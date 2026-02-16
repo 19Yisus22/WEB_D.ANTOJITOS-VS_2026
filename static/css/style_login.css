@@ -1,93 +1,68 @@
-body {
-    background-color: #f2dbdb;
-    color: #d6336c;
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    overflow: hidden;
-}
-
-.card {
-    width: 400px;
-    max-width: 90%;
-    padding: 2rem;
+.login-card {
+    max-width: 400px;
+    width: 100%;
     border-radius: 20px;
-    box-shadow: 0 15px 35px rgba(93, 64, 55, 0.15);
-    background-color: #ffffff;
-    animation: fadeInScale 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    text-align: center;
+    border: none;
 }
 
-@keyframes fadeInScale {
-    0% {
-        transform: scale(0.95) translateY(20px);
-        opacity: 0;
-    }
-    100% {
-        transform: scale(1) translateY(0);
-        opacity: 1;
-    }
+.logo-animated {
+    animation: pulseLogo 3s infinite ease-in-out;
+    filter: drop-shadow(0 5px 15px rgba(216, 90, 118, 0.2));
 }
 
-#buttonDiv {
+@keyframes pulseLogo {
+    0% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.08) rotate(2deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.main-title {
+    color: #5d4037;
+}
+
+.password-container {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 10;
+    color: #a67c83;
+}
+
+.btn-pasteleria {
+    background-color: #f1a7b9;
+    color: white;
+    border: none;
     transition: all 0.3s ease;
-    animation: pulseGoogle 2s infinite;
-    border-radius: 25px;
 }
 
-@keyframes pulseGoogle {
-    0% { box-shadow: 0 0 0 0 rgba(241, 167, 185, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(241, 167, 185, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(241, 167, 185, 0); }
+.btn-pasteleria:hover {
+    background-color: #d85a76;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(216, 90, 118, 0.3);
 }
 
-input.form-control {
-    border-radius: 10px;
-    border: 1.5px solid #eee;
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+.link-highlight {
+    color: #d85a76;
 }
 
-input.form-control:focus {
-    border-color: #f1a7b9;
-    box-shadow: 0 0 0 0.25rem rgba(241, 167, 185, 0.25);
+.legal-footer {
+    font-size: 0.75rem;
 }
 
-button.btn-pasteleria {
-    border-radius: 12px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.legal-link {
+    color: #888;
+    text-decoration: none;
+    transition: color 0.2s;
 }
 
-button.btn-pasteleria:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(216, 90, 118, 0.3);
-}
-
-.logo-container img {
-    width: 70px;
-    animation: float 4s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-
-#toastContainer {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    z-index: 1080;
-}
-
-.custom-toast {
-    animation: toastSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-@keyframes toastSlideIn {
-    0% { transform: translateX(-100%); opacity: 0; }
-    100% { transform: translateX(0); opacity: 1; }
+.legal-link:hover {
+    color: #d85a76;
+    text-decoration: underline;
 }

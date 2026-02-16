@@ -21,7 +21,6 @@ const btnSubmitForm = document.getElementById("btnSubmitForm");
 async function verificarAccesoAdmin() {
     try {
         const res = await fetch("/gestionar_productos");
-        
         if (res.status === 401 || res.status === 403) {
             document.documentElement.innerHTML = `
                 <head>
@@ -38,7 +37,7 @@ async function verificarAccesoAdmin() {
                     <div class="lock-box shadow-lg">
                         <i class="bi bi-shield-slash-fill shield-icon"></i>
                         <h1 class="fw-bold mt-3">MÓDULO PROTEGIDO</h1>
-                        <p class="text-secondary">Se requiere nivel de acceso administrativo para esta sección.</p>
+                        <p class="text-secondary">Acceso administrativo requerido.</p>
                         <div class="spinner-border text-danger my-3" role="status"></div>
                         <br>
                         <button onclick="window.location.href='/'" class="btn btn-outline-danger mt-2 px-5">SALIR</button>
@@ -57,7 +56,8 @@ async function verificarAccesoAdmin() {
 function ajustarAtributosPrecio() {
     const precioInput = document.getElementById("precioPostre");
     if (precioInput) {
-        precioInput.setAttribute("step", "any");
+        precioInput.setAttribute("step", "0.01");
+        precioInput.setAttribute("min", "0");
     }
 }
 
@@ -86,16 +86,20 @@ async function cargarPostres(silent = false) {
     if (isUpdating && !silent) return;
     isUpdating = true;
     try {
-        const res = await fetch("/gestionar_productos");
-        if (res.status === 401 || res.status === 403) return;
+        const res = await fetch("/gestionar_productos", { cache: 'no-store' });
+        if (!res.ok) return;
         const nuevosPostres = await res.json();
-        if (JSON.stringify(nuevosPostres) !== JSON.stringify(postres)) {
+        
+        const dataNueva = JSON.stringify(nuevosPostres);
+        const dataVieja = JSON.stringify(postres);
+
+        if (dataNueva !== dataVieja) {
             postres = nuevosPostres;
-            localStorage.setItem('postresCache', JSON.stringify(postres));
+            localStorage.setItem('postresCache', dataNueva);
             renderPostres();
         }
     } catch (error) {
-        console.error("Error en actualización:", error);
+        console.error("Error en sincronización:", error);
     } finally {
         isUpdating = false;
     }
@@ -103,30 +107,37 @@ async function cargarPostres(silent = false) {
 
 function renderPostres() {
     if (!listaPostresDisponibles || !listaPostresAgotados) return;
+    
     listaPostresDisponibles.innerHTML = "";
     listaPostresAgotados.innerHTML = "";
     let hayAgotados = false;
 
     postres.forEach((p, index) => {
         const card = document.createElement("div");
-        card.className = "col-4 mb-3 d-flex align-items-stretch";
+        card.className = "col-md-4 col-sm-6 mb-3 d-flex align-items-stretch animate__animated animate__fadeIn";
         const imgUrl = p.imagen_url || "/static/uploads/default.png";
+        const stockActual = parseInt(p.stock) || 0;
+        const isAgotado = stockActual <= 0;
         
         card.innerHTML = `
-        <div class="card w-100 cursor-pointer ${p.stock <= 0 ? 'gris' : ''}" data-id="${p.id_producto}">
-            <img src="${imgUrl}" class="card-img-top postre-img" alt="${p.nombre}">
+        <div class="card w-100 cursor-pointer ${isAgotado ? 'opacity-75 grayscale' : ''}" data-id="${p.id_producto}">
+            <div class="position-relative">
+                <img src="${imgUrl}" class="card-img-top postre-img" alt="${p.nombre}" style="height: 200px; object-fit: cover;">
+                ${isAgotado ? '<div class="position-absolute top-50 start-50 translate-middle badge bg-danger fs-6 shadow-lg">AGOTADO</div>' : ''}
+            </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-1">
-                    <h5 class="card-title mb-0 text-truncate" style="max-width: 150px;" title="${p.nombre}">${p.nombre}</h5>
-                    <span class="badge ${p.stock <= 5 ? 'bg-danger' : 'bg-info'} text-dark">${p.stock}</span>
+                    <h5 class="card-title mb-0 text-truncate" title="${p.nombre}">${p.nombre}</h5>
+                    <span class="badge ${stockActual <= 5 ? 'bg-danger animate__animated animate__pulse animate__infinite' : 'bg-success'}">${stockActual}</span>
                 </div>
-                <p class="card-text fw-bold">${Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
+                <p class="card-text fw-bold text-primary">${Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
+                <small class="text-muted d-block">${p.categoria || 'Postre'}</small>
             </div>
         </div>`;
 
         card.querySelector(".card").onclick = () => abrirModalPostre(index);
 
-        if (p.stock > 0) {
+        if (!isAgotado) {
             listaPostresDisponibles.appendChild(card);
         } else {
             listaPostresAgotados.appendChild(card);
@@ -141,7 +152,7 @@ function abrirModalPostre(index) {
     const p = postres[index];
     document.getElementById("modalNombre").textContent = p.nombre;
     document.getElementById("modalFoto").src = p.imagen_url || "/static/uploads/default.png";
-    document.getElementById("modalDescripcion").textContent = p.descripcion;
+    document.getElementById("modalDescripcion").textContent = p.descripcion || "Sin descripción disponible";
     document.getElementById("modalPrecio").textContent = Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP' });
     document.getElementById("modalStock").textContent = p.stock;
     if (modal) modal.show();
@@ -160,16 +171,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     
     await cargarPostres();
-    
-    setInterval(() => {
-        cargarPostres(true);
-    }, 10000);
+    setInterval(() => cargarPostres(true), 5000);
 
     if (btnAgregarPostre) {
         btnAgregarPostre.addEventListener("click", () => {
             indexActual = null;
             agregarPostreForm.reset();
-            btnSubmitForm.innerHTML = '<i class="bi bi-check-lg me-2"></i>Subir Postre';
+            btnSubmitForm.innerHTML = '<i class="bi bi-check-lg me-2"></i>Guardar Nuevo Postre';
             formAgregarPostre.classList.remove("d-none");
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
@@ -188,12 +196,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         btnEliminar.onclick = async () => {
             if (indexActual === null) return;
             const p = postres[indexActual];
+            if (!confirm(`¿Eliminar ${p.nombre}? Esta acción no se puede deshacer.`)) return;
             try {
                 const res = await fetch(`/eliminar_producto/${p.id_producto}`, { method: "DELETE" });
                 if (res.ok) {
                     showMessage("Producto eliminado");
                     modal.hide();
-                    indexActual = null;
                     await cargarPostres();
                 } else {
                     const err = await res.json();
@@ -212,9 +220,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             const p = postres[indexActual];
             document.getElementById("nombrePostre").value = p.nombre;
             document.getElementById("precioPostre").value = p.precio;
-            document.getElementById("descripcionPostre").value = p.descripcion;
+            document.getElementById("descripcionPostre").value = p.descripcion || "";
             document.getElementById("stockPostre").value = p.stock;
-            btnSubmitForm.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Actualizar Postre';
+            btnSubmitForm.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Actualizar Cambios';
             formAgregarPostre.classList.remove("d-none");
             modal.hide();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -228,10 +236,12 @@ if (agregarPostreForm) {
         const fileInput = document.getElementById("fotoPostre");
         const file = fileInput.files[0];
         const formData = new FormData();
+        
         formData.append("nombre", document.getElementById("nombrePostre").value);
         formData.append("precio", document.getElementById("precioPostre").value);
         formData.append("descripcion", document.getElementById("descripcionPostre").value);
         formData.append("stock", document.getElementById("stockPostre").value);
+        formData.append("categoria", "Postre");
 
         if (file) {
             const reader = new FileReader();
@@ -251,6 +261,7 @@ async function enviarFormulario(formData) {
     const esEdicion = indexActual !== null;
     const metodo = esEdicion ? "PUT" : "POST";
     const url = esEdicion ? `/actualizar_producto/${postres[indexActual].id_producto}` : "/gestionar_productos";
+    
     try {
         const res = await fetch(url, { method: metodo, body: formData });
         if (res.ok) {
@@ -258,9 +269,10 @@ async function enviarFormulario(formData) {
             agregarPostreForm.reset();
             indexActual = null;
             await cargarPostres();
-            showMessage(esEdicion ? "Actualizado correctamente" : "Agregado correctamente");
+            showMessage("Prodcuto guardado exitosamente");
         } else {
-            showMessage("Error al guardar datos", true);
+            const errorData = await res.json();
+            showMessage(errorData.error || "Error", true);
         }
     } catch (e) {
         showMessage("Error de red", true);
@@ -270,7 +282,7 @@ async function enviarFormulario(formData) {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/static/js/workers/service-worker-catalogo.js')
-        .then(() => { console.log('SW OK'); })
-        .catch(() => { console.log('SW Error'); });
+        .then(() => { console.log('SW Operativo'); })
+        .catch(() => { console.log('SW Fallo'); });
     });
 }

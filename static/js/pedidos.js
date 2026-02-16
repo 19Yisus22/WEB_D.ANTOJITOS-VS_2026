@@ -83,66 +83,46 @@ function showMessage(msg, isError = false) {
 
 function escucharEventosTiempoReal() {
     window.addEventListener('storage', (e) => {
-        if (e.key === 'nuevoPedidoDetectado') {
-            cargarPedidos();
-        }
-        if (e.key === 'pedidoAnuladoRecientemente') {
-            const data = JSON.parse(e.newValue);
-            notificarAnulacionCritica(data);
+        if (e.key === 'nuevoPedidoDetectado' || e.key === 'pedidoAnuladoRecientemente') {
+            if (e.key === 'pedidoAnuladoRecientemente') {
+                try {
+                    const data = JSON.parse(e.newValue);
+                    notificarAnulacionCritica(data);
+                } catch {}
+            }
             cargarPedidos();
         }
     });
 }
 
 async function iniciarModuloPedidos() {
-    const tieneAcceso = await verificarAccesoAdmin();
-    if (!tieneAcceso) return;
+    if (!await verificarAccesoAdmin()) return;
 
     inicializarSelectAnios();
     await cargarPedidos();
     escucharEventosTiempoReal();
-    
+
     setInterval(() => cargarPedidos(true), 15000);
 
-    const btnPDF = document.getElementById("btnGenerarPDF");
-    if (btnPDF) {
-        btnPDF.addEventListener("click", generarReporteConfigurado);
-    }
+    document.getElementById("btnGenerarPDF")?.addEventListener("click", generarReporteConfigurado);
 
     const inputsFiltro = [
-        "inputBusquedaNombre", 
-        "inputBusquedaCedula", 
-        "inputNumeroFactura", 
-        "selectAnio", 
+        "inputBusquedaNombre",
+        "inputBusquedaCedula",
+        "inputNumeroFactura",
+        "selectAnio",
         "filtroEstado"
     ];
 
     inputsFiltro.forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-            const evento = (id.includes("select") || id.includes("filtro")) ? "change" : "input";
-            el.addEventListener(evento, () => {
-                paginaActual = 1;
-                aplicarFiltros();
-            });
-        }
+        if (!el) return;
+        const evento = (id.includes("select") || id.includes("filtro")) ? "change" : "input";
+        el.addEventListener(evento, () => {
+            paginaActual = 1;
+            aplicarFiltros();
+        });
     });
-}
-
-iniciarModuloPedidos();
-
-function generarNumeroFactura(idPedido, fecha) {
-    const year = new Date(fecha).getFullYear();
-    const key = `${year}-${idPedido}`;
-    if (!contadorFacturasPorAnio[key]) {
-        if (!contadorFacturasPorAnio[year]) {
-            contadorFacturasPorAnio[year] = 0;
-        }
-        contadorFacturasPorAnio[year]++;
-        contadorFacturasPorAnio[key] = contadorFacturasPorAnio[year];
-        localStorage.setItem("contadorFacturasPorAnio", JSON.stringify(contadorFacturasPorAnio));
-    }
-    return `F-${year}-${contadorFacturasPorAnio[key]}`;
 }
 
 function normalizarTexto(texto) {
@@ -175,9 +155,12 @@ function renderizarPaginacion(lista) {
 function mostrarPagina(lista, pagina) {
     const cont = document.getElementById("tablaPedidos");
     if (!cont) return;
+
     cont.innerHTML = "";
+
     const inicio = (pagina - 1) * itemsPorPagina;
     const fin = inicio + itemsPorPagina;
+
     lista.slice(inicio, fin).forEach(card => {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
@@ -201,44 +184,50 @@ function actualizarTituloTabla() {
 }
 
 async function cargarPedidos(isAutoRefresh = false) {
-    const algunInputFocado = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT';
-    if (isAutoRefresh && algunInputFocado) return;
+    if (isAutoRefresh && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) {
+        return;
+    }
 
     try {
         const res = await fetch("/obtener_pedidos");
+        if (!res.ok) return;
+
         const pedidos = await res.json();
         if (!Array.isArray(pedidos)) return;
 
         const nuevosCancelados = pedidos.filter(p => p.estado === 'Cancelado').map(p => String(p.id_pedido));
-        
-        if (isAutoRefresh && typeof ultimosIdsCancelados !== 'undefined' && ultimosIdsCancelados.length > 0) {
+
+        if (isAutoRefresh && ultimosIdsCancelados?.length > 0) {
             const detectados = nuevosCancelados.filter(id => !ultimosIdsCancelados.includes(id));
             if (detectados.length > 0) {
                 const idNotificar = detectados[0];
                 const pedidoData = pedidos.find(p => String(p.id_pedido) === idNotificar);
                 const nombreCliente = `${pedidoData?.usuarios?.nombre || "Un"} ${pedidoData?.usuarios?.apellido || "cliente"}`;
-                showMessage(`⚠️ EL CLIENTE ${nombreCliente.toUpperCase()} HA ANULADO EL PEDIDO #${idNotificar}`);
+                showMessage(`⚠️ EL CLIENTE ${nombreCliente.toUpperCase()} HA ANULADO EL PEDIDO #${pedidoData?.numero_factura || idNotificar}`);
             }
         }
-        ultimosIdsCancelados = nuevosCancelados;
 
+        ultimosIdsCancelados = nuevosCancelados;
         pedidosDatosRaw = pedidos;
-        
+
+        limpiarEstadosPagoObsoletos(pedidos);
+
         const nuevasCards = pedidos.map(pedido => {
             const idPedidoStr = String(pedido.id_pedido);
-            const facturaFormateada = generarNumeroFactura(pedido.id_pedido, pedido.fecha_pedido);
+            const facturaDB = pedido.numero_factura || 'S/N';
             const esFijado = pedidosFijados.includes(idPedidoStr);
             const user = pedido.usuarios || {};
-            
+
             const cardExistente = document.getElementById(`pedido-${pedido.id_pedido}`);
-            const estabaAbierta = cardExistente ? !cardExistente.classList.contains('card-collapsed') : false;
+            const estabaAbierta = cardExistente && !cardExistente.classList.contains('card-collapsed');
 
             const card = document.createElement("div");
             let totalPendientePedido = 0;
 
             const itemsRowsHTML = (pedido.pedido_detalle || []).map((item, idx) => {
                 const itemId = `${pedido.id_pedido}-${idx}`;
-                let pagadoItem = estadosPagoGuardados[itemId] !== undefined ? estadosPagoGuardados[itemId] : (item.pagado !== undefined ? item.pagado : pedido.pagado);
+                const pagadoItem = estadosPagoGuardados[itemId] ?? item.pagado ?? !!pedido.pagado;
+
                 const subtotal = Number(item.subtotal || 0);
                 if (!pagadoItem) totalPendientePedido += subtotal;
 
@@ -246,29 +235,40 @@ async function cargarPedidos(isAutoRefresh = false) {
                     <td class="text-start">${item.gestion_productos?.nombre || item.nombre_producto || 'Producto'}</td>
                     <td>${item.cantidad}</td>
                     <td>${subtotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</td>
-                    <td><i class="bi ${pagadoItem ? 'bi-check-circle text-success' : 'bi-x-circle text-danger'} fs-4 toggle-pago-item" style="cursor:pointer" data-item-id="${itemId}" data-pagado="${pagadoItem}"></i></td>
+                    <td>
+                        <i class="bi ${pagadoItem ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'} fs-4 toggle-pago-item" 
+                           style="cursor:pointer" 
+                           data-item-id="${itemId}" 
+                           data-pagado="${pagadoItem}">
+                        </i>
+                    </td>
                 </tr>`;
             }).join("");
 
-            const todosPagos = (pedido.pedido_detalle || []).every((_, idx) => {
+            const todosPagos = (pedido.pedido_detalle || []).every((item, idx) => {
                 const itemId = `${pedido.id_pedido}-${idx}`;
-                return estadosPagoGuardados[itemId] !== undefined ? estadosPagoGuardados[itemId] : (pedido.pedido_detalle[idx].pagado !== undefined ? pedido.pedido_detalle[idx].pagado : pedido.pagado);
+                return estadosPagoGuardados[itemId] ?? item.pagado ?? !!pedido.pagado;
             });
 
             const esTerminado = pedido.estado === 'Entregado' && todosPagos;
             const esAnulado = pedido.estado === 'Cancelado';
             const bloqueado = esTerminado || esAnulado;
-            let estadoClase = esAnulado ? "pedido-anulado border-danger" : (esTerminado ? "pedido-finalizado" : "pedido-activo");
+
+            const estadoClase = esAnulado ? "pedido-anulado border-danger"
+                : esTerminado ? "pedido-finalizado"
+                : "pedido-activo";
 
             card.className = `pedido-card col-12 mb-3 p-1 shadow-sm ${estadoClase} ${esFijado ? 'fijado border-primary' : ''} ${estabaAbierta ? '' : 'card-collapsed'}`;
             card.id = `pedido-${pedido.id_pedido}`;
             card.dataset.id_real = idPedidoStr;
-            card.dataset.factura = normalizarTexto(facturaFormateada);
+            card.dataset.factura = normalizarTexto(facturaDB);
             card.dataset.estado = pedido.estado;
             card.dataset.todosPagos = todosPagos.toString();
             card.dataset.fijado = esFijado.toString();
 
-            const fechaStr = pedido.fecha_pedido ? new Date(pedido.fecha_pedido).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '---';
+            const fechaStr = pedido.fecha_pedido
+                ? new Date(pedido.fecha_pedido).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })
+                : '---';
 
             card.innerHTML = `
                 <div class="card border-0 bg-transparent">
@@ -277,8 +277,10 @@ async function cargarPedidos(isAutoRefresh = false) {
                             <i class="bi ${esFijado ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle'} fs-5 btn-fijar" style="cursor:pointer"></i>
                             <img src="${user.imagen_url || '/static/uploads/default.png'}" class="rounded-circle border" style="width:38px;height:38px;object-fit:cover;">
                             <div class="lh-1">
-                                <strong class="d-block" style="font-size:0.9rem">${facturaFormateada}</strong>
-                                <small class="status-info ${esAnulado ? 'text-danger fw-bold' : 'text-muted'}" style="font-size:0.75rem">${pedido.estado} | ${fechaStr}</small>
+                                <strong class="d-block" style="font-size:0.9rem">${facturaDB}</strong>
+                                <small class="status-info ${esAnulado ? 'text-danger fw-bold' : 'text-muted'}" style="font-size:0.75rem">
+                                    ${pedido.estado} | ${fechaStr} ${todosPagos ? '• Pagado' : '• Pendiente pago'}
+                                </small>
                             </div>
                         </div>
                         <div class="d-flex gap-2">
@@ -295,7 +297,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                                     <p class="mb-1"><strong>Teléfono:</strong> ${user.telefono || 'N/A'}</p>
                                 </div>
                                 <div class="col-md-6">
-                                    <p class="mb-1"><strong>Dirección:</strong> ${pedido.direccion_envio || user.direccion || 'N/A'}</p>
+                                    <p class="mb-1"><strong>Dirección:</strong> ${pedido.direccion_entrega || user.direccion || 'N/A'}</p>
                                     <p class="mb-1"><strong>Método Pago:</strong> <span class="badge bg-info text-dark">${pedido.metodo_pago || 'No especificado'}</span></p>
                                 </div>
                             </div>
@@ -329,33 +331,79 @@ async function cargarPedidos(isAutoRefresh = false) {
             card.querySelectorAll(".toggle-pago-item").forEach(icon => {
                 icon.onclick = async () => {
                     if (bloqueado) return;
+
                     const itemId = icon.dataset.itemId;
-                    const val = icon.dataset.pagado === 'false';
-                    estadosPagoGuardados[itemId] = val;
+                    const current = icon.dataset.pagado === 'true';
+                    const nuevoValor = !current;
+
+                    estadosPagoGuardados[itemId] = nuevoValor;
                     localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
-                    
-                    const res = await fetch(`/actualizar_pago/${pedido.id_pedido}`, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ pagado: val })
+
+                    icon.className = icon.className.replace(
+                        current ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger',
+                        nuevoValor ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'
+                    );
+                    icon.dataset.pagado = nuevoValor.toString();
+
+                    const todosAhora = (pedido.pedido_detalle || []).every((_, idx) => {
+                        const iid = `${pedido.id_pedido}-${idx}`;
+                        return estadosPagoGuardados[iid] ?? pedido.pedido_detalle[idx].pagado ?? pedido.pagado ?? false;
                     });
 
-                    if (res.ok) { 
-                        showMessage("Cobro actualizado");
-                        await cargarPedidos(); 
+                    try {
+                        await fetch(`/actualizar_pago_item/${pedido.id_pedido}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                indice: parseInt(itemId.split('-')[1]),
+                                pagado: nuevoValor
+                            })
+                        });
+
+                        await fetch(`/actualizar_pago_general/${pedido.id_pedido}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ pagado: todosAhora })
+                        });
+
+                        showMessage(todosAhora ? "Pedido pagado completamente" : "Pago parcial actualizado");
+
+                        card.dataset.todosPagos = todosAhora.toString();
+                        aplicarFiltros();
+
+                    } catch (err) {
+                        showMessage("Error al guardar estado de pago", true);
+                        console.error(err);
+
+                        icon.className = icon.className.replace(
+                            nuevoValor ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger',
+                            current ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'
+                        );
+                        icon.dataset.pagado = current.toString();
+                        delete estadosPagoGuardados[itemId];
+                        localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
                     }
                 };
             });
 
             card.querySelector(".btn-fijar").onclick = () => {
-                pedidosFijados = pedidosFijados.includes(idPedidoStr) ? pedidosFijados.filter(id => id !== idPedidoStr) : [...pedidosFijados, idPedidoStr];
+                pedidosFijados = pedidosFijados.includes(idPedidoStr)
+                    ? pedidosFijados.filter(id => id !== idPedidoStr)
+                    : [...pedidosFijados, idPedidoStr];
                 localStorage.setItem("pedidosFijados", JSON.stringify(pedidosFijados));
                 aplicarFiltros();
             };
 
             card.querySelector(".btn-eliminar-individual").onclick = async () => {
-                const r = await fetch("/eliminar_pedidos", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids: [idPedidoStr] }) });
-                if (r.ok) { showMessage("Pedido eliminado"); await cargarPedidos(); }
+                const r = await fetch("/eliminar_pedidos", {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ids: [idPedidoStr] })
+                });
+                if (r.ok) {
+                    showMessage("Pedido eliminado");
+                    await cargarPedidos();
+                }
             };
 
             card.querySelector(".toggle-detalle").onclick = (e) => {
@@ -365,10 +413,14 @@ async function cargarPedidos(isAutoRefresh = false) {
 
             card.querySelector(".actualizar-btn").onclick = async () => {
                 const nuevo = card.querySelector(".estado-select").value;
-                const r = await fetch(`/actualizar_estado/${pedido.id_pedido}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado: nuevo }) });
-                if (r.ok) { 
-                    showMessage(`Estado: ${nuevo}`); 
-                    await cargarPedidos(); 
+                const r = await fetch(`/actualizar_estado/${pedido.id_pedido}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ estado: nuevo })
+                });
+                if (r.ok) {
+                    showMessage(`Estado: ${nuevo}`);
+                    await cargarPedidos();
                 }
             };
 
@@ -378,7 +430,25 @@ async function cargarPedidos(isAutoRefresh = false) {
         pedidosGlobal = nuevasCards;
         aplicarFiltros();
 
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error("Error cargando pedidos:", e);
+    }
+}
+
+function limpiarEstadosPagoObsoletos(pedidos) {
+    const idsValidos = new Set();
+    pedidos.forEach(p => {
+        (p.pedido_detalle || []).forEach((_, i) => {
+            idsValidos.add(`${p.id_pedido}-${i}`);
+        });
+    });
+
+    for (const key in estadosPagoGuardados) {
+        if (!idsValidos.has(key)) {
+            delete estadosPagoGuardados[key];
+        }
+    }
+    localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
 }
 
 function aplicarFiltros() {
@@ -387,12 +457,12 @@ function aplicarFiltros() {
     const filtroEstado = document.getElementById("filtroEstado")?.value;
     const busquedaNombre = normalizarTexto(document.getElementById("inputBusquedaNombre")?.value);
     const busquedaCedula = normalizarTexto(document.getElementById("inputBusquedaCedula")?.value);
-    
+
     let filtrados = pedidosGlobal.filter(card => {
         const idReal = card.dataset.id_real;
         const pedidoData = pedidosDatosRaw.find(p => String(p.id_pedido) === idReal);
         const user = pedidoData?.usuarios || {};
-        
+
         const nombreNorm = normalizarTexto(`${user.nombre || ''}${user.apellido || ''}`);
         const cedulaNorm = normalizarTexto(user.cedula);
         const est = card.dataset.estado;
@@ -402,7 +472,7 @@ function aplicarFiltros() {
         if (busquedaNombre && !nombreNorm.includes(busquedaNombre)) return false;
         if (busquedaCedula && !cedulaNorm.includes(busquedaCedula)) return false;
 
-        let matchFactura = numFact === "" || card.dataset.factura === normalizarTexto(`f-${anio}-${numFact}`);
+        const matchFactura = !numFact || card.dataset.factura === normalizarTexto(`f-${anio}-${numFact}`);
         if (!matchFactura) return false;
 
         if (filtroEstado === "FiltroPagoPendiente") return !pagos && est !== "Cancelado";
@@ -414,50 +484,42 @@ function aplicarFiltros() {
         return true;
     });
 
-    const grupos = {
-        activos: [],
-        finalizados: [],
-        anulados: []
-    };
+    const grupos = { activos: [], finalizados: [], anulados: [] };
 
     filtrados.forEach(card => {
         const est = card.dataset.estado;
         const pagos = card.dataset.todosPagos === "true";
 
-        if (est === "Cancelado") {
-            grupos.anulados.push(card);
-        } else if (est === "Entregado" && pagos) {
-            grupos.finalizados.push(card);
-        } else {
-            grupos.activos.push(card);
-        }
+        if (est === "Cancelado") grupos.anulados.push(card);
+        else if (est === "Entregado" && pagos) grupos.finalizados.push(card);
+        else grupos.activos.push(card);
     });
 
-    const ordenarGrupo = (arr) => arr.sort((a, b) => {
+    const ordenarGrupo = arr => arr.sort((a, b) => {
         const aF = a.dataset.fijado === "true" ? 1 : 0;
         const bF = b.dataset.fijado === "true" ? 1 : 0;
         if (aF !== bF) return bF - aF;
         return parseInt(b.dataset.id_real) - parseInt(a.dataset.id_real);
     });
 
-    const finalListaConSeparadores = [];
-    
-    if (grupos.activos.length > 0) {
-        finalListaConSeparadores.push(crearSeparador("PEDIDOS ACTIVOS / PENDIENTES", "bg-primary"));
-        finalListaConSeparadores.push(...ordenarGrupo(grupos.activos));
-    }
-    
-    if (grupos.finalizados.length > 0) {
-        finalListaConSeparadores.push(crearSeparador("TRANSACCIONES FINALIZADAS", "bg-success"));
-        finalListaConSeparadores.push(...ordenarGrupo(grupos.finalizados));
-    }
-    
-    if (grupos.anulados.length > 0) {
-        finalListaConSeparadores.push(crearSeparador("PEDIDOS ANULADOS", "bg-danger"));
-        finalListaConSeparadores.push(...ordenarGrupo(grupos.anulados));
+    const finalLista = [];
+
+    if (grupos.activos.length) {
+        finalLista.push(crearSeparador("PEDIDOS ACTIVOS / PENDIENTES", "bg-primary"));
+        finalLista.push(...ordenarGrupo(grupos.activos));
     }
 
-    pedidosFiltrados = finalListaConSeparadores;
+    if (grupos.finalizados.length) {
+        finalLista.push(crearSeparador("TRANSACCIONES FINALIZADAS", "bg-success"));
+        finalLista.push(...ordenarGrupo(grupos.finalizados));
+    }
+
+    if (grupos.anulados.length) {
+        finalLista.push(crearSeparador("PEDIDOS ANULADOS", "bg-danger"));
+        finalLista.push(...ordenarGrupo(grupos.anulados));
+    }
+
+    pedidosFiltrados = finalLista;
     renderizarPaginacion(pedidosFiltrados);
 }
 
@@ -532,14 +594,14 @@ async function generarReporteConfigurado() {
     doc.text(`Fecha Emisión: ${new Date().toLocaleString()}`, 140, 20);
 
     let totalAcumulado = 0;
-    const stats = { Pendiente: 0, Entregado: 0, Cancelado: 0 };
+    const stats = { Pendiente: 0, Entregado: 0, Cancelado: 0, Enviado: 0 };
 
     const body = listaParaPdf.map(p => {
-        const sub = (p.pedido_detalle || []).reduce((a, b) => a + b.subtotal, 0);
+        const sub = (p.pedido_detalle || []).reduce((a, b) => a + (Number(b.subtotal) || 0), 0);
         totalAcumulado += sub;
         if(stats[p.estado] !== undefined) stats[p.estado]++;
         return [
-            generarNumeroFactura(p.id_pedido, p.fecha_pedido),
+            p.numero_factura || 'S/N',
             new Date(p.fecha_pedido).toLocaleDateString(),
             `${p.usuarios?.nombre || ''} ${p.usuarios?.apellido || ''}`,
             p.estado.toUpperCase(),
@@ -563,7 +625,9 @@ async function generarReporteConfigurado() {
     let finalY = doc.lastAutoTable.finalY + 15;
     if (finalY > 220) { doc.addPage(); finalY = 20; }
     
-    dibujarGraficoEstadistico(doc, stats, finalY);
+    if (typeof dibujarGraficoEstadistico === 'function') {
+        dibujarGraficoEstadistico(doc, stats, finalY);
+    }
 
     const pageCount = doc.internal.getNumberOfPages();
     doc.setPage(pageCount);
@@ -656,33 +720,6 @@ function dibujarGraficoEstadistico(doc, stats, y) {
     });
 }
 
-document.addEventListener('change', async (e) => {
-    if (e.target.classList.contains('check-pago')) {
-        const idPedido = e.target.dataset.id;
-        const estaPagado = e.target.checked;
-
-        try {
-            const response = await fetch(`/actualizar_pago/${idPedido}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pagado: estaPagado })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                e.target.checked = !estaPagado;
-                mostrarNotificacionInterna(result.error, "error");
-            } else {
-                mostrarNotificacionInterna("Pago actualizado", "success");
-            }
-        } catch (error) {
-            e.target.checked = !estaPagado;
-            console.error("Error al actualizar pago:", error);
-        }
-    }
-});
-
 const inputsFiltro = ["inputBusquedaNombre", "inputBusquedaCedula", "inputNumeroFactura", "selectAnio", "filtroEstado"];
 inputsFiltro.forEach(id => {
     document.getElementById(id)?.addEventListener(id.includes("select") || id.includes("filtro") ? "change" : "input", () => {
@@ -726,8 +763,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-inicializarSelectAnios();
+iniciarModuloPedidos();
 cargarPedidos();
+inicializarSelectAnios();
 escucharEventosTiempoReal();
 setInterval(() => cargarPedidos(true), 15000);
 

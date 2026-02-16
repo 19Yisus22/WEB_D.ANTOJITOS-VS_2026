@@ -1,4 +1,5 @@
 let facturasActuales = [];
+let estadosFacturasPrevios = {};
 let paginaActual = 1;
 const itemsPorPagina = 5;
 let productosCarrito = [];
@@ -137,84 +138,67 @@ function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
     setTimeout(remove, 5000);
 }
 
-async function cargarMetodosPago() {
-    try {
-        const res = await fetch("/obtener_metodos_pago");
-        if (res.ok) {
-            const data = await res.json();
-            metodosPagoCache = data.metodos || [];
-        }
-    } catch (e) {
-        console.error("Error cargando métodos de pago:", e);
-    }
-}
-
-function abrirModalPago(facturaNum, total) {
-    const modalElement = document.getElementById('modalPago');
-    const modalBody = document.getElementById("modalPagoBody");
-    if (!modalElement || !modalBody) return;
-
-    if (!metodosPagoCache || metodosPagoCache.length === 0) {
-        modalBody.innerHTML = `
-            <div class="text-center p-5">
-                <i class="bi bi-wallet2 fs-1 text-muted mb-3 d-block"></i>
-                <h5 class="text-secondary">Sin métodos registrados</h5>
-                <p class="small text-muted">No hay cuentas de pago disponibles en este momento.</p>
-            </div>`;
-    } else {
-        modalBody.innerHTML = `
-            <div class="text-center mb-4 border-bottom pb-3">
-                <p class="text-muted mb-1 small text-uppercase fw-bold">Referencia de Pago</p>
-                <h4 class="fw-bold text-dark mb-1">${facturaNum}</h4>
-                <div class="fs-3 fw-bold text-primary">${total}</div>
-            </div>
-            <div class="row g-4 justify-content-center">
-                ${metodosPagoCache.map(m => `
-                    <div class="col-12 col-md-6">
-                        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                            <div class="card-header bg-dark text-white text-center py-2 border-0">
-                                <span class="fw-bold small text-uppercase">${m.entidad} - ${m.tipo_cuenta}</span>
-                            </div>
-                            <div class="card-body p-3 text-center bg-white">
-                                <div class="mb-3">
-                                    <img src="${m.qr_url || '/static/uploads/no-qr.png'}" 
-                                         class="img-fluid rounded-3 border p-2 bg-light shadow-sm" 
-                                         style="max-height: 200px; width: 100%; object-fit: contain;"
-                                         onerror="this.src='/static/uploads/no-qr.png'">
-                                </div>
-                                <div class="bg-light rounded-3 p-3 border">
-                                    <p class="text-muted small mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">Titular de la cuenta</p>
-                                    <p class="mb-2 fw-semibold text-dark">${m.titular}</p>
-                                    
-                                    <hr class="my-2 opacity-25">
-                                    
-                                    <p class="text-muted small mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">Número / Celular</p>
-                                    <div class="d-flex align-items-center justify-content-center gap-2">
-                                        <span class="fs-5 fw-bold text-primary text-break">${m.numero}</span>
-                                        <button class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" 
-                                                style="width: 32px; height: 32px;"
-                                                onclick="navigator.clipboard.writeText('${m.numero}').then(() => showMessage('Número copiado al portapapeles'))"
-                                                title="Copiar número">
-                                            <i class="bi bi-clipboard"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-            <div class="mt-4 p-3 bg-primary bg-opacity-10 border border-primary border-dashed rounded-3 text-center">
-                <p class="small text-primary mb-0 fw-medium">
-                    <i class="bi bi-info-circle-fill me-2"></i>Realiza la transferencia y adjunta el comprobante vía WhatsApp o al correo <strong>d.antojitos1958@gmail.com</strong>
-                </p>
-            </div>
-        `;
-    }
+function lanzarNotificacionMultidispositivo(fObj, estado) {
+    playNotificationSound();
     
-    const bootstrapModal = bootstrap.Modal.getOrCreateInstance(modalElement);
-    bootstrapModal.show();
+    const estadoL = estado.toLowerCase();
+    
+    let configuracion = {
+        color: "primary",
+        icono: "bi-info-circle-fill",
+        titulo: "Actualización de Pedido"
+    };
+
+    if (["anulada", "cancelado", "cancelada"].includes(estadoL)) {
+        configuracion = { color: "danger", icono: "bi-x-circle-fill", titulo: "Pedido Anulado" };
+    } else if (["pagada", "pagado"].includes(estadoL)) {
+        configuracion = { color: "success", icono: "bi-check-circle-fill", titulo: "Pago Confirmado" };
+    } else if (["emitida", "emitido"].includes(estadoL)) {
+        configuracion = { color: "info", icono: "bi-send-fill", titulo: "Pedido Emitido" };
+    } else if (estadoL === "enviado") {
+        configuracion = { color: "warning", icono: "bi-truck", titulo: "Pedido en Camino" };
+    } else if (["finalizado", "entregado"].includes(estadoL)) {
+        configuracion = { color: "info", icono: "bi-house-check-fill", titulo: "Pedido Entregado" };
+    }
+
+    if (Notification.permission === "granted") {
+        new Notification(configuracion.titulo, {
+            body: `Tu factura ${facturaFormateada} ha pasado al estado: ${estado}`,
+            icon: "/static/uploads/logo.png"
+        });
+    }
+
+    const cont = document.getElementById("toastContainer");
+    if (!cont) return;
+
+    const t = document.createElement("div");
+    t.className = `custom-toast bg-dark text-white border-0 shadow-lg mb-2`;
+    t.style.borderLeft = `5px solid var(--bs-${configuracion.color})`;
+    t.style.minWidth = "300px";
+    t.style.transition = "opacity 0.4s ease";
+    
+    t.innerHTML = `
+        <div class="d-flex align-items-center p-2">
+            <i class="bi ${configuracion.icono} text-${configuracion.color} fs-4 me-3"></i>
+            <div class="flex-grow-1">
+                <strong style="font-size: 0.85rem;" class="d-block">${configuracion.titulo}</strong>
+                <small class="text-white-50">Factura ${facturaFormateada}: </small>
+                <span class="badge bg-${configuracion.color} text-dark" style="font-size: 0.65rem;">${estado.toUpperCase()}</span>
+            </div>
+            <i class="bi bi-x-lg ms-2 btn-close-toast" style="cursor:pointer; font-size: 0.7rem;"></i>
+        </div>`;
+        
+    cont.appendChild(t);
+
+    const remove = () => {
+        t.style.opacity = '0';
+        setTimeout(() => t.remove(), 400);
+    };
+
+    t.querySelector('.btn-close-toast').onclick = remove;
+    setTimeout(remove, 7000);
 }
+
 
 async function verificarCambiosCatalogoYCarrito() {
     try {
@@ -294,81 +278,6 @@ async function verificarCambiosCatalogoYCarrito() {
     } catch (e) {
         console.error("Error en verificación de catálogo:", e);
     }
-}
-
-async function descargarPDF(f) {
-    const { jsPDF } = window.jspdf || window.jsPDF;
-    if (!jsPDF) {
-        showMessage("Error al cargar generador de PDF", true);
-        return;
-    }
-    
-    const doc = new jsPDF();
-    const logoUrl = '/static/uploads/logo.png';
-
-    try {
-        const img = new Image();
-        img.src = logoUrl;
-        await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-        });
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        doc.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 12, 22, 22);
-    } catch (e) { console.warn("Logo no cargado"); }
-
-    doc.setFontSize(22);
-    doc.setTextColor(33, 37, 41);
-    doc.text("D'Antojitos ©", 42, 25);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Factura N°: ${f.numero_factura}`, 145, 20);
-    doc.text(`Fecha: ${new Date(f.fecha_emision).toLocaleString()}`, 145, 25);
-    
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(f.estado === 'Anulada' ? 220 : 40, f.estado === 'Anulada' ? 53 : 167, f.estado === 'Anulada' ? 69 : 69);
-    doc.text(`ESTADO: ${f.estado.toUpperCase()}`, 145, 30);
-    doc.setFont("helvetica", "normal");
-
-    const tableData = (f.productos || []).map(p => [
-        p.nombre_producto,
-        `x${p.cantidad}`,
-        Number(p.subtotal).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })
-    ]);
-
-    doc.autoTable({
-        startY: 45,
-        head: [['Producto', 'Cantidad', 'Subtotal']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: { fillColor: [33, 37, 41] }
-    });
-
-    const finalY = doc.lastAutoTable.finalY;
-    const total = (f.productos || []).reduce((acc, curr) => acc + Number(curr.subtotal), 0);
-    
-    doc.setFontSize(14);
-    doc.setTextColor(0);
-    doc.text(`TOTAL: ${total.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}`, 195, finalY + 12, { align: 'right' });
-
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(100);
-    const mensaje1 = "Espere a que se procese el pedido en el sistema.";
-    const mensaje2 = "¡Gracias por la compra!";
-    const textWidth1 = doc.getStringUnitWidth(mensaje1) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-    const textWidth2 = doc.getStringUnitWidth(mensaje2) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-    doc.text(mensaje1, (210 - textWidth1) / 2, finalY + 30);
-    doc.setFont("helvetica", "bolditalic");
-    doc.text(mensaje2, (210 - textWidth2) / 2, finalY + 38);
-
-    doc.save(`Factura_${f.numero_factura}.pdf`);
-    showMessage("Descarga finalizada PDF");
 }
 
 async function cargarCarrito() {
@@ -522,23 +431,19 @@ async function finalizarCompra() {
             if (res.status === 400 && data.completar_perfil) {
                 showMessage(data.message);
                 setTimeout(() => { window.location.href = "/mi_perfil"; }, 1000);
-            } else if (res.status === 400 && data.stock_insuficiente) {
-                showMessage(data.message);
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-                await cargarCarrito();
             } else {
                 showMessage(data.message || "Error al procesar el pedido");
-                btn.disabled = false;
-                btn.innerHTML = originalText;
             }
+            btn.disabled = false;
+            btn.innerHTML = originalText;
             return;
         }
 
         showMessage("¡Pedido enviado con éxito!");
         
-        actualizarContadorBadge(0);
-        productosCarrito = [];
+        if (typeof actualizarContadorBadge === 'function') {
+            actualizarContadorBadge(0);
+        }
         
         const modalElement = document.getElementById('modalCarrito');
         if (modalElement) {
@@ -554,13 +459,84 @@ async function finalizarCompra() {
         showMessage("Error de conexión con el servidor");
         btn.disabled = false;
         btn.innerHTML = originalText;
-    } finally {
-        if (btn && btn.innerHTML.includes("Procesando") && (typeof productosCarrito !== 'undefined' && productosCarrito.length > 0)) {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        }
     }
 }
+
+async function descargarPDF(f) {
+    const { jsPDF } = window.jspdf || window.jsPDF;
+    if (!jsPDF) {
+        showMessage("Error al cargar generador de PDF", true);
+        return;
+    }
+    
+    const doc = new jsPDF();
+    const logoUrl = '/static/uploads/logo.png';
+
+    try {
+        const img = new Image();
+        img.src = logoUrl;
+        await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+        });
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        doc.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 12, 22, 22);
+    } catch (e) { console.warn("Logo no cargado"); }
+
+    doc.setFontSize(22);
+    doc.setTextColor(33, 37, 41);
+    doc.text("D'Antojitos ©", 42, 25);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Factura N°: ${f.numero_factura}`, 145, 20);
+    doc.text(`Fecha: ${new Date(f.fecha_emision).toLocaleString()}`, 145, 25);
+    
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(f.estado === 'Anulada' ? 220 : 40, f.estado === 'Anulada' ? 53 : 167, f.estado === 'Anulada' ? 69 : 69);
+    doc.text(`ESTADO: ${f.estado.toUpperCase()}`, 145, 30);
+    doc.setFont("helvetica", "normal");
+
+    const tableData = (f.productos || []).map(p => [
+        p.nombre_producto,
+        `x${p.cantidad}`,
+        Number(p.subtotal).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })
+    ]);
+
+    doc.autoTable({
+        startY: 45,
+        head: [['Producto', 'Cantidad', 'Subtotal']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [33, 37, 41] }
+    });
+
+    const finalY = doc.lastAutoTable.finalY;
+    const total = (f.productos || []).reduce((acc, curr) => acc + Number(curr.subtotal), 0);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text(`TOTAL: ${total.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}`, 195, finalY + 12, { align: 'right' });
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(100);
+    const mensaje1 = "Espere a que se procese el pedido en el sistema.";
+    const mensaje2 = "¡Gracias por la compra!";
+    const textWidth1 = doc.getStringUnitWidth(mensaje1) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    const textWidth2 = doc.getStringUnitWidth(mensaje2) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    doc.text(mensaje1, (210 - textWidth1) / 2, finalY + 30);
+    doc.setFont("helvetica", "bolditalic");
+    doc.text(mensaje2, (210 - textWidth2) / 2, finalY + 38);
+
+    doc.save(`Factura_${f.numero_factura}.pdf`);
+    showMessage("Descarga finalizada PDF");
+}
+
 
 async function monitorearCambiosFacturas() {
     const inputBuscar = document.getElementById("buscarFactura");
@@ -595,93 +571,6 @@ async function monitorearCambiosFacturas() {
     }
 }
 
-function generarReferenciaVisual(f) {
-    const fechaEmi = new Date(f.fecha_emision);
-    const anio = fechaEmi.getFullYear();
-    const idReal = f.id_factura;
-    return `F-${anio}-${idReal}`;
-}
-
-function lanzarNotificacionMultidispositivo(fObj, estado) {
-    playNotificationSound();
-    
-    const facturaFormateada = generarReferenciaVisual(fObj);
-    const estadoL = estado.toLowerCase();
-    
-    let configuracion = {
-        color: "primary",
-        icono: "bi-info-circle-fill",
-        titulo: "Actualización de Pedido"
-    };
-
-    if (["anulada", "cancelado", "cancelada"].includes(estadoL)) {
-        configuracion = { color: "danger", icono: "bi-x-circle-fill", titulo: "Pedido Anulado" };
-    } else if (["pagada", "pagado"].includes(estadoL)) {
-        configuracion = { color: "success", icono: "bi-check-circle-fill", titulo: "Pago Confirmado" };
-    } else if (["emitida", "emitido"].includes(estadoL)) {
-        configuracion = { color: "info", icono: "bi-send-fill", titulo: "Pedido Emitido" };
-    } else if (estadoL === "enviado") {
-        configuracion = { color: "warning", icono: "bi-truck", titulo: "Pedido en Camino" };
-    } else if (["finalizado", "entregado"].includes(estadoL)) {
-        configuracion = { color: "info", icono: "bi-house-check-fill", titulo: "Pedido Entregado" };
-    }
-
-    if (Notification.permission === "granted") {
-        new Notification(configuracion.titulo, {
-            body: `Tu factura ${facturaFormateada} ha pasado al estado: ${estado}`,
-            icon: "/static/uploads/logo.png"
-        });
-    }
-
-    const cont = document.getElementById("toastContainer");
-    if (!cont) return;
-
-    const t = document.createElement("div");
-    t.className = `custom-toast bg-dark text-white border-0 shadow-lg mb-2`;
-    t.style.borderLeft = `5px solid var(--bs-${configuracion.color})`;
-    t.style.minWidth = "300px";
-    t.style.transition = "opacity 0.4s ease";
-    
-    t.innerHTML = `
-        <div class="d-flex align-items-center p-2">
-            <i class="bi ${configuracion.icono} text-${configuracion.color} fs-4 me-3"></i>
-            <div class="flex-grow-1">
-                <strong style="font-size: 0.85rem;" class="d-block">${configuracion.titulo}</strong>
-                <small class="text-white-50">Factura ${facturaFormateada}: </small>
-                <span class="badge bg-${configuracion.color} text-dark" style="font-size: 0.65rem;">${estado.toUpperCase()}</span>
-            </div>
-            <i class="bi bi-x-lg ms-2 btn-close-toast" style="cursor:pointer; font-size: 0.7rem;"></i>
-        </div>`;
-        
-    cont.appendChild(t);
-
-    const remove = () => {
-        t.style.opacity = '0';
-        setTimeout(() => t.remove(), 400);
-    };
-
-    t.querySelector('.btn-close-toast').onclick = remove;
-    setTimeout(remove, 7000);
-}
-
-function generarNumeroFactura(idPedido, fecha) {
-    const year = new Date(fecha).getFullYear();
-    const key = `${year}-${idPedido}`;
-    let contadorFacturasPorAnio = JSON.parse(localStorage.getItem("contadorFacturasPorAnio") || "{}");
-    
-    if (!contadorFacturasPorAnio[key]) {
-        if (!contadorFacturasPorAnio[year]) {
-            contadorFacturasPorAnio[year] = 0;
-        }
-        contadorFacturasPorAnio[year]++;
-        contadorFacturasPorAnio[key] = contadorFacturasPorAnio[year];
-        localStorage.setItem("contadorFacturasPorAnio", JSON.stringify(contadorFacturasPorAnio));
-    }
-    return `F-${year}-${contadorFacturasPorAnio[key]}`;
-}
-
-let estadosFacturasPrevios = {};
-
 function mostrarFacturasBuscadas() {
     const container = document.getElementById("facturasContainer");
     if (!container) return;
@@ -712,8 +601,7 @@ function mostrarFacturasBuscadas() {
             const eraAnulada = ["anulada", "cancelado", "cancelada"].includes(estadoAnterior.toLowerCase());
             
             if (esAnuladaAhora && !eraAnulada) {
-                const numFact = generarNumeroFactura(f.id_factura, f.fecha_emision);
-                showMessage(` EL PEDIDO ${numFact} HA SIDO CANCELADO`);
+                showMessage(` EL PEDIDO ${f.numero_factura} HA SIDO CANCELADO`);
             }
         }
         estadosFacturasPrevios[idFacturaStr] = estadoNormalizado;
@@ -748,7 +636,7 @@ function mostrarFacturasBuscadas() {
         const esAnulada = ["anulada", "cancelado", "cancelada"].includes(estadoRaw.toLowerCase());
         const esEstadoFinal = esPagada || esAnulada;
         
-        const facturaFormateada = generarNumeroFactura(f.id_factura, f.fecha_emision);
+        const facturaFormateada = f.numero_factura;
 
         let detalleHtml = "";
         let totalCalculado = 0;
@@ -874,6 +762,85 @@ function mostrarFacturasBuscadas() {
         container.appendChild(card);
     });
     paginar(filtradas.length);
+}
+
+async function cargarMetodosPago() {
+    try {
+        const res = await fetch("/obtener_metodos_pago");
+        if (res.ok) {
+            const data = await res.json();
+            metodosPagoCache = data.metodos || [];
+        }
+    } catch (e) {
+        console.error("Error cargando métodos de pago:", e);
+    }
+}
+
+function abrirModalPago(facturaNum, total) {
+    const modalElement = document.getElementById('modalPago');
+    const modalBody = document.getElementById("modalPagoBody");
+    if (!modalElement || !modalBody) return;
+
+    if (!metodosPagoCache || metodosPagoCache.length === 0) {
+        modalBody.innerHTML = `
+            <div class="text-center p-5">
+                <i class="bi bi-wallet2 fs-1 text-muted mb-3 d-block"></i>
+                <h5 class="text-secondary">Sin métodos registrados</h5>
+                <p class="small text-muted">No hay cuentas de pago disponibles en este momento.</p>
+            </div>`;
+    } else {
+        modalBody.innerHTML = `
+            <div class="text-center mb-4 border-bottom pb-3">
+                <p class="text-muted mb-1 small text-uppercase fw-bold">Referencia de Pago</p>
+                <h4 class="fw-bold text-dark mb-1">${facturaNum}</h4>
+                <div class="fs-3 fw-bold text-primary">${total}</div>
+            </div>
+            <div class="row g-4 justify-content-center">
+                ${metodosPagoCache.map(m => `
+                    <div class="col-12 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                            <div class="card-header bg-dark text-white text-center py-2 border-0">
+                                <span class="fw-bold small text-uppercase">${m.entidad} - ${m.tipo_cuenta}</span>
+                            </div>
+                            <div class="card-body p-3 text-center bg-white">
+                                <div class="mb-3">
+                                    <img src="${m.qr_url || '/static/uploads/no-qr.png'}" 
+                                         class="img-fluid rounded-3 border p-2 bg-light shadow-sm" 
+                                         style="max-height: 200px; width: 100%; object-fit: contain;"
+                                         onerror="this.src='/static/uploads/no-qr.png'">
+                                </div>
+                                <div class="bg-light rounded-3 p-3 border">
+                                    <p class="text-muted small mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">Titular de la cuenta</p>
+                                    <p class="mb-2 fw-semibold text-dark">${m.titular}</p>
+                                    
+                                    <hr class="my-2 opacity-25">
+                                    
+                                    <p class="text-muted small mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">Número / Celular</p>
+                                    <div class="d-flex align-items-center justify-content-center gap-2">
+                                        <span class="fs-5 fw-bold text-primary text-break">${m.numero}</span>
+                                        <button class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" 
+                                                style="width: 32px; height: 32px;"
+                                                onclick="navigator.clipboard.writeText('${m.numero}').then(() => showMessage('Número copiado al portapapeles'))"
+                                                title="Copiar número">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="mt-4 p-3 bg-primary bg-opacity-10 border border-primary border-dashed rounded-3 text-center">
+                <p class="small text-primary mb-0 fw-medium">
+                    <i class="bi bi-info-circle-fill me-2"></i>Realiza la transferencia y adjunta el comprobante vía WhatsApp o al correo <strong>d.antojitos1958@gmail.com</strong>
+                </p>
+            </div>
+        `;
+    }
+    
+    const bootstrapModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    bootstrapModal.show();
 }
 
 async function anularFactura(idFactura) {

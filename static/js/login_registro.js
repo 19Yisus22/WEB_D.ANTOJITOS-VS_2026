@@ -89,33 +89,78 @@ function showMessage(titulo, msg, isSuccess = true) {
     setTimeout(remove, 5000);
 }
 
+async function handleCredentialResponse(response) {
+    setLoading(true);
+    try {
+        const res = await fetch("/registro-google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ credential: response.credential })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            sessionStorage.setItem("user", JSON.stringify(data.user));
+            showMessage("¡Dulce Entrada!", `Hola, ${data.user.nombre}`, true);
+            setTimeout(() => {
+                window.location.href = "/inicio";
+            }, 1500);
+        } else {
+            showMessage("Error", data.error || "Error al validar con Google", false);
+            setLoading(false);
+        }
+    } catch (err) {
+        showMessage("Error", "Error de conexión con el servidor", false);
+        setLoading(false);
+    }
+}
+
+async function inicializarGoogle() {
+    try {
+        const res = await fetch("/obtener-cliente-id");
+        const data = await res.json();
+        if (data.client_id && window.google) {
+            
+            google.accounts.id.initialize({
+                client_id: data.client_id,
+                callback: handleCredentialResponse,
+                auto_select: false,
+                context: "signin"
+            });
+
+            const buttonDiv = document.getElementById("buttonDiv");
+            if (buttonDiv) {
+                google.accounts.id.renderButton(
+                    buttonDiv,
+                    { 
+                        theme: "outline", 
+                        size: "large", 
+                        shape: "pill",
+                        width: buttonDiv.offsetWidth
+                    }
+                );
+            }
+        }
+    } catch (err) { }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const isGoogleSuccess = urlParams.get('success_google');
-    const nombre = urlParams.get('nombre');
-    const rol = urlParams.get('rol');
-
-    if (isGoogleSuccess) {
-        showMessage("¡Bienvenido!", `Hola ${nombre}, has ingresado como ${rol}`, true);
-        setTimeout(() => {
-            window.location.href = "/inicio";
-        }, 2000);
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
+    
     const errorMsg = urlParams.get('error');
     if (errorMsg) {
-        const esErrorReloj = errorMsg.includes("Token used too early") || 
-                             errorMsg.includes("iat") || 
-                             errorMsg.includes("1769537647");
-
-        if (esErrorReloj) {
-            showMessage("Sincronización", "El reloj de tu equipo está desfasado. Por favor, ajústalo a la hora automática.", false);
-        } else {
-            showMessage("Error de Acceso", errorMsg, false);
-        }
+        showMessage("Error de Acceso", errorMsg, false);
         window.history.replaceState({}, document.title, window.location.pathname);
     }
+});
+
+window.addEventListener('load', () => {
+    if (window.location.search.includes('logout=true')) {
+        sessionStorage.clear();
+        localStorage.clear();
+        if (window.google) google.accounts.id.disableAutoSelect();
+    }
+    inicializarGoogle();
 });
 
 function setLoading(isLoading) {
@@ -129,51 +174,6 @@ function setLoading(isLoading) {
         btn.innerHTML = btn.dataset.original;
     }
 }
-
-async function inicializarGoogle() {
-    try {
-        const res = await fetch("/obtener-cliente-id");
-        const data = await res.json();
-        if (data.client_id && window.google) {
-            const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-            const redirectUri = isLocal 
-                ? "http://localhost:8000/registro-google" 
-                : "https://dantojitos-vs.vercel.app/registro-google";
-
-            google.accounts.id.initialize({
-                client_id: data.client_id,
-                ux_mode: 'redirect',
-                login_uri: redirectUri,
-                auto_select: false
-            });
-
-            const buttonDiv = document.getElementById("buttonDiv");
-            if (buttonDiv) {
-                google.accounts.id.renderButton(
-                    buttonDiv,
-                    { 
-                        theme: "outline", 
-                        size: "large", 
-                        type: "standard",
-                        shape: "pill",
-                        text: "continue_with",
-                        logo_alignment: "left",
-                        width: buttonDiv.offsetWidth
-                    }
-                );
-            }
-        }
-    } catch (err) { }
-}
-
-window.addEventListener('load', () => {
-    if (window.location.search.includes('logout=true')) {
-        sessionStorage.clear();
-        localStorage.clear();
-        if (window.google) google.accounts.id.disableAutoSelect();
-    }
-    inicializarGoogle();
-});
 
 if (togglePassword && passwordInput) {
     togglePassword.addEventListener("click", function () {
@@ -254,9 +254,7 @@ if (linkInicio) {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/js/workers/service-worker-perfil.js');
-        navigator.serviceWorker.register('/static/js/workers/service-worker-registro.js')
-        .then(reg => { console.log('SW OK'); })
-        .catch(err => { console.error('SW Error', err); });
+        navigator.serviceWorker.register('/static/js/workers/service-worker-perfil.js').catch(() => {});
+        navigator.serviceWorker.register('/static/js/workers/service-worker-registro.js').catch(() => {});
     });
 }
