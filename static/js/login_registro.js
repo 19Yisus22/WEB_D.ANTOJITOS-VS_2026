@@ -138,7 +138,7 @@ async function inicializarGoogle() {
             const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
             const redirectUri = isLocal 
                 ? "http://localhost:8000/registro-google" 
-                : "https://dantojitos.onrender.com/registro-google";
+                : "https://dantojitos-vs.vercel.app/registro-google";
 
             google.accounts.id.initialize({
                 client_id: data.client_id,
