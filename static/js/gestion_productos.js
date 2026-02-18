@@ -61,25 +61,78 @@ function ajustarAtributosPrecio() {
     }
 }
 
+function showConfirmToast(msg, callback) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const t = document.createElement('div');
+    t.className = 'custom-toast bg-dark text-white p-3 shadow-lg mb-2';
+    t.style.cssText = `
+        border-left: 5px solid #ffc107;
+        min-width: 320px;
+        border-radius: 12px;
+        pointer-events: auto !important;
+        animation: slideInRight 0.4s ease forwards;
+    `;
+
+    t.innerHTML = `
+        <div class="d-flex flex-column">
+            <div class="d-flex align-items-start mb-3">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-3 fs-4"></i>
+                <div>
+                    <strong class="d-block">Confirmar acción</strong>
+                    <span class="small text-white-50">${msg}</span>
+                </div>
+            </div>
+            <div class="d-flex gap-2 justify-content-end">
+                <button class="btn btn-sm btn-link text-white text-decoration-none btn-cancelar-confirm">Cancelar</button>
+                <button class="btn btn-sm btn-warning fw-bold px-4 rounded-pill btn-aceptar-confirm">Confirmar</button>
+            </div>
+        </div>
+    `;
+
+    container.appendChild(t);
+
+    t.querySelector('.btn-cancelar-confirm').onclick = (e) => {
+        e.stopPropagation();
+        t.style.opacity = '0';
+        setTimeout(() => t.remove(), 400);
+    };
+
+    t.querySelector('.btn-aceptar-confirm').onclick = (e) => {
+        e.stopPropagation();
+        callback();
+        t.remove();
+    };
+}
+
 function showMessage(msg, isError = false) {
     if (!toastContainer) return;
     const toast = document.createElement('div');
-    toast.className = 'custom-toast';
+    toast.className = 'custom-toast bg-dark text-white p-3 shadow-lg mb-2';
+    toast.style.cssText = `
+        border-left: 5px solid ${isError ? '#dc3545' : '#198754'};
+        min-width: 300px;
+        border-radius: 10px;
+        pointer-events: auto !important;
+        animation: slideInRight 0.3s ease forwards;
+    `;
     toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="bi ${isError ? 'bi-x-circle text-danger' : 'bi-check-circle text-success'} me-3 fs-5"></i>
-            <span>${msg}</span>
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <i class="bi ${isError ? 'bi-x-circle-fill text-danger' : 'bi-check-circle-fill text-success'} me-3 fs-5"></i>
+                <span style="font-size: 0.9rem;">${msg}</span>
+            </div>
+            <i class="bi bi-x-lg ms-3 btn-close-toast text-muted" style="cursor:pointer; font-size: 0.75rem;"></i>
         </div>
-        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 0.7rem;"></i>
     `;
     toastContainer.appendChild(toast);
     const remove = () => {
         toast.style.opacity = '0';
-        toast.style.transform = 'translateX(-20px)';
         setTimeout(() => toast.remove(), 400);
     };
     toast.querySelector('.btn-close-toast').onclick = remove;
-    setTimeout(remove, 3500);
+    setTimeout(remove, 4000);
 }
 
 async function cargarPostres(silent = false) {
@@ -193,23 +246,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const btnEliminar = document.getElementById("btnEliminar");
     if (btnEliminar) {
-        btnEliminar.onclick = async () => {
+        btnEliminar.onclick = () => {
             if (indexActual === null) return;
             const p = postres[indexActual];
-            if (!confirm(`¿Eliminar ${p.nombre}? Esta acción no se puede deshacer.`)) return;
-            try {
-                const res = await fetch(`/eliminar_producto/${p.id_producto}`, { method: "DELETE" });
-                if (res.ok) {
-                    showMessage("Producto eliminado");
-                    modal.hide();
-                    await cargarPostres();
-                } else {
-                    const err = await res.json();
-                    showMessage(err.error || "Error al eliminar", true);
+            
+            showConfirmToast(`¿Eliminar ${p.nombre}? Esta acción no se puede deshacer.`, async () => {
+                try {
+                    const res = await fetch(`/eliminar_producto/${p.id_producto}`, { method: "DELETE" });
+                    if (res.ok) {
+                        showMessage("Producto eliminado");
+                        modal.hide();
+                        await cargarPostres();
+                    } else {
+                        const err = await res.json();
+                        showMessage(err.error || "Error al eliminar", true);
+                    }
+                } catch (e) {
+                    showMessage("Error de conexión", true);
                 }
-            } catch (e) {
-                showMessage("Error de conexión", true);
-            }
+            });
         };
     }
 
@@ -269,7 +324,7 @@ async function enviarFormulario(formData) {
             agregarPostreForm.reset();
             indexActual = null;
             await cargarPostres();
-            showMessage("Prodcuto guardado exitosamente");
+            showMessage("Producto guardado exitosamente");
         } else {
             const errorData = await res.json();
             showMessage(errorData.error || "Error", true);

@@ -5,7 +5,7 @@ const searchInput = document.getElementById("searchInput");
 const toastContainer = document.getElementById("toastContainer");
 const btnCarrito = document.getElementById("btnCarrito");
 const badgeCarrito = document.getElementById("contadorCarritoBadge");
- 
+
 let productos = [];
 let filtroIndex = 0;
 let contadorCarrito = 0;
@@ -22,9 +22,7 @@ let audioCtx = null;
 function initAudioContext() {
     if (!audioCtx) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-            audioCtx = new AudioContextClass();
-        }
+        if (AudioContextClass) audioCtx = new AudioContextClass();
     }
     if (audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume();
@@ -39,7 +37,7 @@ function playNotificationSound(type = 'default') {
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
 
-        if (type === 'agotado') {
+        if (type === 'error' || type === 'agotado') {
             oscillator.type = 'sawtooth';
             oscillator.frequency.setValueAtTime(330, audioCtx.currentTime);
             oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.3);
@@ -64,76 +62,122 @@ function playNotificationSound(type = 'default') {
     }
 }
 
-function showMessage(msg, isError = false) {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-    
-    const toast = document.createElement('div');
-    toast.className = 'custom-toast';
-    toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="bi ${isError ? 'bi-x-circle text-danger' : 'bi-check-circle text-success'} me-3 fs-5"></i>
-            <span>${msg}</span>
-        </div>
-        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 0.7rem;"></i>
-    `;
-    container.appendChild(toast);
-    
-    const remove = () => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 400);
-    };
-    
-    toast.querySelector('.btn-close-toast').onclick = remove;
-    setTimeout(remove, 3500);
-}
+function mostrarAlerta({
+    mensaje = "",
+    titulo = "",
+    descripcion = "",
+    imagen = "/static/uploads/logo.png",
+    tipo = "info",
+    duracion = 5000,
+    idUnico = null,
+    sonido = true
+} = {}) {
+    if (idUnico && productosNotificados.has(idUnico)) return;
+    if (idUnico) {
+        productosNotificados.add(idUnico);
+        setTimeout(() => productosNotificados.delete(idUnico), duracion + 2000);
+    }
 
-function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
-    const cont = document.getElementById("toastContainer");
+    const cont = toastContainer;
     if (!cont) return;
 
-    playNotificationSound(isError ? 'agotado' : 'default');
+    if (sonido) {
+        const soundType = (tipo === 'error' || tipo === 'agotado' || tipo === 'warning') ? 'error' : 'default';
+        playNotificationSound(soundType);
+    }
 
-    const t = document.createElement("div");
-    t.className = "toast show bg-dark text-white border-light mb-2";
-    t.style.display = "block";
-    t.style.minWidth = "320px";
-    t.style.borderRadius = "12px";
-    
-    const textColor = isError ? '#ff4d4d' : '#e67e22';
-    const iconClass = isError ? 'bi-exclamation-triangle-fill' : 'bi-stars';
+    const esError   = tipo === 'error'   || tipo === 'agotado' || tipo === 'warning';
+    const esExito   = tipo === 'success' || tipo === 'disponible';
+    const textColor = esError ? '#ff4d4d' : esExito ? '#28a745' : '#e67e22';
+    const iconClass = esError   ? 'bi-exclamation-triangle-fill' :
+                      esExito   ? 'bi-check-circle-fill' :
+                      tipo === 'bienvenida' ? 'bi-emoji-smile-fill' : 'bi-stars';
 
-    t.innerHTML = `
+    const bgClass   = esError ? 'bg-danger-subtle' : esExito ? 'bg-success-subtle' : 'bg-dark';
+    const textClass = esError || esExito ? 'text-dark' : 'text-white';
+
+    const toast = document.createElement("div");
+    toast.className = `toast show ${bgClass} ${textClass} border-light mb-2 shadow`;
+    toast.style.display = "block";
+    toast.style.minWidth = "320px";
+    toast.style.borderRadius = "12px";
+
+    let contenido = `
         <div class="d-flex align-items-center p-3">
             <img src="${imagen}" style="width:50px;height:50px;object-fit:cover;border-radius:10px;" class="me-3 shadow" onerror="this.src='/static/uploads/logo.png'">
             <div class="flex-grow-1">
-                <div class="d-flex align-items-center mb-0">
+    `;
+
+    if (titulo) {
+        contenido += `
+                <div class="d-flex align-items-center mb-1">
                     <i class="bi ${iconClass} me-2" style="color: ${textColor};"></i>
                     <strong style="color: ${textColor}; font-size: 0.95rem;">${titulo}</strong>
                 </div>
-                <div style="font-size: 0.85rem; color: #e0e0e0; line-height: 1.2;">${descripcion}</div>
+        `;
+    }
+
+    if (descripcion || mensaje) {
+        const texto = descripcion || mensaje;
+        contenido += `<div style="font-size: 0.85rem; color: ${esError || esExito ? '#333' : '#e0e0e0'}; line-height: 1.2;">${texto}</div>`;
+    }
+
+    contenido += `
             </div>
-            <button class="btn-close btn-close-white ms-2" style="font-size: 0.6rem;"></button>
+            <button class="btn-close ${textClass === 'text-white' ? 'btn-close-white' : ''} ms-2" style="font-size: 0.6rem;"></button>
         </div>`;
-    
-    cont.appendChild(t);
-    
+
+    toast.innerHTML = contenido;
+    cont.appendChild(toast);
+
     const remove = () => {
-        t.style.opacity = '0';
-        t.style.transform = 'translateX(20px)';
-        setTimeout(() => t.remove(), 500);
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(20px)';
+        setTimeout(() => toast.remove(), 500);
     };
-    
-    t.querySelector('.btn-close').onclick = remove;
-    setTimeout(remove, 5000);
+
+    toast.querySelector('.btn-close').onclick = remove;
+    setTimeout(remove, duracion);
+}
+
+function showMessage(msg, isError = false) {
+    mostrarAlerta({
+        mensaje: msg,
+        tipo: isError ? "error" : "success",
+        duracion: 3500,
+        sonido: true
+    });
+}
+
+function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
+    mostrarAlerta({
+        imagen,
+        titulo,
+        descripcion,
+        tipo: isError ? "agotado" : "info",
+        duracion: 5000
+    });
 }
 
 function mostrarToastActualizacion(imagen, titulo, descripcion, idUnico, isError = false) {
-    if (productosNotificados.has(idUnico)) return;
-    productosNotificados.add(idUnico);
-    mostrarToastPublicidad(imagen, titulo, descripcion, isError);
-    setTimeout(() => {
-        productosNotificados.delete(idUnico);}, 7000);
+    mostrarAlerta({
+        imagen,
+        titulo,
+        descripcion,
+        idUnico,
+        tipo: isError ? "agotado" : "disponible",
+        duracion: 6000
+    });
+}
+
+function mostrarBienvenida(nombre) {
+    mostrarAlerta({
+        titulo: `¡Hola, ${nombre || 'bienvenido'}!`,
+        descripcion: "Elige y disfruta nuestros postres",
+        imagen: "/static/uploads/logo.png",
+        tipo: "bienvenida",
+        duracion: 6500
+    });
 }
 
 async function sincronizarContadorCarrito() {
@@ -191,13 +235,14 @@ async function cargarCintaPublicitaria() {
             publicidadContainer.innerHTML = `
                 <div class="promo-banner shadow-sm overflow-hidden">
                     <div class="marquee-content">
-                        ${itemsCinta.concat(itemsCinta).map(item => `
+                        ${itemsCinta.concat(itemsCinta, itemsCinta).map(item => `
                             <div class="promo-item mx-5 d-flex align-items-center" style="min-width: max-content;">
-                                <img src="${item.imagen_url || '/static/uploads/logo.png'}" 
-                                     class="me-3 rounded-circle border border-2 border-warning shadow-sm" 
-                                     style="width: 45px; height: 45px; object-fit: cover;"
-                                     onerror="this.src='/static/uploads/logo.png'">
-                                <span class="text-white fw-bold" style="font-size: 0.95rem; letter-spacing: 0.5px; text-transform: uppercase;">
+                                <div class="promo-img-container">
+                                    <img src="${item.imagen_url || '/static/uploads/logo.png'}" 
+                                         class="promo-img-glow" 
+                                         onerror="this.src='/static/uploads/logo.png'">
+                                </div>
+                                <span class="promo-text">
                                     ${item.titulo || ''}
                                 </span>
                             </div>
@@ -214,17 +259,19 @@ async function cargarCintaPublicitaria() {
     }
 }
 
-function iniciarNotificacionesCintaPeriodicas() {
+function iniciarNotificacionesPeriodicas() {
     setInterval(() => {
         if (notificacionesActivas.length > 0) {
             const elegido = notificacionesActivas[Math.floor(Math.random() * notificacionesActivas.length)];
-            mostrarToastPublicidad(
-                elegido.imagen_url || '/static/uploads/logo.png', 
-                elegido.titulo, 
-                elegido.descripcion
-            );
+            mostrarAlerta({
+                imagen: elegido.imagen_url || '/static/uploads/logo.png',
+                titulo: elegido.titulo,
+                descripcion: elegido.descripcion,
+                tipo: "info",
+                duracion: 5500
+            });
         }
-    }, 20000);
+    }, 11000);
 }
 
 function toggleFavorito(id) {
@@ -496,7 +543,7 @@ function resetBotonesEstado() {
 
 window.onload = () => {
     cargarCintaPublicitaria().then(() => {
-        iniciarNotificacionesCintaPeriodicas();
+        iniciarNotificacionesPeriodicas();
     });
     cargarProductos();
     resetBotonesEstado();
@@ -504,7 +551,7 @@ window.onload = () => {
     setInterval(cargarCintaPublicitaria, 10000);
     if (userLogged && userLogged !== "false") {
         sincronizarContadorCarrito();
-        setInterval(sincronizarContadorCarrito, 15000);
+        setInterval(sincronizarContadorCarrito, 1500);
     }
 };
 
@@ -519,7 +566,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const alertShown = sessionStorage.getItem("welcomeAlertShown");
         if (!alertShown) {
             setTimeout(() => {
-                mostrarToastPublicidad('/static/uploads/logo.png', `Hola, ${user.nombre || 'bienvenido'}`, "Disfruta de nuestros postres");
+                mostrarBienvenida(user.nombre);
                 sessionStorage.setItem("welcomeAlertShown", "true");
             }, 2000);
         }
@@ -529,7 +576,7 @@ document.addEventListener("DOMContentLoaded", () => {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/static/js/workers/service-worker-catalogo.js')
-        .then(() => { console.log('SW OK'); })
-        .catch(() => { console.log('SW Error'); });
+            .then(() => { console.log('SW OK'); })
+            .catch(() => { console.log('SW Error'); });
     });
 }

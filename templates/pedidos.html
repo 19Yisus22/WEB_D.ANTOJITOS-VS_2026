@@ -18,7 +18,7 @@
 
     {% if session.get('user_id') and session.get('rol') == 'admin' %}
     
-        <div id="notificacion-container"></div>
+        <div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
         
         {% include 'navbar.html' %}
 
@@ -110,7 +110,7 @@
                     <div class="modal-body">
                         <div class="alert alert-info d-flex align-items-center py-2 mb-3" style="font-size: 0.85rem;">
                             <i class="bi bi-info-circle-fill me-2 fs-5"></i>
-                            <div>Este reporte incluirá un resumen totalizado y un gráfico estadístico.</div>
+                            <div>Este reporte incluirá un resumen totalizado de los pedidos seleccionados.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-muted">Estado de pedidos:</label>
@@ -118,6 +118,7 @@
                                 <option value="Todos">Todos los Estados</option>
                                 <option value="Entregado">Finalizados (Entregados)</option>
                                 <option value="Pendiente">Pendientes (Activos)</option>
+                                <option value="Cancelado">Anulados</option>
                             </select>
                         </div>
                         <div class="row g-2">

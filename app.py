@@ -2,7 +2,7 @@ import requests
 from waitress import serve
 from flask_cors import CORS
 from dotenv import load_dotenv
-from supabase import create_client
+from supabase import create_client, ClientOptions
 from datetime import datetime, timezone, timedelta
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -25,7 +25,13 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
     raise ValueError("Faltan las credenciales de Supabase en el archivo .env")
 
-supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+opts = ClientOptions(
+    postgrest_client_timeout=15,
+    storage_client_timeout=20
+)
+
+supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY, options=opts)
+
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
@@ -34,7 +40,12 @@ CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 if not CLOUDINARY_CLOUD_NAME or not CLOUDINARY_API_KEY or not CLOUDINARY_API_SECRET:
     raise ValueError("Faltan las credenciales de Cloudinary en el archivo .env")
 
-cloudinary.config(cloud_name=CLOUDINARY_CLOUD_NAME, api_key=CLOUDINARY_API_KEY, api_secret=CLOUDINARY_API_SECRET)
+cloudinary.config(
+    cloud_name=CLOUDINARY_CLOUD_NAME, 
+    api_key=CLOUDINARY_API_KEY, 
+    api_secret=CLOUDINARY_API_SECRET
+)
+
 FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(24)
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
 app.permanent_session_lifetime = timedelta(days=7)
@@ -276,49 +287,52 @@ def logout():
 
 @app.route("/mi_perfil", methods=["GET", "POST"])
 def mi_perfil():
-
     user_id = session.get("user_id")
-
     if not user_id:
         return redirect(url_for("login"))
+
     res_usuario = supabase.table("usuarios").select("*, roles(nombre_role)").eq("id_cliente", user_id).single().execute()
     usuario = res_usuario.data if res_usuario.data else {}
     usuario["imagen_url"] = usuario.get("imagen_url") or "/static/default_icon_profile.png"
 
     if request.method == "POST":
         updates = {}
-
-        for campo in ["nombre","apellido","telefono","correo","direccion","cedula","metodo_pago"]:
+        for campo in ["nombre", "apellido", "telefono", "correo", "direccion", "cedula", "metodo_pago"]:
             valor = request.form.get(campo)
-
             if valor:
-                updates[campo] = valor.strip().lower() if campo=="correo" else valor.strip()
+                updates[campo] = valor.strip().lower() if campo == "correo" else valor.strip()
+
         imagen_file = request.files.get("imagen_url")
+        eliminar_foto = request.form.get("eliminar_foto") == "1"
 
         if imagen_file and imagen_file.filename:
-            url_imagen = upload_image_to_cloudinary(imagen_file, folder="usuarios", public_id=f"foto_perfil_{user_id}")
+            if usuario.get("imagen_url") and "default_icon_profile.png" not in usuario["imagen_url"]:
+                delete_image_from_cloudinary(usuario["imagen_url"])
+            
+            url_imagen = upload_image_to_cloudinary(imagen_file, folder="usuarios/perfiles", public_id=f"user_{user_id}")
             updates["imagen_url"] = url_imagen
-
-        if request.form.get("eliminar_foto")=="1" and usuario.get("imagen_url") and "default_icon_profile.png" not in usuario["imagen_url"]:
+        
+        elif eliminar_foto and usuario.get("imagen_url") and "default_icon_profile.png" not in usuario["imagen_url"]:
             delete_image_from_cloudinary(usuario["imagen_url"])
             updates["imagen_url"] = "/static/default_icon_profile.png"
 
         if updates:
             supabase.table("usuarios").update(updates).eq("id_cliente", user_id).execute()
+            return redirect(url_for("mi_perfil"))
+
     return render_template("mi_perfil.html", user=usuario)
 
 @app.route("/actualizar_perfil/<id_cliente>", methods=["PUT", "POST"])
 def actualizar_perfil(id_cliente):
     user_id = session.get("user_id")
-
     if not user_id:
         return jsonify({"ok": False, "error": "No autorizado"}), 401
 
     user_res = supabase.table("usuarios").select("*").eq("id_cliente", id_cliente).single().execute()
-
     if not user_res.data:
         return jsonify({"ok": False, "error": "Usuario no encontrado"}), 404
-
+    
+    usuario_previo = user_res.data
     data = request.form if request.form else request.json
     
     campos_actualizar = {
@@ -332,9 +346,11 @@ def actualizar_perfil(id_cliente):
     }
 
     imagen_file = request.files.get("imagen_url")
-
     if imagen_file and imagen_file.filename:
-        url_imagen = upload_image_to_cloudinary(imagen_file, folder="usuarios", public_id=f"foto_perfil_{id_cliente}")
+        if usuario_previo.get("imagen_url") and "default_icon_profile.png" not in usuario_previo["imagen_url"]:
+            delete_image_from_cloudinary(usuario_previo["imagen_url"])
+            
+        url_imagen = upload_image_to_cloudinary(imagen_file, folder="usuarios/perfiles", public_id=f"user_{id_cliente}")
         campos_actualizar["imagen_url"] = url_imagen
 
     campos_actualizar = {k: v for k, v in campos_actualizar.items() if v is not None and v != ""}
@@ -344,18 +360,15 @@ def actualizar_perfil(id_cliente):
 
     try:
         supabase.table("usuarios").update(campos_actualizar).eq("id_cliente", id_cliente).execute()
-        
-        user_res = supabase.table("usuarios").select("*, roles(nombre_role)").eq("id_cliente", id_cliente).single().execute()
-        usuario = user_res.data
-        usuario["imagen_url"] = usuario.get("imagen_url") or "/static/default_icon_profile.png"
-        
-        return jsonify({"ok": True, "usuario": usuario})
+        res_final = supabase.table("usuarios").select("*, roles(nombre_role)").eq("id_cliente", id_cliente).single().execute()
+        usuario_final = res_final.data
+        usuario_final["imagen_url"] = usuario_final.get("imagen_url") or "/static/default_icon_profile.png"
+        return jsonify({"ok": True, "usuario": usuario_final})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @app.route("/actualizar_rol_usuario", methods=["PUT"])
 def actualizar_rol_usuario():
-
     data = request.get_json()
     id_usuario = data.get("id")
     nuevo_rol = data.get("rol")
@@ -363,13 +376,13 @@ def actualizar_rol_usuario():
 
     if not res_rol.data:
         return jsonify({"ok": False, "error": "Rol no encontrado"}), 404
+
     rol_id = res_rol.data.get("id_role")
     supabase.table("usuarios").update({"id_role": rol_id}).eq("id_cliente", id_usuario).execute()
     return jsonify({"ok": True})
 
 @app.route("/listar_usuarios", methods=["GET"])
 def listar_usuarios():
-
     res = supabase.table("usuarios").select("id_cliente,imagen_url,cedula,nombre,apellido,telefono,correo,direccion,metodo_pago,fecha_creacion,roles(nombre_role)").execute()
     usuarios = res.data if res.data else []
 
@@ -380,23 +393,22 @@ def listar_usuarios():
 
 @app.route("/cambiar_contrasena", methods=["PUT"])
 def cambiar_contrasena():
-
     user_id = session.get("user_id")
-
     if not user_id:
         return jsonify({"ok": False, "error": "No autorizado"}), 401
+    
     data = request.get_json()
     nueva = data.get("nueva", "").strip()
 
     if not nueva:
         return jsonify({"ok": False, "error": "Contraseña requerida"}), 400
+    
     hashed = hash_password(nueva)
     supabase.table("usuarios").update({"contrasena": hashed}).eq("id_cliente", user_id).execute()
     return jsonify({"ok": True})
 
 @app.route("/eliminar_usuario_admin", methods=["DELETE"])
 def eliminar_usuario_admin():
-
     data = request.get_json()
     correo = data.get("correo", "").strip().lower()
 
@@ -404,18 +416,16 @@ def eliminar_usuario_admin():
         return jsonify({"ok": False, "error": "Correo requerido"}), 400
 
     try:
-        
         res_usuario = supabase.table("usuarios").select("*").eq("correo", correo).execute()
-
         if not res_usuario.data:
             return jsonify({"ok": False, "error": "Usuario no encontrado"}), 404
+        
         usuario = res_usuario.data[0]
-
         if usuario.get("imagen_url") and "default_icon_profile.png" not in usuario["imagen_url"]:
             delete_image_from_cloudinary(usuario["imagen_url"])
+            
         supabase.table("usuarios").delete().eq("correo", correo).execute()
         return jsonify({"ok": True})
-    
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
@@ -428,7 +438,6 @@ def productos_page():
 
 @app.route("/gestionar_productos", methods=["GET", "POST"])
 def gestionar_productos():
-
     user_id = session.get("user_id")
 
     if not user_id:
@@ -446,7 +455,11 @@ def gestionar_productos():
         categoria = request.form.get("categoria", "Postre").strip() or "Postre"
         foto_base64 = request.form.get("foto_base64")
 
-        imagen_url = upload_image_to_cloudinary(f"data:image/png;base64,{foto_base64}", folder="productos") if foto_base64 else None
+        imagen_url = None
+        if foto_base64:
+            formato_imagen = f"data:image/png;base64,{foto_base64}"
+            res_upload = cloudinary.uploader.upload(formato_imagen, folder="productos")
+            imagen_url = res_upload.get("secure_url")
 
         nuevo_producto = {
             "nombre": nombre,
@@ -464,17 +477,15 @@ def gestionar_productos():
 
 @app.route("/actualizar_producto/<id_producto>", methods=["PUT", "OPTIONS"])
 def actualizar_producto(id_producto):
-
     if request.method == "OPTIONS":
         return "", 200
+    
     user_id = session.get("user_id")
-
     if not user_id:
         return jsonify({"ok": False, "error": "No autorizado"}), 401
+    
     updates = {}
-
     for campo in ["nombre", "descripcion", "precio", "stock", "categoria"]:
-
         if campo in request.form:
             updates[campo] = (
                 float(request.form[campo]) if campo == "precio"
@@ -482,16 +493,22 @@ def actualizar_producto(id_producto):
                 else request.form[campo].strip())
 
     if "estado" in request.form:
-        updates["estado"] = str(request.form["estado"]).lower() in ["true","1","on","sí","si"]
+        updates["estado"] = str(request.form["estado"]).lower() in ["true", "1", "on", "sí", "si"]
+    
     foto_base64 = request.form.get("foto_base64")
-
     if foto_base64:
-        res_producto = supabase.table("gestion_productos").select("*").eq("id_producto", id_producto).single().execute()
-        producto_actual = res_producto.data
+        res_prod = supabase.table("gestion_productos").select("imagen_url").eq("id_producto", id_producto).single().execute()
+        producto_actual = res_prod.data
 
         if producto_actual and producto_actual.get("imagen_url"):
-            delete_image_from_cloudinary(producto_actual["imagen_url"])
-        updates["imagen_url"] = upload_image_to_cloudinary(f"data:image/png;base64,{foto_base64}", folder="productos")
+            try:
+                public_id = "productos/" + producto_actual["imagen_url"].split("/")[-1].split(".")[0]
+                cloudinary.uploader.destroy(public_id)
+            except Exception:
+                pass
+
+        res_upload = cloudinary.uploader.upload(f"data:image/png;base64,{foto_base64}", folder="productos")
+        updates["imagen_url"] = res_upload.get("secure_url")
 
     upd = supabase.table("gestion_productos").update(updates).eq("id_producto", id_producto).execute()
     prod = upd.data[0] if upd.data else {"id_producto": id_producto, **updates}
@@ -499,19 +516,23 @@ def actualizar_producto(id_producto):
 
 @app.route("/eliminar_producto/<id_producto>", methods=["DELETE", "OPTIONS"])
 def eliminar_producto(id_producto):
-
     if request.method == "OPTIONS":
         return "", 200
+    
     user_id = session.get("user_id")
-
     if not user_id:
         return jsonify({"ok": False, "error": "No autorizado"}), 401
     
-    res_producto = supabase.table("gestion_productos").select("*").eq("id_producto", id_producto).single().execute()
-    producto_actual = res_producto.data
+    res_prod = supabase.table("gestion_productos").select("imagen_url").eq("id_producto", id_producto).single().execute()
+    producto_actual = res_prod.data
 
     if producto_actual and producto_actual.get("imagen_url"):
-        delete_image_from_cloudinary(producto_actual["imagen_url"])
+        try:
+            public_id = "productos/" + producto_actual["imagen_url"].split("/")[-1].split(".")[0]
+            cloudinary.uploader.destroy(public_id)
+        except Exception:
+            pass
+            
     supabase.table("gestion_productos").delete().eq("id_producto", id_producto).execute()
     return jsonify({"ok": True})
 
@@ -615,7 +636,6 @@ def guardar_catalogo():
 
 @app.route("/carrito_page")
 def carrito_page():
-
     user_id = session.get("user_id")
     userLogged = bool(user_id)
     mensaje = "" if userLogged else "Debes iniciar sesión para acceder al carrito"
@@ -623,238 +643,201 @@ def carrito_page():
 
 @app.route("/obtener_carrito", methods=["GET"])
 def obtener_carrito():
-
     user_id = session.get("user_id")
-
     if not user_id:
         return jsonify({"productos": []})
-    
-    carrito_res = supabase.table("carrito").select("*").eq("id_cliente", user_id).execute()
-    carrito = carrito_res.data or []
-    ids_productos = [item["id_producto"] for item in carrito]
-    productos_res = supabase.table("gestion_productos").select("*").in_("id_producto", ids_productos).execute()
-    productos = {p["id_producto"]: p for p in productos_res.data or []}
-    carrito_completo = []
-
-    for item in carrito:
-        prod = productos.get(item["id_producto"], {})
-        carrito_completo.append({
-            "id_carrito": item["id_carrito"],
-            "id_producto": item["id_producto"],
-            "nombre_producto": prod.get("nombre", item.get("nombre_producto","")),
-            "descripcion": prod.get("descripcion",""),
-            "cantidad": int(item.get("cantidad", 1)),
-            "precio_unitario": float(prod.get("precio",0)),
-            "subtotal": float(prod.get("precio",0)) * int(item.get("cantidad",1)),
-            "imagen": prod.get("imagen_url") or "",
-            "stock": int(prod.get("stock",0)),
-            "agotado": int(prod.get("stock",0)) <= 0})
-    return jsonify({"productos": carrito_completo})
+    try:
+        carrito_res = supabase.table("carrito").select("*").eq("id_cliente", user_id).execute()
+        carrito = carrito_res.data or []
+        if not carrito:
+            return jsonify({"productos": []})
+        ids_productos = [item["id_producto"] for item in carrito if item.get("id_producto")]
+        if not ids_productos:
+            return jsonify({"productos": []})
+        productos_res = supabase.table("gestion_productos").select("*").in_("id_producto", ids_productos).execute()
+        productos = {str(p["id_producto"]): p for p in productos_res.data or []}
+        carrito_completo = []
+        for item in carrito:
+            id_p_str = str(item["id_producto"])
+            prod = productos.get(id_p_str, {})
+            try:
+                cantidad = int(item.get("cantidad", 1))
+                precio = float(prod.get("precio", 0)) if prod.get("precio") is not None else 0.0
+                stock = int(prod.get("stock", 0)) if prod.get("stock") is not None else 0
+                carrito_completo.append({
+                    "id_carrito": item["id_carrito"],
+                    "id_producto": item["id_producto"],
+                    "nombre_producto": str(prod.get("nombre") or item.get("nombre_producto") or "Producto sin nombre"),
+                    "descripcion": str(prod.get("descripcion") or ""),
+                    "cantidad": cantidad,
+                    "precio_unitario": precio,
+                    "subtotal": float(precio * cantidad),
+                    "imagen": str(prod.get("imagen_url") or ""),
+                    "stock": stock,
+                    "agotado": stock <= 0
+                })
+            except (ValueError, TypeError):
+                continue
+        return jsonify({"productos": carrito_completo})
+    except Exception as e:
+        print(f"Error crítico en obtener_carrito: {str(e)}")
+        return jsonify({"productos": [], "status": "error", "message": "No se pudo procesar la solicitud"}), 500
 
 @app.route("/agregar_al_carrito", methods=["POST"])
 def agregar_al_carrito():
-
     id_cliente = session.get("user_id")
-
     if not id_cliente:
         return {"error": "Inicie sesión para agregar productos al carrito"}, 401
-    
     data = request.json
     productos = data.get("productos", [])
-    
     if not productos:
-        return {"error": "No hay productos para agregar al carrito"}, 400
-    insert_data, carrito_response = [], []
-
-    for p in productos:
-
-        prod_res = supabase.table("gestion_productos")\
-            .select("nombre, precio, stock, imagen_url")\
-            .eq("id_producto", p["id_producto"]).single().execute()
-        
-        if not prod_res.data:
-            return {"error": f"Producto {p.get('nombre_producto','')} no existe"}, 400
-        stock_actual = int(prod_res.data.get("stock", 0))
-        nombre_producto = prod_res.data.get("nombre", "")
-        precio_unitario = float(prod_res.data.get("precio", 0))
-        imagen_url = prod_res.data.get("imagen_url", "")
-        cantidad = int(p["cantidad"])
-
-        if stock_actual < cantidad:
-            return {"error": f"Stock insuficiente para {nombre_producto}"}, 400
-        carrito_existente_res = supabase.table("carrito")\
-            .select("*").eq("id_cliente", id_cliente)\
-            .eq("id_producto", p["id_producto"]).single().execute()
-        
-        if carrito_existente_res.data:
-            nueva_cantidad = int(carrito_existente_res.data.get("cantidad",1)) + cantidad
-            supabase.table("carrito").update({
-                "cantidad": nueva_cantidad,
-                "total": nueva_cantidad * precio_unitario
-            }).eq("id_carrito", carrito_existente_res.data["id_carrito"]).execute()
-
-            carrito_response.append({
-                "id_producto": p["id_producto"],
-                "nombre_producto": nombre_producto,
-                "cantidad": nueva_cantidad,
-                "precio_unitario": precio_unitario,
-                "total": nueva_cantidad * precio_unitario,
-                "imagen_url": imagen_url})
-            
-        else:
-            insert_data.append({
-                "id_cliente": id_cliente,
-                "id_producto": p["id_producto"],
-                "nombre_producto": nombre_producto,
-                "cantidad": cantidad,
-                "precio_unitario": precio_unitario,
-                "total": cantidad * precio_unitario})
-
-            carrito_response.append({
-                "id_producto": p["id_producto"],
-                "nombre_producto": nombre_producto,
-                "cantidad": cantidad,
-                "precio_unitario": precio_unitario,
-                "total": cantidad * precio_unitario,
-                "imagen_url": imagen_url})
-
-    if insert_data:
-        supabase.table("carrito").insert(insert_data).execute()
-    return jsonify({"message": "Productos agregados al carrito correctamente", "carrito": carrito_response}), 200
+        return {"error": "No hay productos para agregar"}, 400
+    try:
+        for p in productos:
+            prod_res = supabase.table("gestion_productos").select("nombre, precio, stock").eq("id_producto", p["id_producto"]).single().execute()
+            if not prod_res.data:
+                return {"error": f"Producto no existe"}, 400
+            stock_actual = int(prod_res.data.get("stock", 0))
+            cantidad = int(p["cantidad"])
+            if stock_actual < cantidad:
+                return {"error": f"Stock insuficiente para {prod_res.data.get('nombre')}"}, 400
+            carrito_existente = supabase.table("carrito").select("*").eq("id_cliente", id_cliente).eq("id_producto", p["id_producto"]).execute()
+            if carrito_existente.data:
+                item_id = carrito_existente.data[0]["id_carrito"]
+                nueva_cantidad = int(carrito_existente.data[0]["cantidad"]) + cantidad
+                supabase.table("carrito").update({"cantidad": nueva_cantidad}).eq("id_carrito", item_id).execute()
+            else:
+                supabase.table("carrito").insert({
+                    "id_cliente": id_cliente,
+                    "id_producto": p["id_producto"],
+                    "nombre_producto": prod_res.data.get("nombre"),
+                    "cantidad": cantidad,
+                    "precio_unitario": float(prod_res.data.get("precio", 0))
+                }).execute()
+        return jsonify({"message": "Carrito actualizado"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/carrito_quitar/<id_carrito>", methods=["DELETE"])
 def carrito_quitar(id_carrito):
-
     user_id = session.get("user_id")
-
     if not user_id:
         return jsonify({"ok": False, "message": "Debe iniciar sesión"}), 401
-    
-    carrito_item_res = supabase.table("carrito").select("*").eq("id_carrito", id_carrito).single().execute()
-    item = carrito_item_res.data
-
-    if item and item.get("id_cliente") == user_id:
-        producto_id = item.get("id_producto")
-        cantidad = item.get("cantidad", 0)
-        producto_res = supabase.table("gestion_productos").select("stock").eq("id_producto", producto_id).single().execute()
-        producto = producto_res.data
-
-        if producto:
-            nuevo_stock = producto.get("stock", 0) + cantidad
-            supabase.table("gestion_productos").update({"stock": nuevo_stock}).eq("id_producto", producto_id).execute()
-        supabase.table("carrito").delete().eq("id_carrito", id_carrito).execute()
-        return jsonify({"ok": True, "message": "Producto eliminado del carrito y stock actualizado"})
-    return jsonify({"ok": False, "message": "Producto no encontrado"}), 404
+    try:
+        supabase.table("carrito").delete().eq("id_carrito", id_carrito).eq("id_cliente", user_id).execute()
+        return jsonify({"ok": True, "message": "Producto eliminado"})
+    except Exception as e:
+        return jsonify({"ok": False, "message": str(e)}), 500
 
 @app.route("/finalizar_compra", methods=["POST"])
 def finalizar_compra():
     user_id = session.get("user_id")
-
     if not user_id:
         return jsonify({"message": "Debe iniciar sesión"}), 401
-
-    usuario_res = supabase.table("usuarios").select("nombre, apellido, cedula, direccion, metodo_pago, telefono, correo").eq("id_cliente", user_id).single().execute()
-    usuario = usuario_res.data
-
-    if not usuario:
-        return jsonify({"message": "Usuario no encontrado"}), 404
-
-    carrito_res = supabase.table("carrito").select("*").eq("id_cliente", user_id).execute()
-    carrito = carrito_res.data or []
-
-    if not carrito:
-        return jsonify({"message": "El carrito está vacío"}), 400
-
-    total_compra = sum(float(item.get("precio_unitario") or 0) * int(item.get("cantidad", 1)) for item in carrito)
-    
-    id_pedido = str(uuid.uuid4())
-    
-    supabase.table("pedidos").insert({
-        "id_pedido": id_pedido,
-        "id_cliente": user_id,
-        "direccion_entrega": usuario.get("direccion") or "Dirección no especificada",
-        "metodo_pago": usuario.get("metodo_pago", "Efectivo"),
-        "estado": "Pendiente", 
-        "pagado": False,
-        "total": total_compra
-    }).execute()
-    
-    detalles = []
-    for item in carrito:
-        detalles.append({
-            "id_detalle": str(uuid.uuid4()),
+    try:
+        usuario = supabase.table("usuarios").select("cedula, direccion, metodo_pago").eq("id_cliente", user_id).single().execute().data
+        if not usuario or not usuario.get("cedula") or not usuario.get("direccion"):
+            return jsonify({"message": "Complete su perfil (Cédula/Dirección)", "completar_perfil": True}), 400
+        carrito = supabase.table("carrito").select("*").eq("id_cliente", user_id).execute().data
+        if not carrito:
+            return jsonify({"message": "El carrito está vacío"}), 400
+        total_compra = sum(float(item.get("total") or 0) for item in carrito)
+        id_pedido = str(uuid.uuid4())
+        res_pedido = supabase.table("pedidos").insert({
             "id_pedido": id_pedido,
-            "id_producto": item["id_producto"],
-            "nombre_producto": item["nombre_producto"],
-            "cantidad": item["cantidad"],
-            "precio_unitario": item["precio_unitario"],
-            "subtotal": float(item["precio_unitario"]) * int(item["cantidad"])
-        })
-    
-    supabase.table("pedido_detalle").insert(detalles).execute()
-
-    supabase.table("pedidos").update({"estado": "Enviado"}).eq("id_pedido", id_pedido).execute()
-
-    supabase.table("carrito").delete().eq("id_cliente", user_id).execute()
-    
-    return jsonify({"message": "Pedido y factura generados con éxito", "ok": True})
+            "id_cliente": user_id,
+            "direccion_entrega": usuario["direccion"],
+            "metodo_pago": usuario.get("metodo_pago", "Efectivo"),
+            "total": total_compra
+        }).execute()
+        detalles = []
+        for item in carrito:
+            detalles.append({
+                "id_pedido": id_pedido,
+                "id_producto": item["id_producto"],
+                "nombre_producto": item["nombre_producto"],
+                "cantidad": item["cantidad"],
+                "precio_unitario": item["precio_unitario"],
+                "subtotal": item["total"]
+            })
+        supabase.table("pedido_detalle").insert(detalles).execute()
+        res_factura = supabase.table("facturas").insert({
+            "id_pedido": id_pedido,
+            "id_cliente": user_id,
+            "cedula": usuario["cedula"],
+            "subtotal": total_compra,
+            "total": total_compra,
+            "metodo_pago": usuario.get("metodo_pago", "Efectivo")
+        }).execute()
+        num_factura = res_factura.data[0]["numero_factura"]
+        supabase.table("pedidos").update({"numero_factura": num_factura}).eq("id_pedido", id_pedido).execute()
+        supabase.table("carrito").delete().eq("id_cliente", user_id).execute()
+        return jsonify({"message": "Compra exitosa", "ok": True, "numero_factura": num_factura})
+    except Exception as e:
+        return jsonify({"message": f"Error: {str(e)}"}), 500
 
 
 # APARTADO DE FACTURAS
-
-@app.route("/obtener_metodos_pago", methods=["GET"])
-def obtener_metodos_pago():
-    try:
-        res = supabase.table("metodos_pago").select("*").eq("estado", True).execute()
-        return jsonify({"metodos": res.data or []}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @app.route("/buscar_facturas", methods=["GET"])
 def buscar_facturas():
     cedula = request.args.get("cedula")
     if not cedula:
         return jsonify([]), 200
-
     try:
-        usuario_res = supabase.table("usuarios").select("id_cliente, nombre, apellido, cedula, imagen_url, telefono, correo").eq("cedula", str(cedula)).limit(1).execute()
-
+        usuario_res = supabase.table("usuarios").select("*").eq("cedula", str(cedula).strip()).execute()
         if not usuario_res.data:
             return jsonify([]), 200
-
         usuario = usuario_res.data[0]
-        id_cliente = usuario["id_cliente"]
-        
-        facturas_res = supabase.table("facturas").select("*").eq("id_cliente", id_cliente).order("fecha_emision", desc=True).execute()
-        
-        facturas = []
-        for f in facturas_res.data:
-            detalles_res = supabase.table("pedido_detalle").select("*").eq("id_pedido", f["id_pedido"]).execute()
-            
-            facturas.append({
+        facturas = supabase.table("facturas").select("*").eq("id_cliente", usuario["id_cliente"]).order("fecha_emision", desc=True).execute().data
+        facturas_lista = []
+        for f in facturas:
+            detalles = supabase.table("pedido_detalle").select("*").eq("id_pedido", f["id_pedido"]).execute().data
+            facturas_lista.append({
                 "numero_factura": f["numero_factura"],
                 "fecha_emision": f["fecha_emision"],
-                "subtotal": float(f["subtotal"]),
                 "total": float(f["total"]),
                 "metodo_pago": f["metodo_pago"],
                 "estado": f["estado"],
-                "usuarios": {
-                    "nombre": usuario['nombre'],
-                    "apellido": usuario['apellido'],
-                    "cedula": usuario["cedula"],
-                    "telefono": usuario.get("telefono"),
-                    "correo": usuario.get("correo"),
-                    "imagen_url": usuario.get("imagen_url")
-                },
-                "productos": detalles_res.data or []
+                "usuarios": usuario,
+                "productos": detalles or []
             })
-
-        return jsonify(facturas), 200
+        return jsonify(facturas_lista), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/facturas/<numero_factura>/anular", methods=["PUT"])
+def anular_factura(numero_factura):
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"message": "Debe iniciar sesión para realizar esta acción"}), 401
+
+    try:
+        factura_res = supabase.table("facturas").select("id_pedido, id_cliente").eq("numero_factura", numero_factura).execute()
+        
+        if not factura_res.data:
+            return jsonify({"message": "Factura no encontrada"}), 404
+            
+        factura = factura_res.data[0]
+        
+        if str(factura.get("id_cliente")) != str(user_id):
+            return jsonify({"message": "Error: No tiene permisos para anular esta factura"}), 403
+            
+        id_pedido = factura["id_pedido"]
+        
+        supabase.table("facturas").update({"estado": "Anulada"}).eq("numero_factura", numero_factura).execute()
+        supabase.table("pedidos").update({"estado": "Cancelado"}).eq("id_pedido", id_pedido).execute()
+        
+        return jsonify({"message": "Factura anulada con éxito"}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error al anular: {str(e)}"}), 500
+
 @app.route("/actualizar_estado_factura/<numero_factura>", methods=["PUT"])
 def actualizar_estado_factura(numero_factura):
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"message": "Debe iniciar sesión"}), 401
+
     data = request.json
     nuevo_estado = data.get("estado")
 
@@ -862,12 +845,17 @@ def actualizar_estado_factura(numero_factura):
         return jsonify({"message": "Estado inválido"}), 400
 
     try:
-        factura_res = supabase.table("facturas").select("id_pedido").eq("numero_factura", numero_factura).limit(1).execute()
+        factura_res = supabase.table("facturas").select("id_pedido, id_cliente").eq("numero_factura", numero_factura).execute()
         
         if not factura_res.data:
             return jsonify({"message": "Factura no encontrada"}), 404
             
-        id_pedido = factura_res.data[0]["id_pedido"]
+        factura = factura_res.data[0]
+
+        if str(factura.get("id_cliente")) != str(user_id):
+            return jsonify({"message": "Acceso denegado: Esta factura no le pertenece"}), 403
+            
+        id_pedido = factura["id_pedido"]
         
         update_res = supabase.table("facturas").update({"estado": nuevo_estado}).eq("numero_factura", numero_factura).execute()
         
@@ -878,57 +866,36 @@ def actualizar_estado_factura(numero_factura):
 
         return jsonify({
             "message": "Estado actualizado correctamente", 
-            "factura": update_res.data[0]
+            "factura": update_res.data[0] if update_res.data else {}
         }), 200
     
     except Exception as e:
         return jsonify({"message": f"Error al actualizar: {str(e)}"}), 500
 
-@app.route("/facturas/<numero_factura>/anular", methods=["PUT"])
-def anular_factura(numero_factura):
-    try:
-        factura_res = supabase.table("facturas").select("id_pedido").eq("numero_factura", numero_factura).limit(1).execute()
 
-        if not factura_res.data:
-            return jsonify({"message": "Factura no encontrada"}), 404
-            
-        id_pedido = factura_res.data[0]["id_pedido"]
-        
-        supabase.table("facturas").update({"estado": "Anulada"}).eq("numero_factura", numero_factura).execute()
-        supabase.table("pedidos").update({"estado": "Cancelado"}).eq("id_pedido", id_pedido).execute()
-        
-        return jsonify({"message": "Factura anulada"}), 200
+@app.route("/obtener_metodos_pago", methods=["GET"])
+def obtener_metodos_pago():
+    try:
+        res = supabase.table("metodos_pago").select("*").eq("estado", True).execute()
+        return jsonify({"metodos": res.data or []}), 200
     except Exception as e:
-        return jsonify({"message": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 # APARTADO DE PEDIDOS
 
 @app.route("/pedidos_page", methods=["GET"])
 def pedidos_page():
-
     user_id = session.get("user_id")
-
     if not user_id:
         return redirect("/login")
     return render_template("pedidos.html")
 
 @app.route("/obtener_pedidos", methods=["GET"])
 def obtener_pedidos():
-    user_id = session.get("user_id")
-
-    if not user_id:
-        return jsonify([]), 401
-    
-    query = "*, usuarios(id_cliente, nombre, apellido, cedula, telefono, correo, direccion, metodo_pago, imagen_url), pedido_detalle(*, gestion_productos(nombre, precio, imagen_url))"
-    
     try:
-        pedidos_res = (
-            supabase.table("pedidos")
-            .select(query)
-            .order("fecha_pedido", desc=True)
-            .execute()
-        )
+        query = "*, usuarios(id_cliente, nombre, apellido, cedula, telefono, correo, direccion, metodo_pago, imagen_url), pedido_detalle(*, gestion_productos(nombre, precio, imagen_url))"
+        pedidos_res = supabase.table("pedidos").select(query).order("fecha_pedido", desc=True).execute()
         pedidos = pedidos_res.data or []
 
         for p in pedidos:
@@ -945,37 +912,36 @@ def obtener_pedidos():
                 p["estado_factura"] = "Emitida"
                 
         return jsonify(pedidos), 200
-        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route("/enviar_pedido", methods=["POST"])
 def enviar_pedido():
-
     user_id = session.get("user_id")
-
     if not user_id:
         return jsonify({"message": "Usuario no autenticado"}), 401
     
     usuario_res = supabase.table("usuarios").select("nombre, apellido, direccion, metodo_pago").eq("id_cliente", user_id).single().execute()
     usuario = usuario_res.data or {}
-    direccion = usuario.get("direccion", "")
-    metodo_pago = usuario.get("metodo_pago", "Efectivo")
+    
     carrito_res = supabase.table("carrito").select("id_producto, cantidad, precio_unitario, total, nombre_producto").eq("id_cliente", user_id).execute()
     carrito = carrito_res.data or []
 
     if not carrito:
         return jsonify({"message": "El carrito está vacío"}), 400
-    total = sum(item["total"] for item in carrito)
+
+    total_pedido = sum(item["total"] for item in carrito)
+
     pedido_res = supabase.table("pedidos").insert({
         "id_cliente": user_id,
-        "direccion_entrega": direccion,
-        "metodo_pago": metodo_pago,
+        "direccion_entrega": usuario.get("direccion"),
+        "metodo_pago": usuario.get("metodo_pago"),
         "estado": "Pendiente",
         "pagado": False,
-        "total": total}).execute()
-    pedido = pedido_res.data[0]
-    id_pedido = pedido["id_pedido"]
+        "total": total_pedido
+    }).execute()
+
+    id_pedido = pedido_res.data[0]["id_pedido"]
 
     detalles = [{
         "id_pedido": id_pedido,
@@ -983,66 +949,83 @@ def enviar_pedido():
         "nombre_producto": item["nombre_producto"],
         "cantidad": item["cantidad"],
         "precio_unitario": item["precio_unitario"],
-        "subtotal": item["total"]} for item in carrito]
+        "subtotal": item["total"]
+    } for item in carrito]
 
     supabase.table("pedido_detalle").insert(detalles).execute()
     supabase.table("carrito").delete().eq("id_cliente", user_id).execute()
-    return jsonify({
-        "message": "Pedido enviado con éxito",
-        "id_pedido": id_pedido,
-        "total": total})
+
+    return jsonify({"message": "Pedido enviado con éxito", "id_pedido": id_pedido, "total": total_pedido})
 
 @app.route("/actualizar_estado/<uuid:id_pedido>", methods=["PUT"])
 def actualizar_estado(id_pedido):
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Usuario no autenticado"}), 401
-    
-    data = request.get_json()
-    nuevo_estado = data.get("estado")
-    
-    pedido_res = supabase.table("pedidos").select("*").eq("id_pedido", str(id_pedido)).single().execute()
-    pedido = pedido_res.data
-    if not pedido:
-        return jsonify({"error": "Pedido no encontrado"}), 404
+    try:
+        data = request.get_json()
+        nuevo_estado = data.get("estado")
+        id_pedido_str = str(id_pedido)
+        
+        pedido_res = supabase.table("pedidos").select("*").eq("id_pedido", id_pedido_str).single().execute()
+        if not pedido_res.data:
+            return jsonify({"error": "Pedido no encontrado"}), 404
 
-    supabase.table("pedidos").update({"estado": nuevo_estado}).eq("id_pedido", str(id_pedido)).execute()
-    
-    estado_factura = "Emitida"
-    if nuevo_estado == "Entregado" and pedido.get("pagado"):
-        estado_factura = "Pagada"
-    elif nuevo_estado == "Cancelado":
-        estado_factura = "Anulada"
+        pedido = pedido_res.data
+        supabase.table("pedidos").update({"estado": nuevo_estado}).eq("id_pedido", id_pedido_str).execute()
+        
+        estado_factura = "Emitida"
+        if nuevo_estado == "Entregado" and pedido.get("pagado"):
+            estado_factura = "Pagada"
+        elif nuevo_estado == "Cancelado":
+            estado_factura = "Anulada"
 
-    supabase.table("facturas").update({"estado": estado_factura}).eq("id_pedido", str(id_pedido)).execute()
+        factura_res = supabase.table("facturas").select("numero_factura").eq("id_pedido", id_pedido_str).execute()
+        if factura_res.data:
+            supabase.table("facturas").update({"estado": estado_factura}).eq("id_pedido", id_pedido_str).execute()
 
-    return jsonify({"ok": True, "nuevo_estado": nuevo_estado, "estado_factura": estado_factura})
+        return jsonify({"ok": True, "nuevo_estado": nuevo_estado, "estado_factura": estado_factura})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-@app.route("/actualizar_pago/<uuid:id_pedido>", methods=["PUT"])
-def actualizar_pago(id_pedido):
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Usuario no autenticado"}), 401
-    
-    data = request.get_json()
-    pagado = data.get("pagado")
-    if pagado is None:
-        return jsonify({"error": "Falta el valor de pago"}), 400
+@app.route("/actualizar_pago_item/<uuid:id_pedido>", methods=["PUT"])
+def actualizar_pago_item(id_pedido):
+    try:
+        data = request.get_json()
+        pagado = data.get("pagado")
 
-    update_pedido = supabase.table("pedidos").update({"pagado": bool(pagado)}).eq("id_pedido", str(id_pedido)).execute()
-    if not update_pedido.data:
-        return jsonify({"error": "No se pudo actualizar el pago"}), 500
+        if pagado is None:
+            return jsonify({"error": "Faltan parámetros"}), 400
 
-    pedido = update_pedido.data[0]
-    estado_factura = "Emitida"
-    if pedido.get("estado") == "Entregado" and pagado:
-        estado_factura = "Pagada"
-    elif pedido.get("estado") == "Cancelado":
-        estado_factura = "Anulada"
+        supabase.table("pedidos").update({"pagado": bool(pagado)}).eq("id_pedido", str(id_pedido)).execute()
 
-    supabase.table("facturas").update({"estado": estado_factura}).eq("id_pedido", str(id_pedido)).execute()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-    return jsonify({"ok": True, "pagado": pagado, "estado_factura": estado_factura})
+@app.route("/actualizar_pago_general/<uuid:id_pedido>", methods=["PUT"])
+def actualizar_pago_general(id_pedido):
+    try:
+        data = request.get_json()
+        pagado_general = data.get("pagado")
+        id_pedido_str = str(id_pedido)
+
+        if pagado_general is None:
+            return jsonify({"error": "Falta el valor de pago"}), 400
+
+        supabase.table("pedidos").update({"pagado": bool(pagado_general)}).eq("id_pedido", id_pedido_str).execute()
+
+        pedido_res = supabase.table("pedidos").select("estado, pagado").eq("id_pedido", id_pedido_str).single().execute()
+        pedido = pedido_res.data
+
+        estado_factura = "Emitida"
+        if pedido["estado"] == "Entregado" and pedido["pagado"]:
+            estado_factura = "Pagada"
+        elif pedido["estado"] == "Cancelado":
+            estado_factura = "Anulada"
+
+        supabase.table("facturas").update({"estado": estado_factura}).eq("id_pedido", id_pedido_str).execute()
+
+        return jsonify({"ok": True, "pagado": pagado_general, "estado_factura": estado_factura})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/eliminar_pedidos", methods=["DELETE"])
 def eliminar_pedidos():
@@ -1239,21 +1222,20 @@ def eliminar_comentario(id):
 
 @app.route("/publicidad_page", methods=["GET", "POST"])
 def publicidad_page():
-
     if not session.get("user_id") or session.get("rol") != "admin":
-
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.method == "POST":
             return jsonify({"error": "No autorizado"}), 401
         return render_template("publicidad.html")
         
     if request.method == "POST":
-
         try:
             tipos_a_gestionar = ["carrusel", "seccion", "cinta"]
             res_actual = supabase.table("publicidad").select("id_publicidad, imagen_url").in_("tipo", tipos_a_gestionar).execute()
             data_db = res_actual.data if res_actual.data else []
+            
             viejos_urls = [row['imagen_url'] for row in data_db]
             ids_viejos = [row['id_publicidad'] for row in data_db]
+            
             nuevos_registros = []
             urls_en_uso = []
             
@@ -1264,6 +1246,8 @@ def publicidad_page():
                 for item in metadata:
                     url_f = item.get("url_actual", "")
                     if item.get("cambio_img") and f_idx < len(files):
+                        if url_f:
+                            delete_image_from_cloudinary(url_f)
                         url_f = upload_image_to_cloudinary(files[f_idx], folder="publicidad")
                         f_idx += 1
                     
@@ -1281,19 +1265,21 @@ def publicidad_page():
             procesar("metadata_secciones", "imagenes_secciones", "seccion")
             procesar("metadata_cinta", "imagenes_cinta", "cinta")
 
+            for u in viejos_urls:
+                if u and u not in urls_en_uso:
+                    delete_image_from_cloudinary(u)
+
             if ids_viejos:
                 supabase.table("publicidad").delete().in_("id_publicidad", ids_viejos).execute()
             
             if nuevos_registros:
                 supabase.table("publicidad").insert(nuevos_registros).execute()
 
-            for u in viejos_urls:
-                if u not in urls_en_uso:
-                    delete_image_from_cloudinary(u)
             return jsonify({"ok": True})
         
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+            
     return render_template("publicidad.html")
 
 @app.route("/api/publicidad/activa", methods=["GET"])
@@ -1330,7 +1316,10 @@ def admin_notificaciones():
             titulo = request.form.get("titulo")
             descripcion = request.form.get("descripcion")
             archivo = request.files.get("archivo")
-            url = upload_image_to_cloudinary(archivo, folder="publicidad_DAntojitos") if archivo else ""
+            url = ""
+            
+            if archivo:
+                url = upload_image_to_cloudinary(archivo, folder="publicidad_DAntojitos")
             
             record = {
                 "tipo": "notificacion",
@@ -1372,6 +1361,7 @@ def admin_gestion_notificacion(id_publicidad):
         if request.method == "PUT":
             archivo = request.files.get("archivo")
             nueva_url = url_actual
+            
             if archivo:
                 if url_actual:
                     delete_image_from_cloudinary(url_actual)
@@ -1504,6 +1494,27 @@ def eliminar_metodo_pago(id_pago):
         return jsonify({"error": str(e)}), 500
 
 
+# APARTADO DE TÉRMINOS Y CONDICIONES | POLÍTICAS DE PRIVACIDAD
+
+@app.route("/politicas_page", methods=["GET"])
+def politicas_page():
+    user_id = session.get("user_id")
+    rol = session.get("rol")
+
+    if not user_id or rol != 'admin':
+        return render_template("politicas.html")
+    return render_template("politicas.html")
+
+@app.route("/condiciones_page", methods=["GET"])
+def condiciones_page():
+    user_id = session.get("user_id")
+    rol = session.get("rol")
+
+    if not user_id or rol != 'admin':
+        return render_template("condiciones.html")
+    return render_template("condiciones.html")
+
+
 # APARTADO DEL APP RUN
 
 def get_local_ip():
@@ -1523,21 +1534,20 @@ def redirect_root():
         return redirect("/inicio")
 
 if __name__ == "__main__":
-    
     host = "0.0.0.0"
     port = 8000
     local_ip = get_local_ip()
 
-    debug_mode = False
+    debug_mode = True
 
     if debug_mode:
         print("⚡ Ejecutando en modo DEBUG con servidor de desarrollo de Flask")
         print(f"- Acceso local: http://localhost:{port}")
         print(f"- Acceso en red: http://{local_ip}:{port}")
-        app.run(host=host, port=port, debug=True)
+        app.run(host=host, port=port, debug=True, threaded=True)
         
     else:
         print("🚀 Servidor ejecutándose en producción con Waitress")
         print(f"- Acceso local: http://localhost:{port}")
         print(f"- Acceso en red: http://{local_ip}:{port}")
-        serve(app, host=host, port=port)
+        serve(app, host=host, port=port, threads=10)

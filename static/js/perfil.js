@@ -321,13 +321,29 @@ function renderPagination() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    if (USER_ROLE === 'admin') {
+    const inputImagen = document.getElementById("imagen_url");
+    if (inputImagen) {
+        inputImagen.addEventListener("change", function () {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const imgPerfil = document.querySelector("#formPerfil img");
+                    if (imgPerfil) imgPerfil.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (typeof USER_ROLE !== 'undefined' && USER_ROLE === 'admin') {
         const searchInput = document.getElementById('userSearch');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 const t = e.target.value.toLowerCase();
                 filteredUsers = allUsers.filter(u => (u.nombre + " " + u.apellido).toLowerCase().includes(t) || u.correo.toLowerCase().includes(t));
-                currentPage = 1; renderUserTable();
+                currentPage = 1;
+                renderUserTable();
             });
         }
         fetchUsuarios();

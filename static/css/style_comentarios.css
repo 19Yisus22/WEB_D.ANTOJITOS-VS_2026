@@ -128,13 +128,6 @@ html, body {
     box-shadow: 0 5px 15px rgba(211, 84, 0, 0.3);
 }
 
-footer, .footer {
-    background-color: #000;
-    color: #fff;
-    padding: 40px 0 20px 0;
-    border-top: 4px solid var(--primary);
-}
-
 .custom-toast {
     position: fixed;
     bottom: 25px;

@@ -52,27 +52,68 @@ body {
 }
 
 .promo-banner {
-    border-radius: 18px;
-    height: 65px;
+    border-radius: 20px;
+    height: 85px;
     background: var(--dark-bg);
     display: flex;
     align-items: center;
     position: relative;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
     overflow: hidden;
     margin: 20px 0;
+    border: 1px solid rgba(211, 84, 0, 0.4);
 }
 
 .marquee-content {
     display: flex;
     white-space: nowrap;
-    animation: marquee 25s linear infinite;
+    animation: marqueeCatalog 12s linear infinite;
     align-items: center;
+    will-change: transform;
 }
 
-@keyframes marquee {
+.promo-banner:hover .marquee-content {
+    animation-play-state: paused;
+    cursor: pointer;
+}
+
+@keyframes marqueeCatalog {
     0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    100% { transform: translateX(-33.33%); }
+}
+
+.promo-img-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 18px;
+}
+
+.promo-img-glow {
+    width: 55px;
+    height: 55px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    filter: drop-shadow(0 0 12px rgba(211, 84, 0, 0.9));
+    transition: var(--transition-smooth);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+.promo-item:hover .promo-img-glow {
+    filter: drop-shadow(0 0 20px rgba(230, 126, 34, 1));
+    transform: scale(1.1);
+}
+
+.promo-text {
+    color: white;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
 }
 
 .product-card {
@@ -248,13 +289,6 @@ body {
     animation: heartBeat 0.3s ease-out;
 }
 
-footer {
-    background: #000;
-    color: #fff;
-    padding: 40px 0;
-    border-top: 4px solid var(--primary-color);
-}
-
 .custom-toast {
     background: var(--dark-bg);
     color: white;
@@ -272,4 +306,7 @@ footer {
     .qty-btn { width: 30px; height: 30px; }
     .cantidad { width: 30px; }
     .product-info { padding: 1rem; }
+    .promo-banner { height: 75px; }
+    .promo-img-glow { width: 48px; height: 48px; }
+    .marquee-content { animation-duration: 8s; }
 }
