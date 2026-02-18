@@ -24,12 +24,7 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
     raise ValueError("Faltan las credenciales de Supabase en el archivo .env")
-
-opts = ClientOptions(
-    postgrest_client_timeout=15,
-    storage_client_timeout=20
-)
-
+opts = ClientOptions(postgrest_client_timeout=15, storage_client_timeout=20)
 supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY, options=opts)
 
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
@@ -39,12 +34,7 @@ CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
 if not CLOUDINARY_CLOUD_NAME or not CLOUDINARY_API_KEY or not CLOUDINARY_API_SECRET:
     raise ValueError("Faltan las credenciales de Cloudinary en el archivo .env")
-
-cloudinary.config(
-    cloud_name=CLOUDINARY_CLOUD_NAME, 
-    api_key=CLOUDINARY_API_KEY, 
-    api_secret=CLOUDINARY_API_SECRET
-)
+cloudinary.config(cloud_name=CLOUDINARY_CLOUD_NAME, api_key=CLOUDINARY_API_KEY, api_secret=CLOUDINARY_API_SECRET)
 
 FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(24)
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
@@ -57,65 +47,7 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'ico'}
 
-def allowed_file(filename):
-    ext = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
-    return ext in ALLOWED_EXTENSIONS
-
-def upload_image_to_cloudinary(file, folder="mi_app", public_id=None):
-    if not public_id:
-        public_id = secrets.token_hex(8)
-    result = cloudinary.uploader.upload(file, folder=folder, public_id=public_id, overwrite=True, resource_type="image")
-    return result.get("secure_url")
-
-def delete_image_from_cloudinary(public_url):
-    parts = public_url.split("/")[-2:]
-    public_id = "/".join(parts).split(".")[0]
-    try:
-        cloudinary.uploader.destroy(public_id, resource_type="image")
-        return True
-    except:
-        return False
-
-def hash_password(contrasena, salt=None):
-    if not salt:
-        salt = os.urandom(16).hex()
-    hashed = hashlib.sha256((salt + contrasena).encode()).hexdigest()
-    return f"{salt}${hashed}"
-
-def verify_password(contrasena, hashed):
-    try:
-        salt, hash_val = hashed.split("$")
-        return hashlib.sha256((salt + contrasena).encode()).hexdigest() == hash_val
-    except:
-        return False
-
-@app.route("/obtener-cliente-id", methods=["GET"])
-def obtener_cliente_id():
-    cliente_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
-    return jsonify({"client_id": cliente_id})
-
-@app.after_request
-def agregar_cabeceras(response):
-    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
-    response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    return response
-
-def verificar_token_google(token):
-    try:
-        idinfo = id_token.verify_oauth2_token(
-            token, 
-            google_requests.Request(), 
-            CLIENT_ID,
-            clock_skew_in_seconds=60
-        )
-        return idinfo
-    except ValueError as e:
-        print(f"Error validando token: {e}")
-        return None
-
-
-# APARTADO DE AUTH
+# APARTADO DE AUTH E INICIO SESIÓN
 
 @app.route("/registro-google", methods=["POST", "OPTIONS"])
 def registro_google():
@@ -283,7 +215,7 @@ def logout():
     return response
 
 
-# APARTADO DE PERFILES
+# APARTADO DE MI PERFIL
 
 @app.route("/mi_perfil", methods=["GET", "POST"])
 def mi_perfil():
@@ -632,7 +564,7 @@ def guardar_catalogo():
         return jsonify({"error": True, "message": str(e)}), 500
 
 
-# APARTADO DE CARRITO
+# APARTADO DE MI CARRITO
 
 @app.route("/carrito_page")
 def carrito_page():
@@ -882,7 +814,7 @@ def obtener_metodos_pago():
         return jsonify({"error": str(e)}), 500
 
 
-# APARTADO DE PEDIDOS
+# APARTADO DE GESTIÓN DE PEDIDOS
 
 @app.route("/pedidos_page", methods=["GET"])
 def pedidos_page():
@@ -1047,7 +979,7 @@ def eliminar_pedidos():
     return jsonify({"success": True, "message": "Eliminación exitosa"})
 
 
-# APARTADO DE COMENTARIOS
+# APARTADO DE MURO SOCIAL / SUGERENCIAS
 
 @app.route("/comentarios_page", methods=["GET"])
 def comentarios_page():
@@ -1379,7 +1311,7 @@ def admin_gestion_notificacion(id_publicidad):
         return jsonify({"error": str(e)}), 500
 
 
-# APARTADO DE ZONA DE PAGOS
+# APARTADO DE ZONA DE FACTURACIÓN
 
 @app.route("/facturacion_page", methods=["GET", "POST"])
 def zona_pagos():
@@ -1494,7 +1426,67 @@ def eliminar_metodo_pago(id_pago):
         return jsonify({"error": str(e)}), 500
 
 
-# APARTADO DE TÉRMINOS Y CONDICIONES | POLÍTICAS DE PRIVACIDAD
+# ¡WARNING! -- | APARTADO DE ENDPOINTS GLOBALES (NO MODIFICAR)
+
+def allowed_file(filename):
+    ext = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
+    return ext in ALLOWED_EXTENSIONS
+
+def upload_image_to_cloudinary(file, folder="mi_app", public_id=None):
+    if not public_id:
+        public_id = secrets.token_hex(8)
+    result = cloudinary.uploader.upload(file, folder=folder, public_id=public_id, overwrite=True, resource_type="image")
+    return result.get("secure_url")
+
+def delete_image_from_cloudinary(public_url):
+    parts = public_url.split("/")[-2:]
+    public_id = "/".join(parts).split(".")[0]
+    try:
+        cloudinary.uploader.destroy(public_id, resource_type="image")
+        return True
+    except:
+        return False
+
+def hash_password(contrasena, salt=None):
+    if not salt:
+        salt = os.urandom(16).hex()
+    hashed = hashlib.sha256((salt + contrasena).encode()).hexdigest()
+    return f"{salt}${hashed}"
+
+def verify_password(contrasena, hashed):
+    try:
+        salt, hash_val = hashed.split("$")
+        return hashlib.sha256((salt + contrasena).encode()).hexdigest() == hash_val
+    except:
+        return False
+
+@app.route("/obtener-cliente-id", methods=["GET"])
+def obtener_cliente_id():
+    cliente_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    return jsonify({"client_id": cliente_id})
+
+@app.after_request
+def agregar_cabeceras(response):
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
+    response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
+def verificar_token_google(token):
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            token, 
+            google_requests.Request(), 
+            CLIENT_ID,
+            clock_skew_in_seconds=60
+        )
+        return idinfo
+    except ValueError as e:
+        print(f"Error validando token: {e}")
+        return None
+
+
+# TÉRMINOS Y CONDICIONES | POLÍTICAS DE PRIVACIDAD
 
 @app.route("/politicas_page", methods=["GET"])
 def politicas_page():
@@ -1514,8 +1506,16 @@ def condiciones_page():
         return render_template("condiciones.html")
     return render_template("condiciones.html")
 
+@app.route("/manual_page", methods=["GET"])
+def manual_page():
+    user_id = session.get("user_id")
+    rol = session.get("rol")
 
-# APARTADO DEL APP RUN
+    if not user_id or rol != 'admin':
+        return render_template("manual_usuario.html")
+    return render_template("manual_usuario.html")
+
+# APP RUN SEVERLESS
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -1538,7 +1538,7 @@ if __name__ == "__main__":
     port = 8000
     local_ip = get_local_ip()
 
-    debug_mode = True
+    debug_mode = False
 
     if debug_mode:
         print("⚡ Ejecutando en modo DEBUG con servidor de desarrollo de Flask")
