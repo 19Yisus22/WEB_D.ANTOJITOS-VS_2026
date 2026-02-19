@@ -54,10 +54,13 @@
                             </div>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 animate-dropdown">
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-header text-uppercase">Menú Clientes</li>
                             <li><a class="dropdown-item" href="/mi_perfil"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
+                            <li><a class="dropdown-item" href="/gestionar_facturas_page"><i class="bi bi-wallet2 me-2"></i>Gestión de Facturas</a></li>
                             {% if session.get('rol') == 'admin' %}
                             <li><hr class="dropdown-divider"></li>
-                            <li class="dropdown-header text-uppercase">Opciones Administrativas</li>
+                            <li class="dropdown-header text-uppercase">Menú Administrativo</li>
                             <li><a class="dropdown-item" href="/gestionar_productos_page"><i class="bi bi-box-seam me-2"></i> Gestión de Productos</a></li>
                             <li><a class="dropdown-item" href="/pedidos_page"><i class="bi bi-clipboard-check me-2"></i> Gestión de Pedidos</a></li>
                             <li><a class="dropdown-item" href="/publicidad_page"><i class="bi bi-megaphone me-2"></i> Gestión de Publicidad</a></li>

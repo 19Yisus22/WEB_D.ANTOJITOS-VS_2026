@@ -9,12 +9,6 @@ def crear_entorno_virtual():
     ruta_venv = carpeta_actual / "venv"
     subprocess.run([sys.executable, "-m", "venv", str(ruta_venv)], check=True)
     activate = ruta_venv / "Scripts" / "activate.bat" if os.name == "nt" else ruta_venv / "bin" / "activate"
-    
-    if os.name == "nt":
-        os.system(f'start cmd /k "{activate}"')
-
-    else:
-        print(f"source {activate}")
 
     req = carpeta_actual / "requirements.txt"
     
