@@ -28,6 +28,13 @@ const monitorConexion = {
     }
 };
 
+function ajustarAlturaInput() {
+    mensajeInput.style.height = 'auto';
+    mensajeInput.style.height = (mensajeInput.scrollHeight) + 'px';
+}
+
+mensajeInput.addEventListener("input", ajustarAlturaInput);
+
 function getUserColor(userId) {
     const colors = ['#f8f9ff', '#fffcf0', '#f0fff4', '#fff5f5', '#f5faff', '#f9f0ff', '#fffaf0', '#f0f0f0'];
     let hash = 0;
@@ -96,9 +103,9 @@ function renderComentario(c) {
                         ${esMio ? `<i class="bi bi-three-dots-vertical btn-options text-muted ms-2" style="cursor:pointer;"></i>` : ''}
                     </div>
                 </div>
-                <div class="mensaje-texto text-dark mb-2">${c.mensaje}</div>
+                <div class="mensaje-texto text-dark mb-2" style="white-space: pre-wrap; word-wrap: break-word;">${c.mensaje}</div>
                 <div class="d-flex align-items-center">
-                    <div class="btn-like" onclick="toggleLike('${c.id}')">
+                    <div class="btn-like" onclick="toggleLike('${c.id}')" style="cursor:pointer;">
                         <i class="bi ${yaDiLike ? 'bi-heart-fill text-danger' : 'bi-heart text-muted'} me-1"></i>
                         <span class="small fw-bold text-muted" style="font-size: 0.8rem;">${likes.length}</span>
                     </div>
@@ -114,6 +121,7 @@ function renderComentario(c) {
             document.querySelectorAll(".comentario-dropdown").forEach(d => d.remove());
             const dd = document.createElement("ul");
             dd.className = "list-group position-absolute shadow-lg comentario-dropdown";
+            dd.style.zIndex = "1050";
             dd.innerHTML = `
                 <li class="list-group-item list-group-item-action border-0 py-2 px-3" style="cursor:pointer; font-size: 0.85rem;">
                     <i class="bi bi-pencil me-2 text-primary"></i>Editar
@@ -141,6 +149,7 @@ async function toggleLike(id) {
         return;
     }
     const btn = document.querySelector(`#msg-${id} .btn-like`);
+    if (!btn) return;
     const icon = btn.querySelector('i');
     const countSpan = btn.querySelector('span');
     let count = parseInt(countSpan.innerText);
@@ -188,6 +197,7 @@ function iniciarEdicion(id, msg) {
     mensajeInput.value = msg;
     editandoComentario = id;
     sendBtn.innerHTML = `<i class="bi bi-check2-all me-2"></i>Guardar`;
+    ajustarAlturaInput();
     mensajeInput.focus();
 }
 
@@ -214,6 +224,7 @@ sendBtn.onclick = async () => {
         if(res.ok) {
             showMessage(successMsg);
             mensajeInput.value = "";
+            mensajeInput.style.height = 'auto';
             editandoComentario = null;
             sendBtn.innerHTML = `<i class="bi bi-send me-2"></i>Enviar`;
             cargarComentarios();
@@ -235,21 +246,17 @@ document.addEventListener("DOMContentLoaded", () => {
         logoutBtn.onclick = async (e) => {
             e.preventDefault();
             const url = logoutBtn.getAttribute("href");
-
             monitorConexion.detener();
-
             const misComentarios = document.querySelectorAll(`[data-user-id="${USER_CONFIG.userId}"] .punto-estado`);
             misComentarios.forEach(punto => {
                 punto.classList.remove('estado-conectado');
                 punto.classList.add('estado-desconectado');
             });
-
             const profileStatus = document.querySelector(".profile-status");
             if (profileStatus) {
                 profileStatus.innerText = "Desconectado";
                 profileStatus.style.color = "#6c757d";
             }
-
             window.location.href = url;
         };
     }

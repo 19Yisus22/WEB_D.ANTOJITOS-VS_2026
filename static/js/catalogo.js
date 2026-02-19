@@ -173,7 +173,7 @@ function mostrarToastActualizacion(imagen, titulo, descripcion, idUnico, isError
 function mostrarBienvenida(nombre) {
     mostrarAlerta({
         titulo: `¡Hola, ${nombre || 'bienvenido'}!`,
-        descripcion: "Elige y disfruta nuestros postres",
+        descripcion: "Elige y disfruta de nuestros deliciosos postres",
         imagen: "/static/uploads/logo.png",
         tipo: "bienvenida",
         duracion: 6500
