@@ -12,7 +12,7 @@ let contadorFacturasPorAnio = JSON.parse(localStorage.getItem("contadorFacturasP
 let ultimoIdPedidoNotificado = parseInt(localStorage.getItem("ultimoIdPedidoNotificado") || "0");
 
 const sonidoNuevoPedido = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
-sonidoNuevoPedido.volume = 0.7;
+sonidoNuevoPedido.volume = 0.9;
 
 async function verificarAccesoAdmin() {
     try {
@@ -23,56 +23,89 @@ async function verificarAccesoAdmin() {
                     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
                     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
                     <style>
-                        body { background: #000; color: white; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; overflow: hidden; }
-                        .lock-box { text-align: center; border: 1px solid #333; padding: 3rem; border-radius: 20px; background: #0a0a0a; }
-                        .shield-icon { font-size: 5rem; color: #ff4757; animation: pulse 2s infinite; }
-                        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+                        body { background: #000; color: white; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+                        .lock-box { text-align: center; border: 1px solid #333; padding: 4rem; border-radius: 30px; background: #0a0a0a; box-shadow: 0 0 50px rgba(255,0,0,0.1); }
+                        .shield-icon { font-size: 6rem; color: #ff4757; animation: pulse 1.5s infinite; }
+                        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
                     </style>
                 </head>
                 <body>
-                    <div class="lock-box shadow-lg">
-                        <i class="bi bi-shield-slash-fill shield-icon"></i>
-                        <h1 class="fw-bold mt-3">MÓDULO PROTEGIDO</h1>
-                        <p class="text-secondary">Se requiere nivel de acceso administrativo para esta sección.</p>
-                        <div class="spinner-border text-danger my-3" role="status"></div>
+                    <div class="lock-box">
+                        <i class="bi bi-shield-lock-fill shield-icon"></i>
+                        <h1 class="fw-bold mt-4">ACCESO RESTRINGIDO</h1>
+                        <p class="text-secondary fs-5">Este panel requiere credenciales de administrador de alto nivel.</p>
+                        <div class="spinner-grow text-danger my-4" role="status"></div>
                         <br>
-                        <button onclick="window.location.href='/'" class="btn btn-outline-danger mt-2 px-5">SALIR</button>
+                        <button onclick="window.location.href='/'" class="btn btn-danger btn-lg mt-2 px-5 rounded-pill">REGRESAR AL INICIO</button>
                     </div>
                 </body>
             `;
-            setTimeout(() => { window.location.href = "/"; }, 4000);
+            setTimeout(() => { window.location.href = "/"; }, 3500);
             return false;
         }
         return true;
-    } catch {
+    } catch (error) {
+        console.error("Error crítico de verificación:", error);
         return false;
     }
 }
 
-function mostrarAlerta(mensaje, esError = false, duracionMs = 3500) {
+function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement("div");
         container.id = "toastContainer";
-        container.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 9999;";
+        container.style.cssText = "position: fixed; top: 25px; right: 25px; z-index: 10000; display: flex; flex-direction: column; gap: 12px;";
         document.body.appendChild(container);
     }
 
     const toast = document.createElement('div');
-    toast.className = 'custom-toast';
+    toast.className = 'custom-toast-alert';
+    
+    const colorPrimario = esError ? "#ff4757" : "#2ed573";
+    const sombraColor = esError ? "rgba(255, 71, 87, 0.2)" : "rgba(46, 213, 115, 0.2)";
+    
+    toast.style.cssText = `
+        background: #ffffff; 
+        color: #2f3542; 
+        padding: 16px 24px; 
+        border-radius: 12px; 
+        box-shadow: 0 10px 30px ${sombraColor}; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        min-width: 350px; 
+        max-width: 450px;
+        border-left: 6px solid ${colorPrimario}; 
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform: translateX(100%);
+        opacity: 0;
+    `;
+    
     toast.innerHTML = `
         <div class="d-flex align-items-center">
-            <i class="bi ${esError ? 'bi-x-circle text-danger' : 'bi-check-circle text-success'} me-2 fs-6"></i>
-            <span style="font-size: 0.85rem;">${mensaje}</span>
+            <div style="background: ${colorPrimario}; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                <i class="bi ${esError ? 'bi-x-circle-fill' : 'bi-check-circle-fill'} text-white fs-5"></i>
+            </div>
+            <div>
+                <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #747d8c;">Notificación de Sistema</strong>
+                <span style="font-size: 0.95rem; font-weight: 600;">${mensaje}</span>
+            </div>
         </div>
-        <i class="bi bi-x-lg ms-2 btn-close-toast" style="cursor:pointer; font-size: 0.65rem;"></i>
+        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 1rem; color: #a4b0be;"></i>
     `;
     
     container.appendChild(toast);
 
+    requestAnimationFrame(() => {
+        toast.style.transform = "translateX(0)";
+        toast.style.opacity = "1";
+    });
+
     const eliminar = () => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 400);
+        toast.style.transform = "translateX(120%)";
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 500);
     };
 
     toast.querySelector('.btn-close-toast').onclick = eliminar;
@@ -82,13 +115,105 @@ function mostrarAlerta(mensaje, esError = false, duracionMs = 3500) {
 function escucharEventosTiempoReal() {
     window.addEventListener('storage', (e) => {
         if (e.key === 'nuevoPedidoDetectado') {
-            cargarPedidos();
+            cargarPedidos(true);
         }
-        if (e.key === 'pedidoAnuladoRecientemente') {
+        if (e.key === 'pedidoAnuladoRecientemente' && e.newValue) {
             const data = JSON.parse(e.newValue);
-            mostrarAlerta(`⚠️ EL CLIENTE ${data.nombre.toUpperCase()} HA ANULADO EL PEDIDO #${data.id}`, true, 6000);
-            cargarPedidos();
+            mostrarAlerta(`CRÍTICO: El cliente ${data.nombre.toUpperCase()} canceló el pedido #${data.id}`, true, 7000);
+            sonidoNuevoPedido.play().catch(() => {});
+            cargarPedidos(true);
         }
+    });
+}
+
+function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
+    const existing = document.getElementById('appModalConfirm');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'appModalConfirm';
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); display: flex; align-items: center;
+        justify-content: center; z-index: 20000; backdrop-filter: blur(5px);
+        transition: opacity 0.3s ease;
+    `;
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: #ffffff; width: 95%; max-width: 420px; padding: 35px;
+        border-radius: 25px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+        transform: scale(0.7); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    `;
+
+    modal.innerHTML = `
+        <div style="color: #ff4757; font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h2 style="margin-bottom: 12px; font-weight: 800; color: #1e272e; letter-spacing: -0.5px;">${titulo}</h2>
+        <p style="color: #485460; margin-bottom: 30px; line-height: 1.6; font-size: 1.05rem;">${mensaje}</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="btnCancelModal" class="btn btn-light" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; border: 2px solid #f1f2f6;">CANCELAR</button>
+            <button id="btnConfirmModal" class="btn btn-danger" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; background: #ff4757; border: none; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);">CONFIRMAR</button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+        modal.style.transform = 'scale(1)';
+    }, 10);
+
+    const cerrar = () => {
+        modal.style.transform = 'scale(0.7)';
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 300);
+    };
+
+    document.getElementById('btnCancelModal').onclick = cerrar;
+    document.getElementById('btnConfirmModal').onclick = () => {
+        onConfirm();
+        cerrar();
+    };
+}
+
+function ajustarBarraBusqueda() {
+    const row = document.querySelector('.search-box-container');
+    if (row) {
+        row.style.cssText = `
+            background: #ffffff; 
+            padding: 30px; 
+            border-radius: 22px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            margin-bottom: 40px;
+            border: 1px solid #edf2f7;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+        `;
+    }
+    const inputs = document.querySelectorAll('.search-box-container input, .search-box-container select');
+    inputs.forEach(el => {
+        el.style.cssText = `
+            border-radius: 14px;
+            border: 1.5px solid #e2e8f0;
+            padding: 12px 18px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            outline: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        `;
+        el.onfocus = () => {
+            el.style.borderColor = "#3498db";
+            el.style.boxShadow = "0 0 0 4px rgba(52, 152, 219, 0.15)";
+        };
+        el.onblur = () => {
+            el.style.borderColor = "#e2e8f0";
+            el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.02)";
+        };
     });
 }
 
@@ -96,11 +221,12 @@ async function iniciarModuloPedidos() {
     const tieneAcceso = await verificarAccesoAdmin();
     if (!tieneAcceso) return;
 
+    ajustarBarraBusqueda();
     inicializarSelectAnios();
     await cargarPedidos();
     escucharEventosTiempoReal();
     
-    setInterval(() => cargarPedidos(true), 15000);
+    setInterval(() => cargarPedidos(true), 3000);
 
     document.getElementById("btnGenerarPDF")?.addEventListener("click", generarReporteConfigurado);
 
@@ -129,18 +255,36 @@ function renderizarPaginacion(lista) {
     pagUl.innerHTML = "";
     if (paginaActual > totalPaginas) paginaActual = totalPaginas;
 
-    for (let i = 1; i <= totalPaginas; i++) {
+    const crearLink = (num, texto, activo = false, deshabilitado = false) => {
         const li = document.createElement("li");
-        li.className = `page-item ${i === paginaActual ? 'active' : ''}`;
-        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-        li.addEventListener("click", (e) => { 
-            e.preventDefault(); 
-            paginaActual = i;
-            mostrarPagina(lista, i);
-            renderizarPaginacion(lista);
-        });
-        pagUl.appendChild(li);
+        li.className = `page-item ${activo ? 'active' : ''} ${deshabilitado ? 'disabled' : ''}`;
+        li.innerHTML = `<a class="page-link shadow-sm mx-1 rounded" href="#">${texto}</a>`;
+        if (!deshabilitado) {
+            li.addEventListener("click", (e) => {
+                e.preventDefault();
+                paginaActual = num;
+                mostrarPagina(lista, num);
+                renderizarPaginacion(lista);
+            });
+        }
+        return li;
+    };
+
+    pagUl.appendChild(crearLink(paginaActual - 1, '<i class="bi bi-chevron-left"></i>', false, paginaActual === 1));
+
+    for (let i = 1; i <= totalPaginas; i++) {
+        if (i === 1 || i === totalPaginas || (i >= paginaActual - 1 && i <= paginaActual + 1)) {
+            pagUl.appendChild(crearLink(i, i, i === paginaActual));
+        } else if (i === paginaActual - 2 || i === paginaActual + 2) {
+            const dots = document.createElement("li");
+            dots.className = "page-item disabled";
+            dots.innerHTML = '<span class="page-link border-0">...</span>';
+            pagUl.appendChild(dots);
+        }
     }
+
+    pagUl.appendChild(crearLink(paginaActual + 1, '<i class="bi bi-chevron-right"></i>', false, paginaActual === totalPaginas));
+
     actualizarTituloTabla();
     mostrarPagina(lista, paginaActual);
 }
@@ -151,9 +295,24 @@ function mostrarPagina(lista, pagina) {
     cont.innerHTML = "";
     const inicio = (pagina - 1) * itemsPorPagina;
     const fin = inicio + itemsPorPagina;
-    lista.slice(inicio, fin).forEach(card => {
+    const items = lista.slice(inicio, fin);
+
+    if (items.length === 0) {
+        cont.innerHTML = `
+            <tr>
+                <td class="text-center py-5">
+                    <i class="bi bi-search fs-1 text-muted d-block mb-3"></i>
+                    <p class="text-muted fw-bold">No se encontraron pedidos que coincidan con la búsqueda.</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    items.forEach(card => {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
+        td.style.border = "none";
         td.appendChild(card);
         tr.appendChild(td);
         cont.appendChild(tr);
@@ -165,12 +324,13 @@ function actualizarTituloTabla() {
     if (!titulo) return;
     const filtro = document.getElementById("filtroEstado").value;
     const titulos = {
-        "Todos": "MOSTRANDO TODOS LOS PEDIDOS",
-        "FiltroPagoPendiente": "Pedidos Activos (PAGOS O ENTREGAS PENDIENTES)",
-        "Entregado": "Pedidos Finalizados (PAGADOS Y ENTREGADOS)",
-        "Cancelado": "Pedidos Anulados"
+        "Todos": "LISTADO MAESTRO DE PEDIDOS",
+        "FiltroPagoPendiente": "GESTIÓN DE PAGOS PENDIENTES",
+        "Pendiente": "PEDIDOS EN COLA DE ESPERA",
+        "Entregado": "REGISTRO DE OPERACIONES FINALIZADAS",
+        "Cancelado": "HISTORIAL DE PEDIDOS ANULADOS"
     };
-    titulo.textContent = titulos[filtro] || "Pedidos";
+    titulo.innerHTML = `<i class="bi bi-journal-text me-2"></i> ${titulos[filtro] || "GESTIÓN DE PEDIDOS"}`;
 }
 
 async function cargarPedidos(isAutoRefresh = false) {
@@ -178,31 +338,44 @@ async function cargarPedidos(isAutoRefresh = false) {
 
     try {
         const res = await fetch("/obtener_pedidos");
+        if (!res.ok) throw new Error("Error de conexión");
         const pedidos = await res.json();
         if (!Array.isArray(pedidos)) return;
 
-        const nuevosCancelados = pedidos.filter(p => p.estado === 'Cancelado').map(p => String(p.id_pedido));
-        
-        if (isAutoRefresh && ultimosIdsCancelados.length > 0) {
-            const detectados = nuevosCancelados.filter(id => !ultimosIdsCancelados.includes(id));
-            if (detectados.length > 0) {
-                const idNotificar = detectados[0];
-                const pedido = pedidos.find(p => String(p.id_pedido) === idNotificar);
-                if (pedido) {
-                    const nombre = `${pedido.usuarios?.nombre || "UN"} ${pedido.usuarios?.apellido || "CLIENTE"}`;
-                    mostrarAlerta(`⚠️ EL CLIENTE ${nombre.toUpperCase()} HA ANULADO EL PEDIDO DESDE EL CARRITO #${idNotificar}`, true, 7000);
+        if (pedidos.length > 0) {
+            const maxIdActual = Math.max(...pedidos.map(p => p.id_pedido));
+            if (ultimoIdPedidoNotificado !== 0 && maxIdActual > ultimoIdPedidoNotificado) {
+                const nuevoP = pedidos.find(p => p.id_pedido === maxIdActual);
+                const nombreFull = `${nuevoP.usuarios?.nombre || 'Nuevo'} ${nuevoP.usuarios?.apellido || 'Usuario'}`;
+                mostrarAlerta(`NUEVA VENTA: ${nombreFull.toUpperCase()} (#${maxIdActual})`, false, 9000);
+                sonidoNuevoPedido.play().catch(() => {});
+            }
+            ultimoIdPedidoNotificado = maxIdActual;
+            localStorage.setItem("ultimoIdPedidoNotificado", ultimoIdPedidoNotificado);
+        }
+
+        const idsActualesCancelados = pedidos.filter(p => p.estado === 'Cancelado').map(p => String(p.id_pedido));
+        if (ultimosIdsCancelados.length > 0) {
+            const nuevosBajas = idsActualesCancelados.filter(id => !ultimosIdsCancelados.includes(id));
+            if (nuevosBajas.length > 0) {
+                const pBaja = pedidos.find(p => String(p.id_pedido) === nuevosBajas[0]);
+                if (pBaja) {
+                    const cli = `${pBaja.usuarios?.nombre || "CLIENTE"} ${pBaja.usuarios?.apellido || ""}`;
+                    mostrarAlerta(`ALERTA: El pedido #${pBaja.id_pedido} de ${cli.toUpperCase()} fue anulado ahora mismo`, true, 9000);
+                    sonidoNuevoPedido.play().catch(() => {});
                 }
             }
         }
-        ultimosIdsCancelados = nuevosCancelados;
+        ultimosIdsCancelados = idsActualesCancelados;
 
         pedidosDatosRaw = pedidos;
-        
         pedidosGlobal = pedidos.map(pedido => {
             const idStr = String(pedido.id_pedido);
-            const factura = pedido.numero_factura || `ID-${pedido.id_pedido}`;
+            const numFacturaCompuesta = generarNumeroFactura(pedido.id_pedido, pedido.fecha_pedido);
+            const facturaAMostrar = pedido.numero_factura || numFacturaCompuesta;
             const esFijado = pedidosFijados.includes(idStr);
             const user = pedido.usuarios || {};
+            
             const cardExistente = document.getElementById(`pedido-${pedido.id_pedido}`);
             const estabaAbierta = cardExistente ? !cardExistente.classList.contains('card-collapsed') : false;
 
@@ -212,17 +385,19 @@ async function cargarPedidos(isAutoRefresh = false) {
                 const pagado = estadosPagoGuardados[itemId] ?? (item.pagado ?? pedido.pagado ?? false);
                 if (!pagado) totalPendiente += Number(item.subtotal || 0);
 
-                return `<tr>
-                    <td class="text-start">${item.gestion_productos?.nombre || item.nombre_producto || 'Producto'}</td>
-                    <td>${item.cantidad}</td>
-                    <td>${Number(item.subtotal || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</td>
+                return `
+                <tr style="vertical-align: middle;">
+                    <td class="text-start ps-3 fw-medium">${item.gestion_productos?.nombre || item.nombre_producto || 'Producto'}</td>
+                    <td class="fw-bold">${item.cantidad}</td>
+                    <td class="text-primary">${Number(item.subtotal || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</td>
                     <td>
-                        <i class="bi ${pagado ? 'bi-check-circle text-success' : 'bi-x-circle text-danger'} fs-4 toggle-pago-item" 
-                           style="cursor:pointer" 
-                           data-item-id="${itemId}" 
-                           data-indice="${idx}"
-                           data-pagado="${pagado}">
-                        </i>
+                        <div class="form-check form-switch d-flex justify-content-center">
+                            <input class="form-check-input toggle-pago-item-switch" type="checkbox" role="switch" 
+                                   ${pagado ? 'checked' : ''}
+                                   data-item-id="${itemId}" 
+                                   data-indice="${idx}"
+                                   style="cursor:pointer; width: 40px; height: 20px;">
+                        </div>
                     </td>
                 </tr>`;
             }).join("");
@@ -238,89 +413,116 @@ async function cargarPedidos(isAutoRefresh = false) {
             const estadoClase = esAnulado ? "pedido-anulado border-danger" : (esTerminado ? "pedido-finalizado" : "pedido-activo");
 
             const card = document.createElement("div");
-            card.className = `pedido-card col-12 mb-3 p-1 shadow-sm ${estadoClase} ${esFijado ? 'fijado border-primary' : ''} ${estabaAbierta ? '' : 'card-collapsed'}`;
+            card.className = `pedido-card col-12 mb-4 p-2 shadow-sm rounded-4 bg-white border-start border-5 ${estadoClase} ${esFijado ? 'fijado border-primary' : ''} ${estabaAbierta ? '' : 'card-collapsed'}`;
             card.id = `pedido-${pedido.id_pedido}`;
             card.dataset.id_real = idStr;
             card.dataset.fecha_iso = pedido.fecha_pedido;
-            card.dataset.factura = normalizarTexto(factura);
+            card.dataset.factura = normalizarTexto(facturaAMostrar);
             card.dataset.estado = pedido.estado;
             card.dataset.todosPagos = todosPagos.toString();
             card.dataset.fijado = esFijado.toString();
 
-            const fechaStr = pedido.fecha_pedido 
-                ? new Date(pedido.fecha_pedido).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) 
-                : '---';
+            const fechaFormat = pedido.fecha_pedido 
+                ? new Date(pedido.fecha_pedido).toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+                : 'Sin fecha';
 
             card.innerHTML = `
                 <div class="card border-0 bg-transparent">
-                    <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0 py-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi ${esFijado ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle'} fs-5 btn-fijar" style="cursor:pointer"></i>
-                            <img src="${user.imagen_url || '/static/uploads/default.png'}" class="rounded-circle border" style="width:38px;height:38px;object-fit:cover;">
-                            <div class="lh-1">
-                                <strong class="d-block" style="font-size:0.9rem">${factura}</strong>
-                                <small class="status-info ${esAnulado ? 'text-danger fw-bold' : 'text-muted'}" style="font-size:0.75rem">${pedido.estado} | ${fechaStr}</small>
+                    <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0 py-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="btn-fijar-wrapper">
+                                <i class="bi ${esFijado ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle text-muted'} fs-4 btn-fijar" style="cursor:pointer transition: 0.3s;"></i>
+                            </div>
+                            <div class="position-relative">
+                                <img src="${user.imagen_url || '/static/uploads/default.png'}" class="rounded-circle border border-2 border-white shadow-sm" style="width:45px;height:45px;object-fit:cover;">
+                                <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-light rounded-circle" style="${pedido.estado === 'Entregado' ? '' : 'display:none'}"></span>
+                            </div>
+                            <div class="lh-sm">
+                                <strong class="d-block text-dark" style="font-size:1.05rem">${facturaAMostrar}</strong>
+                                <small class="status-info ${esAnulado ? 'text-danger fw-bold' : 'text-muted'}" style="font-size:0.8rem">
+                                    <i class="bi bi-clock-history me-1"></i>${fechaFormat} | <span class="badge ${esAnulado ? 'bg-danger' : 'bg-secondary'}">${pedido.estado}</span>
+                                </small>
                             </div>
                         </div>
-                        <div class="d-flex gap-2">
-                            <i class="bi bi-chevron-down icono fs-4 toggle-detalle"></i>
-                            <i class="bi bi-trash icono text-danger fs-4 btn-eliminar-individual" style="cursor:pointer"></i>
+                        <div class="d-flex align-items-center gap-3">
+                            <button class="btn btn-light btn-sm rounded-circle toggle-detalle" style="width:35px; height:35px; display:flex; align-items:center; justify-content:center;">
+                                <i class="bi bi-chevron-down icono transition-all"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm border-0 rounded-circle btn-eliminar-individual" style="width:35px; height:35px;">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="card-body pt-0">
-                        <div class="mb-2 border-top pt-2" style="font-size:0.85rem">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p class="mb-1"><strong>Cliente:</strong> ${user.nombre || ''} ${user.apellido || ''}</p>
-                                    <p class="mb-1"><strong>Cédula:</strong> ${user.cedula || 'N/A'}</p>
-                                    <p class="mb-1"><strong>Teléfono:</strong> ${user.telefono || 'N/A'}</p>
+                    <div class="card-body pt-0 collapse-content">
+                        <div class="p-3 mb-3 bg-light rounded-3 border-0" style="font-size:0.9rem">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="text-muted mb-1"><i class="bi bi-person-fill me-1"></i> Información del Cliente</div>
+                                    <div class="fw-bold">${user.nombre || ''} ${user.apellido || ''}</div>
+                                    <div class="text-secondary">${user.cedula || 'Documento N/A'}</div>
                                 </div>
-                                <div class="col-md-6">
-                                    <p class="mb-1"><strong>Dirección:</strong> ${pedido.direccion_envio || user.direccion || 'N/A'}</p>
-                                    <p class="mb-1"><strong>Método Pago:</strong> <span class="badge bg-info text-dark">${pedido.metodo_pago || 'No especificado'}</span></p>
+                                <div class="col-md-4">
+                                    <div class="text-muted mb-1"><i class="bi bi-geo-alt-fill me-1"></i> Destino de Entrega</div>
+                                    <div class="fw-bold">${pedido.direccion_envio || user.direccion || 'Entrega en Local'}</div>
+                                    <div class="text-secondary">${user.telefono || 'Sin teléfono'}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-muted mb-1"><i class="bi bi-credit-card-fill me-1"></i> Transacción</div>
+                                    <div class="fw-bold">${pedido.metodo_pago || 'Efectivo'}</div>
+                                    <div class="badge bg-white text-dark border shadow-sm mt-1">Ref: ${pedido.id_pedido}</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="table-responsive-container">
-                            <table class="table table-sm text-center mb-0">
-                                <thead><tr><th class="text-start">Productos</th><th>Cant.</th><th>Subtotal</th><th>Pago?</th></tr></thead>
-                                <tbody>${itemsRows}</tbody>
-                                <tfoot class="table-light">
+                        <div class="table-responsive rounded-3 border">
+                            <table class="table table-hover text-center mb-0">
+                                <thead class="table-dark">
                                     <tr>
-                                        <td colspan="2" class="text-end fw-bold">Total Pendiente:</td>
-                                        <td colspan="2" class="text-start fw-bold text-danger ps-3">
+                                        <th class="text-start ps-3 py-3">Detalle del Producto</th>
+                                        <th class="py-3">Cant.</th>
+                                        <th class="py-3">Precio</th>
+                                        <th class="py-3">¿Pagó?</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${itemsRows}</tbody>
+                                <tfoot class="bg-white border-top-2">
+                                    <tr style="height: 60px;">
+                                        <td colspan="2" class="text-end align-middle fw-bold fs-6">SALDO PENDIENTE DE COBRO:</td>
+                                        <td colspan="2" class="text-start align-middle fw-bolder text-danger fs-5 ps-3">
                                             ${totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
                                         </td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
-                        <div class="d-flex gap-2 mt-3">
-                            <select class="form-select form-select-sm estado-select" ${bloqueado ? 'disabled' : ''}>
-                                <option value="Pendiente" ${pedido.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                                <option value="Enviado" ${pedido.estado === 'Enviado' ? 'selected' : ''}>Enviado</option>
-                                <option value="Entregado" ${pedido.estado === 'Entregado' ? 'selected' : ''}>Finalizado</option>
-                                <option value="Cancelado" ${pedido.estado === 'Cancelado' ? 'selected' : ''}>Anulado</option>
-                            </select>
-                            <button class="btn btn-primary btn-sm actualizar-btn px-3" ${bloqueado ? 'disabled' : ''}>Actualizar</button>
+                        <div class="d-flex justify-content-between align-items-center mt-4 bg-light p-3 rounded-3">
+                            <div class="d-flex align-items-center gap-2 flex-grow-1">
+                                <label class="fw-bold text-muted small text-uppercase">Cambiar Estado:</label>
+                                <select class="form-select estado-select shadow-none" style="max-width:200px;" ${bloqueado ? 'disabled' : ''}>
+                                    <option value="Pendiente" ${pedido.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                                    <option value="Enviado" ${pedido.estado === 'Enviado' ? 'selected' : ''}>Enviado</option>
+                                    <option value="Entregado" ${pedido.estado === 'Entregado' ? 'selected' : ''}>Finalizado</option>
+                                    <option value="Cancelado" ${pedido.estado === 'Cancelado' ? 'selected' : ''}>Anular</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary actualizar-btn px-4 py-2 rounded-pill fw-bold shadow-sm" ${bloqueado ? 'disabled' : ''}>
+                                <i class="bi bi-arrow-repeat me-2"></i>GUARDAR CAMBIOS
+                            </button>
                         </div>
                     </div>
                 </div>`;
 
-            card.querySelectorAll(".toggle-pago-item").forEach(icon => {
-                icon.onclick = async () => {
-                    if (bloqueado) return;
-                    const itemId = icon.dataset.itemId;
-                    const indice = parseInt(icon.dataset.indice);
-                    const eraPagado = icon.dataset.pagado === 'true';
-                    const ahoraPagado = !eraPagado;
-
-                    icon.dataset.pagado = ahoraPagado.toString();
-                    icon.className = `bi ${ahoraPagado ? 'bi-check-circle text-success' : 'bi-x-circle text-danger'} fs-4 toggle-pago-item`;
+            card.querySelectorAll(".toggle-pago-item-switch").forEach(sw => {
+                sw.onchange = async () => {
+                    if (bloqueado) {
+                        sw.checked = !sw.checked;
+                        return;
+                    }
+                    const itemId = sw.dataset.itemId;
+                    const indice = parseInt(sw.dataset.indice);
+                    const ahoraPagado = sw.checked;
 
                     estadosPagoGuardados[itemId] = ahoraPagado;
                     localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
-
                     actualizarCardLocalmente(card, pedido.id_pedido, pedido);
 
                     try {
@@ -330,50 +532,56 @@ async function cargarPedidos(isAutoRefresh = false) {
                             body: JSON.stringify({ indice, pagado: ahoraPagado })
                         });
                         if (!res.ok) throw new Error();
-                        mostrarAlerta("Cobro actualizado");
+                        mostrarAlerta("Registro de pago actualizado exitosamente");
                     } catch {
-                        icon.dataset.pagado = eraPagado.toString();
-                        icon.className = `bi ${eraPagado ? 'bi-check-circle text-success' : 'bi-x-circle text-danger'} fs-4 toggle-pago-item`;
+                        sw.checked = !ahoraPagado;
                         delete estadosPagoGuardados[itemId];
                         localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
                         actualizarCardLocalmente(card, pedido.id_pedido, pedido);
-                        mostrarAlerta("Error al guardar pago", true);
+                        mostrarAlerta("Error al sincronizar con el servidor", true);
                     }
                 };
             });
 
             card.querySelector(".btn-fijar").onclick = () => {
                 const id = card.dataset.id_real;
-                const nuevoFijado = !pedidosFijados.includes(id);
-                if (nuevoFijado) pedidosFijados.push(id);
+                const nuevoF = !pedidosFijados.includes(id);
+                if (nuevoF) pedidosFijados.push(id);
                 else pedidosFijados = pedidosFijados.filter(x => x !== id);
                 
                 localStorage.setItem("pedidosFijados", JSON.stringify(pedidosFijados));
-                card.dataset.fijado = nuevoFijado.toString();
-                const icon = card.querySelector(".btn-fijar");
-                icon.className = `bi ${nuevoFijado ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle'} fs-5 btn-fijar`;
-                card.classList.toggle('fijado', nuevoFijado);
-                card.classList.toggle('border-primary', nuevoFijado);
+                card.dataset.fijado = nuevoF.toString();
+                card.querySelector(".btn-fijar").className = `bi ${nuevoF ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle text-muted'} fs-4 btn-fijar`;
+                card.classList.toggle('fijado', nuevoF);
+                card.classList.toggle('border-primary', nuevoF);
                 aplicarFiltros();
             };
 
-            card.querySelector(".btn-eliminar-individual").onclick = async () => {
-                const res = await fetch("/eliminar_pedidos", { 
-                    method: "DELETE", 
-                    headers: { "Content-Type": "application/json" }, 
-                    body: JSON.stringify({ ids: [idStr] }) 
-                });
-                if (res.ok) {
-                    mostrarAlerta("Pedido eliminado");
-                    pedidosGlobal = pedidosGlobal.filter(c => c.dataset.id_real !== idStr);
-                    pedidosDatosRaw = pedidosDatosRaw.filter(p => String(p.id_pedido) !== idStr);
-                    aplicarFiltros();
-                }
+            card.querySelector(".btn-eliminar-individual").onclick = () => {
+                mostrarConfirmacionApp(
+                    "ELIMINAR REGISTRO", 
+                    "¿Está seguro de eliminar este registro permanentemente? Esta acción no se puede deshacer.",
+                    async () => {
+                        const res = await fetch("/eliminar_pedidos", { 
+                            method: "DELETE", 
+                            headers: { "Content-Type": "application/json" }, 
+                            body: JSON.stringify({ ids: [idStr] }) 
+                        });
+                        if (res.ok) {
+                            mostrarAlerta("El registro ha sido borrado del sistema");
+                            pedidosGlobal = pedidosGlobal.filter(c => c.dataset.id_real !== idStr);
+                            pedidosDatosRaw = pedidosDatosRaw.filter(p => String(p.id_pedido) !== idStr);
+                            aplicarFiltros();
+                        }
+                    }
+                );
             };
 
-            card.querySelector(".toggle-detalle").onclick = (e) => {
+            const toggleBtn = card.querySelector(".toggle-detalle");
+            toggleBtn.onclick = (e) => {
                 e.stopPropagation();
                 card.classList.toggle("card-collapsed");
+                toggleBtn.querySelector("i").style.transform = card.classList.contains("card-collapsed") ? "rotate(0deg)" : "rotate(180deg)";
             };
 
             card.querySelector(".actualizar-btn").onclick = async () => {
@@ -384,9 +592,11 @@ async function cargarPedidos(isAutoRefresh = false) {
                     body: JSON.stringify({ estado: nuevoEstado }) 
                 });
                 if (res.ok) {
-                    mostrarAlerta(`Estado: ${nuevoEstado}`);
+                    mostrarAlerta(`Estado actualizado a: ${nuevoEstado.toUpperCase()}`);
                     card.dataset.estado = nuevoEstado;
                     actualizarCardLocalmente(card, pedido.id_pedido, pedido, nuevoEstado);
+                } else {
+                    mostrarAlerta("Error al actualizar el estado", true);
                 }
             };
 
@@ -396,21 +606,23 @@ async function cargarPedidos(isAutoRefresh = false) {
         aplicarFiltros();
 
     } catch (e) {
-        console.error(e);
+        console.error("Fallo en carga de pedidos:", e);
     }
 }
 
 function actualizarCardLocalmente(card, idPedido, pedidoData, nuevoEstado = null) {
-    const icons = card.querySelectorAll(".toggle-pago-item");
-    const todosPagos = Array.from(icons).every(i => i.dataset.pagado === 'true');
+    const switches = card.querySelectorAll(".toggle-pago-item-switch");
+    const todosPagos = Array.from(switches).every(s => s.checked);
     card.dataset.todosPagos = todosPagos.toString();
 
     let totalPendiente = 0;
-    icons.forEach((icon, idx) => {
-        const pagado = icon.dataset.pagado === 'true';
-        const subtotalStr = card.querySelector(`tbody tr:nth-child(${idx+1}) td:nth-child(3)`).textContent.replace(/[^0-9]/g, '');
-        const subtotal = Number(subtotalStr) || 0;
-        if (!pagado) totalPendiente += subtotal;
+    switches.forEach((sw, idx) => {
+        if (!sw.checked) {
+            const rows = card.querySelectorAll("tbody tr");
+            const priceText = rows[idx].querySelector("td:nth-child(3)").textContent;
+            const price = Number(priceText.replace(/[^0-9]/g, '')) || 0;
+            totalPendiente += price;
+        }
     });
 
     card.querySelector("tfoot td:nth-child(2)").textContent = 
@@ -422,37 +634,33 @@ function actualizarCardLocalmente(card, idPedido, pedidoData, nuevoEstado = null
     const bloqueado = esTerminado || esAnulado;
 
     card.classList.remove('pedido-anulado', 'border-danger', 'pedido-finalizado', 'pedido-activo');
-    const clase = esAnulado ? "pedido-anulado border-danger" : (esTerminado ? "pedido-finalizado" : "pedido-activo");
-    card.classList.add(...clase.split(' '));
-
-    const status = card.querySelector(".status-info");
-    status.textContent = `${estado} | ${new Date(pedidoData.fecha_pedido).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}`;
-    status.classList.toggle('text-danger', esAnulado);
-    status.classList.toggle('fw-bold', esAnulado);
-    status.classList.toggle('text-muted', !esAnulado);
+    if (esAnulado) card.classList.add('pedido-anulado', 'border-danger');
+    else if (esTerminado) card.classList.add('pedido-finalizado');
+    else card.classList.add('pedido-activo');
 
     const select = card.querySelector(".estado-select");
     const btn = card.querySelector(".actualizar-btn");
-    select.disabled = bloqueado;
-    btn.disabled = bloqueado;
-
-    aplicarFiltros();
+    if (select) select.disabled = bloqueado;
+    if (btn) btn.disabled = bloqueado;
 }
 
 function generarNumeroFactura(idPedido, fecha) {
-    const year = new Date(fecha).getFullYear();
-    const key = `${year}-${idPedido}`;
+    const d = new Date(fecha);
+    const anio = d.getFullYear();
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const key = `${anio}-${idPedido}`;
     if (!contadorFacturasPorAnio[key]) {
-        contadorFacturasPorAnio[year] = (contadorFacturasPorAnio[year] || 0) + 1;
-        contadorFacturasPorAnio[key] = contadorFacturasPorAnio[year];
+        contadorFacturasPorAnio[anio] = (contadorFacturasPorAnio[anio] || 0) + 1;
+        contadorFacturasPorAnio[key] = contadorFacturasPorAnio[anio];
         localStorage.setItem("contadorFacturasPorAnio", JSON.stringify(contadorFacturasPorAnio));
     }
-    return `F-${year}-${contadorFacturasPorAnio[key]}`;
+    const correlativo = String(contadorFacturasPorAnio[key]).padStart(4, '0');
+    return `FAC-${anio}${mes}-${correlativo}`;
 }
 
 function aplicarFiltros() {
-    const anio = document.getElementById("selectAnio")?.value;
-    const numFact = document.getElementById("inputNumeroFactura")?.value.trim();
+    const anioFiltro = document.getElementById("selectAnio")?.value;
+    const numFactFiltro = document.getElementById("inputNumeroFactura")?.value.trim();
     const filtroEstado = document.getElementById("filtroEstado")?.value;
     const busqNombre = normalizarTexto(document.getElementById("inputBusquedaNombre")?.value);
     const busqCedula = normalizarTexto(document.getElementById("inputBusquedaCedula")?.value);
@@ -460,75 +668,80 @@ function aplicarFiltros() {
     let filtrados = pedidosGlobal.filter(card => {
         const id = card.dataset.id_real;
         const p = pedidosDatosRaw.find(x => String(x.id_pedido) === id);
-        const user = p?.usuarios || {};
+        if (!p) return false;
         
-        if (busqNombre && !normalizarTexto(`${user.nombre||''}${user.apellido||''}`).includes(busqNombre)) return false;
+        const user = p.usuarios || {};
+        const nombreCompleto = normalizarTexto(`${user.nombre||''}${user.apellido||''}`);
+        
+        if (busqNombre && !nombreCompleto.includes(busqNombre)) return false;
         if (busqCedula && !normalizarTexto(user.cedula).includes(busqCedula)) return false;
 
-        if (numFact && card.dataset.factura !== normalizarTexto(`f-${anio}-${numFact}`)) return false;
+        if (numFactFiltro) {
+            const factCard = card.dataset.factura;
+            if (!factCard.includes(numFactFiltro.toLowerCase())) return false;
+        }
+        
+        const fechaObj = new Date(card.dataset.fecha_iso);
+        if (anioFiltro && anioFiltro !== "Todos" && fechaObj.getFullYear().toString() !== anioFiltro) return false;
 
         const est = card.dataset.estado;
-        const pagos = card.dataset.todosPagos === "true";
-        const verif = pedidosCanceladosVerificados.includes(id);
+        const pagosOk = card.dataset.todosPagos === "true";
+        const verificado = pedidosCanceladosVerificados.includes(id);
 
-        if (filtroEstado === "FiltroPagoPendiente") return !pagos && est !== "Cancelado";
+        if (filtroEstado === "FiltroPagoPendiente") return !pagosOk && est !== "Cancelado";
         if (filtroEstado === "Pendiente") return est === "Pendiente";
-        if (filtroEstado === "Entregado") return est === "Entregado" && pagos;
+        if (filtroEstado === "Entregado") return est === "Entregado" && pagosOk;
         if (filtroEstado === "Cancelado") return est === "Cancelado";
-        if (est === "Cancelado" && verif && filtroEstado === "Todos") return false;
+        
+        if (est === "Cancelado" && verificado && filtroEstado === "Todos") return false;
 
         return true;
     });
 
-    const grupos = { pendientes: [], finalizados: [], anulados: [] };
+    const grupos = { urgentes: [], normales: [], finalizados: [], anulados: [] };
 
     filtrados.forEach(card => {
         const est = card.dataset.estado;
         const pagos = card.dataset.todosPagos === "true";
+        const fijado = card.dataset.fijado === "true";
+
         if (est === "Cancelado") grupos.anulados.push(card);
         else if (est === "Entregado" && pagos) grupos.finalizados.push(card);
-        else grupos.pendientes.push(card);
+        else if (fijado) grupos.urgentes.push(card);
+        else grupos.normales.push(card);
     });
 
-    const ordenadosP = grupos.pendientes.sort(ordenarPorFechaYFijado);
-    const ordenadosF = grupos.finalizados.sort(ordenarPorFechaYFijado);
-    const ordenadosA = grupos.anulados.sort(ordenarPorFechaYFijado);
+    const sortFn = (a, b) => new Date(b.dataset.fecha_iso) - new Date(a.dataset.fecha_iso);
 
     const listaFinal = [];
 
-    if (ordenadosP.length) {
-        listaFinal.push(crearSeparador("PEDIDOS PENDIENTES / ACTIVOS", "bg-primary"), ...ordenadosP);
+    if (grupos.urgentes.length) {
+        listaFinal.push(crearSeparador("PEDIDOS PRIORITARIOS / FIJADOS", "bg-primary"), ...grupos.urgentes.sort(sortFn));
     }
-    if (ordenadosF.length) {
-        listaFinal.push(crearSeparador("PEDIDOS FINALIZADOS", "bg-success"), ...ordenadosF);
+    if (grupos.normales.length) {
+        listaFinal.push(crearSeparador("PEDIDOS EN PROCESO", "bg-info text-dark"), ...grupos.normales.sort(sortFn));
     }
-    if (ordenadosA.length) {
-        listaFinal.push(crearSeparador("PEDIDOS ANULADOS", "bg-danger"), ...ordenadosA);
+    if (grupos.finalizados.length) {
+        listaFinal.push(crearSeparador("HISTORIAL DE VENTAS EXITOSAS", "bg-success"), ...grupos.finalizados.sort(sortFn));
+    }
+    if (grupos.anulados.length) {
+        listaFinal.push(crearSeparador("PEDIDOS DESCARTADOS / ANULADOS", "bg-danger"), ...grupos.anulados.sort(sortFn));
     }
 
     pedidosFiltrados = listaFinal;
     renderizarPaginacion(pedidosFiltrados);
 }
 
-
-
-function ordenarPorFechaYFijado(a, b) {
-    const fijA = a.dataset.fijado === "true" ? 1 : 0;
-    const fijB = b.dataset.fijado === "true" ? 1 : 0;
-    if (fijA !== fijB) return fijB - fijA;
-    return new Date(b.dataset.fecha_iso) - new Date(a.dataset.fecha_iso);
-}
-
 function crearSeparador(texto, claseColor) {
     const div = document.createElement("div");
-    div.className = "col-12 my-3";
+    div.className = "col-12 my-4";
     div.innerHTML = `
-        <div class="d-flex align-items-center">
-            <div class="flex-grow-1 border-top border-2"></div>
-            <span class="badge ${claseColor} mx-3 py-2 px-4 rounded-pill shadow-sm" style="font-size: 0.85rem; letter-spacing: 1px;">
-                <i class="bi bi-funnel-fill me-2"></i>${texto}
+        <div class="d-flex align-items-center opacity-75">
+            <div class="flex-grow-1 border-top border-2 border-secondary"></div>
+            <span class="badge ${claseColor} mx-3 py-2 px-4 rounded-pill shadow-sm text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 2px;">
+                ${texto}
             </span>
-            <div class="flex-grow-1 border-top border-2"></div>
+            <div class="flex-grow-1 border-top border-2 border-secondary"></div>
         </div>
     `;
     div.dataset.esSeparador = "true";
@@ -539,8 +752,12 @@ function inicializarSelectAnios() {
     const s = document.getElementById("selectAnio");
     const r = document.getElementById("repoAnio");
     if (!s || !r) return;
+    
+    s.innerHTML = '<option value="Todos">Todos los años</option>';
+    r.innerHTML = '';
+    
     const actual = new Date().getFullYear();
-    for (let i = actual; i >= actual - 5; i--) {
+    for (let i = actual; i >= actual - 4; i--) {
         const opt = document.createElement("option");
         opt.value = i;
         opt.textContent = i;
@@ -551,122 +768,156 @@ function inicializarSelectAnios() {
 
 async function generarReporteConfigurado() {
     const { jsPDF } = window.jspdf;
-    const estado = document.getElementById("repoEstado").value;
-    const anio = document.getElementById("repoAnio").value;
-    const mes = document.getElementById("repoMes").value;
-    const admin = document.getElementById("adminName").value;
+    const config = {
+        estado: document.getElementById("repoEstado").value,
+        anio: document.getElementById("repoAnio").value,
+        mes: document.getElementById("repoMes").value,
+        admin: document.getElementById("adminName")?.value || "Administrador"
+    };
     
     let lista = pedidosDatosRaw.filter(p => {
         const f = new Date(p.fecha_pedido);
-        if (f.getFullYear().toString() !== anio) return false;
-        if (mes !== "Todos" && f.getMonth().toString() !== mes) return false;
-        if (estado !== "Todos" && p.estado !== estado) return false;
+        if (f.getFullYear().toString() !== config.anio) return false;
+        if (config.mes !== "Todos" && f.getMonth().toString() !== config.mes) return false;
+        if (config.estado !== "Todos" && p.estado !== config.estado) return false;
         return true;
     });
 
-    if (!lista.length) return mostrarAlerta("No hay pedidos con esos criterios", true);
-
-    lista.sort((a, b) => new Date(b.fecha_pedido) - new Date(a.fecha_pedido));
+    if (!lista.length) return mostrarAlerta("No existen datos para los filtros seleccionados", true);
 
     const doc = new jsPDF();
+    const colorPrimario = [211, 84, 0]; // Naranja Corporativo
+    const colorOscuro = [44, 62, 80];   // Gris Oxford para textos serios
+
     try {
-        const img = new Image(); img.src = '/static/uploads/logo.png';
-        await new Promise(r => img.onload = r);
-        const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
-        c.getContext('2d').drawImage(img, 0, 0);
-        doc.addImage(c.toDataURL('image/png'), 'PNG', 15, 10, 20, 20);
-    } catch {}
+        const img = new Image(); 
+        img.src = '/static/uploads/logo.png';
+        await new Promise(r => { img.onload = r; img.onerror = r; });
+        if (img.complete && img.naturalWidth !== 0) {
+            const c = document.createElement('canvas'); 
+            c.width = img.width; c.height = img.height;
+            c.getContext('2d').drawImage(img, 0, 0);
+            doc.addImage(c.toDataURL('image/png'), 'PNG', 15, 12, 22, 22);
+        }
+    } catch (e) { console.warn("Logo no disponible"); }
 
-    const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-    const subtMes = mes === "Todos" ? "Anual" : meses[parseInt(mes)];
+    doc.setFontSize(20);
+    doc.setTextColor(colorPrimario[0], colorPrimario[1], colorPrimario[2]);
+    doc.setFont(undefined, 'bold');
+    doc.text("D'ANTOJITOS", 42, 20);
+    
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.setFont(undefined, 'normal');
+    doc.text("SISTEMA DE GESTIÓN ADMINISTRATIVA Y VENTAS", 42, 26);
+    doc.text(`RESPONSABLE: ${config.admin.toUpperCase()}`, 42, 31);
+    
+    doc.setDrawColor(200);
+    doc.line(15, 38, 195, 38);
 
-    doc.setFontSize(18); doc.text("Reporte de Ventas D'Antojitos ©", 40, 20);
-    doc.setFontSize(10); doc.text(`Periodo: ${subtMes} ${anio} | Estado: ${estado.toUpperCase()}`, 40, 26);
-    doc.text(`Fecha Emisión: ${new Date().toLocaleString()}`, 140, 20);
+    let totalVendido = 0;
+    const stats = { Pendiente: 0, Enviado: 0, Entregado: 0, Cancelado: 0 };
 
-    let total = 0;
-    const stats = { Pendiente: 0, Entregado: 0, Cancelado: 0 };
-
-    const body = lista.map(p => {
-        const sub = (p.pedido_detalle || []).reduce((a, b) => a + b.subtotal, 0);
-        total += sub;
+    const bodyTable = lista.map(p => {
+        const sub = (p.pedido_detalle || []).reduce((acc, item) => acc + (item.subtotal || 0), 0);
+        totalVendido += sub;
         if (stats[p.estado] !== undefined) stats[p.estado]++;
+        
         return [
             generarNumeroFactura(p.id_pedido, p.fecha_pedido),
-            new Date(p.fecha_pedido).toLocaleDateString(),
-            `${p.usuarios?.nombre || ''} ${p.usuarios?.apellido || ''}`,
+            new Date(p.fecha_pedido).toLocaleDateString('es-CO'),
+            `${p.usuarios?.nombre || ''} ${p.usuarios?.apellido || ''}`.substring(0, 25),
             p.estado.toUpperCase(),
-            sub.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })
+            sub.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
         ];
     });
 
-    body.push([
-        { content: 'TOTAL ACUMULADO', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } },
-        { content: total.toLocaleString('es-CO', { style: 'currency', currency: 'COP' }), styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }
-    ]);
-
     doc.autoTable({
-        startY: 35,
-        head: [['Factura', 'Fecha', 'Cliente', 'Estado', 'Subtotal']],
-        body,
-        theme: 'grid',
-        headStyles: { fillColor: [33, 37, 41] }
+        startY: 45,
+        head: [['Nº FACTURA', 'FECHA', 'CLIENTE', 'ESTADO', 'TOTAL']],
+        body: bodyTable,
+        theme: 'striped',
+        headStyles: { fillColor: colorOscuro, textColor: 255, fontSize: 9, halign: 'center' },
+        columnStyles: { 0: { halign: 'center' }, 1: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'right' } },
+        styles: { fontSize: 8, cellPadding: 3 }
     });
 
-    let y = doc.lastAutoTable.finalY + 15;
-    if (y > 220) { doc.addPage(); y = 20; }
+    let finalY = doc.lastAutoTable.finalY + 15;
+    if (finalY > 210) { doc.addPage(); finalY = 25; }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 300;
+    const ctx = canvas.getContext('2d');
     
-    const centerX = 105, centerY = y + 40, radius = 25;
-    doc.setFontSize(14); doc.text("Resumen Estadístico de Pedidos", 105, y, { align: "center" });
+    const dataStats = [
+        { label: "PENDIENTE", val: stats.Pendiente, color: "#d4ac0d" },
+        { label: "ENVIADO", val: stats.Enviado, color: "#2e86c1" },
+        { label: "ENTREGADO", val: stats.Entregado, color: "#239b56" },
+        { label: "ANULADO", val: stats.Cancelado, color: "#b03a2e" }
+    ].filter(s => s.val > 0);
 
-    if (Object.values(stats).reduce((a,b)=>a+b) > 0) {
-        let angle = 0;
-        Object.entries(stats).forEach(([label, count]) => {
-            if (count > 0) {
-                const slice = (count / Object.values(stats).reduce((a,b)=>a+b)) * 2 * Math.PI;
-                doc.setFillColor(...(label === "Pendiente" ? [255,193,7] : label === "Entregado" ? [40,167,69] : [220,53,69]));
-                
-                let points = [{x:centerX,y:centerY}];
-                for (let i = 0; i <= 40; i++) {
-                    const a = angle + (i/40)*slice;
-                    points.push({x: centerX + radius * Math.cos(a), y: centerY + radius * Math.sin(a)});
-                }
-                doc.lines(points.map((p,i)=> i===0 ? [p.x,p.y] : [p.x-points[i-1].x, p.y-points[i-1].y]).slice(1), points[0].x, points[0].y, [1,1], 'F');
+    const totalPedidos = dataStats.reduce((a, b) => a + b.val, 0);
+    let startAngle = -Math.PI / 2;
 
-                const mid = angle + slice/2;
-                const tx = centerX + (radius+8)*Math.cos(mid);
-                const ty = centerY + (radius+8)*Math.sin(mid);
-                doc.setFontSize(8); doc.setTextColor(60);
-                doc.text(`${(count/Object.values(stats).reduce((a,b)=>a+b)*100).toFixed(1)}%`, tx, ty, { align: tx > centerX ? "left" : "right" });
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 600, 300);
 
-                angle += slice;
-            }
-        });
+    dataStats.forEach((slice) => {
+        const sliceAngle = (slice.val / totalPedidos) * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(150, 150);
+        ctx.arc(150, 150, 110, startAngle, startAngle + sliceAngle);
+        ctx.closePath();
+        ctx.fillStyle = slice.color;
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        startAngle += sliceAngle;
+    });
 
-        let ly = centerY + radius + 15, lx = 65;
-        Object.entries({Pendiente:[255,193,7], Entregado:[40,167,69], Cancelado:[220,53,69]}).forEach(([l,c]) => {
-            doc.setFillColor(...c); doc.rect(lx, ly, 3, 3, 'F');
-            doc.setFontSize(8); doc.setTextColor(0);
-            doc.text(`${l}: ${stats[l]}`, lx+5, ly+2.5);
-            lx += 30;
-        });
-    } else {
-        doc.setFontSize(10); doc.text("No hay datos para representar", 105, y+20, { align: "center" });
+    ctx.font = "bold 14px Arial";
+    dataStats.forEach((slice, i) => {
+        ctx.fillStyle = slice.color;
+        ctx.fillRect(320, 80 + (i * 35), 15, 15);
+        ctx.fillStyle = "#2c3e50";
+        const porc = ((slice.val/totalPedidos)*100).toFixed(1);
+        ctx.fillText(`${slice.label}: ${slice.val} Uds. (${porc}%)`, 345, 93 + (i * 35));
+    });
+
+    doc.setFontSize(11);
+    doc.setTextColor(colorOscuro[0], colorOscuro[1], colorOscuro[2]);
+    doc.text("ANÁLISIS DE RENDIMIENTO OPERATIVO", 15, finalY);
+    doc.addImage(canvas.toDataURL('image/png'), 'PNG', 15, finalY + 5, 110, 55);
+
+    const resX = 135;
+    doc.setDrawColor(colorPrimario[0], colorPrimario[1], colorPrimario[2]);
+    doc.setLineWidth(0.5);
+    doc.line(resX, finalY + 15, resX + 55, finalY + 15);
+    
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(10);
+    doc.text("RESUMEN CONTABLE", resX, finalY + 22);
+    doc.setFontSize(13);
+    doc.setTextColor(colorPrimario[0], colorPrimario[1], colorPrimario[2]);
+    doc.text(totalVendido.toLocaleString('es-CO', { style: 'currency', currency: 'COP' }), resX, finalY + 32);
+
+    const paginas = doc.internal.getNumberOfPages();
+    for(let i = 1; i <= paginas; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7);
+        doc.setTextColor(150);
+        doc.text(`Documento de carácter oficial - Página ${i} de ${paginas}`, 105, 290, { align: "center" });
     }
 
-    const pg = doc.internal.getNumberOfPages();
-    doc.setPage(pg);
-    doc.setFontSize(9); doc.setTextColor(100);
-    doc.text(`Generado por Administrador: ${admin}`, 15, 285);
-    doc.text(`D'Antojitos © - Página ${pg}`, 170, 285);
-
-    doc.save(`reporte_dantojitos_${new Date().toISOString().split('T')[0]}.pdf`);
-    
-    bootstrap.Modal.getInstance(document.getElementById('modalConfigReporte'))?.hide();
-    mostrarAlerta("Reporte generado con éxito");
+    doc.save(`Reporte_Oficial_${config.anio}_${config.mes}.pdf`);
+    mostrarAlerta("Reporte Corporativo generado correctamente");
 }
 
-iniciarModuloPedidos();
+window.onload = iniciarModuloPedidos;
+
+document.addEventListener("DOMContentLoaded", iniciarModuloPedidos);
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

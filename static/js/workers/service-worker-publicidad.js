@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dantojitos-admin-v2';
+const CACHE_NAME = 'dantojitos-admin-v3';
 const STATIC_FILES = [
     '/',
     '/publicidad_page',
@@ -36,15 +36,11 @@ self.addEventListener('fetch', (e) => {
     if (e.request.method !== 'GET') return;
 
     const url = new URL(e.request.url);
-    const isNavigation = e.request.mode === 'navigate' || url.pathname.includes('/publicidad_page');
+    const isNavigation = e.request.mode === 'navigate' || url.pathname === '/publicidad_page';
     const isApi = url.pathname.includes('/api/');
-    const isStaticAsset = url.pathname.includes('/static/') || 
-                          url.pathname.includes('/uploads/') || 
-                          e.request.destination === 'font' || 
-                          e.request.destination === 'script' || 
-                          e.request.destination === 'style';
+    const isImage = e.request.destination === 'image' || url.hostname.includes('cloudinary.com');
 
-    if (isNavigation || isApi) {
+    if (isApi || isNavigation) {
         e.respondWith(
             fetch(e.request)
                 .then((res) => {
@@ -60,25 +56,35 @@ self.addEventListener('fetch', (e) => {
                     });
                 })
         );
-    } else if (isStaticAsset) {
-        e.respondWith(
-            caches.open(CACHE_NAME).then((cache) => {
-                return cache.match(e.request).then((cachedResponse) => {
-                    const fetchPromise = fetch(e.request).then((networkResponse) => {
-                        if (networkResponse.ok) {
-                            cache.put(e.request, networkResponse.clone());
-                        }
-                        return networkResponse;
-                    });
-                    return cachedResponse || fetchPromise;
-                });
-            })
-        );
-    } else {
-        e.respondWith(
-            caches.match(e.request).then((res) => {
-                return res || fetch(e.request);
-            })
-        );
+        return;
     }
+
+    if (isImage) {
+        e.respondWith(
+            caches.match(e.request).then((cached) => {
+                const fetchPromise = fetch(e.request).then((res) => {
+                    if (res.ok) {
+                        const clone = res.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+                    }
+                    return res;
+                });
+                return cached || fetchPromise;
+            })
+        );
+        return;
+    }
+
+    e.respondWith(
+        caches.match(e.request).then((res) => {
+            const fetchPromise = fetch(e.request).then((networkRes) => {
+                if (networkRes.ok) {
+                    const clone = networkRes.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+                }
+                return networkRes;
+            });
+            return res || fetchPromise;
+        })
+    );
 });

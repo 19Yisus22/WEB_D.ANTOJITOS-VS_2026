@@ -7,10 +7,6 @@
                 <img src="/static/uploads/logo.ico" alt="Logo" width="55" height="auto" class="logo-img">
                 <span class="ms-2">D'Antojitos©</span>
             </a>
-            
-            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto nav-gap-custom">
@@ -40,43 +36,54 @@
                         </a>
                     </li>
                 </ul>
+            </div>
 
-                <div class="navbar-nav ms-auto ms-lg-0">
-                    {% if session.get('user') %}
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center profile-trigger" href="#" id="perfilDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="profile-img-container">
-                                <img src="{{ session.user.imagen_url or url_for('static', filename='uploads/default_icon_profile.png') }}" alt="Perfil">
-                            </div>
-                            <div class="d-flex flex-column ms-2 d-none d-sm-flex">
-                                <span class="profile-name">{{ session.user.nombre }}</span>
-                                <span class="profile-status">Online</span>
-                            </div>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 animate-dropdown">
-                            <li><hr class="dropdown-divider"></li>
-                            <li class="dropdown-header text-uppercase">Menú Clientes</li>
-                            <li><a class="dropdown-item" href="/mi_perfil"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
-                            <li><a class="dropdown-item" href="/gestionar_facturas_page"><i class="bi bi-wallet2 me-2"></i>Gestión de Facturas</a></li>
-                            {% if session.get('rol') == 'admin' %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li class="dropdown-header text-uppercase">Menú Administrativo</li>
-                            <li><a class="dropdown-item" href="/gestionar_productos_page"><i class="bi bi-box-seam me-2"></i> Gestión de Productos</a></li>
-                            <li><a class="dropdown-item" href="/pedidos_page"><i class="bi bi-clipboard-check me-2"></i> Gestión de Pedidos</a></li>
-                            <li><a class="dropdown-item" href="/publicidad_page"><i class="bi bi-megaphone me-2"></i> Gestión de Publicidad</a></li>
-                            <li><a class="dropdown-item" href="/facturacion_page"><i class="bi bi-wallet2 me-2"></i> Zona de Facturación</a></li>
-                            <li><a class="dropdown-item" href="/manual_page"><i class="bi bi-info-circle me-2"></i> Manual de Admin</a></li>
-                            {% endif %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger logout-link" href="/logout" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
-                        </ul>
-                    </div>
-                    {% else %}
-                    <a class="nav-link nav-icon-link login-btn-custom" href="/login">
-                        <i class="bi bi-box-arrow-in-right"></i>
-                        <span class="nav-label">Ingresar</span>
+            <div class="ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center profile-trigger" href="#" id="perfilDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="profile-img-container">
+                            <img src="{{ session.user.imagen_url or url_for('static', filename='uploads/default_icon_profile.png') if session.get('user') else url_for('static', filename='uploads/default_icon_profile.png') }}" alt="Perfil">
+                        </div>
                     </a>
-                    {% endif %}
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 animate-dropdown mt-2">
+                        {% if session.get('user') %}
+                        <li class="px-3 py-2">
+                            <span class="profile-name d-block">{{ session.user.nombre }}</span>
+                            <span class="profile-status">Online</span>
+                        </li>
+                        {% else %}
+                        <li><a class="dropdown-item fw-bold text-primary" href="/login"><i class="bi bi-box-arrow-in-right me-2"></i>Ingresar</a></li>
+                        {% endif %}
+                        
+                        <div class="d-lg-none">
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-header text-uppercase">Navegación</li>
+                            <li><a class="dropdown-item" href="/inicio"><i class="bi bi-house-door me-2"></i>Home</a></li>
+                            <li><a class="dropdown-item" href="/catalogo_page"><i class="bi bi-shop me-2"></i>Catálogo</a></li>
+                            <li><a class="dropdown-item" href="/carrito_page"><i class="bi bi-cart3 me-2"></i>Carrito</a></li>
+                            <li><a class="dropdown-item" href="/comentarios_page"><i class="bi bi-chat-dots me-2"></i>Sugerencias</a></li>
+                        </div>
+
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-header text-uppercase">Mi Cuenta</li>
+                        <li><a class="dropdown-item" href="/mi_perfil"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
+                        <li><a class="dropdown-item" href="/gestionar_facturas_page"><i class="bi bi-wallet2 me-2"></i>Gestión de Facturas</a></li>
+                        
+                        {% if session.get('rol') == 'admin' %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-header text-uppercase">Administración</li>
+                        <li><a class="dropdown-item" href="/gestionar_productos_page"><i class="bi bi-box-seam me-2"></i> Gestión de Productos</a></li>
+                        <li><a class="dropdown-item" href="/pedidos_page"><i class="bi bi-clipboard-check me-2"></i> Gestión de Pedidos</a></li>
+                        <li><a class="dropdown-item" href="/publicidad_page"><i class="bi bi-megaphone me-2"></i> Gestión de Publicidad</a></li>
+                        <li><a class="dropdown-item" href="/facturacion_page"><i class="bi bi-wallet2 me-2"></i> Zona de Facturación</a></li>
+                        <li><a class="dropdown-item" href="/manual_page"><i class="bi bi-info-circle me-2"></i> Manual Admin</a></li>
+                        {% endif %}
+                        
+                        {% if session.get('user') %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger logout-link" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
+                        {% endif %}
+                    </ul>
                 </div>
             </div>
         </div>

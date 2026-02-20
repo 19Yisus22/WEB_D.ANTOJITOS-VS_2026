@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dantojitos-inicio-v2';
+const CACHE_NAME = 'dantojitos-inicio-v3';
 const STATIC_ASSETS = [
     '/',
     '/static/css/style_inicio.css',
@@ -31,15 +31,13 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
-
     if (event.request.method !== 'GET') return;
 
+    const url = new URL(event.request.url);
+    const isApiCall = url.pathname.startsWith('/api/') || url.pathname.includes('obtener_catalogo');
     const isStaticAsset = STATIC_ASSETS.some(asset => 
-        event.request.url.includes(asset) || url.pathname === asset
+        url.pathname === asset || event.request.url.includes(asset)
     );
-
-    const isApiCall = url.pathname.startsWith('/api/');
 
     if (isApiCall) {
         event.respondWith(
@@ -53,9 +51,7 @@ self.addEventListener('fetch', event => {
                     }
                     return networkResponse;
                 })
-                .catch(() => {
-                    return caches.match(event.request);
-                })
+                .catch(() => caches.match(event.request))
         );
         return;
     }
@@ -79,7 +75,8 @@ self.addEventListener('fetch', event => {
     }
 
     event.respondWith(
-        fetch(event.request)
-            .catch(() => caches.match(event.request) || caches.match('/'))
+        fetch(event.request).catch(() => {
+            return caches.match(event.request) || caches.match('/');
+        })
     );
 });

@@ -4,30 +4,41 @@ let paginaActual = 1;
 const itemsPorPagina = 10;
 let facturasLocalesCache = [];
 let metodosPagoCache = [];
+let ultimaSincronizacion = new Date();
+
+const FormateadorCosto = new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0
+});
 
 function showConfirmToast(msg, callback) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
 
     const t = document.createElement('div');
-    t.className = 'custom-toast bg-dark text-white p-3 shadow-lg mb-2';
+    t.className = 'custom-toast bg-dark text-white p-4 shadow-lg mb-3';
     t.style.cssText = `
-        border-left: 4px solid #ffc107;
-        min-width: 300px;
-        border-radius: 8px;
+        border-left: 5px solid #ffc107;
+        min-width: 350px;
+        border-radius: 12px;
         pointer-events: auto !important;
         opacity: 1;
         display: block;
+        animation: slideInRight 0.4s ease-out;
     `;
 
     t.innerHTML = `
-        <div class="mb-3">
-            <i class="bi bi-exclamation-triangle text-warning me-2"></i>
-            <strong>${msg}</strong>
+        <div class="mb-3 d-flex align-items-start">
+            <i class="bi bi-exclamation-triangle-fill text-warning me-3 fs-4"></i>
+            <div>
+                <strong class="d-block mb-1">Confirmación Requerida</strong>
+                <span class="small opacity-75">${msg}</span>
+            </div>
         </div>
         <div class="d-flex gap-2 justify-content-end">
-            <button class="btn btn-sm btn-outline-light border-0 btn-cancelar-confirm">Cancelar</button>
-            <button class="btn btn-sm btn-warning fw-bold px-3 btn-aceptar-confirm">Confirmar</button>
+            <button class="btn btn-sm btn-outline-light border-0 px-3 btn-cancelar-confirm">Descartar</button>
+            <button class="btn btn-sm btn-warning fw-bold px-4 rounded-pill btn-aceptar-confirm">Confirmar Acción</button>
         </div>
     `;
 
@@ -36,6 +47,7 @@ function showConfirmToast(msg, callback) {
     t.querySelector('.btn-cancelar-confirm').onclick = (e) => {
         e.stopPropagation();
         t.style.opacity = '0';
+        t.style.transform = 'translateX(20px)';
         setTimeout(() => t.remove(), 400);
     };
 
@@ -57,13 +69,14 @@ function showMessage(msg, isError = false) {
         min-width: 300px;
         border-radius: 8px;
         pointer-events: auto !important;
+        animation: fadeIn 0.3s ease;
     `;
 
     toast.innerHTML = `
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
-                <i class="bi ${isError ? 'bi-x-circle text-danger' : 'bi-check-circle text-success'} me-3 fs-5"></i>
-                <span>${msg}</span>
+                <i class="bi ${isError ? 'bi-x-circle-fill text-danger' : 'bi-check-circle-fill text-success'} me-3 fs-5"></i>
+                <span class="small fw-medium">${msg}</span>
             </div>
             <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 0.7rem;"></i>
         </div>
@@ -81,7 +94,7 @@ function showMessage(msg, isError = false) {
         remove();
     };
 
-    setTimeout(remove, 3500);
+    setTimeout(remove, 4000);
 }
 
 function playNotificationSound() {
@@ -100,7 +113,9 @@ function playNotificationSound() {
         gainNode.connect(audioCtx.destination);
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.2);
-    } catch (e) {}
+    } catch (e) {
+        console.warn("Audio bloqueado");
+    }
 }
 
 function lanzarNotificacionMultidispositivo(fObj, estado) {
@@ -139,26 +154,32 @@ function lanzarNotificacionMultidispositivo(fObj, estado) {
     const t = document.createElement("div");
     t.className = `custom-toast bg-dark text-white border-0 shadow-lg mb-2`;
     t.style.borderLeft = `5px solid var(--bs-${configuracion.color})`;
-    t.style.minWidth = "300px";
-    t.style.transition = "opacity 0.4s ease";
+    t.style.minWidth = "320px";
+    t.style.transition = "all 0.4s ease";
     t.innerHTML = `
-        <div class="d-flex align-items-center p-2">
-            <i class="bi ${configuracion.icono} text-${configuracion.color} fs-4 me-3"></i>
-            <div class="flex-grow-1">
-                <strong style="font-size: 0.85rem;" class="d-block">${configuracion.titulo}</strong>
-                <small class="text-white-50">Factura ${facturaFormateada}: </small>
-                <span class="badge bg-${configuracion.color} text-dark" style="font-size: 0.65rem;">${estado.toUpperCase()}</span>
+        <div class="d-flex align-items-center p-3">
+            <div class="position-relative me-3">
+                <i class="bi ${configuracion.icono} text-${configuracion.color} fs-3"></i>
+                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-${configuracion.color} border border-light rounded-circle"></span>
             </div>
-            <i class="bi bi-x-lg ms-2 btn-close-toast" style="cursor:pointer; font-size: 0.7rem;"></i>
+            <div class="flex-grow-1">
+                <strong style="font-size: 0.9rem;" class="d-block text-uppercase">${configuracion.titulo}</strong>
+                <div class="d-flex align-items-center gap-1 mt-1">
+                    <small class="text-white-50">Factura ${facturaFormateada}</small>
+                    <span class="badge bg-${configuracion.color} text-dark ms-auto" style="font-size: 0.6rem;">${estado.toUpperCase()}</span>
+                </div>
+            </div>
+            <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 0.7rem;"></i>
         </div>`;
 
     cont.appendChild(t);
     const remove = () => {
         t.style.opacity = '0';
+        t.style.transform = 'translateY(-10px)';
         setTimeout(() => t.remove(), 400);
     };
     t.querySelector('.btn-close-toast').onclick = remove;
-    setTimeout(remove, 7000);
+    setTimeout(remove, 8000);
 }
 
 async function monitorearCambiosFacturas() {
@@ -173,23 +194,35 @@ async function monitorearCambiosFacturas() {
         const facturasServidor = await res.json();
         const ocultas = JSON.parse(localStorage.getItem('facturas_ocultas') || "[]");
 
+        let huboCambio = false;
+
         if (facturasLocalesCache.length > 0) {
             facturasServidor.forEach(fServ => {
                 const fLocal = facturasLocalesCache.find(l => l.numero_factura === fServ.numero_factura);
                 if (fLocal && fLocal.estado !== fServ.estado) {
                     lanzarNotificacionMultidispositivo(fServ, fServ.estado);
+                    huboCambio = true;
                 }
             });
+            
+            if (facturasServidor.length !== facturasLocalesCache.length) {
+                huboCambio = true;
+            }
+        } else {
+            huboCambio = true;
         }
 
         facturasLocalesCache = facturasServidor;
         facturasActuales = facturasServidor
-            .filter(f => !ocultas.includes(f.numero_factura))
-            .sort((a, b) => new Date(b.fecha_emision) - new Date(a.fecha_emision));
+            .sort((a, b) => new Date(b.fecha_emision || b.created_at) - new Date(a.fecha_emision || a.created_at));
 
-        mostrarFacturasBuscadas();
+        if (huboCambio) {
+            mostrarFacturasBuscadas();
+        }
+        
+        ultimaSincronizacion = new Date();
     } catch (e) {
-        console.error("Error en sincronización:", e);
+        console.error("Error sincronización:", e);
     }
 }
 
@@ -201,7 +234,7 @@ async function cargarMetodosPago() {
             metodosPagoCache = data.metodos || [];
         }
     } catch (e) {
-        console.error("Error cargando métodos de pago:", e);
+        console.error("Error carga pagos:", e);
     }
 }
 
@@ -212,43 +245,42 @@ function abrirModalPago(facturaNum, total) {
 
     if (!metodosPagoCache || metodosPagoCache.length === 0) {
         modalBody.innerHTML = `
-            <div class="text-center p-5">
-                <i class="bi bi-wallet2 fs-1 text-muted mb-3 d-block"></i>
-                <h5 class="text-secondary">Sin métodos registrados</h5>
-                <p class="small text-muted">No hay cuentas de pago disponibles en este momento.</p>
+            <div class="text-center py-5">
+                <div class="mb-3">
+                    <i class="bi bi-bank2 fs-1 text-muted opacity-25"></i>
+                </div>
+                <h5 class="text-secondary fw-bold">Canales de pago no disponibles</h5>
+                <p class="small text-muted mx-auto" style="max-width: 250px;">Estamos actualizando nuestras cuentas.</p>
             </div>`;
     } else {
         modalBody.innerHTML = `
-            <div class="text-center mb-4 border-bottom pb-3">
-                <p class="text-muted mb-1 small text-uppercase fw-bold">Referencia de Pago</p>
-                <h4 class="fw-bold text-dark mb-1">${facturaNum}</h4>
-                <div class="fs-3 fw-bold text-primary">${total}</div>
+            <div class="text-center mb-4 bg-light p-3 rounded-4">
+                <span class="badge bg-primary px-3 mb-2 rounded-pill">REFERENCIA DE PAGO</span>
+                <h4 class="fw-bold text-dark mb-1 font-monospace">${facturaNum}</h4>
+                <div class="fs-2 fw-bold text-primary mt-2">${total}</div>
             </div>
             <div class="row g-4 justify-content-center">
                 ${metodosPagoCache.map(m => `
                     <div class="col-12 col-md-6">
-                        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                            <div class="card-header bg-dark text-white text-center py-2 border-0">
-                                <span class="fw-bold small text-uppercase">${m.entidad} - ${m.tipo_cuenta}</span>
+                        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-metodo-pago">
+                            <div class="card-header bg-dark text-white text-center py-3 border-0">
+                                <span class="fw-bold small text-uppercase letter-spacing-1">${m.entidad}</span>
                             </div>
-                            <div class="card-body p-3 text-center bg-white">
-                                <div class="mb-3">
+                            <div class="card-body p-4 text-center bg-white">
+                                <div class="mb-3 position-relative d-inline-block">
                                     <img src="${m.qr_url || '/static/uploads/no-qr.png'}" 
-                                         class="img-fluid rounded-3 border p-2 bg-light shadow-sm"
-                                         style="max-height: 200px; width: 100%; object-fit: contain;"
+                                         class="img-fluid rounded-4 border p-2 bg-white shadow-sm"
+                                         style="max-height: 180px; width: 100%; object-fit: contain;"
                                          onerror="this.src='/static/uploads/no-qr.png'">
                                 </div>
-                                <div class="bg-light rounded-3 p-3 border">
-                                    <p class="text-muted small mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">Titular de la cuenta</p>
-                                    <p class="mb-2 fw-semibold text-dark">${m.titular}</p>
-                                    <hr class="my-2 opacity-25">
-                                    <p class="text-muted small mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">Número / Celular</p>
-                                    <div class="d-flex align-items-center justify-content-center gap-2">
-                                        <span class="fs-5 fw-bold text-primary text-break">${m.numero}</span>
-                                        <button class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center"
-                                                style="width: 32px; height: 32px;"
-                                                onclick="navigator.clipboard.writeText('${m.numero}').then(() => showMessage('Número copiado al portapapeles'))">
-                                            <i class="bi bi-clipboard"></i>
+                                <div class="bg-light rounded-4 p-3 border border-dashed mt-2">
+                                    <p class="text-muted small mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">${m.tipo_cuenta || 'Cuenta'}</p>
+                                    <p class="mb-3 fw-bold text-dark border-bottom pb-2">${m.titular}</p>
+                                    <div class="d-flex align-items-center justify-content-between bg-white p-2 rounded-3 border">
+                                        <span class="fs-5 fw-bold text-primary font-monospace">${m.numero}</span>
+                                        <button class="btn btn-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-2"
+                                                onclick="navigator.clipboard.writeText('${m.numero}').then(() => showMessage('Copiado'))">
+                                            <i class="bi bi-copy"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -257,19 +289,20 @@ function abrirModalPago(facturaNum, total) {
                     </div>
                 `).join('')}
             </div>
-            <div class="mt-4 p-3 bg-primary bg-opacity-10 border border-primary border-dashed rounded-3 text-center">
-                <p class="small text-primary mb-0 fw-medium">
-                    <i class="bi bi-info-circle-fill me-2"></i>Realiza la transferencia y adjunta el comprobante vía WhatsApp o al correo <strong>d.antojitos1958@gmail.com</strong>
+            <div class="mt-4 p-3 bg-warning bg-opacity-10 border border-warning border-dashed rounded-4 text-center">
+                <p class="small text-dark mb-0 fw-medium">
+                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>Envía el comprobante tras realizar la transferencia.
                 </p>
             </div>`;
     }
-    bootstrap.Modal.getOrCreateInstance(modalElement).show();
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    bsModal.show();
 }
 
 async function descargarPDF(f) {
     const { jsPDF } = window.jspdf || window.jsPDF;
     if (!jsPDF) {
-        showMessage("Error al cargar generador de PDF", true);
+        showMessage("Librería PDF no detectada", true);
         return;
     }
     const doc = new jsPDF();
@@ -287,60 +320,95 @@ async function descargarPDF(f) {
         canvas.height = img.height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0);
-        doc.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 12, 22, 22);
-    } catch (e) {}
+        doc.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 12, 25, 25);
+    } catch (e) {
+        console.warn("Logo fail");
+    }
 
-    doc.setFontSize(22);
-    doc.setTextColor(33, 37, 41);
-    doc.text("D'Antojitos ©", 42, 25);
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Factura N°: ${f.numero_factura}`, 145, 20);
-    doc.text(`Fecha: ${new Date(f.fecha_emision).toLocaleString()}`, 145, 25);
-    doc.setFont("helvetica", "bold");
+    doc.setFontSize(24);
+    doc.setTextColor(20, 20, 20);
+    doc.text("D'Antojitos ©", 45, 25);
     
+    doc.setFontSize(9);
+    doc.setTextColor(80);
+    doc.text(`Documento: ${f.numero_factura}`, 140, 20);
+    doc.text(`Emisión: ${new Date(f.fecha_emision || Date.now()).toLocaleString()}`, 140, 25);
+    doc.text(`Cédula: ${f.cedula || 'Registrada'}`, 140, 30);
+    
+    doc.setDrawColor(200);
+    doc.line(15, 40, 195, 40);
+
     const esAnulada = ["anulada", "cancelado", "cancelada"].includes(f.estado.toLowerCase());
-    doc.setTextColor(esAnulada ? 220 : 40, esAnulada ? 53 : 167, esAnulada ? 69 : 69);
-    doc.text(`ESTADO: ${f.estado.toUpperCase()}`, 145, 30);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(esAnulada ? 200 : 0, esAnulada ? 0 : 150, esAnulada ? 0 : 0);
+    doc.text(`ESTADO ACTUAL: ${f.estado.toUpperCase()}`, 15, 48);
     
-    const tableData = (f.productos || []).map(p => [
+    const dataFilas = (f.productos || []).map(p => [
         p.nombre_producto,
-        `x${p.cantidad}`,
-        Number(p.subtotal).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })
+        `${p.cantidad} unidad(es)`,
+        FormateadorCosto.format(Number(p.precio_unitario || 0)),
+        FormateadorCosto.format(Number(p.subtotal || 0))
     ]);
 
     doc.autoTable({
-        startY: 45,
-        head: [['Producto', 'Cantidad', 'Subtotal']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: { fillColor: [33, 37, 41] }
+        startY: 55,
+        head: [['Descripción', 'Cant.', 'Unitario', 'Subtotal']],
+        body: dataFilas,
+        theme: 'striped',
+        headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold' },
+        columnStyles: { 3: { halign: 'right', fontStyle: 'bold' } }
     });
 
     const finalY = doc.lastAutoTable.finalY;
-    const total = (f.productos || []).reduce((acc, curr) => acc + Number(curr.subtotal), 0);
+    const totalVenta = (f.productos || []).reduce((acc, curr) => acc + Number(curr.subtotal), 0);
+    
+    doc.setFillColor(245, 245, 245);
+    doc.rect(130, finalY + 5, 65, 15, 'F');
     doc.setFontSize(14);
     doc.setTextColor(0);
-    doc.text(`TOTAL: ${total.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}`, 195, finalY + 12, { align: 'right' });
+    doc.text(`TOTAL: ${FormateadorCosto.format(totalVenta)}`, 190, finalY + 15, { align: 'right' });
     
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Comprobante de operación digital.", 105, 285, { align: 'center' });
+
     doc.save(`Factura_${f.numero_factura}.pdf`);
-    showMessage("Descarga finalizada PDF");
 }
 
 function mostrarFacturasBuscadas() {
     const container = document.getElementById("facturasContainer");
+    const filtroEstado = document.getElementById("filtroEstadoFactura");
     if (!container) return;
-    container.innerHTML = "";
-
+    
     const ocultas = JSON.parse(localStorage.getItem('facturas_ocultas') || "[]");
     let filtradas = facturasActuales.filter(f => !ocultas.includes(f.numero_factura));
-    const paginadas = filtradas.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina);
+    
+    if (filtroEstado && filtroEstado.value !== "todos") {
+        const valFiltro = filtroEstado.value.toLowerCase();
+        filtradas = filtradas.filter(f => {
+            const e = f.estado.toLowerCase();
+            if (valFiltro === "emitida") return e.includes("emitid");
+            if (valFiltro === "pagado") return ["pagada", "pagado", "finalizado", "entregado", "completada", "completado"].includes(e);
+            if (valFiltro === "anulada") return ["anulada", "cancelado", "cancelada"].includes(e);
+            return true;
+        });
+    }
+    
+    const totalItems = filtradas.length;
+    const totalPaginas = Math.ceil(totalItems / itemsPorPagina);
+    if (paginaActual > totalPaginas && totalPaginas > 0) paginaActual = totalPaginas;
+
+    container.innerHTML = "";
+    const inicio = (paginaActual - 1) * itemsPorPagina;
+    const paginadas = filtradas.slice(inicio, inicio + itemsPorPagina);
 
     if (paginadas.length === 0) {
         container.innerHTML = `
-            <div class="text-center p-5 text-muted bg-white rounded-4 shadow-sm">
-                <i class="bi bi-search fs-1"></i>
-                <p class="mt-2">No se encontraron facturas</p>
+            <div class="text-center p-5 bg-white rounded-5 shadow-sm border">
+                <div class="display-1 text-muted opacity-10 mb-3"><i class="bi bi-folder2-open"></i></div>
+                <h5 class="fw-bold text-dark">Sin registros</h5>
+                <p class="text-muted small">No hay facturas con los criterios seleccionados.</p>
             </div>`;
         paginar(0);
         return;
@@ -348,183 +416,174 @@ function mostrarFacturasBuscadas() {
 
     paginadas.forEach(f => {
         const card = document.createElement("div");
-        const estadoRaw = f.estado || "";
-        const estadoLower = estadoRaw.toLowerCase();
+        const estadoActual = (f.estado || "Emitida").toUpperCase();
+        const estadoLower = estadoActual.toLowerCase();
         
         const esPagada = ["pagada", "pagado", "finalizado", "entregado", "completada", "completado"].includes(estadoLower);
         const esAnulada = ["anulada", "cancelado", "cancelada"].includes(estadoLower);
         const esEstadoFinal = esPagada || esAnulada;
 
-        let totalCalculado = 0;
-        let detalleHtml = (f.productos || []).map(p => {
-            const sub = Number(p.subtotal || 0);
-            totalCalculado += sub;
+        let totalSuma = 0;
+        let itemsListHtml = (f.productos || []).map(p => {
+            const valSub = Number(p.subtotal || 0);
+            totalSuma += valSub;
             return `
-                <div class="d-flex justify-content-between border-bottom py-1">
-                    <span class="text-dark text-truncate" style="max-width: 200px;">${p.nombre_producto}</span>
-                    <span class="text-muted small">x${p.cantidad}</span>
-                    <span class="fw-bold">${sub.toLocaleString('es-CO', {style: 'currency', currency: 'COP', maximumFractionDigits: 0})}</span>
+                <div class="d-flex justify-content-between align-items-center border-bottom border-light py-2">
+                    <div class="me-2">
+                        <div class="fw-semibold text-dark small text-truncate" style="max-width: 180px;">${p.nombre_producto}</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">Cant: ${p.cantidad}</div>
+                    </div>
+                    <div class="fw-bold text-dark">${FormateadorCosto.format(valSub)}</div>
                 </div>`;
         }).join('');
 
-        let colorBadge = "primary";
-        let iconoEstado = "bi-clock-history";
+        let configVisual = { color: "primary", icono: "bi-hourglass-split" };
+        if (esAnulada) configVisual = { color: "danger", icono: "bi-x-octagon-fill" };
+        else if (esPagada) configVisual = { color: "success", icono: "bi-patch-check-fill" };
+        else if (estadoLower.includes("emitid")) configVisual = { color: "info", icono: "bi-file-earmark-arrow-up" };
+        else if (estadoLower === "enviado") configVisual = { color: "warning", icono: "bi-truck-flatbed" };
 
-        if (esAnulada) {
-            colorBadge = "danger";
-            iconoEstado = "bi-x-circle";
-        } else if (esPagada) {
-            colorBadge = "success";
-            iconoEstado = "bi-check-circle-fill";
-        } else if (estadoLower.includes("emitid")) {
-            colorBadge = "info";
-            iconoEstado = "bi-send";
-        } else if (estadoLower === "enviado") {
-            colorBadge = "warning";
-            iconoEstado = "bi-truck";
-        }
-
-        card.className = `card card-factura mb-4 shadow-sm border-0 ${esEstadoFinal ? 'factura-finalizada' : ''}`;
+        card.className = `card border-0 shadow-sm rounded-4 mb-4 overflow-hidden ${esEstadoFinal ? 'opacity-90' : 'border-start border-4 border-' + configVisual.color}`;
         card.innerHTML = `
-            <div class="factura-header p-3 border-bottom">
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="card-header bg-white border-bottom-0 p-4">
+                <div class="d-flex justify-content-between align-items-start">
                     <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center me-3" style="width:40px; height:40px;">
-                            <i class="bi bi-receipt fs-5"></i>
+                        <div class="rounded-4 bg-dark text-white d-flex align-items-center justify-content-center me-3 shadow" style="width:50px; height:50px;">
+                            <i class="bi bi-receipt-cutoff fs-4"></i>
                         </div>
                         <div>
-                            <h6 class="fw-bold mb-0">${f.numero_factura}</h6>
-                            <small class="text-primary fw-bold">CC: ${f.cedula || 'N/A'}</small>
+                            <h5 class="fw-bold mb-0 text-dark font-monospace">${f.numero_factura}</h5>
+                            <span class="badge bg-light text-primary border border-primary-subtle fw-bold mt-1">
+                                TITULAR: ${f.cedula || 'REGISTRADO'}
+                            </span>
                         </div>
                     </div>
-                    <span class="badge bg-${colorBadge} d-flex align-items-center gap-1 py-2 px-3 rounded-pill">
-                        <i class="bi ${iconoEstado}"></i> ${estadoRaw.toUpperCase()}
-                    </span>
-                </div>
-            </div>
-            <div class="card-body p-3">
-                <div class="lista-productos mb-3">${detalleHtml}</div>
-                <div class="text-end border-top pt-2">
-                    <div class="small text-muted mb-0" style="font-size: 0.7rem;">TOTAL NETO: </div>
-                    <div class="fw-bold fs-4 text-primary">${totalCalculado.toLocaleString('es-CO', {style: 'currency', currency: 'COP', maximumFractionDigits: 0})}</div>
-                </div>
-                <div class="mt-3">
-                    ${(!esEstadoFinal) ? `
-                        <button class="btn btn-primary w-100 fw-bold rounded-pill py-2 btn-pagar-main">
-                            <i class="bi bi-qr-code me-2"></i>Pagar Ahora
-                        </button>
-                    ` : `
-                        <div class="p-2 border rounded-3 bg-light text-center ${esAnulada ? 'text-danger' : 'text-success'} small fw-bold">
-                            <i class="bi ${esAnulada ? 'bi-x-octagon' : 'bi-shield-check'} me-1"></i> 
-                            ${esAnulada ? 'PEDIDO ANULADO' : 'PAGO CONFIRMADO'}
+                    <div class="text-end">
+                        <span class="badge bg-${configVisual.color} bg-opacity-10 text-${configVisual.color} px-3 py-2 rounded-pill fw-bold border border-${configVisual.color}">
+                            <i class="bi ${configVisual.icono} me-1"></i> ${estadoActual}
+                        </span>
+                        <div class="text-muted mt-2 small">
+                            ${new Date(f.fecha_emision || f.created_at).toLocaleDateString()}
                         </div>
-                    `}
+                    </div>
                 </div>
             </div>
-            <div class="card-footer bg-transparent border-top-0 p-3">
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-dark flex-grow-1 btn-pdf-action">
-                        <i class="bi bi-file-earmark-pdf"></i> PDF
-                    </button>
-                    ${(!esEstadoFinal) ?
-                        `<button class="btn btn-sm btn-outline-danger flex-grow-1 btn-anular-action">Anular</button>` :
-                        `<button class="btn btn-sm btn-link text-muted text-decoration-none flex-grow-1 btn-eliminar-action"><i class="bi bi-trash"></i> Quitar</button>`
-                    }
+            <div class="card-body px-4 py-2">
+                <div class="bg-light rounded-4 p-3 mb-3" style="max-height: 180px; overflow-y: auto;">
+                    ${itemsListHtml}
+                </div>
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    <div class="text-muted small fw-bold text-uppercase">Total</div>
+                    <div class="text-primary fw-bolder fs-3">${FormateadorCosto.format(totalSuma)}</div>
+                </div>
+                ${(!esEstadoFinal) ? `
+                    <button class="btn btn-primary w-100 fw-bold rounded-pill py-3 btn-pagar-card mt-2 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-qr-code-scan"></i> PROCEDER AL PAGO
+                    </button>` : `
+                    <div class="alert alert-${esAnulada ? 'secondary' : 'success'} border-0 rounded-pill py-2 px-4 text-center mt-2 small fw-bold">
+                        <i class="bi ${esAnulada ? 'bi-slash-circle' : 'bi-shield-fill-check'}"></i>
+                        ${esAnulada ? 'ANULADO' : 'COMPLETADO'}
+                    </div>`}
+            </div>
+            <div class="card-footer bg-light border-0 p-3">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button class="btn btn-sm btn-dark w-100 rounded-3 py-2 btn-descargar-pdf">REPORTE</button>
+                    </div>
+                    <div class="col-6">
+                        ${(!esEstadoFinal) ?
+                            `<button class="btn btn-sm btn-outline-danger w-100 rounded-3 py-2 btn-anular-factura">ANULAR</button>` :
+                            `<button class="btn btn-sm btn-outline-secondary w-100 rounded-3 py-2 btn-quitar-vista">ARCHIVAR</button>`}
+                    </div>
                 </div>
             </div>`;
 
-        const btnPagar = card.querySelector('.btn-pagar-main');
-        if (btnPagar) {
-            btnPagar.onclick = () => abrirModalPago(f.numero_factura, totalCalculado.toLocaleString('es-CO', {style: 'currency', currency: 'COP', maximumFractionDigits: 0}));
-        }
-
-        card.querySelector('.btn-pdf-action').onclick = () => descargarPDF(f);
-        
-        const btnAnular = card.querySelector('.btn-anular-action');
-        if (btnAnular) {
-            btnAnular.onclick = () => anularFactura(f.numero_factura);
-        }
-
-        const btnEliminar = card.querySelector('.btn-eliminar-action');
-        if (btnEliminar) {
-            btnEliminar.onclick = () => {
-                const actualesOcultas = JSON.parse(localStorage.getItem('facturas_ocultas') || "[]");
-                actualesOcultas.push(f.numero_factura);
-                localStorage.setItem('facturas_ocultas', JSON.stringify(actualesOcultas));
-                monitorearCambiosFacturas();
-                showMessage("Factura removida de la lista");
+        const btnP = card.querySelector('.btn-pagar-card');
+        if (btnP) btnP.onclick = () => abrirModalPago(f.numero_factura, FormateadorCosto.format(totalSuma));
+        card.querySelector('.btn-descargar-pdf').onclick = () => descargarPDF(f);
+        const btnA = card.querySelector('.btn-anular-factura');
+        if (btnA) btnA.onclick = () => procesarAnulacion(f.numero_factura);
+        const btnQ = card.querySelector('.btn-quitar-vista');
+        if (btnQ) {
+            btnQ.onclick = () => {
+                const ocu = JSON.parse(localStorage.getItem('facturas_ocultas') || "[]");
+                ocu.push(f.numero_factura);
+                localStorage.setItem('facturas_ocultas', JSON.stringify(ocu));
+                mostrarFacturasBuscadas();
             };
         }
-
         container.appendChild(card);
     });
     paginar(filtradas.length);
 }
 
-async function anularFactura(numeroFactura) {
-    showConfirmToast("¿Estás seguro de que deseas anular este pedido?", async () => {
+async function procesarAnulacion(numFactura) {
+    showConfirmToast("¿Deseas anular este registro?", async () => {
         try {
-            const res = await fetch(`/anular_factura_page/${numeroFactura}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" }
-            });
-            const data = await res.json();
+            const res = await fetch(`/anular_factura_page/${numFactura}`, { method: "PUT" });
             if (res.ok) {
                 await monitorearCambiosFacturas();
-                showMessage("Pedido anulado correctamente");
-            } else {
-                showMessage(data.message || "No se pudo anular", true);
+                showMessage("Anulado exitosamente");
             }
-        } catch (error) {
+        } catch (e) {
             showMessage("Error de conexión", true);
         }
     });
 }
 
-function paginar(total) {
-    const p = document.getElementById("paginacion");
-    if (!p) return;
-    p.innerHTML = "";
-    const totalPag = Math.ceil(total / itemsPorPagina);
-    if (totalPag <= 1) return;
-    for (let i = 1; i <= totalPag; i++) {
-        const li = document.createElement("li");
-        li.className = `page-item ${i === paginaActual ? 'active' : ''}`;
-        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-        li.onclick = (e) => { 
+function paginar(totalItems) {
+    const nav = document.getElementById("paginacion");
+    if (!nav) return;
+    nav.innerHTML = "";
+    const maxPaginas = Math.ceil(totalItems / itemsPorPagina);
+    if (maxPaginas <= 1) return;
+    const frag = document.createDocumentFragment();
+    for (let i = 1; i <= maxPaginas; i++) {
+        const item = document.createElement("li");
+        item.className = `page-item ${i === paginaActual ? 'active' : ''} mx-1`;
+        item.innerHTML = `<a class="page-link rounded-circle border-0 shadow-sm fw-bold" href="#">${i}</a>`;
+        item.onclick = (e) => { 
             e.preventDefault(); 
             paginaActual = i; 
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             mostrarFacturasBuscadas(); 
         };
-        p.appendChild(li);
+        frag.appendChild(item);
     }
+    nav.appendChild(frag);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarMetodosPago();
-    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+    if ("Notification" in window && Notification.permission !== "granted") {
         Notification.requestPermission();
     }
-
-    const inputBuscar = document.getElementById("buscarFactura");
-    if (inputBuscar) {
-        inputBuscar.addEventListener("input", function() {
-            if (this.value.trim().length >= 6) {
-                paginaActual = 1;
-                monitorearCambiosFacturas();
+    const inputInput = document.getElementById("buscarFactura");
+    const selectFiltro = document.getElementById("filtroEstadoFactura");
+    if (inputInput) {
+        let timerBusqueda;
+        inputInput.addEventListener("input", function() {
+            clearTimeout(timerBusqueda);
+            const val = this.value.trim();
+            if (val.length >= 6) {
+                timerBusqueda = setTimeout(() => {
+                    paginaActual = 1;
+                    monitorearCambiosFacturas();
+                }, 500);
             } else {
                 facturasActuales = [];
+                facturasLocalesCache = [];
                 mostrarFacturasBuscadas();
             }
         });
     }
-    setInterval(monitorearCambiosFacturas, 5000);
+    if (selectFiltro) {
+        selectFiltro.addEventListener("change", () => {
+            paginaActual = 1;
+            mostrarFacturasBuscadas();
+        });
+    }
+    setInterval(() => {
+        if (facturasActuales.length > 0) monitorearCambiosFacturas();
+    }, 10000);
 });
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/js/workers/service-worker-facturas.js')
-            .then(() => console.log("Worker activo"))
-            .catch(err => console.error("Worker fallido", err));
-    });
-}

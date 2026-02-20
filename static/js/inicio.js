@@ -128,7 +128,7 @@ async function monitorearCambiosCatalogo() {
 
 async function cargarMarketing() {
     try {
-        const res = await fetch("/api/publicidad/activa");
+        const res = await fetch("/api/publicidad/activa", { cache: "no-store" });
         const publicidadArray = await res.json();
         if (!Array.isArray(publicidadArray)) return;
 
@@ -142,34 +142,37 @@ async function cargarMarketing() {
 
         notificacionesDisponibles = publicidadArray.filter(item => item.tipo === 'notificacion');
 
-        publicidadArray.forEach((item, index) => {
-            if (item.tipo === 'seccion') {
-                const delay = (index * 0.15).toFixed(2);
-                const cardHtml = `
-                    <div class="seccion-card shadow-sm h-100 w-100" style="animation: fadeInSmooth 0.8s ease forwards; animation-delay: ${delay}s">
-                        <img src="${item.imagen_url || '/static/img/placeholder.png'}" class="postre-imagen-seccion w-100" onerror="this.src='/static/img/placeholder.png'">
-                        <div class="p-3 d-flex flex-column flex-grow-1">
-                            <h6 class="fw-bold mb-1" style="color: #d6336c; font-size: 1.1rem;">${item.titulo || ''}</h6>
-                            <p class="text-muted mb-0 small" style="line-height: 1.5;">${item.descripcion || ''}</p>
-                        </div>
-                    </div>`;
+        const seccionesItems = publicidadArray.filter(item => item.tipo === 'seccion');
+        
+        seccionesItems.forEach((item, index) => {
+            const delay = (index * 0.1).toFixed(2);
+            const cardHtml = `
+                <div class="seccion-card shadow-sm h-100 w-100" style="animation: fadeInSmooth 0.8s ease forwards; animation-delay: ${delay}s">
+                    <img src="${item.imagen_url || '/static/img/placeholder.png'}" class="postre-imagen-seccion w-100" onerror="this.src='/static/img/placeholder.png'">
+                    <div class="p-3 d-flex flex-column flex-grow-1">
+                        <h6 class="fw-bold mb-1" style="color: #d6336c; font-size: 1.1rem;">${item.titulo || ''}</h6>
+                        <p class="text-muted mb-0 small" style="line-height: 1.5;">${item.descripcion || ''}</p>
+                    </div>
+                </div>`;
 
-                if (seccionesAlFrente && seccionesAlFrente.children.length < 2) {
-                    const wrap = document.createElement("div");
-                    wrap.className = "w-100 mb-3";
-                    wrap.innerHTML = cardHtml;
-                    seccionesAlFrente.appendChild(wrap);
-                } else if (seccionesDebajo) {
-                    const col = document.createElement("div");
-                    col.className = "col-6 col-md-4 col-lg-3 mb-4";
-                    col.innerHTML = cardHtml;
-                    seccionesDebajo.appendChild(col);
-                }
+            if (seccionesAlFrente && index < 2) {
+                const wrap = document.createElement("div");
+                wrap.className = "w-100 mb-3";
+                wrap.innerHTML = cardHtml;
+                seccionesAlFrente.appendChild(wrap);
+            } else if (seccionesDebajo) {
+                const col = document.createElement("div");
+                col.className = "col-6 col-md-4 col-lg-3 mb-4";
+                col.innerHTML = cardHtml;
+                seccionesDebajo.appendChild(col);
             }
+        });
 
-            if (item.tipo === 'carrusel' && carouselInner) {
+        const carruselItems = publicidadArray.filter(item => item.tipo === 'carrusel');
+        carruselItems.forEach((item, index) => {
+            if (carouselInner) {
                 const div = document.createElement("div");
-                div.className = `carousel-item ${carouselInner.children.length === 0 ? 'active' : ''}`;
+                div.className = `carousel-item ${index === 0 ? 'active' : ''}`;
                 div.innerHTML = `
                     <div class="carousel-img-wrapper">
                         <img src="${item.imagen_url}" class="carousel-background-blur">
@@ -186,28 +189,30 @@ async function cargarMarketing() {
         });
 
         if (carouselInner && carouselInner.children.length > 0) {
-            new bootstrap.Carousel(document.getElementById('carouselPromo'), { 
-                interval: 6000, 
+            const carouselElem = document.getElementById('carouselPromo');
+            const bCarousel = bootstrap.Carousel.getInstance(carouselElem) || new bootstrap.Carousel(carouselElem, { 
+                interval: 5000, 
                 ride: 'carousel', 
                 pause: false 
             });
+            bCarousel.to(0);
         }
     } catch (e) { console.error("Error al cargar publicidad", e); }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    cargarMarketing().then(() => {
-        setInterval(() => {
-            if (notificacionesDisponibles.length > 0) {
-                const indiceAleatorio = Math.floor(Math.random() * notificacionesDisponibles.length);
-                const e = notificacionesDisponibles[indiceAleatorio];
-                mostrarToastPublicidad(e.imagen_url, e.titulo, e.descripcion);
-            }
-        }, 8000);
-    });
+    cargarMarketing();
+    
+    setInterval(() => {
+        if (notificacionesDisponibles.length > 0) {
+            const indiceAleatorio = Math.floor(Math.random() * notificacionesDisponibles.length);
+            const e = notificacionesDisponibles[indiceAleatorio];
+            mostrarToastPublicidad(e.imagen_url, e.titulo, e.descripcion);
+        }
+    }, 12000);
 
     monitorearCambiosCatalogo();
-    setInterval(monitorearCambiosCatalogo, 8000);
+    setInterval(monitorearCambiosCatalogo, 10000);
 });
 
 document.addEventListener("click", () => { initAudioContext(); }, { once: true });

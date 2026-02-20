@@ -57,6 +57,8 @@ logging.getLogger('waitress').setLevel(logging.ERROR)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'ico'}
+app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+
 
 # ¡WARNING! -- | MÓDULO DE ENDPOINTS GLOBALES (NO MODIFICAR)
 
@@ -92,18 +94,6 @@ def verify_password(contrasena, hashed):
     except:
         return False
 
-@app.route("/obtener-cliente-id", methods=["GET"])
-def obtener_cliente_id():
-    cliente_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
-    return jsonify({"client_id": cliente_id})
-
-@app.after_request
-def agregar_cabeceras(response):
-    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
-    response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    return response
-
 def verificar_token_google(token):
     try:
         idinfo = id_token.verify_oauth2_token(
@@ -116,6 +106,18 @@ def verificar_token_google(token):
     except ValueError as e:
         print(f"Error validando token: {e}")
         return None
+
+@app.after_request
+def agregar_cabeceras(response):
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
+    response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
+@app.route("/obtener-cliente-id", methods=["GET"])
+def obtener_cliente_id():
+    cliente_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    return jsonify({"client_id": cliente_id})
 
 
 # MÓDULO DE AUTH E INICIO SESIÓN
@@ -584,53 +586,34 @@ def guardar_catalogo():
     try:
         user_id = session.get("user_id")
         if not user_id:
-            return jsonify({"error": True, "message": "Usuario no autenticado"}), 401
+            return jsonify({"error": True, "message": "Inicie sesión"}), 401
         
         data = request.json
-        productos_solicitados = data.get("productos", [])
+        items = data.get("productos", [])
 
-        if not productos_solicitados:
-            return jsonify({"error": True, "message": "No hay productos para guardar"}), 400
+        for item in items:
+            id_p = item["id_producto"]
+            cant = int(item["cantidad"])
 
-        insert_carrito = []
+            res_p = supabase.table("gestion_productos").select("nombre, stock, precio").eq("id_producto", id_p).single().execute()
 
-        for p in productos_solicitados:
-            prod_res = (
-                supabase.table("gestion_productos")
-                .select("nombre, stock, precio")
-                .eq("id_producto", p["id_producto"])
-                .single()
-                .execute()
-            )
+            if res_p.data and int(res_p.data["stock"]) >= cant:
+                nuevo_stock = int(res_p.data["stock"]) - cant
+                
+                supabase.table("gestion_productos").update({"stock": nuevo_stock}).eq("id_producto", id_p).execute()
 
-            if not prod_res.data:
-                return jsonify({"error": True, "message": f"Producto no existe"}), 400
+                supabase.table("carrito").insert({
+                    "id_cliente": user_id,
+                    "id_producto": id_p,
+                    "nombre_producto": res_p.data["nombre"],
+                    "cantidad": cant,
+                    "precio_unitario": float(res_p.data["precio"]),
+                    "total": float(res_p.data["precio"]) * cant
+                }).execute()
+            else:
+                return jsonify({"error": True, "message": "Stock insuficiente"}), 400
 
-            stock_actual = int(prod_res.data.get("stock", 0))
-            nombre_producto = prod_res.data.get("nombre", "")
-            precio_unitario = float(prod_res.data.get("precio", 0))
-            cantidad_pedida = int(p["cantidad"])
-
-            if stock_actual < cantidad_pedida:
-                return jsonify({"error": True, "message": f"Stock insuficiente para {nombre_producto}"}), 400
-            
-            insert_carrito.append({
-                "id_cliente": user_id,
-                "id_producto": p["id_producto"],
-                "nombre_producto": nombre_producto,
-                "cantidad": cantidad_pedida,
-                "precio_unitario": precio_unitario,
-                "total": precio_unitario * cantidad_pedida
-            })
-
-        supabase.table("carrito").insert(insert_carrito).execute()
-
-        for item in insert_carrito:
-            res_stock = supabase.table("gestion_productos").select("stock").eq("id_producto", item["id_producto"]).single().execute()
-            nuevo_stock = int(res_stock.data.get("stock", 0)) - item["cantidad"]
-            supabase.table("gestion_productos").update({"stock": nuevo_stock}).eq("id_producto", item["id_producto"]).execute()
-
-        return jsonify({"error": False, "message": "Productos agregados al carrito correctamente"}), 200
+        return jsonify({"error": False, "message": "Agregado"}), 200
     except Exception as e:
         return jsonify({"error": True, "message": str(e)}), 500
 
@@ -725,10 +708,31 @@ def agregar_al_carrito():
 def carrito_quitar(id_carrito):
     user_id = session.get("user_id")
     if not user_id:
-        return jsonify({"ok": False, "message": "Debe iniciar sesión"}), 401
+        return jsonify({"ok": False, "message": "Sesión expirada"}), 401
+    
     try:
-        supabase.table("carrito").delete().eq("id_carrito", id_carrito).eq("id_cliente", user_id).execute()
-        return jsonify({"ok": True, "message": "Producto eliminado"})
+        res_item = supabase.table("carrito").select("id_producto, cantidad").eq("id_carrito", id_carrito).eq("id_cliente", user_id).single().execute()
+        
+        if res_item.data:
+            id_p = res_item.data["id_producto"]
+            cantidad_retorno = int(res_item.data["cantidad"])
+
+            res_stock = supabase.table("gestion_productos").select("stock").eq("id_producto", id_p).single().execute()
+            
+            if res_stock.data:
+                nuevo_stock = int(res_stock.data["stock"]) + cantidad_retorno
+                
+                supabase.table("gestion_productos").update({"stock": nuevo_stock}).eq("id_producto", id_p).execute()
+
+            supabase.table("carrito").delete().eq("id_carrito", id_carrito).execute()
+            
+            return jsonify({
+                "ok": True, 
+                "nuevo_stock": nuevo_stock if res_stock.data else None
+            }), 200
+
+        return jsonify({"ok": False, "message": "No encontrado"}), 404
+
     except Exception as e:
         return jsonify({"ok": False, "message": str(e)}), 500
 
@@ -736,21 +740,22 @@ def carrito_quitar(id_carrito):
 def finalizar_compra():
     user_id = session.get("user_id")
     if not user_id:
-        return jsonify({"message": "Debe iniciar sesión"}), 401
+        return jsonify({"message": "Debe iniciar sesión", "ok": False}), 401
 
     try:
-        usuario = supabase.table("usuarios").select("cedula, direccion, metodo_pago").eq("id_cliente", user_id).single().execute().data
-        if not usuario:
-            return jsonify({"message": "Usuario no encontrado"}), 404
+        usuario_res = supabase.table("usuarios").select("cedula, direccion, metodo_pago").eq("id_cliente", user_id).execute()
+        if not usuario_res.data:
+            return jsonify({"message": "Usuario no encontrado", "ok": False}), 404
+            
+        usuario = usuario_res.data[0]
         if not usuario.get("cedula") or not usuario.get("direccion"):
-            return jsonify({"message": "Complete su perfil", "completar_perfil": True}), 400
+            return jsonify({"message": "Complete su perfil", "completar_perfil": True, "ok": False}), 400
 
         carrito = supabase.table("carrito").select("*").eq("id_cliente", user_id).execute().data or []
         if not carrito:
-            return jsonify({"message": "Carrito vacío"}), 400
+            return jsonify({"message": "Carrito vacío", "ok": False}), 400
 
         total_compra = sum(int(item.get("cantidad", 0)) * float(item.get("precio_unitario", 0)) for item in carrito)
-
         id_pedido = str(uuid.uuid4())
 
         supabase.table("pedidos").insert({
@@ -763,49 +768,30 @@ def finalizar_compra():
             "pagado": False
         }).execute()
 
-        detalles = []
-        for item in carrito:
-            qty = int(item.get("cantidad", 1))
-            price = float(item.get("precio_unitario", 0))
-            detalles.append({
-                "id_pedido": id_pedido,
-                "id_producto": item["id_producto"],
-                "nombre_producto": item.get("nombre_producto", "Sin nombre"),
-                "cantidad": qty,
-                "precio_unitario": price,
-                "subtotal": qty * price
-            })
-
+        detalles = [{
+            "id_pedido": id_pedido,
+            "id_producto": item["id_producto"],
+            "nombre_producto": item.get("nombre_producto", "Sin nombre"),
+            "cantidad": int(item.get("cantidad", 1)),
+            "precio_unitario": float(item.get("precio_unitario", 0)),
+            "subtotal": int(item.get("cantidad", 1)) * float(item.get("precio_unitario", 0))
+        } for item in carrito]
+            
         if detalles:
             supabase.table("pedido_detalle").insert(detalles).execute()
 
         year = datetime.now().strftime("%Y")
-
-        last = supabase.table("facturas") \
-            .select("numero_factura") \
-            .ilike("numero_factura", f"F-{year}-%") \
-            .order("numero_factura", desc=True) \
-            .limit(1) \
-            .execute()
+        last = supabase.table("facturas").select("numero_factura").order("numero_factura", desc=True).limit(20).execute()
 
         seq = 1
-        if last.data and last.data[0].get("numero_factura"):
+        facturas_del_año = [f["numero_factura"] for f in last.data if f["numero_factura"].startswith(f"F-{year}-")]
+        if facturas_del_año:
             try:
-                last_num = last.data[0]["numero_factura"].split("-")[-1]
-                seq = int(last_num) + 1
+                seq = int(facturas_del_año[0].split("-")[-1]) + 1
             except:
                 seq = 1
 
         numero_factura = f"F-{year}-{seq:06d}"
-
-        check = supabase.table("facturas") \
-            .select("numero_factura") \
-            .eq("numero_factura", numero_factura) \
-            .execute()
-
-        if check.data:
-            seq += 1
-            numero_factura = f"F-{year}-{seq:06d}"
 
         supabase.table("facturas").insert({
             "numero_factura": numero_factura,
@@ -819,20 +805,12 @@ def finalizar_compra():
         }).execute()
 
         supabase.table("pedidos").update({"numero_factura": numero_factura}).eq("id_pedido", id_pedido).execute()
-
         supabase.table("carrito").delete().eq("id_cliente", user_id).execute()
 
-        return jsonify({
-            "message": "Compra procesada correctamente",
-            "ok": True,
-            "numero_factura": numero_factura
-        })
+        return jsonify({"message": "Éxito", "ok": True, "numero_factura": numero_factura})
 
     except Exception as e:
-        import traceback
-        print("ERROR en finalizar_compra:", str(e))
-        print(traceback.format_exc())
-        return jsonify({"message": f"Error al procesar la compra: {str(e)}", "ok": False}), 500
+        return jsonify({"message": str(e), "ok": False}), 500
 
 
 # MÓDULO DE FACTURAS
@@ -843,81 +821,111 @@ def gestionar_facturas_page():
         return redirect(url_for("login_page"))
     return render_template("facturas.html")
 
-@app.route("/obtener_mis_facturas_page", methods=["GET"])
-def obtener_mis_facturas_page():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Debe iniciar sesión"}), 401
-    try:
-        facturas_res = supabase.table("facturas") \
-            .select("*, pedidos!inner(*)") \
-            .eq("id_cliente", user_id) \
-            .order("fecha_emision", desc=True) \
-            .execute()
-        facturas = facturas_res.data or []
-        resultado = []
-        for f in facturas:
-            detalles_res = supabase.table("pedido_detalle") \
-                .select("*, productos!inner(nombre_producto, precio, imagen)") \
-                .eq("id_pedido", f["id_pedido"]) \
-                .execute()
-            productos = []
-            for d in detalles_res.data or []:
-                prod = d.get("productos", {})
-                productos.append({
-                    "nombre_producto": prod.get("nombre_producto", "Producto eliminado"),
-                    "cantidad": d["cantidad"],
-                    "precio_unitario": float(d["precio_unitario"]),
-                    "subtotal": float(d["subtotal"]),
-                    "imagen": prod.get("imagen") or "/static/uploads/default.png"
-                })
-            resultado.append({
-                "id_factura": f["id_factura"],
-                "numero_factura": f["numero_factura"],
-                "fecha_emision": f["fecha_emision"],
-                "total": float(f["total"]),
-                "metodo_pago": f.get("metodo_pago"),
-                "estado": f["estado"],
-                "id_pedido": f["id_pedido"],
-                "productos": productos
-            })
-        return jsonify(resultado), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 @app.route("/buscar_facturas_page", methods=["GET"])
 def buscar_facturas_page():
     cedula = request.args.get("cedula", "").strip()
     if not cedula:
         return jsonify([]), 200
+        
     try:
         usuario_res = supabase.table("usuarios") \
-            .select("id_cliente") \
+            .select("id_cliente, cedula") \
             .eq("cedula", cedula) \
             .execute()
-        if not usuario_res.data:
+        
+        if not usuario_res.data or len(usuario_res.data) == 0:
             return jsonify([]), 200
-        id_cliente = usuario_res.data[0]["id_cliente"]
+            
+        cliente = usuario_res.data[0]
+        id_cliente = cliente.get("id_cliente")
+        cedula_usuario = cliente.get("cedula")
+        
         facturas_res = supabase.table("facturas") \
             .select("*") \
             .eq("id_cliente", id_cliente) \
             .order("fecha_emision", desc=True) \
             .execute()
+            
         facturas_lista = []
-        for f in facturas_res.data or []:
-            detalles = supabase.table("pedido_detalle") \
-                .select("*") \
-                .eq("id_pedido", f["id_pedido"]) \
-                .execute().data or []
+        for f in (facturas_res.data or []):
+            id_pedido = f.get("id_pedido")
+            
+            detalles_res = supabase.table("pedido_detalle") \
+                .select("*, gestion_productos(nombre, imagen_url)") \
+                .eq("id_pedido", id_pedido) \
+                .execute()
+            
+            productos = []
+            for d in (detalles_res.data or []):
+                prod_data = d.get("gestion_productos") or {}
+                
+                productos.append({
+                    "nombre_producto": str(d.get("nombre_producto") or prod_data.get("nombre") or "Producto"),
+                    "cantidad": int(d.get("cantidad") or 0),
+                    "precio_unitario": float(d.get("precio_unitario") or 0),
+                    "subtotal": float(d.get("subtotal") or 0),
+                    "imagen": str(prod_data.get("imagen_url") or "/static/uploads/default.png")
+                })
+            
             facturas_lista.append({
-                "numero_factura": f["numero_factura"],
-                "fecha_emision": f["fecha_emision"],
-                "total": float(f["total"]),
-                "metodo_pago": f["metodo_pago"],
-                "estado": f["estado"],
-                "productos": detalles
+                "id_factura": str(f.get("id_factura", "")),
+                "numero_factura": str(f.get("numero_factura", "")),
+                "fecha_emision": str(f.get("fecha_emision", "")),
+                "total": float(f.get("total") or 0),
+                "metodo_pago": str(f.get("metodo_pago") or "No especificado"),
+                "estado": str(f.get("estado") or "Emitida"),
+                "cedula": str(cedula_usuario),
+                "productos": productos
             })
+            
         return jsonify(facturas_lista), 200
+        
+    except Exception as e:
+        print(f"Error critico en buscar_facturas_page: {str(e)}")
+        return jsonify({"error": "Error interno del servidor", "details": str(e)}), 500
+
+@app.route("/obtener_facturas_page", methods=["GET"])
+def obtener_facturas_page():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Debe iniciar sesión"}), 401
+    try:
+        facturas_res = supabase.table("facturas") \
+            .select("*, usuarios(cedula)") \
+            .eq("id_cliente", user_id) \
+            .order("fecha_emision", desc=True) \
+            .execute()
+        
+        resultado = []
+        for f in (facturas_res.data or []):
+            detalles_res = supabase.table("pedido_detalle") \
+                .select("*, productos(nombre_producto, imagen)") \
+                .eq("id_pedido", f.get("id_pedido")) \
+                .execute()
+            
+            productos = []
+            for d in (detalles_res.data or []):
+                prod = d.get("productos") or {}
+                productos.append({
+                    "nombre_producto": prod.get("nombre_producto", "Producto"),
+                    "cantidad": d.get("cantidad", 0),
+                    "precio_unitario": float(d.get("precio_unitario") or 0),
+                    "subtotal": float(d.get("subtotal") or 0),
+                    "imagen": prod.get("imagen") or "/static/uploads/default.png"
+                })
+            
+            resultado.append({
+                "id_factura": f.get("id_factura"),
+                "numero_factura": f.get("numero_factura"),
+                "fecha_emision": f.get("fecha_emision"),
+                "total": float(f.get("total") or 0),
+                "metodo_pago": f.get("metodo_pago"),
+                "estado": f.get("estado"),
+                "cedula": f.get("usuarios", {}).get("cedula") if f.get("usuarios") else None,
+                "id_pedido": f.get("id_pedido"),
+                "productos": productos
+            })
+        return jsonify(resultado), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -932,21 +940,27 @@ def anular_factura_page(numero_factura):
             .eq("numero_factura", numero_factura) \
             .single() \
             .execute()
+            
         if not factura.data:
             return jsonify({"message": "Factura no encontrada"}), 404
+            
         f = factura.data
         if str(f["id_cliente"]) != str(user_id):
             return jsonify({"message": "No tiene permiso para anular esta factura"}), 403
+            
         if f["estado"].lower() in ["anulada", "cancelada", "pagada", "entregado", "finalizado"]:
             return jsonify({"message": f"No se puede anular en estado: {f['estado']}"}), 400
+            
         supabase.table("facturas") \
             .update({"estado": "Anulada"}) \
             .eq("numero_factura", numero_factura) \
             .execute()
+            
         supabase.table("pedidos") \
             .update({"estado": "Cancelado"}) \
             .eq("id_pedido", f["id_pedido"]) \
             .execute()
+            
         return jsonify({"message": "Factura anulada correctamente"}), 200
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
@@ -989,8 +1003,6 @@ def actualizar_estado_factura_page(numero_factura):
         return jsonify({"message": "Estado actualizado correctamente"}), 200
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
-
-
 
 @app.route("/obtener_metodos_pago", methods=["GET"])
 def obtener_metodos_pago():
@@ -1365,7 +1377,7 @@ def publicidad_page():
                 for item in metadata:
                     url_f = item.get("url_actual", "")
                     if item.get("cambio_img") and f_idx < len(files):
-                        if url_f:
+                        if url_f and "cloudinary" in url_f:
                             delete_image_from_cloudinary(url_f)
                         url_f = upload_image_to_cloudinary(files[f_idx], folder="publicidad")
                         f_idx += 1
@@ -1385,7 +1397,7 @@ def publicidad_page():
             procesar("metadata_cinta", "imagenes_cinta", "cinta")
 
             for u in viejos_urls:
-                if u and u not in urls_en_uso:
+                if u and u not in urls_en_uso and "cloudinary" in u:
                     delete_image_from_cloudinary(u)
 
             if ids_viejos:
@@ -1395,19 +1407,10 @@ def publicidad_page():
                 supabase.table("publicidad").insert(nuevos_registros).execute()
 
             return jsonify({"ok": True})
-        
         except Exception as e:
             return jsonify({"error": str(e)}), 500
             
     return render_template("publicidad.html")
-
-@app.route("/api/publicidad/activa", methods=["GET"])
-def obtener_publicidad_activa():
-    try:
-        resp = supabase.table("publicidad").select("*").eq("estado", True).order("id_publicidad", desc=False).execute()
-        return jsonify(resp.data if resp.data else [])
-    except Exception as e:
-        return jsonify([]), 500
 
 @app.route("/api/admin/publicidad/delete/<id_publicidad>", methods=["DELETE"])
 def delete_publicidad_individual(id_publicidad):
@@ -1447,6 +1450,7 @@ def admin_notificaciones():
                 "imagen_url": url,
                 "estado": True
             }
+            
             supabase.table("publicidad").insert(record).execute()
             return jsonify({"ok": True, "msg": "Notificación creada"})
         except Exception as e:
@@ -1489,11 +1493,21 @@ def admin_gestion_notificacion(id_publicidad):
             update_record = {
                 "titulo": request.form.get("titulo", notificacion_actual.get("titulo")),
                 "descripcion": request.form.get("descripcion", notificacion_actual.get("descripcion")),
-                "imagen_url": nueva_url
+                "imagen_url": nueva_url,
+                "estado": True
             }
+            
             supabase.table("publicidad").update(update_record).eq("id_publicidad", id_publicidad).execute()
             return jsonify({"ok": True})
             
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/publicidad/activa", methods=["GET"])
+def obtener_publicidad_activa():
+    try:
+        resp = supabase.table("publicidad").select("*").eq("estado", True).execute()
+        return jsonify(resp.data if resp.data else [])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -1665,7 +1679,7 @@ if __name__ == "__main__":
     port = 8000
     local_ip = get_local_ip()
 
-    debug_mode = False
+    debug_mode = True
 
     if debug_mode:
         print("⚡ Ejecutando en modo DEBUG con servidor de desarrollo de Flask")
