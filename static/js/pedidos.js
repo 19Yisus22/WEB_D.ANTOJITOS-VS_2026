@@ -324,11 +324,11 @@ function actualizarTituloTabla() {
     if (!titulo) return;
     const filtro = document.getElementById("filtroEstado").value;
     const titulos = {
-        "Todos": "LISTADO MAESTRO DE PEDIDOS",
+        "Todos": "LISTANDO TODOS LOS PEDIDOS",
         "FiltroPagoPendiente": "GESTIÓN DE PAGOS PENDIENTES",
-        "Pendiente": "PEDIDOS EN COLA DE ESPERA",
-        "Entregado": "REGISTRO DE OPERACIONES FINALIZADAS",
-        "Cancelado": "HISTORIAL DE PEDIDOS ANULADOS"
+        "Pendiente": "LISTANDO PEDIDOS PENDIENTS",
+        "Entregado": "LISTANDO PEDIDOS FINALIZADOS",
+        "Cancelado": "LISTANDO PEDIDOS ANULADOS"
     };
     titulo.innerHTML = `<i class="bi bi-journal-text me-2"></i> ${titulos[filtro] || "GESTIÓN DE PEDIDOS"}`;
 }
@@ -457,7 +457,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                         <div class="p-3 mb-3 bg-light rounded-3 border-0" style="font-size:0.9rem">
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <div class="text-muted mb-1"><i class="bi bi-person-fill me-1"></i> Información del Cliente</div>
+                                    <div class="text-muted mb-1"><i class="bi bi-person-fill me-1"></i> Datos del Cliente</div>
                                     <div class="fw-bold">${user.nombre || ''} ${user.apellido || ''}</div>
                                     <div class="text-secondary">${user.cedula || 'Documento N/A'}</div>
                                 </div>
@@ -477,7 +477,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                             <table class="table table-hover text-center mb-0">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th class="text-start ps-3 py-3">Detalle del Producto</th>
+                                        <th class="text-start ps-3 py-3">Detalles del Producto</th>
                                         <th class="py-3">Cant.</th>
                                         <th class="py-3">Precio</th>
                                         <th class="py-3">¿Pagó?</th>
@@ -486,7 +486,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                                 <tbody>${itemsRows}</tbody>
                                 <tfoot class="bg-white border-top-2">
                                     <tr style="height: 60px;">
-                                        <td colspan="2" class="text-end align-middle fw-bold fs-6">SALDO PENDIENTE DE COBRO:</td>
+                                        <td colspan="2" class="text-end align-middle fw-bold fs-6">SALDO PENDIENTE:</td>
                                         <td colspan="2" class="text-start align-middle fw-bolder text-danger fs-5 ps-3">
                                             ${totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
                                         </td>
@@ -532,7 +532,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                             body: JSON.stringify({ indice, pagado: ahoraPagado })
                         });
                         if (!res.ok) throw new Error();
-                        mostrarAlerta("Registro de pago actualizado exitosamente");
+                        mostrarAlerta("Pago actualizado exitosamente");
                     } catch {
                         sw.checked = !ahoraPagado;
                         delete estadosPagoGuardados[itemId];
@@ -560,7 +560,7 @@ async function cargarPedidos(isAutoRefresh = false) {
             card.querySelector(".btn-eliminar-individual").onclick = () => {
                 mostrarConfirmacionApp(
                     "ELIMINAR REGISTRO", 
-                    "¿Está seguro de eliminar este registro permanentemente? Esta acción no se puede deshacer.",
+                    "¿Eliminar este pedido permanentemente? Esta acción no se puede deshacer.",
                     async () => {
                         const res = await fetch("/eliminar_pedidos", { 
                             method: "DELETE", 
@@ -568,7 +568,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                             body: JSON.stringify({ ids: [idStr] }) 
                         });
                         if (res.ok) {
-                            mostrarAlerta("El registro ha sido borrado del sistema");
+                            mostrarAlerta("Pedido eliminado del sistema");
                             pedidosGlobal = pedidosGlobal.filter(c => c.dataset.id_real !== idStr);
                             pedidosDatosRaw = pedidosDatosRaw.filter(p => String(p.id_pedido) !== idStr);
                             aplicarFiltros();
