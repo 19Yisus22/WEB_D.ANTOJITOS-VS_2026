@@ -279,7 +279,7 @@ function abrirModalPago(facturaNum, total) {
                                     <div class="d-flex align-items-center justify-content-between bg-white p-2 rounded-3 border">
                                         <span class="fs-5 fw-bold text-primary font-monospace">${m.numero}</span>
                                         <button class="btn btn-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-2"
-                                                onclick="navigator.clipboard.writeText('${m.numero}').then(() => showMessage('Copiado'))">
+                                                onclick="navigator.clipboard.writeText('${m.numero}').then(() => showMessage('Copiado al portapapeles'))">
                                             <i class="bi bi-copy"></i>
                                         </button>
                                     </div>
@@ -291,7 +291,7 @@ function abrirModalPago(facturaNum, total) {
             </div>
             <div class="mt-4 p-3 bg-warning bg-opacity-10 border border-warning border-dashed rounded-4 text-center">
                 <p class="small text-dark mb-0 fw-medium">
-                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>Envía el comprobante tras realizar la transferencia.
+                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>Envía el comprobante vía WhatsApp al 3115699825 o vía correo a d.antojitos1968@gmail.com tras realizar la transferencia.
                 </p>
             </div>`;
     }
