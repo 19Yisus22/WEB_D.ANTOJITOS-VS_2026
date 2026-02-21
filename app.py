@@ -258,18 +258,18 @@ def inicio():
     user_id = session.get("user_id")
     if not user_id:
         session.clear()
-        return render_template("general_modules/inicio.html", user=None)
+        return render_template("inicio.html", user=None)
     try:
         res = supabase.table("usuarios").select("*, roles(nombre_role)").eq("id_cliente", user_id).maybe_single().execute()
         if not res or not res.data:
             session.clear()
-            return render_template("general_modules/inicio.html", user=None)
+            return render_template("inicio.html", user=None)
         user = res.data
         session["user"] = user
         just_logged_in = session.pop("just_logged_in", False)
-        return render_template("general_modules/inicio.html", user=user, just_logged_in=just_logged_in)
+        return render_template("inicio.html", user=user, just_logged_in=just_logged_in)
     except:
-        return render_template("general_modules/inicio.html", user=None)
+        return render_template("inicio.html", user=None)
 
 @app.route("/logout")
 def logout():
