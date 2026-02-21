@@ -19,29 +19,11 @@
             <h1 class="display-4 fw-bold">
                 Bienvenid@ a D'Antojitos{% if session.get('user') %} - {{ session.user.nombre }}{% endif %}
             </h1>
-            <div class="divider mx-auto" style="background-color: #d35400; width: 60px; height: 4px; border-radius: 2px;"></div>
+            
             <p class="text-muted mt-3" id="mensajeBienvenidaDinamico">Endulza tu día con deliciosos postres caseros!!</p>
 
-            {% if session.get('user') and session.user.rol == 'admin' %}
+            {% if session.get('user') and (session.user.rol == 'admin' or (session.user.roles and session.user.roles.nombre_role == 'admin')) %}
             <div class="admin-edit-zone mx-auto mb-4" style="max-width: 500px; margin-top: 15px;">
-                <div class="input-group input-group-sm shadow-sm">
-                    <input type="text" id="inputMensajeAdmin" class="form-control border-warning" placeholder="Nuevo mensaje de bienvenida...">
-                    <button class="btn btn-warning fw-bold" onclick="actualizarMensajeBienvenida()">
-                        <i class="bi bi-save2 me-1"></i> Actualizar
-                    </button>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if not session.get('user') %}
-            <div class="d-flex flex-column flex-md-row justify-content-center gap-3 mt-4 px-3">
-                <a href="/login" class="btn btn-outline-dark px-4 py-2 rounded-pill fw-bold">
-                    <i class="bi bi-envelope-at me-2"></i> Iniciar con Correo
-                </a>
-                <a href="/login" class="btn btn-white border shadow-sm px-4 py-2 rounded-pill fw-bold" style="background: white;">
-                    <img src="{{ url_for('static', filename='uploads/googlogo.ico') }}" width="18" height="18" class="me-2" alt="Google">
-                    Iniciar con Google
-                </a>
             </div>
             {% endif %}
         </header>
@@ -77,10 +59,7 @@
                             Le damos la bienvenida a <strong>D'Antojitos</strong>, un espacio donde la pasión por la repostería se convierte en experiencias inolvidables. Nuestro emprendimiento nace del amor por los sabores auténticos y la creatividad en cada detalle, transformando ingredientes frescos y de la más alta calidad en postres que deleitan tanto la vista como el paladar.
                         </p>
                         <p class="descripcion-postre">
-                            En <strong>D'Antojitos</strong> creemos que los momentos más simples pueden convertirse en recuerdos extraordinarios con un toque de dulzura. Nos esforzamos por llevar alegría y satisfacción a tu mesa, ofreciendo desde clásicos reconfortantes hasta creaciones sorprendentes que despiertan todos tus sentidos.
-                        </p>
-                        <p class="descripcion-postre">
-                            Descubre con nosotros un mundo donde la imaginación y el sabor se encuentran, y déjate llevar por la experiencia de probar postres que no solo alimentan, sino que inspiran, conectan y celebran la vida en cada bocado.
+                            En <strong>D'Antojitos</strong> creemos que los momentos más simples pueden convertirse en recuerdos extraordinarios con un toque de dulzura.
                         </p>
                         <h4 id="tituloInicio" class="mt-4 fw-bold"></h4>
                         <p class="descripcion-postre" id="infoInicioTexto"></p>
@@ -93,7 +72,7 @@
                 
                 <div class="sidebar-custom fade-in p-4 bg-white rounded-4 shadow-sm border">
                     <h5 class="mb-4 fw-bold" style="color: #333; border-left: 4px solid #d35400; padding-left: 12px;">Explorar</h5>
-                    <nav class="d-flex flex-column gap-2">
+                    <nav class="d-flex flex-column gap-2" id="navExplorar">
                         <a href="/catalogo_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
                             <i class="bi bi-shop fs-3 me-3 text-primary"></i>
                             <div>
@@ -108,13 +87,23 @@
                                 <small class="text-muted">Revisa tus pedidos seleccionados</small>
                             </div>
                         </a>
-                        <a href="/comentarios_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
+                        <a href="/comentarios_page" id="btnSugerencias" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
                             <i class="bi bi-chat-heart fs-3 me-3 text-danger"></i>
                             <div>
                                 <span class="d-block fw-bold text-dark">Tu Opinión</span>
                                 <small class="text-muted">Comentarios y sugerencias</small>
                             </div>
                         </a>
+
+                        {% if session.get('user') and (session.user.rol == 'admin' or (session.user.roles and session.user.roles.nombre_role == 'admin')) %}
+                        <a href="/manual_page" id="btnManualAdmin" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all" style="border-color: #0d6efd !important; background-color: #f8fbff; margin-top: 8px;">
+                            <i class="bi bi-book fs-3 me-3 text-primary"></i>
+                            <div>
+                                <span class="d-block fw-bold text-dark">Manual Admin</span>
+                                <small class="text-muted">Guía de uso para administradores</small>
+                            </div>
+                        </a>
+                        {% endif %}
                     </nav>
                 </div>
             </div>

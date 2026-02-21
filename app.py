@@ -19,11 +19,11 @@ env_path = os.path.join(BASE_DIR, ".env")
 if os.path.exists(env_path):
     load_dotenv(env_path)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 
 if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-    raise ValueError("Faltan las credenciales de Supabase en el archivo .env")
+    raise ValueError("Faltan las credenciales de Supabase en el archivo .env o en la configuración de Vercel")
 
 opts = ClientOptions(
     postgrest_client_timeout=120,
@@ -259,18 +259,24 @@ def inicio():
     if not user_id:
         session.clear()
         return render_template("inicio.html", user=None)
+    
     try:
         res = supabase.table("usuarios").select("*, roles(nombre_role)").eq("id_cliente", user_id).maybe_single().execute()
+        
         if not res or not res.data:
             session.clear()
             return render_template("inicio.html", user=None)
+        
         user = res.data
+        if 'roles' in user and user['roles']:
+            user['rol'] = user['roles'].get('nombre_role')
+        
         session["user"] = user
         just_logged_in = session.pop("just_logged_in", False)
         return render_template("inicio.html", user=user, just_logged_in=just_logged_in)
-    except:
+    except Exception as e:
         return render_template("inicio.html", user=None)
-
+    
 @app.route("/logout")
 def logout():
     user_id = session.get("user_id")
