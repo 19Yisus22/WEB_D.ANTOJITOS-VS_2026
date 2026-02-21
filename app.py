@@ -1656,6 +1656,7 @@ def manual_page():
         return render_template("admin_modules/manual_usuario.html")
     return render_template("admin_modules/manual_usuario.html")
 
+
 # MÓDULO APP RUN - SEVERLESS
 
 def get_local_ip():

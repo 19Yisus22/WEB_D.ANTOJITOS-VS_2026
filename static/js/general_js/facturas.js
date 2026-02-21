@@ -114,7 +114,7 @@ function playNotificationSound() {
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.2);
     } catch (e) {
-        console.warn("Audio bloqueado");
+        console.warn(e);
     }
 }
 
@@ -192,29 +192,30 @@ async function monitorearCambiosFacturas() {
         if (!res.ok) return;
         
         const facturasServidor = await res.json();
-        const ocultas = JSON.parse(localStorage.getItem('facturas_ocultas') || "[]");
-
         let huboCambio = false;
 
         if (facturasLocalesCache.length > 0) {
-            facturasServidor.forEach(fServ => {
-                const fLocal = facturasLocalesCache.find(l => l.numero_factura === fServ.numero_factura);
-                if (fLocal && fLocal.estado !== fServ.estado) {
-                    lanzarNotificacionMultidispositivo(fServ, fServ.estado);
-                    huboCambio = true;
-                }
-            });
-            
             if (facturasServidor.length !== facturasLocalesCache.length) {
                 huboCambio = true;
+            } else {
+                facturasServidor.forEach(fServ => {
+                    const fLocal = facturasLocalesCache.find(l => l.numero_factura === fServ.numero_factura);
+                    if (!fLocal) {
+                        huboCambio = true;
+                    } else if (fLocal.estado !== fServ.estado) {
+                        lanzarNotificacionMultidispositivo(fServ, fServ.estado);
+                        huboCambio = true;
+                    } else if (JSON.stringify(fLocal) !== JSON.stringify(fServ)) {
+                        huboCambio = true;
+                    }
+                });
             }
         } else {
             huboCambio = true;
         }
 
-        facturasLocalesCache = facturasServidor;
-        facturasActuales = facturasServidor
-            .sort((a, b) => new Date(b.fecha_emision || b.created_at) - new Date(a.fecha_emision || a.created_at));
+        facturasLocalesCache = JSON.parse(JSON.stringify(facturasServidor));
+        facturasActuales = facturasServidor.sort((a, b) => new Date(b.fecha_emision || b.created_at) - new Date(a.fecha_emision || a.created_at));
 
         if (huboCambio) {
             mostrarFacturasBuscadas();
@@ -222,7 +223,7 @@ async function monitorearCambiosFacturas() {
         
         ultimaSincronizacion = new Date();
     } catch (e) {
-        console.error("Error sincronización:", e);
+        console.error(e);
     }
 }
 
@@ -234,7 +235,7 @@ async function cargarMetodosPago() {
             metodosPagoCache = data.metodos || [];
         }
     } catch (e) {
-        console.error("Error carga pagos:", e);
+        console.error(e);
     }
 }
 
@@ -322,7 +323,7 @@ async function descargarPDF(f) {
         ctx.drawImage(img, 0, 0);
         doc.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 12, 25, 25);
     } catch (e) {
-        console.warn("Logo fail");
+        console.warn(e);
     }
 
     doc.setFontSize(24);
@@ -488,7 +489,7 @@ function mostrarFacturasBuscadas() {
             <div class="card-footer bg-light border-0 p-3">
                 <div class="row g-2">
                     <div class="col-6">
-                        <button class="bi bi-file-earmark-pdf btn btn-sm btn-dark w-100 rounded-3 py-2 btn-descargar-pdf"><strong> Descargar Factura</button></strong>
+                        <button class="bi bi-file-earmark-pdf btn btn-sm btn-dark w-100 rounded-3 py-2 btn-descargar-pdf"><strong> Descargar Factura</strong></button>
                     </div>
                     <div class="col-6">
                         ${(!esEstadoFinal) ?
@@ -592,5 +593,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     setInterval(() => {
         if (facturasActuales.length > 0) monitorearCambiosFacturas();
-    }, 10000);
+    }, 12000);
 });

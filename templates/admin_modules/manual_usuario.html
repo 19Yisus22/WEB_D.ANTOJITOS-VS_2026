@@ -34,28 +34,28 @@
 
         <main>
             <section id="inicio" class="content-section active">
-                <h2><i class="bi bi-speedometer2"></i> Manual del Administrador</h2>
-                <p class="intro-text">Bienvenido al manual interactivo de nuestra plataforma web <strong>D'Antojitos©</strong>. Aprende a gestionar tu sistema de forma profesional.</p>
+                <h2><i class="bi bi-speedometer2"></i> Panel de Control</h2>
+                <p class="intro-text">Bienvenido al manual interactivo de <strong>D'Antojitos©</strong>. Este sistema ha sido diseñado para centralizar la gestión comercial y publicitaria de tu negocio en tiempo real.</p>
                 <div class="card-grid">
                     <div class="card">
                         <h3><i class="bi bi-lightning-charge"></i> Sincronización</h3>
-                        <p>Toda modificación en productos, pedidos o publicidad se refleja en tiempo real en la tienda virtual.</p>
+                        <p>Cada ajuste en precios, stock o banners se refleja inmediatamente en la interfaz del cliente.</p>
                     </div>
                     <div class="card">
-                        <h3><i class="bi bi-shield-lock"></i> Seguridad</h3>
-                        <p>El sistema protege tus datos. Asegúrate de cerrar tu sesión si compartes el equipo de trabajo.</p>
+                        <h3><i class="bi bi-shield-lock"></i> Integridad</h3>
+                        <p>El sistema protege la jerarquía de roles. Recuerda siempre verificar los cambios antes de guardar.</p>
                     </div>
                 </div>
             </section>
 
             <section id="perfil" class="content-section">
-                <h2><i class="bi bi-person-circle"></i> Mi Perfil y Usuarios</h2>
+                <h2><i class="bi bi-person-circle"></i> Gestión de Usuarios</h2>
                 <div class="card">
-                    <h3>Gestión de Usuarios</h3>
-                    <p>Visualiza la lista completa de clientes registrados. Como Administrador Principal, tienes facultades especiales:</p>
+                    <h3>Jerarquía Administrativa</h3>
+                    <p>Como Administrador Principal, tienes el control total sobre quién accede al panel de gestión:</p>
                     <ul class="feature-list">
-                        <li>Seleccionar hasta un máximo de <strong>3 administradores</strong> adicionales.</li>
-                        <li>Al asignar el rol de Admin, el usuario podrá gestionar productos, pedidos, publicidad y facturación.</li>
+                        <li><strong>Asignación de Roles:</strong> Puedes promover usuarios a "Admin" (máximo 3).</li>
+                        <li><strong>Privilegios Especiales:</strong> Solo los administradores pueden gestionar pedidos y modificar la facturación del sistema.</li>
                     </ul>
                 </div>
             </section>
@@ -63,12 +63,12 @@
             <section id="productos" class="content-section">
                 <h2><i class="bi bi-box-seam"></i> Gestión de Productos</h2>
                 <div class="card">
-                    <h3>Control de Inventario</h3>
-                    <p>Este módulo permite operaciones CRUD completas:</p>
+                    <h3>Control de Inventario y Catálogo</h3>
+                    <p>Este módulo es el corazón de la tienda virtual. Permite gestionar cada postre de forma individual:</p>
                     <ul class="feature-list">
-                        <li><strong>Crear:</strong> Añade nuevos items con nombre, descripción y precio.</li>
-                        <li><strong>Editar:</strong> Actualiza información de productos existentes.</li>
-                        <li><strong>Eliminar:</strong> Remueve items que ya no deseas comercializar.</li>
+                        <li><strong>Operaciones CRUD:</strong> Crear nuevos lanzamientos, editar detalles existentes o eliminar productos que salgan de temporada.</li>
+                        <li><strong>Actualización en Tiempo Real:</strong> Al guardar un cambio, el catálogo público se actualiza sin necesidad de recargar la página para el cliente.</li>
+                        <li><strong>Stock Dinámico:</strong> El sistema recupera automáticamente el stock cuando un usuario elimina un ítem de su carrito o cuando un pedido es anulado.</li>
                     </ul>
                 </div>
             </section>
@@ -76,54 +76,40 @@
             <section id="pedidos" class="content-section">
                 <h2><i class="bi bi-cart-check"></i> Gestión de Pedidos</h2>
                 <div class="card">
-                    <h3>Flujo de Trabajo y Prioridad</h3>
+                    <h3>Logística y Seguimiento</h3>
+                    <p>Administra el flujo de ventas con herramientas de filtrado avanzado:</p>
                     <ul class="feature-list">
-                        <li><strong>Orden:</strong> Listado del más reciente al antiguo por secciones (Pendientes, Finalizados, Cancelados).</li>
-                        <li><strong>Fijar:</strong> Botón de anclaje para pedidos de alta prioridad.</li>
-                        <li><strong>Buscador:</strong> Filtro por nombre, documento o número de factura.</li>
+                        <li><strong>Organización:</strong> Clasificación automática por estados (Pendiente, Finalizado, Anulado) y orden cronológico.</li>
+                        <li><strong>Búsqueda Inteligente:</strong> Filtra por nombre, cédula, factura o estado para localizar pedidos específicos.</li>
+                        <li><strong>Reportes PDF:</strong> Genera informes detallados seleccionando Año, Mes y Estado. Ideal para cierres de caja mensuales.</li>
+                        <li><strong>Prioridad (Chinche):</strong> Utiliza el ícono de chinche para "fijar" pedidos urgentes al inicio de la lista, ignorando el orden cronológico.</li>
+                        <li><strong>Estados de Pago:</strong> Interruptores deslizantes para marcar pagos. El sistema calcula el saldo pendiente automáticamente al cambiar el estado de entrega.</li>
                     </ul>
-                </div>
-                <div class="card-grid">
-                    <div class="card">
-                        <h3>Detalle de Factura</h3>
-                        <ul class="feature-list">
-                            <li>Fecha, hora y datos del cliente.</li>
-                            <li><strong>Columna de Pagos:</strong> Botón Verde (Pago) / Rojo (Pendiente).</li>
-                            <li>Select-list para Estado de Entrega (Pendiente, Enviado, Finalizado, Anulado).</li>
-                        </ul>
-                    </div>
-                    <div class="card">
-                        <h3>Lógica de Estados</h3>
-                        <p>Para <strong>Finalizar</strong>: Todos los items marcados como pagos y entrega en "Finalizado".</p>
-                        <p>Al seleccionar <strong>Anulado</strong>, el cliente verá el estado de su factura actualizado al instante.</p>
-                    </div>
                 </div>
             </section>
 
             <section id="publicidad" class="content-section">
-                <h2><i class="bi bi-megaphone"></i> Gestión de Publicidad</h2>
+                <h2><i class="bi bi-megaphone"></i> Estrategia de Publicidad</h2>
                 <div class="card">
-                    <h3>Marketing Digital</h3>
+                    <h3>Marketing Visual</h3>
+                    <p>Configura la identidad visual y promocional de la plataforma:</p>
                     <ul class="feature-list">
-                        <li><strong>Notificaciones:</strong> Mensajes globales (Solo crear/eliminar).</li>
-                        <li><strong>Carrusel e Info-Cards:</strong> Ubicadas en Inicio. Soportan <em>Drag & Drop</em>.</li>
-                        <li><strong>Cinta Publicitaria:</strong> Banner exclusivo del Catálogo.</li>
+                        <li><strong>Notificaciones Globales:</strong> Crea alertas con imagen, título y descripción para anunciar descuentos o nuevos sabores.</li>
+                        <li><strong>Carruseles y Cintas:</strong> Gestiona los banners deslizantes de la página de inicio. Puedes previsualizar los cambios antes de aplicarlos.</li>
+                        <li><strong>Guardado Obligatorio:</strong> La vista previa es solo ilustrativa. Para aplicar los cambios permanentemente en la web, debes pulsar <strong>"Guardar todos los cambios"</strong>.</li>
                     </ul>
-                </div>
-                <div class="alert info-alert">
-                    <i class="bi bi-display"></i>
-                    <span>Usa el <strong>Previsualizador</strong> para verificar el renderizado antes de publicar.</span>
                 </div>
             </section>
 
             <section id="facturacion" class="content-section">
-                <h2><i class="bi bi-credit-card"></i> Zona de Facturación</h2>
+                <h2><i class="bi bi-credit-card"></i> Configuración de Pagos</h2>
                 <div class="card">
-                    <h3>Canales de Pago</h3>
-                    <p>Gestión de transferencias para Nequi, Bancolombia, Daviplata y Nubank.</p>
+                    <h3>Canales de Recaudo</h3>
+                    <p>Administra cómo tus clientes realizan los pagos por transferencia:</p>
                     <ul class="feature-list">
-                        <li>Configura el <strong>QR</strong>, cuenta, titular y entidad financiera.</li>
-                        <li>Recuerda presionar "Agregar a lista" y luego <strong>"Guardar Canales de Pago"</strong>.</li>
+                        <li><strong>Billeteras Digitales:</strong> Configura cuentas de Nequi, Daviplata, Bancolombia o Nubank.</li>
+                        <li><strong>Sincronización de Factura:</strong> Asegúrate de pulsar <strong>"Guardar canales de pago"</strong> para que las cuentas se actualicen en el PDF de factura que recibe el cliente.</li>
+                        <li><strong>Previsualizador:</strong> Incluye una herramienta para ver cómo se verá la información de pago en la factura final del cliente.</li>
                     </ul>
                 </div>
             </section>
@@ -132,37 +118,92 @@
 
     <footer>
         <div class="footer-content">
-            <a href="/inicio">
-                <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo" class="app-badge">
-            </a>
+            <footer>
+        <div class="footer-content">
+            <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo D'Antojitos" class="app-badge">
             <div class="footer-info">
                 <div class="copyright-text">2025 D'Antojitos© - Todos los derechos reservados</div>
                 <div class="author-credit">Created By: 2022 Yisus™</div>
             </div>
         </div>
     </footer>
+        </div>
+    </footer>
 
     {% else %}
-        {% include 'blocked_html.html' %}
+    
+    <div class="admin-lock-screen">
+        <div class="lock-card">
+            <div class="lock-icon-wrapper">
+                <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <h2>Acceso Restringido</h2>
+            <p>Se requiere una sesión de administrador activa para visualizar el manual de procedimientos.</p>
+            <a href="/login" class="btn-verify-admin">
+                <i class="bi bi-person-check-fill"></i>
+                Verificar Identidad
+            </a>
+            <div style="margin-top: 1.5rem;">
+                <a href="/inicio" style="color: #666; text-decoration: none; font-size: 0.8rem;">
+                    <i class="bi bi-arrow-left"></i> Volver al inicio
+                </a>
+            </div>
+        </div>
+    </div>
+
     {% endif %}
 
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            verificarAccesoAdmin();
+        });
+
+        async function verificarAccesoAdmin() {
+            try {
+                const res = await fetch("/facturacion_page", {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                
+                if (res.status === 401 || res.status === 403) {
+                    document.body.innerHTML = `
+                        <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: radial-gradient(circle at center, #2c3e50 0%, #1a1a1a 100%); color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; backdrop-filter: blur(10px);">
+                            <div style="text-align: center; border: 1px solid rgba(255,255,255,0.15); padding: 3.5rem 2.5rem; border-radius: 28px; background: rgba(255,255,255,0.07); box-shadow: 0 30px 60px rgba(0,0,0,0.6); max-width: 420px; width: 90%; backdrop-filter: blur(20px); animation: lockPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                                <div style="width: 90px; height: 90px; background: linear-gradient(135deg, #ffc107, #f39c12); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 1.8rem; font-size: 2.8rem; color: #2c3e50; box-shadow: 0 10px 20px rgba(255, 193, 7, 0.3); animation: shieldPulse 2s infinite;">
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                </div>
+                                <h2 style="font-weight: 700; letter-spacing: -0.5px; margin-bottom: 0.8rem; color: #fff;">ACCESO RESTRINGIDO</h2>
+                                <p style="color: rgba(255,255,255,0.7); font-size: 0.95rem; margin-bottom: 2.5rem; line-height: 1.5;">Este módulo requiere privilegios de administrador. Tu sesión será redirigida al panel principal.</p>
+                                <div style="width: 2.5rem; height: 2.5rem; border: 0.25em solid #ffc107; border-right-color: transparent; border-radius: 50%; display: inline-block; animation: spinner-border .75s linear infinite; margin-bottom: 1.5rem;" role="status"></div>
+                                <br>
+                                <button onclick="window.location.href='/inicio'" style="background: linear-gradient(135deg, #ffc107, #f39c12); color: #2c3e50; border: none; width: 100%; padding: 14px; border-radius: 14px; font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.5px; transition: all 0.3s ease;">VOLVER AL PANEL</button>
+                            </div>
+                        </div>
+                        <style>
+                            @keyframes lockPop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+                            @keyframes shieldPulse { 0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 193, 7, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); } }
+                            @keyframes spinner-border { to { transform: rotate(360deg); } }
+                        </style>`;
+                    setTimeout(() => { window.location.href = "/inicio"; }, 3500);
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
         function showSection(sectionId) {
             const sections = document.querySelectorAll('.content-section');
             const navItems = document.querySelectorAll('.nav-item');
-
-            sections.forEach(section => {
-                section.classList.remove('active');
-            });
-
+            sections.forEach(section => section.classList.remove('active'));
             navItems.forEach(item => {
                 item.classList.remove('active');
                 if(item.getAttribute('onclick').includes(sectionId)) {
                     item.classList.add('active');
                 }
             });
-
-            document.getElementById(sectionId).classList.add('active');
+            const target = document.getElementById(sectionId);
+            if(target) target.classList.add('active');
         }
     </script>
 </body>

@@ -151,7 +151,9 @@ function showConfirmToast(msg, callback) {
         min-width: 320px;
         border-left: 5px solid #ffc107;
         margin-bottom: 10px;
-        animation: slideInRight 0.3s ease forwards;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: scale(0.9);
     `;
 
     t.innerHTML = `
@@ -164,22 +166,30 @@ function showConfirmToast(msg, callback) {
                 </div>
             </div>
             <div class="d-flex gap-2 justify-content-end">
-                <button class="btn btn-sm btn-link text-white text-decoration-none btn-cancelar-confirm">Cancelar</button>
+                <button class="btn btn-sm text-white text-decoration-none btn-cancelar-confirm">Cancelar</button>
                 <button class="btn btn-sm btn-warning fw-bold px-4 rounded-pill btn-aceptar-confirm">Confirmar</button>
             </div>
         </div>
     `;
 
     toastContainer.appendChild(t);
+    
+    setTimeout(() => {
+        t.style.opacity = '1';
+        t.style.transform = 'scale(1)';
+    }, 10);
 
-    t.querySelector('.btn-cancelar-confirm').onclick = () => {
+    const closeConfirm = () => {
         t.style.opacity = '0';
+        t.style.transform = 'scale(0.9)';
         setTimeout(() => t.remove(), 300);
     };
 
+    t.querySelector('.btn-cancelar-confirm').onclick = () => closeConfirm();
+
     t.querySelector('.btn-aceptar-confirm').onclick = () => {
         callback();
-        t.remove();
+        closeConfirm();
     };
 }
 
@@ -306,19 +316,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         btnEliminar.onclick = () => {
             if (indexActual === null) return;
             const p = postres[indexActual];
-            showConfirmToast(`¿Eliminar ${p.nombre}?`, async () => {
+            showConfirmToast(`¿Estás seguro de eliminar "${p.nombre}"? Esta acción no se puede deshacer.`, async () => {
                 try {
                     const res = await fetch(`/eliminar_producto/${p.id_producto}`, { method: "DELETE" });
                     if (res.ok) {
-                        showMessage("Producto eliminado");
-                        modal.hide();
+                        showMessage("Producto eliminado correctamente");
+                        if (modal) modal.hide();
                         await cargarPostres();
                     } else {
                         const err = await res.json();
-                        showMessage(err.error || "Error al eliminar", true);
+                        showMessage(err.error || "No se pudo eliminar el producto", true);
                     }
                 } catch (e) {
-                    showMessage("Error de conexión", true);
+                    showMessage("Error de conexión con el servidor", true);
                 }
             });
         };
@@ -335,7 +345,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById("stockPostre").value = p.stock;
             btnSubmitForm.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Actualizar Cambios';
             formAgregarPostre.classList.remove("d-none");
-            modal.hide();
+            if (modal) modal.hide();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
     }
@@ -380,13 +390,13 @@ async function enviarFormulario(formData) {
             agregarPostreForm.reset();
             indexActual = null;
             await cargarPostres();
-            showMessage("Producto guardado exitosamente");
+            showMessage(`Producto ${esEdicion ? 'actualizado' : 'creado'} exitosamente`);
         } else {
             const errorData = await res.json();
-            showMessage(errorData.error || "Error", true);
+            showMessage(errorData.error || "Error al procesar la solicitud", true);
         }
     } catch (e) {
-        showMessage("Error de red", true);
+        showMessage("Error de red o servidor no disponible", true);
     }
 }
 
@@ -395,7 +405,7 @@ document.addEventListener("click", () => initAudioContext(), { once: true });
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/static/js/workers/service-worker-catalogo.js')
-        .then(() => { console.log('SW Operativo'); })
+        .then(() => { console.log('SW OK'); })
         .catch(() => { console.log('SW Fallo'); });
     });
 }
