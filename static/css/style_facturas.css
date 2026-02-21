@@ -40,6 +40,91 @@ body {
     margin: 0 auto 1.5rem;
 }
 
+.search-panel {
+    width: 100%;
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-invoice);
+    margin-bottom: 4rem;
+}
+
+.search-panel .input-group {
+    width: 100%;
+}
+
+.search-panel input#buscarFactura {
+    height: 55px;
+    font-size: 1.1rem;
+    border-radius: 0 12px 12px 0 !important;
+}
+
+.search-panel .input-group-text {
+    background-color: white !important;
+    border-radius: 12px 0 0 12px !important;
+    padding-left: 20px;
+    padding-right: 15px;
+}
+
+#facturasContainer {
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 400px;
+    padding: 20px;
+    background: transparent;
+    margin-top: 2rem;
+}
+
+#facturasContainer:empty::before {
+    content: "Escribe tu cédula arriba para ver tus facturas";
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 100px 20px;
+    color: #adb5bd;
+    font-size: 1.2rem;
+    font-style: italic;
+    background: white;
+    border-radius: 16px;
+    border: 2px dashed #dee2e6;
+}
+
+.card-factura {
+    background: white;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    height: 100%;
+}
+
+.card-factura:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+}
+
+.factura-header {
+    background: #ffffff;
+    padding: 1.25rem;
+    border-bottom: 1px dashed #e9ecef;
+}
+
+.factura-body {
+    padding: 1.5rem;
+}
+
+.lista-productos {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.item-row {
+    font-size: 0.95rem;
+}
+
 .btn-confirmar {
     background: var(--primary);
     color: white;
@@ -72,7 +157,6 @@ body {
     text-align: center;
     text-transform: uppercase;
     font-size: 0.9rem;
-    letter-spacing: 0.5px;
 }
 
 .custom-table-carrito td {
@@ -82,42 +166,11 @@ body {
     border-bottom: 1px solid var(--border-invoice);
 }
 
-.cart-item-row {
-    transition: all 0.4s ease;
-    background: white;
-}
-
-.cart-item-row.removing {
-    animation: shake 0.5s ease-in-out;
-    opacity: 0;
-    transform: translateX(30px);
-}
-
 .img-preview {
     border-radius: 10px;
     object-fit: cover;
     width: 50px;
     height: 50px;
-}
-
-.img-placeholder {
-    width: 50px;
-    height: 50px;
-    border-radius: 10px;
-    background: #f1f3f5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #adb5bd;
-}
-
-.badge-qty {
-    background: #e9ecef;
-    padding: 6px 12px;
-    border-radius: 20px;
-    border: 1px solid #ced4da;
-    color: #212529;
-    font-weight: 600;
 }
 
 .custom-toast {
@@ -131,101 +184,24 @@ body {
     animation: slideInRight 0.4s ease forwards;
 }
 
-.toast-container {
-    z-index: 9999;
-}
-
-.card-factura {
-    background: white;
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
-    overflow: hidden;
-}
-
-.card-factura:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-}
-
-.factura-header {
-    background: #ffffff;
-    padding: 1.25rem;
-    border-bottom: 1px dashed #e9ecef;
-}
-
-.factura-body {
-    padding: 1.5rem;
-}
-
-.lista-productos {
-    max-height: 280px;
-    overflow-y: auto;
-    padding-right: 8px;
-}
-
-.item-row {
-    font-size: 0.95rem;
-}
-
-.factura-bloqueada {
-    opacity: 0.92;
-    filter: grayscale(0.3);
-}
-
-#facturasContainer {
-    display: block;
-    min-height: 400px;
-    padding: 20px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-    margin-bottom: 2rem;
-}
-
-#facturasContainer:empty::before {
-    content: "Escribe tu cédula arriba para ver tus facturas";
-    display: block;
-    text-align: center;
-    padding: 80px 20px;
-    color: #adb5bd;
-    font-size: 1.1rem;
-    font-style: italic;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-6px); }
-    50% { transform: translateX(6px); }
-    75% { transform: translateX(-6px); }
-}
-
 @keyframes slideInRight {
     from { opacity: 0; transform: translateX(40px); }
     to { opacity: 1; transform: translateX(0); }
 }
 
 @media (max-width: 768px) {
-    .custom-table-carrito {
-        font-size: 0.85rem;
+    .search-panel {
+        padding: 1rem;
+        margin-bottom: 2.5rem;
     }
-
-    .custom-table-carrito th, .custom-table-carrito td {
-        padding: 10px 6px;
-    }
-
-    .img-preview, .img-placeholder {
-        width: 40px;
-        height: 40px;
+    
+    .search-panel input#buscarFactura {
+        height: 48px;
+        font-size: 1rem;
     }
 
     #facturasContainer {
-        min-height: 300px;
-        padding: 15px;
-    }
-
-    .card-factura {
-        margin-bottom: 1.25rem;
+        margin-top: 1rem;
+        padding: 10px;
     }
 }

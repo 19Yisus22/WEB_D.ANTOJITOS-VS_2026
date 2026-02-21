@@ -203,7 +203,7 @@ def login():
     if request.method == "GET":
         if "user_id" in session:
             return redirect("/inicio")
-        return render_template("login.html")
+        return render_template("global_modules/login.html")
     
     session.clear()
     data = request.get_json()
@@ -232,7 +232,7 @@ def login():
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
     if request.method == "GET":
-        return render_template("registro.html")
+        return render_template("general_modules/registro.html")
     payload = request.get_json()
     correo = payload.get("correo", "").strip().lower()
     try:
@@ -258,18 +258,18 @@ def inicio():
     user_id = session.get("user_id")
     if not user_id:
         session.clear()
-        return render_template("inicio.html", user=None)
+        return render_template("general_modules/inicio.html", user=None)
     try:
         res = supabase.table("usuarios").select("*, roles(nombre_role)").eq("id_cliente", user_id).maybe_single().execute()
         if not res or not res.data:
             session.clear()
-            return render_template("inicio.html", user=None)
+            return render_template("general_modules/inicio.html", user=None)
         user = res.data
         session["user"] = user
         just_logged_in = session.pop("just_logged_in", False)
-        return render_template("inicio.html", user=user, just_logged_in=just_logged_in)
+        return render_template("general_modules/inicio.html", user=user, just_logged_in=just_logged_in)
     except:
-        return render_template("inicio.html", user=None)
+        return render_template("general_modules/inicio.html", user=None)
 
 @app.route("/logout")
 def logout():
@@ -325,7 +325,7 @@ def mi_perfil():
             supabase.table("usuarios").update(updates).eq("id_cliente", user_id).execute()
             return redirect(url_for("mi_perfil"))
 
-    return render_template("mi_perfil.html", user=usuario)
+    return render_template("general_modules/mi_perfil.html", user=usuario)
 
 @app.route("/actualizar_perfil/<id_cliente>", methods=["PUT", "POST"])
 def actualizar_perfil(id_cliente):
@@ -439,7 +439,7 @@ def eliminar_usuario_admin():
 
 @app.route("/gestionar_productos_page", methods=["GET"])
 def productos_page():
-    return render_template("gestion_productos.html")
+    return render_template("admin_modules/gestion_productos.html")
 
 @app.route("/gestionar_productos", methods=["GET", "POST"])
 def gestionar_productos():
@@ -556,7 +556,7 @@ def catalogo_page():
             p["agotado"] = int(p.get("stock", 0)) <= 0
             p["imagen_url"] = p.get("imagen_url", "")
             
-        return render_template("catalogo.html", productos=productos, userLogged=userLogged)
+        return render_template("general_modules/catalogo.html", productos=productos, userLogged=userLogged)
     except Exception as e:
         return f"Error cargando catálogo: {str(e)}", 500
 
@@ -625,7 +625,7 @@ def carrito_page():
     user_id = session.get("user_id")
     userLogged = bool(user_id)
     mensaje = "" if userLogged else "Debes iniciar sesión para acceder al carrito"
-    return render_template("carrito.html", userLogged=userLogged, mensaje=mensaje)
+    return render_template("general_modules/carrito.html", userLogged=userLogged, mensaje=mensaje)
 
 @app.route("/obtener_carrito", methods=["GET"])
 def obtener_carrito():
@@ -819,7 +819,7 @@ def finalizar_compra():
 def gestionar_facturas_page():
     if "user_id" not in session:
         return redirect(url_for("login_page"))
-    return render_template("facturas.html")
+    return render_template("general_modules/facturas.html")
 
 @app.route("/buscar_facturas_page", methods=["GET"])
 def buscar_facturas_page():
@@ -1020,7 +1020,7 @@ def pedidos_page():
     user_id = session.get("user_id")
     if not user_id:
         return redirect("/login")
-    return render_template("pedidos.html")
+    return render_template("admin_modules/pedidos.html")
 
 @app.route("/obtener_pedidos", methods=["GET"])
 def obtener_pedidos():
@@ -1203,7 +1203,7 @@ def comentarios_page():
 
         if not c.get("foto_perfil"):
             c["foto_perfil"] = info["foto_perfil"]
-    return render_template("comentarios.html", comentarios=comentarios, user_id=user_id)
+    return render_template("general_modules/comentarios.html", comentarios=comentarios, user_id=user_id)
 
 @app.route("/comentarios", methods=["GET"])
 def obtener_comentarios():
@@ -1356,7 +1356,7 @@ def publicidad_page():
     if not session.get("user_id") or session.get("rol") != "admin":
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.method == "POST":
             return jsonify({"error": "No autorizado"}), 401
-        return render_template("publicidad.html")
+        return render_template("admin_modules/publicidad.html")
         
     if request.method == "POST":
         try:
@@ -1410,7 +1410,7 @@ def publicidad_page():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
             
-    return render_template("publicidad.html")
+    return render_template("admin_modules/publicidad.html")
 
 @app.route("/api/admin/publicidad/delete/<id_publicidad>", methods=["DELETE"])
 def delete_publicidad_individual(id_publicidad):
@@ -1519,7 +1519,7 @@ def zona_pagos():
     if not session.get("user_id") or session.get("rol") != "admin":
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.method == "POST":
             return jsonify({"error": "No autorizado"}), 401
-        return render_template("zona_pagos.html", metodos=[])
+        return render_template("admin_modules/zona_pagos.html", metodos=[])
         
     if request.method == "POST":
         try:
@@ -1576,7 +1576,7 @@ def zona_pagos():
     except Exception as e:
         metodos_db = []
 
-    return render_template("zona_pagos.html", metodos=metodos_db)
+    return render_template("admin_modules/zona_pagos.html", metodos=metodos_db)
 
 @app.route("/actualizar_metodo_pago/<id_pago>", methods=["POST"])
 def actualizar_metodo_pago(id_pago):
@@ -1635,8 +1635,8 @@ def politicas_page():
     rol = session.get("rol")
 
     if not user_id or rol != 'admin':
-        return render_template("politicas.html")
-    return render_template("politicas.html")
+        return render_template("global_modules/politicas.html")
+    return render_template("global_modules/politicas.html")
 
 @app.route("/condiciones_page", methods=["GET"])
 def condiciones_page():
@@ -1644,8 +1644,8 @@ def condiciones_page():
     rol = session.get("rol")
 
     if not user_id or rol != 'admin':
-        return render_template("condiciones.html")
-    return render_template("condiciones.html")
+        return render_template("global_modules/condiciones.html")
+    return render_template("global_modules/condiciones.html")
 
 @app.route("/manual_page", methods=["GET"])
 def manual_page():
@@ -1653,8 +1653,8 @@ def manual_page():
     rol = session.get("rol")
 
     if not user_id or rol != 'admin':
-        return render_template("manual_usuario.html")
-    return render_template("manual_usuario.html")
+        return render_template("admin_modules/manual_usuario.html")
+    return render_template("admin_modules/manual_usuario.html")
 
 # MÓDULO APP RUN - SEVERLESS
 
@@ -1679,7 +1679,7 @@ if __name__ == "__main__":
     port = 8000
     local_ip = get_local_ip()
 
-    debug_mode = True
+    debug_mode = False
 
     if debug_mode:
         print("⚡ Ejecutando en modo DEBUG con servidor de desarrollo de Flask")
