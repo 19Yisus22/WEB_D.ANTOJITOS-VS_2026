@@ -40,31 +40,29 @@
 
             <div class="ms-auto">
                 <div class="nav-item dropdown">
+                    {% if session.get('user') %}
                     <a class="nav-link dropdown-toggle d-flex align-items-center profile-trigger" href="#" id="perfilDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="profile-img-container">
-                            <img src="{{ session.user.imagen_url or url_for('static', filename='uploads/default_icon_profile.png') if session.get('user') else url_for('static', filename='uploads/default_icon_profile.png') }}" alt="Perfil">
+                            <img src="{{ session.user.imagen_url or url_for('static', filename='uploads/default_icon_profile.png') }}" alt="Perfil">
+                        </div>
+                        <div class="d-flex flex-column mx-2">
+                            <span class="profile-name-nav fw-bold" style="font-size: 1.1rem; line-height: 1;">{{ session.user.nombre }}</span>
+                            <div id="statusContainer" class="d-flex align-items-center text-success" style="font-size: 0.85rem; transition: all 0.3s ease;">
+                                <span id="statusDot" style="width: 8px; height: 8px; background-color: currentColor; border-radius: 50%; display: inline-block; margin-right: 5px;"></span>
+                                <span id="userStatusLabel">Online</span>
+                            </div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 animate-dropdown mt-2">
-                        {% if session.get('user') %}
-                        <li class="px-3 py-2">
-                            <span class="profile-name d-block">{{ session.user.nombre }}</span>
-                            <span class="profile-status">Online</span>
-                        </li>
-                        {% else %}
-                        <li><a class="dropdown-item fw-bold text-primary" href="/login"><i class="bi bi-box-arrow-in-right me-2"></i>Ingresar</a></li>
-                        {% endif %}
-                        
                         <div class="d-lg-none">
-                            <li><hr class="dropdown-divider"></li>
                             <li class="dropdown-header text-uppercase">Navegación</li>
                             <li><a class="dropdown-item" href="/inicio"><i class="bi bi-house-door me-2"></i>Home</a></li>
                             <li><a class="dropdown-item" href="/catalogo_page"><i class="bi bi-shop me-2"></i>Catálogo</a></li>
                             <li><a class="dropdown-item" href="/carrito_page"><i class="bi bi-cart3 me-2"></i>Carrito</a></li>
                             <li><a class="dropdown-item" href="/comentarios_page"><i class="bi bi-chat-dots me-2"></i>Sugerencias</a></li>
+                            <li><hr class="dropdown-divider"></li>
                         </div>
 
-                        <li><hr class="dropdown-divider"></li>
                         <li class="dropdown-header text-uppercase">Mi Cuenta</li>
                         <li><a class="dropdown-item" href="/mi_perfil"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
                         <li><a class="dropdown-item" href="/gestionar_facturas_page"><i class="bi bi-wallet2 me-2"></i>Gestión de Facturas</a></li>
@@ -79,13 +77,49 @@
                         <li><a class="dropdown-item" href="/manual_page"><i class="bi bi-info-circle me-2"></i> Manual Admin</a></li>
                         {% endif %}
                         
-                        {% if session.get('user') %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger logout-link" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
-                        {% endif %}
                     </ul>
+                    {% else %}
+                    <a class="btn btn-outline-primary fw-bold d-flex align-items-center px-3" href="/login" style="border-radius: 20px;">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> Ingresar
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </nav>
 </header>
+
+<script>
+    (function() {
+        let timeout;
+        const statusContainer = document.getElementById('statusContainer');
+        const statusLabel = document.getElementById('userStatusLabel');
+        
+        if (!statusContainer || !statusLabel) return;
+
+        function setInactive() {
+            statusLabel.textContent = 'Inactive';
+            statusContainer.classList.remove('text-success');
+            statusContainer.style.color = '#6c757d';
+        }
+
+        function resetTimer() {
+            if (statusLabel.textContent === 'Inactive') {
+                statusLabel.textContent = 'Online';
+                statusContainer.classList.add('text-success');
+                statusContainer.style.color = '';
+            }
+            
+            clearTimeout(timeout);
+            timeout = setTimeout(setInactive, 5000);
+        }
+
+        window.onload = resetTimer;
+        document.onmousemove = resetTimer;
+        document.onkeydown = resetTimer;
+        document.onclick = resetTimer;
+        document.onscroll = resetTimer;
+    })();
+</script>

@@ -60,37 +60,59 @@ function showMessage(msg, isError = false) {
     toast.innerHTML = `
         <i class="bi ${icon} me-3" style="color: ${color}; font-size: 1.2rem;"></i>
         <div class="flex-grow-1" style="font-size: 0.9rem;">${msg}</div>
-        <i class="bi bi-x-lg ms-2" style="cursor: pointer; opacity: 0.5;" onclick="this.parentElement.remove()"></i>
     `;
     container.appendChild(toast);
     setTimeout(() => { toast.style.transform = "translateX(0)"; }, 10);
-    const close = () => {
+    setTimeout(() => {
         toast.style.transform = "translateX(120%)";
         setTimeout(() => toast.remove(), 300);
-    };
-    setTimeout(close, 4000);
+    }, 4000);
+}
+
+async function verificarAccesoAdmin() {
+    try {
+        const res = await fetch("/facturacion_page", {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        
+        if (res.status === 401 || res.status === 403) {
+            document.body.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
+                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
+                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
+                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
+                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador. Tu sesión será redirigida.</p>
+                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+                        <br>
+                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
+                    </div>
+                </div>
+                <style>
+                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+                </style>`;
+            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
+            return false;
+        }
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const titleHeader = document.querySelector('h2, h1, .card-title');
-    if (titleHeader) titleHeader.innerText = "PANEL FACTURACIÓN";
-
-    const tieneAcceso = await verificarAccesoAdmin();
-    if (!tieneAcceso) return;
+    const acceso = await verificarAccesoAdmin();
+    if (!acceso) return;
 
     cargarMetodosDesdeHTML();
-    escucharEventosTiempoReal();
 
     const archivoQR = document.getElementById('archivoQR');
     const previewImg = document.getElementById('previewPagoImg');
-    if (archivoQR && previewImg) {
-        archivoQR.addEventListener('change', function(e) {
+    if (archivoQR) {
+        archivoQR.addEventListener('change', function() {
             if (this.files && this.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => { previewImg.src = e.target.result; };
                 reader.readAsDataURL(this.files[0]);
-            } else {
-                previewImg.src = IMG_DEFAULT;
             }
         });
     }
@@ -101,69 +123,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnAgregar = document.getElementById('btnAgregarTemporal');
     if (btnAgregar) btnAgregar.addEventListener('click', agregarMetodoPago);
 
-    document.addEventListener('change', async (e) => {
-        if (e.target.classList.contains('check-pago')) {
-            const idPedido = e.target.dataset.id;
-            const estaPagado = e.target.checked;
-            try {
-                const response = await fetch(`/actualizar_pago/${idPedido}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pagado: estaPagado })
-                });
-                if (!response.ok) {
-                    e.target.checked = !estaPagado;
-                    showMessage("Error al actualizar", true);
-                } else {
-                    showMessage("Estado de pago actualizado", false);
-                }
-            } catch (error) {
-                e.target.checked = !estaPagado;
-                showMessage("Error de comunicación", true);
-            }
-        }
-    });
-
     document.addEventListener('click', () => initAudioContext(), { once: true });
 });
-
-async function verificarAccesoAdmin() {
-    try {
-        const res = await fetch("/gestionar_productos");
-        if (res.status === 401 || res.status === 403) {
-            document.documentElement.innerHTML = `
-                <head>
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-                    <style>
-                        body { background: #000; color: white; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; overflow: hidden; }
-                        .lock-box { text-align: center; border: 1px solid #333; padding: 3rem; border-radius: 20px; background: #0a0a0a; }
-                        .shield-icon { font-size: 5rem; color: #ff4757; animation: pulse 2s infinite; }
-                        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="lock-box shadow-lg">
-                        <i class="bi bi-shield-slash-fill shield-icon"></i>
-                        <h1 class="fw-bold mt-3">MÓDULO PROTEGIDO</h1>
-                        <p class="text-secondary">Se requiere nivel de acceso administrativo.</p>
-                        <div class="spinner-border text-danger my-3" role="status"></div><br>
-                        <button onclick="window.location.href='/'" class="btn btn-outline-danger mt-2 px-5">SALIR</button>
-                    </div>
-                </body>`;
-            setTimeout(() => { window.location.href = "/"; }, 4000);
-            return false;
-        }
-        return true;
-    } catch (e) { return false; }
-}
-
-function escucharEventosTiempoReal() {
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'nuevoPedidoDetectado') showMessage("¡Nuevo pedido detectado!", false);
-        if (e.key === 'pedidoAnuladoRecientemente') showMessage("Pedido anulado", true);
-    });
-}
 
 function cargarMetodosDesdeHTML() {
     const res = document.getElementById('metodos_iniciales_data');
@@ -186,26 +147,70 @@ function agregarMetodoPago() {
     const numero = document.getElementById('numeroCuenta').value.trim();
     const titular = document.getElementById('titularCuenta').value.trim();
     const fileInput = document.getElementById('archivoQR');
+    
     if (!numero || !titular) {
-        showMessage("Completa número y titular", true);
+        showMessage("Ingrese número y titular", true);
         return;
     }
-    const tieneArchivo = fileInput.files && fileInput.files[0];
+    
+    const file = fileInput.files[0];
     const datos = {
         entidad, tipo_cuenta: tipo, numero, titular,
         url_actual: editIndex !== -1 ? metodosPagoArray[editIndex].url_actual : "",
-        cambio_img: tieneArchivo ? true : (editIndex !== -1 ? metodosPagoArray[editIndex].cambio_img : false),
-        file: tieneArchivo ? fileInput.files[0] : (editIndex !== -1 ? metodosPagoArray[editIndex].file : null)
+        cambio_img: !!file,
+        file: file || (editIndex !== -1 ? metodosPagoArray[editIndex].file : null)
     };
+    
     if (editIndex !== -1) {
         metodosPagoArray[editIndex] = datos;
-        showMessage("Método actualizado");
+        showMessage("Lista actualizada");
     } else {
         metodosPagoArray.push(datos);
-        showMessage("Añadido a la lista");
+        showMessage("Agregado a la lista");
     }
     resetearFormulario();
     renderizarLista();
+}
+
+function renderizarLista() {
+    const lista = document.getElementById('listaMetodosPago');
+    const preview = document.getElementById('previewContenedorFinal');
+    if (!lista || !preview) return;
+    
+    lista.innerHTML = "";
+    preview.innerHTML = "";
+    
+    metodosPagoArray.forEach((m, index) => {
+        const imgSrc = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
+        const badge = getBadgeClass(m.entidad);
+        
+        lista.innerHTML += `
+            <div class="col-12 col-md-6">
+                <div class="metodo-card p-3 d-flex align-items-center justify-content-between border rounded bg-white shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="${imgSrc}" style="width:50px; height:50px; object-fit:cover;" class="rounded border">
+                        <div>
+                            <span class="bank-badge ${badge} mb-1">${m.entidad}</span>
+                            <h6 class="m-0 fw-bold">${m.titular}</h6>
+                            <small class="text-muted">${m.numero}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-light btn-sm" onclick="editarMetodo(${index})"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-light btn-sm text-danger" onclick="eliminarFila(${index})"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            </div>`;
+            
+        preview.innerHTML += `
+            <div class="col-6 text-center">
+                <div class="p-2 border rounded bg-light">
+                    <img src="${imgSrc}" class="img-fluid rounded mb-1" style="max-height:80px; object-fit:contain;">
+                    <p class="small fw-bold m-0" style="font-size:10px;">${m.entidad}</p>
+                    <p class="text-muted m-0" style="font-size:9px;">${m.numero}</p>
+                </div>
+            </div>`;
+    });
 }
 
 function editarMetodo(index) {
@@ -215,88 +220,52 @@ function editarMetodo(index) {
     document.getElementById('tipoCuenta').value = m.tipo_cuenta;
     document.getElementById('numeroCuenta').value = m.numero;
     document.getElementById('titularCuenta').value = m.titular;
-    const preview = document.getElementById('previewPagoImg');
-    preview.src = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
+    document.getElementById('previewPagoImg').src = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
+    
     const btn = document.getElementById('btnAgregarTemporal');
-    btn.innerHTML = `<i class="bi bi-check-circle-fill"></i> ACTUALIZAR LISTA`;
-    btn.classList.replace('btn-primary', 'btn-warning');
+    btn.innerHTML = `<i class="bi bi-check-circle"></i> ACTUALIZAR EN LISTA`;
+    btn.className = "btn btn-warning w-100 py-3 shadow-sm";
     window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function renderizarLista() {
-    const lista = document.getElementById('listaMetodosPago');
-    const previewContenedor = document.getElementById('previewContenedorFinal');
-    if (!lista || !previewContenedor) return;
-    lista.innerHTML = "";
-    previewContenedor.innerHTML = "";
-    metodosPagoArray.forEach((m, index) => {
-        const badgeClass = getBadgeClass(m.entidad);
-        const imgSrc = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
-        lista.innerHTML += `
-            <div class="col-12 col-md-6">
-                <div class="metodo-card p-3 shadow-sm d-flex align-items-center justify-content-between border rounded mb-2 bg-white">
-                    <div class="d-flex align-items-center gap-3">
-                        <img src="${imgSrc}" class="rounded border" style="width:55px; height:55px; object-fit:cover;">
-                        <div>
-                            <span class="bank-badge ${badgeClass} mb-1">${m.entidad}</span>
-                            <h6 class="m-0 fw-bold text-dark">${m.titular}</h6>
-                            <small class="text-muted d-block">${m.numero}</small>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-primary btn-sm border-0" onclick="editarMetodo(${index})"><i class="bi bi-pencil-square"></i></button>
-                        <button class="btn btn-outline-danger btn-sm border-0" onclick="eliminarFila(${index})"><i class="bi bi-trash3-fill"></i></button>
-                    </div>
-                </div>
-            </div>`;
-        previewContenedor.innerHTML += `
-            <div class="col-6 text-center mb-3">
-                <div class="p-2 border rounded bg-light h-100">
-                    <img src="${imgSrc}" class="img-fluid rounded mb-2" style="max-height:95px; width: 100%; object-fit: contain; background: white;">
-                    <p class="small fw-bold m-0" style="font-size:11px;">${m.entidad}</p>
-                    <p class="small text-muted m-0" style="font-size:10px;">${m.numero}</p>
-                </div>
-            </div>`;
-    });
 }
 
 function eliminarFila(index) {
     metodosPagoArray.splice(index, 1);
-    if (editIndex === index) resetearFormulario();
     renderizarLista();
-    showMessage("Eliminado de la lista", true);
+    if (editIndex === index) resetearFormulario();
 }
 
 async function guardarCambiosPagos() {
     const btn = document.getElementById('btnGuardarPagos');
-    const original = btn.innerHTML;
-    if (metodosPagoArray.length === 0) {
-        showMessage("Sin métodos para guardar", true);
-        return;
-    }
+    if (metodosPagoArray.length === 0) return showMessage("La lista está vacía", true);
+    
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> GUARDANDO...`;
+    
     const formData = new FormData();
     const metadata = metodosPagoArray.map(m => ({
         entidad: m.entidad, tipo_cuenta: m.tipo_cuenta,
         numero: m.numero, titular: m.titular,
         url_actual: m.url_actual, cambio_img: m.cambio_img
     }));
+    
     formData.append("metadata_pagos", JSON.stringify(metadata));
-    metodosPagoArray.forEach((m) => {
-        if (m.cambio_img && m.file) formData.append(`imagenes_qr`, m.file);
+    metodosPagoArray.forEach(m => {
+        if (m.cambio_img && m.file) formData.append("imagenes_qr", m.file);
     });
+
     try {
-        const response = await fetch("/facturacion_page", { method: "POST", body: formData });
-        const result = await response.json();
-        if (result.ok) {
-            showMessage("¡Cambios guardados!");
-            setTimeout(() => location.reload(), 1200);
-        } else { throw new Error(result.error); }
-    } catch (error) {
-        showMessage(error.message, true);
+        const res = await fetch("/facturacion_page", { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.ok) {
+            showMessage("¡Configuración guardada!");
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            throw new Error(data.error);
+        }
+    } catch (e) {
+        showMessage(e.message, true);
         btn.disabled = false;
-        btn.innerHTML = original;
+        btn.innerHTML = `<i class="bi bi-cloud-upload"></i> Guardar Canales de Pago`;
     }
 }
 
@@ -305,16 +274,15 @@ function resetearFormulario() {
     document.getElementById('numeroCuenta').value = "";
     document.getElementById('titularCuenta').value = "";
     document.getElementById('archivoQR').value = "";
-    document.getElementById('previewPagoImg').src = IMG_DEFAULT;
-    document.getElementById('entidadBancaria').selectedIndex = 0;
+    document.getElementById('previewPagoImg').src = "https://via.placeholder.com/200?text=Subir+QR";
     const btn = document.getElementById('btnAgregarTemporal');
-    btn.innerHTML = `<i class="bi bi-node-plus-fill"></i> AGREGAR A LISTA`;
-    btn.classList.replace('btn-warning', 'btn-primary');
+    btn.innerHTML = `<i class="bi bi-node-plus-fill"></i> Agregar a Lista`;
+    btn.className = "btn btn-primary w-100 py-3 shadow-sm";
 }
 
 function getBadgeClass(entidad) {
-    const classes = { 'Nequi': 'nequi-bg', 'Daviplata': 'daviplata-bg', 'Bancolombia': 'bancolombia-bg', 'NuBank': 'nubank-bg' };
-    return classes[entidad] || 'bg-secondary text-white';
+    const map = { 'Nequi': 'nequi-bg', 'Daviplata': 'daviplata-bg', 'Bancolombia': 'bancolombia-bg', 'NuBank': 'nubank-bg' };
+    return map[entidad] || 'bg-secondary text-white';
 }
 
 if ('serviceWorker' in navigator) {

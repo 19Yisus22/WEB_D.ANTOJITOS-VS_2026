@@ -13,7 +13,6 @@
     
     {% include 'global_modules/navbar.html' %}
 
-    {% if session.get('user_id') and session.get('rol') == 'admin' %}
     <div class="main-content">
         <div class="container-central">
             <div class="card-title-marketing mb-4 text-center">
@@ -116,10 +115,6 @@
             </div>
         </div>
     </div>
-    
-    {% else %}
-    <script>setTimeout(() => { window.location.href = "{{ url_for('inicio') }}"; }, 3000);</script>
-    {% endif %}
 
     {% include 'global_modules/footer.html' %}
     
