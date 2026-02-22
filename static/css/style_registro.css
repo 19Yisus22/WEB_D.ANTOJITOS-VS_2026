@@ -1,111 +1,162 @@
 body {
-    background: linear-gradient(135deg, #fff5f5, #ffe6e6);
+    background: radial-gradient(circle at top right, #fff5f5 0%, #ffe6e6 100%);
     color: #b35d6d;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
     margin: 0;
     padding: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 .card-registro {
     width: 100%;
-    max-width: 480px;
-    padding: 2.5rem;
+    max-width: 500px;
+    padding: 3rem;
     border: none;
-    border-radius: 25px;
-    box-shadow: 0 15px 35px rgba(214, 51, 108, 0.1);
-    background-color: #ffffff;
-    animation: slideIn 0.8s ease forwards;
+    border-radius: 30px;
+    box-shadow: 0 20px 50px rgba(214, 51, 108, 0.15);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    animation: entrance 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-@keyframes slideIn {
-    0% {
-        transform: translateY(20px);
-        opacity: 0;
-    }
-    100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
+@keyframes entrance {
+    0% { transform: scale(0.9) translateY(30px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 .logo-container {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .logo-container img {
-    max-width: 90px;
+    max-width: 100px;
     height: auto;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
+    filter: drop-shadow(0 10px 15px rgba(214, 51, 108, 0.2));
+}
+
+.floating {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
 
 h2 {
     color: #d6336c;
-    font-weight: 700;
+    font-weight: 800;
     text-align: center;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.8rem;
+    letter-spacing: -0.5px;
 }
 
 .form-label {
-    color: #8a5a62;
+    color: #b35d6d;
     font-weight: 600;
     font-size: 0.85rem;
-    margin-bottom: 0.4rem;
+    margin-left: 5px;
+    margin-bottom: 0.5rem;
+}
+
+.input-group-custom {
+    position: relative;
+    transition: transform 0.2s ease;
 }
 
 .form-control {
-    background-color: #fff9fa;
+    background-color: #ffffff;
     border: 2px solid #fce4ec;
-    border-radius: 12px;
-    padding: 10px 15px;
-    color: #555;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
+    border-radius: 15px;
+    padding: 12px 18px;
+    color: #5d4037;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
 }
 
 .form-control:focus {
-    background-color: #ffffff;
     border-color: #ff80ab;
-    box-shadow: 0 0 0 0.25rem rgba(255, 128, 171, 0.15);
-    outline: none;
+    background-color: #fff;
+    box-shadow: 0 10px 20px rgba(255, 128, 171, 0.15);
+    transform: translateY(-2px);
+}
+
+.form-control::placeholder {
+    color: #d1b1b7;
+    font-size: 0.85rem;
+}
+
+.toggle-icon {
+    cursor: pointer;
+    color: #ff80ab;
+    font-size: 1.2rem;
+    transition: color 0.3s ease;
+}
+
+.toggle-icon:hover {
+    color: #d6336c;
 }
 
 .btn-gradient {
-    background: linear-gradient(45deg, #ff80ab, #ff4081);
+    background: linear-gradient(45deg, #ff80ab, #d6336c);
     border: none;
-    border-radius: 12px;
+    border-radius: 15px;
     color: #fff;
-    padding: 12px;
-    font-weight: bold;
-    font-size: 0.95rem;
+    padding: 15px;
+    font-weight: 700;
+    font-size: 1rem;
     width: 100%;
-    transition: all 0.3s ease;
-    margin-top: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    margin-top: 1rem;
+    box-shadow: 0 10px 25px rgba(214, 51, 108, 0.3);
 }
 
 .btn-gradient:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(255, 64, 129, 0.3);
-    color: #fff;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(214, 51, 108, 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-gradient:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.text-link {
+    color: #d6336c;
+    text-decoration: none;
+    font-weight: 700;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.text-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background-color: #d6336c;
+    transition: width 0.3s ease;
+}
+
+.text-link:hover::after {
+    width: 100%;
 }
 
 @media (max-width: 576px) {
-    body {
-        padding: 15px;
-        align-items: flex-start;
-    }
-
+    body { padding: 10px; }
     .card-registro {
-        padding: 1.8rem;
-        border-radius: 20px;
+        padding: 2rem 1.5rem;
+        border-radius: 25px;
     }
-
-    h2 {
-        font-size: 1.3rem;
-    }
+    h2 { font-size: 1.5rem; }
 }
