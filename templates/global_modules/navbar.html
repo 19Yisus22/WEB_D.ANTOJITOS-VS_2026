@@ -58,22 +58,22 @@
                             <li class="dropdown-header text-uppercase">Navegación</li>
                             <li><a class="dropdown-item" href="/inicio"><i class="bi bi-house-door me-2"></i>Home</a></li>
                             <li><a class="dropdown-item" href="/catalogo_page"><i class="bi bi-shop me-2"></i>Catálogo</a></li>
-                            <li><a class="dropdown-item" href="/carrito_page"><i class="bi bi-cart3 me-2"></i>Carrito</a></li>
-                            <li><a class="dropdown-item" href="/comentarios_page"><i class="bi bi-chat-dots me-2"></i>Sugerencias</a></li>
+                            <li><a class="dropdown-item" href="/carrito_page"><i class="bi bi-cart3 me-2"></i>Mi Carrito</a></li>
+                            <li><a class="dropdown-item" href="/comentarios_page"><i class="bi bi-chat-dots me-2"></i>Muro de Sugerencias</a></li>
                             <li><hr class="dropdown-divider"></li>
                         </div>
 
                         <li class="dropdown-header text-uppercase">Mi Cuenta</li>
                         <li><a class="dropdown-item" href="/mi_perfil"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
-                        <li><a class="dropdown-item" href="/gestionar_facturas_page"><i class="bi bi-wallet2 me-2"></i>Gestión de Facturas</a></li>
+                        <li><a class="dropdown-item" href="/gestionar_facturas_page"><i class="bi bi-wallet2 me-2"></i>Buscador de Facturas</a></li>
                         
                         {% if session.get('rol') == 'admin' %}
                         <li><hr class="dropdown-divider"></li>
                         <li class="dropdown-header text-uppercase">Administración</li>
-                        <li><a class="dropdown-item" href="/gestionar_productos_page"><i class="bi bi-box-seam me-2"></i> Gestión de Productos</a></li>
-                        <li><a class="dropdown-item" href="/pedidos_page"><i class="bi bi-clipboard-check me-2"></i> Gestión de Pedidos</a></li>
-                        <li><a class="dropdown-item" href="/publicidad_page"><i class="bi bi-megaphone me-2"></i> Gestión de Publicidad</a></li>
-                        <li><a class="dropdown-item" href="/facturacion_page"><i class="bi bi-wallet2 me-2"></i> Gestión de Facturación</a></li>
+                        <li><a class="dropdown-item" href="/pedidos_page"><i class="bi bi-clipboard-check me-2"></i> Panel Pedidos</a></li>
+                        <li><a class="dropdown-item" href="/gestionar_productos_page"><i class="bi bi-box-seam me-2"></i> Panel Productos</a></li>
+                        <li><a class="dropdown-item" href="/publicidad_page"><i class="bi bi-megaphone me-2"></i> Panel Publicidad</a></li>
+                        <li><a class="dropdown-item" href="/facturacion_page"><i class="bi bi-wallet2 me-2"></i> Panel Facturación</a></li>
                         <li><a class="dropdown-item" href="/manual_page"><i class="bi bi-info-circle me-2"></i> Manual del Admin</a></li>
                         {% endif %}
                         
