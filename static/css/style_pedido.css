@@ -1,0 +1,167 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #fff8f0;
+    scroll-behavior: smooth;
+}
+
+main, .container-fluid, .container {
+    flex: 1;
+}
+
+h2 {
+    color: #d35400;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.pedido-card {
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+    overflow: hidden;
+    background: #fff3e6;
+}
+
+.pedido-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+}
+
+.pedido-card.selected {
+    border: 2px solid #e74c3c;
+    box-shadow: 0 6px 18px rgba(231, 76, 60, 0.4);
+}
+
+.card-collapsed .card-body {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.card-collapsed .card-header .toggle-detalle {
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
+}
+
+.card-header .toggle-detalle {
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.card-header .toggle-detalle:hover {
+    color: #d35400;
+    transform: rotate(90deg);
+}
+
+.card-body p, .card-body table {
+    transition: all 0.3s ease;
+}
+
+.estado-select, .btn {
+    transition: all 0.3s ease;
+}
+
+.estado-select:hover, .btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease;
+}
+
+.table:hover {
+    transform: scale(1.01);
+}
+
+#toastContainer {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1080;
+    max-width: 320px;
+}
+
+.footer-container {
+    margin-top: auto;
+}
+
+.footer {
+    background-color: #000;
+    color: #fff;
+    padding: 20px 0;
+    flex-shrink: 0;
+}
+
+.footer h3, .footer h4, .footer h5, .footer p, .footer a, .footer .social-icon i {
+    color: #fff;
+}
+
+.footer a {
+    text-decoration: none;
+}
+
+.footer a:hover {
+    color: #ffd1dc;
+}
+
+.app-badge {
+    display: inline-block;
+    width: 3cm;
+    height: 3cm;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.2);
+    padding-top: 10px;
+    font-size: 0.9rem;
+}
+
+.custom-toast {
+    background: #1a1a1a;
+    color: white;
+    border-radius: 8px;
+    padding: 10px 14px;
+    min-width: 220px;
+    max-width: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+    margin-bottom: 8px;
+    animation: toastSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    font-size: 0.85rem;
+}
+
+@keyframes toastSlideIn {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.table th, .table td {
+    vertical-align: middle !important;
+}
+
+.pedido-card.seleccion {
+    border: 2px solid red;
+    transition: none;
+}
+
+.card-collapsed .card-body {
+    display: none;
+}
+
+.icono {
+    cursor: pointer;
+}
