@@ -1,5 +1,5 @@
 import requests
-from waitress import serve
+from waitress import serve 
 from flask_cors import CORS
 from dotenv import load_dotenv
 from supabase import create_client, ClientOptions
