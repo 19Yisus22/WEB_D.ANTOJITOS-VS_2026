@@ -49,7 +49,7 @@ cloudinary.config(
 
 FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(24)
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
-app.permanent_session_lifetime = timedelta(days=7)
+app.permanent_session_lifetime = timedelta(days=1)
 app.secret_key = FLASK_SECRET_KEY
 CORS(app, supports_credentials=True)
 logging.getLogger('waitress').setLevel(logging.ERROR)
@@ -287,7 +287,7 @@ def logout():
             pass
     
     session.clear()
-    response = make_response(redirect("/login"))
+    response = make_response(redirect("/inicio"))
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
