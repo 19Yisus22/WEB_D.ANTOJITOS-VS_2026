@@ -1378,27 +1378,34 @@ def publicidad_page():
             
             def procesar(metadata_key, file_key, tipo_db):
                 metadata = json.loads(request.form.get(metadata_key, "[]"))
+                files = request.files.getlist(file_key)
+                f_idx = 0
                 files = {f.filename: f for f in request.files.getlist(file_key)}
                 
                 for item in metadata:
                     url_f = item.get("url_actual", "")
+                    if item.get("cambio_img") and f_idx < len(files):
+                        if url_f and "cloudinary" in url_f:
                     cambio = item.get("cambio_img", False)
                     temp_key = item.get("temp_file_key")
                     
                     if cambio and temp_key in files:
                         if url_f and url_f.startswith("http"):
                             delete_image_from_cloudinary(url_f)
+                        url_f = upload_image_to_cloudinary(files[f_idx], folder="publicidad")
+                        f_idx += 1
                         url_f = upload_image_to_cloudinary(files[temp_key], folder="publicidad")
-                    
+
+                    if url_f:
                     if url_f and not url_f.startswith("data:"):
                         urls_en_uso.append(url_f)
                         nuevos_registros.append({
                             "tipo": tipo_db,
+                            "titulo": item.get("titulo"),
                             "titulo": item.get("titulo", ""),
                             "descripcion": item.get("descripcion", ""),
                             "imagen_url": url_f,
                             "estado": True
-                        })
 
             procesar("metadata_carrusel", "imagenes_carrusel", "carrusel")
             procesar("metadata_secciones", "imagenes_secciones", "seccion")
@@ -1702,3 +1709,4 @@ if __name__ == "__main__":
         print(f"- Acceso en red: http://{local_ip}:{port}")
 
         serve(app, host=host, port=port, threads=10)
+
