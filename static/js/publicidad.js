@@ -361,75 +361,51 @@ function actualizarPreview() {
 
 async function guardarMarketing() {
     if (procesamientoEnCurso) return;
-    
     const btn = document.getElementById("btnGuardarMarketing");
     const originalText = btn.innerHTML;
-    
     procesamientoEnCurso = true;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> GUARDANDO...';
-
     const formData = new FormData();
-
-    const extraerSeccion = (containerId, metaKey, filePrefix) => {
+    const extraerSeccion = async (containerId, metaKey, filePrefix) => {
         const metadata = [];
         const items = document.querySelectorAll(`#${containerId} .section-preview`);
-        
-        let fileIndex = 0;
-        
-        items.forEach((div, index) => {
+        for (let index = 0; index < items.length; index++) {
+            const div = items[index];
             const fileInput = div.querySelector('input[type="file"]');
-            const file = fileInput?.files?.[0];
-            const urlActual = div.querySelector("img").src;
-            const esPlaceholder = urlActual.includes("base64") || !urlActual.startsWith("http");
-            
-            const meta = {
-                index,
+            const file = fileInput.files[0];
+            if (file) {
+                const comprimido = await comprimirImagen(file);
+                formData.append(`${filePrefix}_${index}`, comprimido);
+            }
+            metadata.push({
+                index: index,
                 titulo: div.querySelector(".t-tit")?.value || "",
                 descripcion: div.querySelector(".t-des")?.value || "",
+                url_actual: div.querySelector("img").src,
+                cambio_img: div.dataset.cambioImagen === "true",
                 db_id: div.dataset.dbId || null
-            };
-
-            if (file && !esPlaceholder) {
-                formData.append(`${filePrefix}_${fileIndex}`, file);
-                meta.cambio_img = true;
-                meta.temp_file_key = `${filePrefix}_${fileIndex}`;
-                fileIndex++;
-            } else if (!esPlaceholder) {
-                meta.url_actual = urlActual;
-                meta.cambio_img = false;
-            }
-
-            metadata.push(meta);
-        });
-        
+            });
+        }
         formData.append(metaKey, JSON.stringify(metadata));
     };
-
-    extraerSeccion("carruselContainer", "metadata_carrusel", "file_carrusel");
-    extraerSeccion("seccionesContainer", "metadata_secciones", "file_secciones");
-    extraerSeccion("cintaContainer", "metadata_cinta", "file_cinta");
-
+    await extraerSeccion("carruselContainer", "metadata_carrusel", "file_carrusel");
+    await extraerSeccion("seccionesContainer", "metadata_secciones", "file_secciones");
+    await extraerSeccion("cintaContainer", "metadata_cinta", "file_cinta");
     try {
         const response = await fetch("/publicidad_page", {
             method: "POST",
             body: formData
         });
-
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || `Error ${response.status}`);
-        }
-
         const data = await response.json();
         if (data.ok) {
             toast("Publicidad actualizada correctamente");
-            setTimeout(() => location.reload(), 1200);
+            setTimeout(() => location.reload(), 1000);
         } else {
             toast(data.error || "Error al guardar", "danger");
         }
     } catch (error) {
-        toast("Error: " + error.message, "danger");
+        toast("Error de conexión con el servidor", "danger");
     } finally {
         procesamientoEnCurso = false;
         btn.disabled = false;
