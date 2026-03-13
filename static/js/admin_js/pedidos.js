@@ -226,7 +226,7 @@ async function iniciarModuloPedidos() {
     await cargarPedidos();
     escucharEventosTiempoReal();
     
-    setInterval(() => cargarPedidos(true), 3000);
+    setInterval(() => cargarPedidos(true), 10000);
 
     document.getElementById("btnGenerarPDF")?.addEventListener("click", generarReporteConfigurado);
 
@@ -241,6 +241,218 @@ async function iniciarModuloPedidos() {
             });
         }
     });
+}
+
+async function cargarPedidos(isAutoRefresh = false) {
+    if (isAutoRefresh && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) return;
+
+    try {
+        const res = await fetch("/obtener_pedidos");
+        if (!res.ok) throw new Error("Error de conexión");
+        const pedidos = await res.json();
+        if (!Array.isArray(pedidos)) return;
+
+        if (pedidos.length > 0) {
+            const maxIdActual = Math.max(...pedidos.map(p => p.id_pedido));
+            if (ultimoIdPedidoNotificado !== 0 && maxIdActual > ultimoIdPedidoNotificado) {
+                const nuevoP = pedidos.find(p => p.id_pedido === maxIdActual);
+                const nombreFull = `${nuevoP.usuarios?.nombre || 'Nuevo'} ${nuevoP.usuarios?.apellido || 'Usuario'}`;
+                mostrarAlerta(`NUEVA VENTA: ${nombreFull.toUpperCase()} (#${maxIdActual})`, false, 9000);
+                sonidoNuevoPedido.play().catch(() => {});
+            }
+            ultimoIdPedidoNotificado = maxIdActual;
+            localStorage.setItem("ultimoIdPedidoNotificado", ultimoIdPedidoNotificado);
+        }
+
+        const idsActualesCancelados = pedidos.filter(p => p.estado === 'Cancelado').map(p => String(p.id_pedido));
+        ultimosIdsCancelados = idsActualesCancelados;
+
+        pedidosDatosRaw = pedidos;
+        pedidosGlobal = pedidos.map(pedido => {
+            const idStr = String(pedido.id_pedido);
+            const numFacturaCompuesta = generarNumeroFactura(pedido.id_pedido, pedido.fecha_pedido);
+            const facturaAMostrar = pedido.numero_factura || numFacturaCompuesta;
+            const esFijado = pedidosFijados.includes(idStr);
+            const user = pedido.usuarios || {};
+            
+            const cardExistente = document.getElementById(`pedido-${pedido.id_pedido}`);
+            const estabaAbierta = cardExistente ? !cardExistente.classList.contains('card-collapsed') : false;
+
+            let totalPendiente = 0;
+            const itemsRows = (pedido.pedido_detalle || []).map((item, idx) => {
+                const itemId = `${pedido.id_pedido}-${idx}`;
+                const pagado = estadosPagoGuardados[itemId] ?? (item.pagado ?? pedido.pagado ?? false);
+                const subtotalItem = Number(item.subtotal || 0);
+                if (!pagado) totalPendiente += subtotalItem;
+
+                return `
+                <tr style="vertical-align: middle;">
+                    <td class="text-start ps-3 fw-medium">${item.gestion_productos?.nombre || item.nombre_producto || 'Producto'}</td>
+                    <td class="fw-bold">${item.cantidad}</td>
+                    <td class="text-primary">${subtotalItem.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</td>
+                    <td>
+                        <div class="form-check form-switch d-flex justify-content-center">
+                            <input class="form-check-input toggle-pago-item-switch" type="checkbox" role="switch" 
+                                   ${pagado ? 'checked' : ''}
+                                   data-item-id="${itemId}" 
+                                   data-indice="${idx}"
+                                   data-subtotal="${subtotalItem}"
+                                   style="cursor:pointer; width: 40px; height: 20px;">
+                        </div>
+                    </td>
+                </tr>`;
+            }).join("");
+
+            const todosPagos = (pedido.pedido_detalle || []).every((_, i) => {
+                const id = `${pedido.id_pedido}-${i}`;
+                return estadosPagoGuardados[id] ?? (pedido.pedido_detalle[i]?.pagado ?? pedido.pagado ?? false);
+            });
+
+            const esTerminado = pedido.estado === 'Entregado' && todosPagos;
+            const esAnulado = pedido.estado === 'Cancelado';
+            const bloqueado = esTerminado || esAnulado;
+            const estadoClase = esAnulado ? "pedido-anulado border-danger" : (esTerminado ? "pedido-finalizado" : "pedido-activo");
+
+            const card = document.createElement("div");
+            card.className = `pedido-card col-12 mb-4 p-2 shadow-sm rounded-4 bg-white border-start border-5 ${estadoClase} ${esFijado ? 'fijado border-primary' : ''} ${estabaAbierta ? '' : 'card-collapsed'}`;
+            card.id = `pedido-${pedido.id_pedido}`;
+            card.dataset.id_real = idStr;
+
+            card.innerHTML = `
+                <div class="card border-0 bg-transparent">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0 py-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="bi ${esFijado ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle text-muted'} fs-4 btn-fijar" style="cursor:pointer"></i>
+                            <img src="${user.imagen_url || '/static/uploads/default.png'}" class="rounded-circle border border-2 border-white shadow-sm" style="width:45px;height:45px;object-fit:cover;">
+                            <div class="lh-sm">
+                                <strong class="d-block text-dark" style="font-size:1.05rem">${facturaAMostrar}</strong>
+                                <small class="status-info ${esAnulado ? 'text-danger fw-bold' : 'text-muted'}" style="font-size:0.8rem">
+                                    <span class="badge ${esAnulado ? 'bg-danger' : 'bg-secondary'}">${pedido.estado}</span>
+                                </small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <button class="btn btn-light btn-sm rounded-circle toggle-detalle" style="width:35px; height:35px;">
+                                <i class="bi bi-chevron-down icono"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body pt-0 collapse-content">
+                        <div class="table-responsive rounded-3 border">
+                            <table class="table table-hover text-center mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th class="text-start ps-3">Producto</th>
+                                        <th>Cant.</th>
+                                        <th>Precio</th>
+                                        <th>¿Pagó?</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${itemsRows}</tbody>
+                                <tfoot class="bg-white border-top-2">
+                                    <tr style="height: 60px;">
+                                        <td colspan="2" class="text-end align-middle fw-bold">SALDO PENDIENTE:</td>
+                                        <td colspan="2" class="text-start align-middle fw-bolder text-danger fs-5 ps-3 saldo-pendiente-valor">
+                                            ${totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-4 bg-light p-3 rounded-3">
+                            <select class="form-select estado-select shadow-none" style="max-width:200px;" ${bloqueado ? 'disabled' : ''}>
+                                <option value="Pendiente" ${pedido.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                                <option value="Enviado" ${pedido.estado === 'Enviado' ? 'selected' : ''}>Enviado</option>
+                                <option value="Entregado" ${pedido.estado === 'Entregado' ? 'selected' : ''}>Finalizado</option>
+                                <option value="Cancelado" ${pedido.estado === 'Cancelado' ? 'selected' : ''}>Anular</option>
+                            </select>
+                            <button class="btn btn-primary actualizar-btn px-4 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2" ${bloqueado ? 'disabled' : ''}>
+                                <i class="bi bi-arrow-repeat icono-btn"></i>
+                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                <span class="texto-btn">Actualizar Estado</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+
+            card.querySelectorAll(".toggle-pago-item-switch").forEach(sw => {
+                sw.onchange = async () => {
+                    const itemId = sw.dataset.itemId;
+                    const indice = parseInt(sw.dataset.indice);
+                    const subtotalValor = parseFloat(sw.dataset.subtotal);
+                    const ahoraPagado = sw.checked;
+
+                    const saldoElement = card.querySelector(".saldo-pendiente-valor");
+                    let saldoActual = parseFloat(saldoElement.innerText.replace(/[^0-9]/g, '')) || 0;
+                    saldoActual = ahoraPagado ? saldoActual - subtotalValor : saldoActual + subtotalValor;
+                    saldoElement.innerText = Math.max(0, saldoActual).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+                    try {
+                        const res = await fetch(`/actualizar_pago_item/${pedido.id_pedido}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ indice, pagado: ahoraPagado })
+                        });
+                        if (res.ok) {
+                            estadosPagoGuardados[itemId] = ahoraPagado;
+                            localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
+                            await cargarPedidos(true);
+                            mostrarAlerta("Pago actualizado exitosamente");
+                        } else {
+                            throw new Error();
+                        }
+                    } catch {
+                        sw.checked = !ahoraPagado;
+                        mostrarAlerta("Error al sincronizar el pago", true);
+                    }
+                };
+            });
+
+            card.querySelector(".actualizar-btn").onclick = async function() {
+                const btn = this;
+                const icono = btn.querySelector(".icono-btn");
+                const spinner = btn.querySelector(".spinner-border");
+                const texto = btn.querySelector(".texto-btn");
+                const nuevoEstado = card.querySelector(".estado-select").value;
+
+                btn.disabled = true;
+                icono.classList.add("d-none");
+                spinner.classList.remove("d-none");
+                texto.innerText = "Actualizando...";
+
+                try {
+                    const res = await fetch(`/actualizar_estado/${pedido.id_pedido}`, { 
+                        method: "PUT", 
+                        headers: { "Content-Type": "application/json" }, 
+                        body: JSON.stringify({ estado: nuevoEstado }) 
+                    });
+                    
+                    if (res.ok) {
+                        await cargarPedidos(true);
+                        mostrarAlerta(`Estado actualizado a: ${nuevoEstado.toUpperCase()}`);
+                    } else {
+                        mostrarAlerta("Error al actualizar el estado", true);
+                        btn.disabled = false;
+                        icono.classList.remove("d-none");
+                        spinner.classList.add("d-none");
+                        texto.innerText = "Actualizar Estado";
+                    }
+                } catch {
+                    mostrarAlerta("Error de conexión", true);
+                    btn.disabled = false;
+                    icono.classList.remove("d-none");
+                    spinner.classList.add("d-none");
+                    texto.innerText = "Actualizar Estado";
+                }
+            };
+
+            return card;
+        });
+
+        aplicarFiltros();
+    } catch (e) {
+        console.error("Error:", e);
+    }
 }
 
 function normalizarTexto(texto) {
@@ -383,19 +595,24 @@ async function cargarPedidos(isAutoRefresh = false) {
             const itemsRows = (pedido.pedido_detalle || []).map((item, idx) => {
                 const itemId = `${pedido.id_pedido}-${idx}`;
                 const pagado = estadosPagoGuardados[itemId] ?? (item.pagado ?? pedido.pagado ?? false);
-                if (!pagado) totalPendiente += Number(item.subtotal || 0);
+                
+                const subtotalItem = Number(item.subtotal || 0);
+                if (!pagado) {
+                    totalPendiente += subtotalItem;
+                }
 
                 return `
                 <tr style="vertical-align: middle;">
                     <td class="text-start ps-3 fw-medium">${item.gestion_productos?.nombre || item.nombre_producto || 'Producto'}</td>
                     <td class="fw-bold">${item.cantidad}</td>
-                    <td class="text-primary">${Number(item.subtotal || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</td>
+                    <td class="text-primary">${subtotalItem.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</td>
                     <td>
                         <div class="form-check form-switch d-flex justify-content-center">
                             <input class="form-check-input toggle-pago-item-switch" type="checkbox" role="switch" 
                                    ${pagado ? 'checked' : ''}
                                    data-item-id="${itemId}" 
                                    data-indice="${idx}"
+                                   data-subtotal="${subtotalItem}"
                                    style="cursor:pointer; width: 40px; height: 20px;">
                         </div>
                     </td>
@@ -487,7 +704,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                                 <tfoot class="bg-white border-top-2">
                                     <tr style="height: 60px;">
                                         <td colspan="2" class="text-end align-middle fw-bold fs-6">SALDO PENDIENTE:</td>
-                                        <td colspan="2" class="text-start align-middle fw-bolder text-danger fs-5 ps-3">
+                                        <td colspan="2" class="text-start align-middle fw-bolder text-danger fs-5 ps-3 saldo-pendiente-valor">
                                             ${totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
                                         </td>
                                     </tr>
@@ -517,13 +734,25 @@ async function cargarPedidos(isAutoRefresh = false) {
                         sw.checked = !sw.checked;
                         return;
                     }
+
                     const itemId = sw.dataset.itemId;
                     const indice = parseInt(sw.dataset.indice);
+                    const subtotalValor = parseFloat(sw.dataset.subtotal);
                     const ahoraPagado = sw.checked;
+
+                    const saldoElement = card.querySelector(".saldo-pendiente-valor");
+                    let saldoActual = parseFloat(saldoElement.innerText.replace(/[^0-9]/g, ''));
+                    
+                    if (ahoraPagado) {
+                        saldoActual -= subtotalValor;
+                    } else {
+                        saldoActual += subtotalValor;
+                    }
+                    
+                    saldoElement.innerText = saldoActual.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
                     estadosPagoGuardados[itemId] = ahoraPagado;
                     localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
-                    actualizarCardLocalmente(card, pedido.id_pedido, pedido);
 
                     try {
                         const res = await fetch(`/actualizar_pago_item/${pedido.id_pedido}`, {
