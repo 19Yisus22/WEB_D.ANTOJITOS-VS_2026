@@ -51,7 +51,7 @@
                     {% if session.get('usuario') %}
                     <a class="nav-link dropdown-toggle d-flex align-items-center profile-trigger" href="#" id="perfilDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="profile-img-container">
-                            <img src="{{ session.usuario.imagenUrl or url_for('static', filename='uploads/default_icon_profile.png') }}" alt="Perfil">
+                            <img src="{{ session.usuario.imagen_url or session.usuario.imagenUrl or url_for('static', filename='uploads/default_icon_profile.png') }}" alt="Perfil">
                         </div>
                         <div class="d-flex flex-column mx-2">
                             <span class="profile-name-nav fw-bold" style="font-size: 1.1rem; line-height: 1;">{{ session.usuario.nombre }}</span>
@@ -64,25 +64,26 @@
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 animate-dropdown mt-2">
                         <div class="d-lg-none">
                             <li><hr class="dropdown-divider"></li>
-                            <li class="dropdown-header text-uppercase">Navegación</li>
+                            <li class="dropdown-header text-uppercase">Navegación Principal</li>
                             <li><a class="dropdown-item" href="/inicio"><i class="bi bi-house-door me-2"></i>Home</a></li>
                             <li><a class="dropdown-item" href="/catalogo_page"><i class="bi bi-shop me-2"></i>Catálogo</a></li>
                             <li><a class="dropdown-item" href="/carrito_page"><i class="bi bi-cart3 me-2"></i>Mi Carrito</a></li>
+                            <li><a class="dropdown-item" href="/comentarios_page"><i class="bi bi-chat-dots me-2"></i>Muro de Sugerencias</a></li>
                             <li><hr class="dropdown-divider"></li>
                         </div>
 
                         <li class="dropdown-header text-uppercase">Mi Cuenta</li>
                         <li><a class="dropdown-item" href="/mi_perfil"><i class="bi bi-person me-2"></i>• Mi Perfil</a></li>
-                        <li><a class="dropdown-item" href="/gestionar_facturas_page"><i class="bi bi-wallet2 me-2"></i>• Mis Facturas</a></li>
+                        <li><a class="dropdown-item" href="/gestionar_facturas_page"><i class="bi bi-wallet2 me-2"></i>• Buscador de Facturas</a></li>
                         
                         {% if session.get('rol') == 'admin' %}
                         <li><hr class="dropdown-divider"></li>
-                        <li class="dropdown-header text-uppercase">Administración</li>
+                        <li class="dropdown-header text-uppercase">Sección Administrativa</li>
                         <li><a class="dropdown-item" href="/pedidos_page"><i class="bi bi-clipboard-check me-2"></i>| Panel Pedidos</a></li>
                         <li><a class="dropdown-item" href="/gestionar_productos_page"><i class="bi bi-box-seam me-2"></i>| Panel Productos</a></li>
                         <li><a class="dropdown-item" href="/publicidad_page"><i class="bi bi-megaphone me-2"></i>| Panel Publicidad</a></li>
                         <li><a class="dropdown-item" href="/facturacion_page"><i class="bi bi-wallet2 me-2"></i>| Panel Facturación</a></li>
-                        <li><a class="dropdown-item" href="/manual_page"><i class="bi bi-info-circle me-2"></i>| Manual Admin</a></li>
+                        <li><a class="dropdown-item" href="/manual_page"><i class="bi bi-info-circle me-2"></i>| Manual del Admin</a></li>
                         {% endif %}
                         
                         <li><hr class="dropdown-divider"></li>
