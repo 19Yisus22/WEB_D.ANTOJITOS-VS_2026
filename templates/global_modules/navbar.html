@@ -4,13 +4,9 @@
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container-fluid px-2 px-md-4">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="/inicio">
-                <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo" width="55" height="auto" class="logo-img">
+                <img src="/static/uploads/logo.ico" alt="Logo" width="55" height="auto" class="logo-img">
                 <span class="ms-2">D'Antojitos©</span>
             </a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto nav-gap-custom">
@@ -26,8 +22,6 @@
                             <span class="nav-label">Catálogo</span>
                         </a>
                     </li>
-                    
-                    {% if session.get('usuario') %}
                     <li class="nav-item">
                         <a class="nav-link nav-icon-link" href="/carrito_page">
                             <i class="bi bi-cart3"></i>
@@ -35,8 +29,6 @@
                             <span id="contadorCarritoBadge" class="cart-badge-overlap" style="display: none;">0</span>
                         </a>
                     </li>
-                    {% endif %}
-
                     <li class="nav-item">
                         <a class="nav-link nav-icon-link" href="/comentarios_page">
                             <i class="bi bi-chat-dots"></i>
@@ -48,13 +40,13 @@
 
             <div class="ms-auto">
                 <div class="nav-item dropdown">
-                    {% if session.get('usuario') %}
+                    {% if session.get('user') %}
                     <a class="nav-link dropdown-toggle d-flex align-items-center profile-trigger" href="#" id="perfilDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="profile-img-container">
-                            <img src="{{ session.usuario.imagen_url or session.usuario.imagenUrl or url_for('static', filename='uploads/default_icon_profile.png') }}" alt="Perfil">
+                            <img src="{{ session.user.imagen_url or url_for('static', filename='uploads/default_icon_profile.png') }}" alt="Perfil">
                         </div>
                         <div class="d-flex flex-column mx-2">
-                            <span class="profile-name-nav fw-bold" style="font-size: 1.1rem; line-height: 1;">{{ session.usuario.nombre }}</span>
+                            <span class="profile-name-nav fw-bold" style="font-size: 1.1rem; line-height: 1;">{{ session.user.nombre }}</span>
                             <div id="statusContainer" class="d-flex align-items-center text-success" style="font-size: 0.85rem; transition: all 0.3s ease;">
                                 <span id="statusDot" style="width: 8px; height: 8px; background-color: currentColor; border-radius: 50%; display: inline-block; margin-right: 5px;"></span>
                                 <span id="userStatusLabel">Online</span>
@@ -81,6 +73,7 @@
                         <li class="dropdown-header text-uppercase">Sección Administrativa</li>
                         <li><a class="dropdown-item" href="/pedidos_page"><i class="bi bi-clipboard-check me-2"></i>| Panel Pedidos</a></li>
                         <li><a class="dropdown-item" href="/gestionar_productos_page"><i class="bi bi-box-seam me-2"></i>| Panel Productos</a></li>
+
                         <li><a class="dropdown-item" href="/publicidad_page"><i class="bi bi-megaphone me-2"></i>| Panel Publicidad</a></li>
                         <li><a class="dropdown-item" href="/facturacion_page"><i class="bi bi-wallet2 me-2"></i>| Panel Facturación</a></li>
                         <li><a class="dropdown-item" href="/manual_page"><i class="bi bi-info-circle me-2"></i>| Manual del Admin</a></li>
@@ -105,21 +98,26 @@
         let timeout;
         const statusContainer = document.getElementById('statusContainer');
         const statusLabel = document.getElementById('userStatusLabel');
+        
         if (!statusContainer || !statusLabel) return;
+
         function setInactive() {
             statusLabel.textContent = 'Inactive';
             statusContainer.classList.remove('text-success');
             statusContainer.style.color = '#6c757d';
         }
+
         function resetTimer() {
             if (statusLabel.textContent === 'Inactive') {
                 statusLabel.textContent = 'Online';
                 statusContainer.classList.add('text-success');
                 statusContainer.style.color = '';
             }
+            
             clearTimeout(timeout);
-            timeout = setTimeout(setInactive, 300000); 
+            timeout = setTimeout(setInactive, 5000);
         }
+
         window.onload = resetTimer;
         document.onmousemove = resetTimer;
         document.onkeydown = resetTimer;
