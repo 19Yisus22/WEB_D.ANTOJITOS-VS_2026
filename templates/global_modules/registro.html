@@ -58,15 +58,18 @@
                 </div>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-3">
                 <label for="contrasena" class="form-label">Contraseña</label>
                 <div class="position-relative input-group-custom">
                     <input type="password" id="contrasena" name="contrasena" class="form-control" required placeholder="Ingrese contraseña">
-                    <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3 toggle-icon" id="togglePassword"></i>
+                    <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3 toggle-icon" id="togglePassword" style="cursor: pointer;"></i>
+                </div>
+                <div class="progress mt-2" style="height: 6px; border-radius: 10px; background-color: #eee;">
+                    <div id="passwordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%; transition: all 0.3s ease;"></div>
                 </div>
             </div>
 
-            <button type="submit" id="btnSubmit" class="btn btn-gradient text-uppercase">
+            <button type="submit" id="btnSubmit" class="btn btn-gradient text-uppercase w-100">
                 <span>Comenzar Registro</span>
             </button>
         </form>

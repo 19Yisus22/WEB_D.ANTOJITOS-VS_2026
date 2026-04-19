@@ -16,39 +16,39 @@ sonidoNuevoPedido.volume = 0.9;
 
 async function verificarAccesoAdmin() {
     try {
-        const res = await fetch("/gestionar_productos");
+        const res = await fetch("/facturacion_page", {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        
         if (res.status === 401 || res.status === 403) {
-            document.documentElement.innerHTML = `
-                <head>
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-                    <style>
-                        body { background: #000; color: white; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-                        .lock-box { text-align: center; border: 1px solid #333; padding: 4rem; border-radius: 30px; background: #0a0a0a; box-shadow: 0 0 50px rgba(255,0,0,0.1); }
-                        .shield-icon { font-size: 6rem; color: #ff4757; animation: pulse 1.5s infinite; }
-                        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="lock-box">
-                        <i class="bi bi-shield-lock-fill shield-icon"></i>
-                        <h1 class="fw-bold mt-4">ACCESO RESTRINGIDO</h1>
-                        <p class="text-secondary fs-5">Este panel requiere credenciales de administrador de alto nivel.</p>
-                        <div class="spinner-grow text-danger my-4" role="status"></div>
+            document.body.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
+                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
+                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
+                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
+                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
+                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
                         <br>
-                        <button onclick="window.location.href='/'" class="btn btn-danger btn-lg mt-2 px-5 rounded-pill">REGRESAR AL INICIO</button>
+                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
                     </div>
-                </body>
-            `;
-            setTimeout(() => { window.location.href = "/"; }, 3500);
+                </div>
+                <style>
+                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+                </style>`;
+            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
             return false;
         }
         return true;
-    } catch (error) {
-        console.error("Error crítico de verificación:", error);
+    } catch (e) {
         return false;
     }
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const tieneAcceso = await verificarAccesoAdmin();
+    if (!tieneAcceso) return;
+    
+});
 
 function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
     let container = document.getElementById('toastContainer');
@@ -113,6 +113,7 @@ function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
 }
 
 function escucharEventosTiempoReal() {
+    // Detectar cambios en tiempo real via Storage API
     window.addEventListener('storage', (e) => {
         if (e.key === 'nuevoPedidoDetectado') {
             cargarPedidos(true);
@@ -124,6 +125,61 @@ function escucharEventosTiempoReal() {
             cargarPedidos(true);
         }
     });
+
+    // Escuchar cambios en documento para actualizaciones en tiempo real
+    document.addEventListener('pedidosActualizados', () => {
+        aplicarFiltros();
+    });
+
+    // Monitorear cambios de foco de ventana
+    window.addEventListener('focus', () => {
+        console.log('[TIEMPO REAL] Ventana enfocada - sincronizando pedidos...');
+        cargarPedidos(true);
+    });
+}
+
+function mostrarNotificacionBienvenida() {
+    const yaNotificado = sessionStorage.getItem("notificacionBienvenidaMostrada");
+    if (yaNotificado) return;
+
+    try {
+        const pedidos = pedidosDatosRaw;
+        if (pedidos.length === 0) {
+            mostrarAlerta("Sistema listo. No hay pedidos pendientes.", false, 3000);
+            sessionStorage.setItem("notificacionBienvenidaMostrada", "true");
+            return;
+        }
+
+        const maxIdActual = Math.max(...pedidos.map(p => p.id_pedido));
+        const ultimoPedido = pedidos.find(p => p.id_pedido === maxIdActual);
+        
+        if (ultimoPedido) {
+            const numFactura = generarNumeroFactura(ultimoPedido.id_pedido, ultimoPedido.fecha_pedido);
+            const cliente = `${ultimoPedido.usuarios?.nombre || 'Cliente'} ${ultimoPedido.usuarios?.apellido || ''}`;
+            const estado = ultimoPedido.estado;
+            
+            mostrarAlerta(`✓ Bienvenido. Último pedido: ${numFactura} (${cliente}) - ${estado}`, false, 5000);
+        }
+
+        sessionStorage.setItem("notificacionBienvenidaMostrada", "true");
+    } catch (e) {
+        console.log('[NOTIFICACIÓN] Error en bienvenida:', e);
+    }
+}
+
+function notificarNuevoPedido(pedidos) {
+    if (!Array.isArray(pedidos) || pedidos.length === 0) return;
+
+    const maxIdActual = Math.max(...pedidos.map(p => p.id_pedido));
+    if (ultimoIdPedidoNotificado !== 0 && maxIdActual > ultimoIdPedidoNotificado) {
+        const nuevoP = pedidos.find(p => p.id_pedido === maxIdActual);
+        const nombreFull = `${nuevoP.usuarios?.nombre || 'Nuevo'} ${nuevoP.usuarios?.apellido || 'Usuario'}`;
+        mostrarAlerta(`NUEVO PEDIDO: ${nombreFull.toUpperCase()} (#${maxIdActual})`, false, 9000);
+        sonidoNuevoPedido.play().catch(() => {});
+    }
+
+    ultimoIdPedidoNotificado = maxIdActual;
+    localStorage.setItem("ultimoIdPedidoNotificado", ultimoIdPedidoNotificado);
 }
 
 function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
@@ -223,10 +279,14 @@ async function iniciarModuloPedidos() {
 
     ajustarBarraBusqueda();
     inicializarSelectAnios();
-    await cargarPedidos();
-    escucharEventosTiempoReal();
     
-    setInterval(() => cargarPedidos(true), 10000);
+    localStorage.setItem("moduloPedidosIniciado", "true");
+    
+    await cargarPedidos();
+    mostrarNotificacionBienvenida();
+    escucharEventosTiempoReal();
+
+    setInterval(() => cargarPedidos(true), 5000);
 
     document.getElementById("btnGenerarPDF")?.addEventListener("click", generarReporteConfigurado);
 
@@ -352,8 +412,8 @@ async function cargarPedidos(isAutoRefresh = false) {
                                 <tfoot class="bg-white border-top-2">
                                     <tr style="height: 60px;">
                                         <td colspan="2" class="text-end align-middle fw-bold">SALDO PENDIENTE:</td>
-                                        <td colspan="2" class="text-start align-middle fw-bolder text-danger fs-5 ps-3 saldo-pendiente-valor">
-                                            ${totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                                        <td colspan="2" class="text-start align-middle fw-bolder ${totalPendiente === 0 ? 'text-success' : 'text-danger'} fs-5 ps-3 saldo-pendiente-valor">
+                                            ${totalPendiente === 0 ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -554,17 +614,7 @@ async function cargarPedidos(isAutoRefresh = false) {
         const pedidos = await res.json();
         if (!Array.isArray(pedidos)) return;
 
-        if (pedidos.length > 0) {
-            const maxIdActual = Math.max(...pedidos.map(p => p.id_pedido));
-            if (ultimoIdPedidoNotificado !== 0 && maxIdActual > ultimoIdPedidoNotificado) {
-                const nuevoP = pedidos.find(p => p.id_pedido === maxIdActual);
-                const nombreFull = `${nuevoP.usuarios?.nombre || 'Nuevo'} ${nuevoP.usuarios?.apellido || 'Usuario'}`;
-                mostrarAlerta(`NUEVA VENTA: ${nombreFull.toUpperCase()} (#${maxIdActual})`, false, 9000);
-                sonidoNuevoPedido.play().catch(() => {});
-            }
-            ultimoIdPedidoNotificado = maxIdActual;
-            localStorage.setItem("ultimoIdPedidoNotificado", ultimoIdPedidoNotificado);
-        }
+        notificarNuevoPedido(pedidos);
 
         const idsActualesCancelados = pedidos.filter(p => p.estado === 'Cancelado').map(p => String(p.id_pedido));
         if (ultimosIdsCancelados.length > 0) {
@@ -662,6 +712,15 @@ async function cargarPedidos(isAutoRefresh = false) {
                             </div>
                         </div>
                         <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex flex-column align-items-end me-2">
+                                <small class="text-muted fw-bold" style="font-size: 0.75rem; text-transform: uppercase;">
+                                    Saldo:
+                                </small>
+                                <span class="saldo-header fw-bolder ${totalPendiente === 0 ? 'text-success' : 'text-danger'} d-flex align-items-center justify-content-end" style="font-size: 0.95rem; gap:0.35rem;">
+                                    <i class="bi bi-wallet2 me-1"></i>
+                                    ${totalPendiente === 0 ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                                </span>
+                            </div>
                             <button class="btn btn-light btn-sm rounded-circle toggle-detalle" style="width:35px; height:35px; display:flex; align-items:center; justify-content:center;">
                                 <i class="bi bi-chevron-down icono transition-all"></i>
                             </button>
@@ -704,8 +763,8 @@ async function cargarPedidos(isAutoRefresh = false) {
                                 <tfoot class="bg-white border-top-2">
                                     <tr style="height: 60px;">
                                         <td colspan="2" class="text-end align-middle fw-bold fs-6">SALDO PENDIENTE:</td>
-                                        <td colspan="2" class="text-start align-middle fw-bolder text-danger fs-5 ps-3 saldo-pendiente-valor">
-                                            ${totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                                        <td colspan="2" class="text-start align-middle fw-bolder ${totalPendiente === 0 ? 'text-success' : 'text-danger'} fs-5 ps-3 saldo-pendiente-valor">
+                                            ${totalPendiente === 0 ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -741,7 +800,8 @@ async function cargarPedidos(isAutoRefresh = false) {
                     const ahoraPagado = sw.checked;
 
                     const saldoElement = card.querySelector(".saldo-pendiente-valor");
-                    let saldoActual = parseFloat(saldoElement.innerText.replace(/[^0-9]/g, ''));
+                    const saldoHeader = card.querySelector(".saldo-header");
+                    let saldoActual = parseFloat(saldoElement.innerText.replace(/[^0-9]/g, '')) || 0;
                     
                     if (ahoraPagado) {
                         saldoActual -= subtotalValor;
@@ -749,7 +809,20 @@ async function cargarPedidos(isAutoRefresh = false) {
                         saldoActual += subtotalValor;
                     }
                     
-                    saldoElement.innerText = saldoActual.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+                    const estaPagado = saldoActual <= 0;
+                    const saldoFormato = estaPagado
+                        ? 'PAGADO'
+                        : saldoActual.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+                    saldoElement.innerText = saldoFormato;
+                    saldoElement.classList.toggle('text-success', estaPagado);
+                    saldoElement.classList.toggle('text-danger', !estaPagado);
+
+                    if (saldoHeader) {
+                        saldoHeader.innerText = saldoFormato;
+                        saldoHeader.classList.toggle('text-success', estaPagado);
+                        saldoHeader.classList.toggle('text-danger', !estaPagado);
+                    }
 
                     estadosPagoGuardados[itemId] = ahoraPagado;
                     localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
@@ -854,8 +927,24 @@ function actualizarCardLocalmente(card, idPedido, pedidoData, nuevoEstado = null
         }
     });
 
-    card.querySelector("tfoot td:nth-child(2)").textContent = 
-        totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+    const estaPagado = totalPendiente <= 0;
+    const textoSaldo = estaPagado
+        ? 'PAGADO'
+        : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+    const saldoFooter = card.querySelector("tfoot td:nth-child(2)");
+    if (saldoFooter) {
+        saldoFooter.textContent = textoSaldo;
+        saldoFooter.classList.toggle('text-success', estaPagado);
+        saldoFooter.classList.toggle('text-danger', !estaPagado);
+    }
+
+    const saldoHeader = card.querySelector('.saldo-header');
+    if (saldoHeader) {
+        saldoHeader.textContent = textoSaldo;
+        saldoHeader.classList.toggle('text-success', estaPagado);
+        saldoHeader.classList.toggle('text-danger', !estaPagado);
+    }
 
     const estado = nuevoEstado || card.dataset.estado;
     const esTerminado = estado === 'Entregado' && todosPagos;
@@ -1147,6 +1236,19 @@ async function generarReporteConfigurado() {
 window.onload = iniciarModuloPedidos;
 
 document.addEventListener("DOMContentLoaded", iniciarModuloPedidos);
+
+(function() {
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = function() {
+        window.history.pushState(null, "", window.location.href);
+    };
+
+    window.onpageshow = function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            window.location.reload();
+        }
+    };
+})();
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

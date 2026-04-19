@@ -1,13 +1,4 @@
-const catalogoContainer = document.getElementById("catalogoProductos");
-const btnFiltrar = document.getElementById("btnFiltrar");
-const searchInput = document.getElementById("searchInput");
 const toastContainer = document.getElementById("toastContainer");
-
-let postres = [];
-let indexActual = null;
-let isUpdating = false;
-let audioCtx = null;
-
 const btnAgregarPostre = document.getElementById("btnAgregarPostre");
 const btnCancelar = document.getElementById("btnCancelar");
 const formAgregarPostre = document.getElementById("formAgregarPostre");
@@ -18,28 +9,31 @@ const avisoAgotados = document.getElementById("avisoAgotados");
 const modalElement = document.getElementById("modalPostre");
 const modal = modalElement ? new bootstrap.Modal(modalElement) : null;
 const btnSubmitForm = document.getElementById("btnSubmitForm");
+const searchInput = document.getElementById("searchProductos");
+
+let postres = [];
+let indexActual = null;
+let isUpdating = false;
+let audioCtx = null;
 
 async function verificarAccesoAdmin() {
     try {
         const res = await fetch("/facturacion_page", {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
-        
         if (res.status === 401 || res.status === 403) {
             document.body.innerHTML = `
                 <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
                     <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
                         <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
                         <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador. Tu sesión será redirigida.</p>
+                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
                         <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
                         <br>
                         <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
                     </div>
                 </div>
-                <style>
-                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-                </style>`;
+                <style>@keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }</style>`;
             setTimeout(() => { window.location.href = "/inicio"; }, 3500);
             return false;
         }
@@ -54,9 +48,7 @@ function initAudioContext() {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (AudioContextClass) audioCtx = new AudioContextClass();
     }
-    if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 }
 
 function playNotificationSound(type = 'default') {
@@ -90,115 +82,45 @@ function playNotificationSound(type = 'default') {
 function showMessage(msg, isError = false) {
     if (!toastContainer) return;
     playNotificationSound(isError ? 'error' : 'default');
-    
     const toast = document.createElement('div');
     const colorPrimario = isError ? "#ff4757" : "#2ed573";
-    
-    toast.style.cssText = `
-        background: #121212;
-        color: #ffffff;
-        padding: 14px 18px;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        min-width: 320px;
-        margin-bottom: 10px;
-        border-left: 5px solid ${colorPrimario};
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform: translateX(120%);
-        opacity: 0;
-    `;
-
+    toast.className = "custom-toast";
+    toast.style.borderLeftColor = colorPrimario;
     toast.innerHTML = `
         <div class="d-flex align-items-center w-100">
-            <div style="background: ${colorPrimario}22; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i class="bi ${isError ? 'bi-x-circle-fill' : 'bi-check-circle-fill'}" style="color: ${colorPrimario};"></i>
+            <i class="bi ${isError ? 'bi-x-circle-fill' : 'bi-check-circle-fill'} me-3" style="color: ${colorPrimario}; font-size: 1.2rem;"></i>
+            <div class="flex-grow-1">
+                <div style="font-size: 0.9rem;">${msg}</div>
             </div>
-            <div class="ms-3 flex-grow-1">
-                <strong style="display: block; font-size: 0.7rem; text-transform: uppercase; color: ${colorPrimario}; letter-spacing: 0.8px;">Sistema Admin</strong>
-                <div style="font-size: 0.85rem; color: #f0f0f0;">${msg}</div>
-            </div>
-        </div>
-    `;
-
+        </div>`;
     toastContainer.appendChild(toast);
     setTimeout(() => {
-        toast.style.transform = "translateX(0)";
-        toast.style.opacity = "1";
-    }, 10);
-
-    const remove = () => {
         toast.style.transform = "translateX(120%)";
         toast.style.opacity = "0";
         setTimeout(() => toast.remove(), 400);
-    };
-
-    setTimeout(remove, 3000);
+    }, 3000);
 }
 
 function showConfirmToast(msg, callback) {
     if (!toastContainer) return;
     playNotificationSound('error');
-
     const t = document.createElement('div');
-    t.style.cssText = `
-        background: #1a1a1a;
-        color: #ffffff;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        min-width: 320px;
-        border-left: 5px solid #ffc107;
-        margin-bottom: 10px;
-        transition: all 0.3s ease;
-        opacity: 0;
-        transform: scale(0.9);
-    `;
-
+    t.className = "custom-toast flex-column align-items-start";
+    t.style.borderLeftColor = "#ffc107";
+    t.style.background = "#1a1a1a";
     t.innerHTML = `
-        <div class="d-flex flex-column">
-            <div class="d-flex align-items-start mb-3">
-                <i class="bi bi-exclamation-triangle-fill text-warning me-3 fs-4"></i>
-                <div>
-                    <strong class="d-block" style="color: #ffc107;">Confirmar Acción</strong>
-                    <span class="small text-white-50">${msg}</span>
-                </div>
-            </div>
-            <div class="d-flex gap-2 justify-content-end">
-                <button class="btn btn-sm text-white text-decoration-none btn-cancelar-confirm">Cancelar</button>
-                <button class="btn btn-sm btn-warning fw-bold px-4 rounded-pill btn-aceptar-confirm">Confirmar</button>
-            </div>
-        </div>
-    `;
-
+        <div class="mb-2"><strong>Confirmar</strong></div>
+        <div class="small mb-3 text-white-50">${msg}</div>
+        <div class="d-flex gap-2 w-100 justify-content-end">
+            <button class="btn btn-sm btn-outline-light border-0 btn-cancelar-confirm">Cancelar</button>
+            <button class="btn btn-sm btn-warning btn-aceptar-confirm">Confirmar</button>
+        </div>`;
     toastContainer.appendChild(t);
-    
-    setTimeout(() => {
-        t.style.opacity = '1';
-        t.style.transform = 'scale(1)';
-    }, 10);
-
-    const closeConfirm = () => {
-        t.style.opacity = '0';
-        t.style.transform = 'scale(0.9)';
-        setTimeout(() => t.remove(), 300);
-    };
-
-    t.querySelector('.btn-cancelar-confirm').onclick = () => closeConfirm();
-
+    t.querySelector('.btn-cancelar-confirm').onclick = () => t.remove();
     t.querySelector('.btn-aceptar-confirm').onclick = () => {
         callback();
-        closeConfirm();
+        t.remove();
     };
-}
-
-function ajustarAtributosPrecio() {
-    const precioInput = document.getElementById("precioPostre");
-    if (precioInput) {
-        precioInput.setAttribute("step", "0.01");
-        precioInput.setAttribute("min", "0");
-    }
 }
 
 async function cargarPostres(silent = false) {
@@ -208,12 +130,9 @@ async function cargarPostres(silent = false) {
         const res = await fetch("/gestionar_productos", { cache: 'no-store' });
         if (!res.ok) return;
         const nuevosPostres = await res.json();
-        const dataNueva = JSON.stringify(nuevosPostres);
-        const dataVieja = JSON.stringify(postres);
-
-        if (dataNueva !== dataVieja) {
+        if (JSON.stringify(nuevosPostres) !== JSON.stringify(postres)) {
             postres = nuevosPostres;
-            localStorage.setItem('postresCache', dataNueva);
+            localStorage.setItem('postresCache', JSON.stringify(postres));
             renderPostres();
         }
     } catch (error) {
@@ -223,66 +142,81 @@ async function cargarPostres(silent = false) {
     }
 }
 
-function renderPostres() {
+function actualizarEstadisticas(listaAMostrar) {
+    const total = listaAMostrar.length;
+    const disponibles = listaAMostrar.filter(p => parseInt(p.stock) > 0).length;
+    const agotados = total - disponibles;
+
+    document.getElementById("statTotalNum").textContent = total;
+    document.getElementById("statDispNum").textContent = disponibles;
+    document.getElementById("statAgotNum").textContent = agotados;
+}
+
+function renderPostres(filtro = "") {
     if (!listaPostresDisponibles || !listaPostresAgotados) return;
+    
     listaPostresDisponibles.innerHTML = "";
     listaPostresAgotados.innerHTML = "";
-    let hayAgotados = false;
+    
+    const productosFiltrados = postres.filter(p => 
+        p.nombre.toLowerCase().includes(filtro.toLowerCase())
+    );
 
-    postres.forEach((p, index) => {
+    actualizarEstadisticas(productosFiltrados);
+    let countDisp = 0;
+    let countAgot = 0;
+
+    productosFiltrados.forEach((p) => {
+        const indexOriginal = postres.findIndex(pr => pr.id_producto === p.id_producto);
         const card = document.createElement("div");
-        card.className = "col-md-4 col-sm-6 mb-3 d-flex align-items-stretch animate__animated animate__fadeIn";
-        const imgUrl = p.imagen_url || "/static/uploads/default.png";
+        card.className = "col";
         const stockActual = parseInt(p.stock) || 0;
         const isAgotado = stockActual <= 0;
         
         card.innerHTML = `
-        <div class="card w-100 cursor-pointer ${isAgotado ? 'opacity-75 grayscale' : ''}" data-id="${p.id_producto}">
-            <div class="position-relative">
-                <img src="${imgUrl}" class="card-img-top postre-img" alt="${p.nombre}" style="height: 200px; object-fit: cover;">
-                ${isAgotado ? '<div class="position-absolute top-50 start-50 translate-middle badge bg-danger fs-6 shadow-lg">AGOTADO</div>' : ''}
-            </div>
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                    <h5 class="card-title mb-0 text-truncate" title="${p.nombre}">${p.nombre}</h5>
-                    <span class="badge ${stockActual <= 5 ? 'bg-danger animate__animated animate__pulse animate__infinite' : 'bg-success'}">${stockActual}</span>
+        <div class="card h-100 shadow-sm ${isAgotado ? 'gris' : ''}" data-id="${p.id_producto}">
+            <img src="${p.imagen_url || '/static/uploads/default.png'}" class="postre-img card-img-top" alt="${p.nombre}">
+            <div class="card-body p-3">
+                <h6 class="card-title text-truncate mb-1">${p.nombre}</h6>
+                <p class="card-text text-primary fw-bold mb-2">${Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge ${stockActual <= 5 ? 'bg-danger' : 'bg-success'}">Stock: ${stockActual}</span>
+                    <i class="bi bi-eye text-muted"></i>
                 </div>
-                <p class="card-text fw-bold text-primary">${Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
-                <small class="text-muted d-block">${p.categoria || 'Postre'}</small>
             </div>
         </div>`;
 
-        card.querySelector(".card").onclick = () => {
-            initAudioContext();
-            abrirModalPostre(index);
-        };
+        card.querySelector(".card").onclick = () => abrirModalPostre(indexOriginal);
 
         if (!isAgotado) {
             listaPostresDisponibles.appendChild(card);
+            countDisp++;
         } else {
             listaPostresAgotados.appendChild(card);
-            hayAgotados = true;
+            countAgot++;
         }
     });
-    if (avisoAgotados) avisoAgotados.classList.toggle("d-none", !hayAgotados);
+
+    document.getElementById("emptyDisponibles").classList.toggle("d-none", countDisp > 0);
+    document.getElementById("emptyAgotados").classList.toggle("d-none", countAgot > 0);
+    if (avisoAgotados) avisoAgotados.classList.toggle("d-none", countAgot === 0);
 }
 
 function abrirModalPostre(index) {
     indexActual = index;
     const p = postres[index];
-    document.getElementById("modalNombre").textContent = p.nombre;
+    document.getElementById("modalNombre").textContent = "Ficha de Producto";
+    document.getElementById("modalNombreH3").textContent = p.nombre;
     document.getElementById("modalFoto").src = p.imagen_url || "/static/uploads/default.png";
-    document.getElementById("modalDescripcion").textContent = p.descripcion || "Sin descripción disponible";
+    document.getElementById("modalDescripcion").textContent = p.descripcion || "Sin descripción";
     document.getElementById("modalPrecio").textContent = Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP' });
-    document.getElementById("modalStock").textContent = p.stock;
+    document.getElementById("modalStock").textContent = `Existencias: ${p.stock}`;
     if (modal) modal.show();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const tieneAcceso = await verificarAccesoAdmin();
-    if (!tieneAcceso) return;
+    if (!await verificarAccesoAdmin()) return;
 
-    ajustarAtributosPrecio();
     const cached = localStorage.getItem('postresCache');
     if (cached) {
         postres = JSON.parse(cached);
@@ -290,65 +224,62 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     
     await cargarPostres();
-    setInterval(() => cargarPostres(true), 3000);
+    setInterval(() => cargarPostres(true), 10000);
+
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => renderPostres(e.target.value));
+    }
 
     if (btnAgregarPostre) {
-        btnAgregarPostre.addEventListener("click", () => {
-            initAudioContext();
+        btnAgregarPostre.onclick = () => {
             indexActual = null;
             agregarPostreForm.reset();
-            btnSubmitForm.innerHTML = '<i class="bi bi-check-lg me-2"></i>Guardar Nuevo Postre';
+            document.getElementById("formPanelTitle").textContent = "Nuevo Postre";
+            btnSubmitForm.innerHTML = '<i class="bi bi-save2 me-2"></i>Guardar Nuevo Postre';
             formAgregarPostre.classList.remove("d-none");
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+        };
     }
 
     if (btnCancelar) {
-        btnCancelar.addEventListener("click", () => {
+        btnCancelar.onclick = () => {
             formAgregarPostre.classList.add("d-none");
             agregarPostreForm.reset();
             indexActual = null;
-        });
+        };
     }
 
-    const btnEliminar = document.getElementById("btnEliminar");
-    if (btnEliminar) {
-        btnEliminar.onclick = () => {
-            if (indexActual === null) return;
-            const p = postres[indexActual];
-            showConfirmToast(`¿Estás seguro de eliminar "${p.nombre}"? Esta acción no se puede deshacer.`, async () => {
-                try {
-                    const res = await fetch(`/eliminar_producto/${p.id_producto}`, { method: "DELETE" });
-                    if (res.ok) {
-                        showMessage("Producto eliminado correctamente");
-                        if (modal) modal.hide();
-                        await cargarPostres();
-                    } else {
-                        const err = await res.json();
-                        showMessage(err.error || "No se pudo eliminar el producto", true);
-                    }
-                } catch (e) {
-                    showMessage("Error de conexión con el servidor", true);
+    document.getElementById("btnEliminar").onclick = () => {
+        if (indexActual === null) return;
+        const p = postres[indexActual];
+        showConfirmToast(`¿Eliminar permanentemente "${p.nombre}"?`, async () => {
+            try {
+                const res = await fetch(`/eliminar_producto/${p.id_producto}`, { method: "DELETE" });
+                if (res.ok) {
+                    showMessage("Producto eliminado");
+                    modal.hide();
+                    await cargarPostres();
+                } else {
+                    const err = await res.json();
+                    showMessage(err.error || "Error al eliminar", true);
                 }
-            });
-        };
-    }
+            } catch (e) { showMessage("Error de conexión", true); }
+        });
+    };
 
-    const btnEditar = document.getElementById("btnEditar");
-    if (btnEditar) {
-        btnEditar.onclick = () => {
-            if (indexActual === null) return;
-            const p = postres[indexActual];
-            document.getElementById("nombrePostre").value = p.nombre;
-            document.getElementById("precioPostre").value = p.precio;
-            document.getElementById("descripcionPostre").value = p.descripcion || "";
-            document.getElementById("stockPostre").value = p.stock;
-            btnSubmitForm.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Actualizar Cambios';
-            formAgregarPostre.classList.remove("d-none");
-            if (modal) modal.hide();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-    }
+    document.getElementById("btnEditar").onclick = () => {
+        if (indexActual === null) return;
+        const p = postres[indexActual];
+        document.getElementById("nombrePostre").value = p.nombre;
+        document.getElementById("precioPostre").value = p.precio;
+        document.getElementById("descripcionPostre").value = p.descripcion || "";
+        document.getElementById("stockPostre").value = p.stock;
+        document.getElementById("formPanelTitle").textContent = "Editar Producto";
+        btnSubmitForm.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Actualizar Cambios';
+        formAgregarPostre.classList.remove("d-none");
+        modal.hide();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 });
 
 if (agregarPostreForm) {
@@ -357,7 +288,6 @@ if (agregarPostreForm) {
         const fileInput = document.getElementById("fotoPostre");
         const file = fileInput.files[0];
         const formData = new FormData();
-        
         formData.append("nombre", document.getElementById("nombrePostre").value);
         formData.append("precio", document.getElementById("precioPostre").value);
         formData.append("descripcion", document.getElementById("descripcionPostre").value);
@@ -378,11 +308,23 @@ if (agregarPostreForm) {
     };
 }
 
+(function() {
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = function() {
+        window.history.pushState(null, "", window.location.href);
+    };
+
+    window.onpageshow = function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            window.location.reload();
+        }
+    };
+})();
+
 async function enviarFormulario(formData) {
     const esEdicion = indexActual !== null;
     const metodo = esEdicion ? "PUT" : "POST";
     const url = esEdicion ? `/actualizar_producto/${postres[indexActual].id_producto}` : "/gestionar_productos";
-    
     try {
         const res = await fetch(url, { method: metodo, body: formData });
         if (res.ok) {
@@ -390,22 +332,12 @@ async function enviarFormulario(formData) {
             agregarPostreForm.reset();
             indexActual = null;
             await cargarPostres();
-            showMessage(`Producto ${esEdicion ? 'actualizado' : 'creado'} exitosamente`);
+            showMessage(`Producto ${esEdicion ? 'actualizado' : 'creado'} correctamente`);
         } else {
             const errorData = await res.json();
-            showMessage(errorData.error || "Error al procesar la solicitud", true);
+            showMessage(errorData.error || "Error en la operación", true);
         }
-    } catch (e) {
-        showMessage("Error de red o servidor no disponible", true);
-    }
+    } catch (e) { showMessage("Error de red", true); }
 }
 
 document.addEventListener("click", () => initAudioContext(), { once: true });
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/js/workers/service-worker-catalogo.js')
-        .then(() => { console.log('SW OK'); })
-        .catch(() => { console.log('SW Fallo'); });
-    });
-}

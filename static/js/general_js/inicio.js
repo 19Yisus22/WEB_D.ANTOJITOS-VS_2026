@@ -3,6 +3,7 @@ let notificacionesDisponibles = [];
 let isFirstLoad = true;
 const productosNotificados = new Set();
 let audioCtx = null;
+let swiperInstance = null;
 
 function initAudioContext() {
     if (!audioCtx) {
@@ -18,7 +19,6 @@ function playNotificationSound(type = 'default') {
         if (!audioCtx) return;
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
-
         if (type === 'agotado') {
             oscillator.type = 'sawtooth';
             oscillator.frequency.setValueAtTime(330, audioCtx.currentTime);
@@ -44,9 +44,7 @@ function playNotificationSound(type = 'default') {
 function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
     const cont = document.getElementById("toastContainer");
     if (!cont) return;
-
     playNotificationSound(isError ? 'agotado' : 'default');
-
     const t = document.createElement("div");
     t.className = "toast show bg-dark text-white border-light mb-2";
     t.style.display = "block";
@@ -55,10 +53,8 @@ function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
     t.style.borderRadius = "12px";
     t.style.transition = "all 0.5s ease";
     t.style.pointerEvents = "auto";
-    
     const textColor = isError ? '#ff4d4d' : '#e67e22';
     const iconClass = isError ? 'bi-exclamation-triangle-fill' : 'bi-stars';
-
     t.innerHTML = `
         <div class="d-flex align-items-center p-3">
             <img src="${imagen}" style="width:45px;height:45px;object-fit:cover;border-radius:10px;" class="me-3 shadow" onerror="this.src='/static/uploads/logo.png'">
@@ -71,15 +67,12 @@ function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
             </div>
             <button class="btn-close btn-close-white ms-2" style="font-size: 0.6rem;"></button>
         </div>`;
-    
     cont.appendChild(t);
-    
     const remove = () => {
         t.style.opacity = '0';
         t.style.transform = 'translateX(-20px)';
         setTimeout(() => t.remove(), 500);
     };
-    
     t.querySelector('.btn-close').onclick = remove;
     setTimeout(remove, 6000);
 }
@@ -96,27 +89,14 @@ async function monitorearCambiosCatalogo() {
         const res = await fetch("/obtener_catalogo");
         const data = await res.json();
         const nuevosProductos = data.productos || [];
-
         if (!isFirstLoad) {
             nuevosProductos.forEach(nuevo => {
                 const viejo = productosMemoria.find(p => p.id_producto == nuevo.id_producto);
                 if (viejo) {
                     if (viejo.stock > 0 && nuevo.stock <= 0) {
-                        mostrarToastActualizacion(
-                            nuevo.imagen_url || '/static/uploads/logo.png', 
-                            "¡Producto Agotado!", 
-                            `Se acaba de terminar: ${nuevo.nombre}`, 
-                            `agotado-${nuevo.id_producto}`, 
-                            true
-                        );
+                        mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.png', "¡Producto Agotado!", `Se acaba de terminar: ${nuevo.nombre}`, `agotado-${nuevo.id_producto}`, true);
                     } else if (viejo.stock <= 0 && nuevo.stock > 0) {
-                        mostrarToastActualizacion(
-                            nuevo.imagen_url || '/static/uploads/logo.png', 
-                            "¡Nueva Disponibilidad!", 
-                            `${nuevo.nombre} está listo para pedir nuevamente`, 
-                            `disponible-${nuevo.id_producto}`,
-                            false
-                        );
+                        mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.png', "¡Nueva Disponibilidad!", `${nuevo.nombre} está listo para pedir nuevamente`, `disponible-${nuevo.id_producto}`, false);
                     }
                 }
             });
@@ -131,19 +111,14 @@ async function cargarMarketing() {
         const res = await fetch("/api/publicidad/activa", { cache: "no-store" });
         const publicidadArray = await res.json();
         if (!Array.isArray(publicidadArray)) return;
-
         const seccionesAlFrente = document.getElementById("seccionesAlFrente");
         const seccionesDebajo = document.getElementById("seccionesDebajo");
         const carouselInner = document.getElementById("carouselItems");
-
         if (seccionesAlFrente) seccionesAlFrente.innerHTML = "";
         if (seccionesDebajo) seccionesDebajo.innerHTML = "";
         if (carouselInner) carouselInner.innerHTML = "";
-
         notificacionesDisponibles = publicidadArray.filter(item => item.tipo === 'notificacion');
-
         const seccionesItems = publicidadArray.filter(item => item.tipo === 'seccion');
-        
         seccionesItems.forEach((item, index) => {
             const delay = (index * 0.1).toFixed(2);
             const cardHtml = `
@@ -154,7 +129,6 @@ async function cargarMarketing() {
                         <p class="text-muted mb-0 small" style="line-height: 1.5;">${item.descripcion || ''}</p>
                     </div>
                 </div>`;
-
             if (seccionesAlFrente && index < 2) {
                 const wrap = document.createElement("div");
                 wrap.className = "w-100 mb-3";
@@ -167,42 +141,41 @@ async function cargarMarketing() {
                 seccionesDebajo.appendChild(col);
             }
         });
-
         const carruselItems = publicidadArray.filter(item => item.tipo === 'carrusel');
         carruselItems.forEach((item, index) => {
             if (carouselInner) {
                 const div = document.createElement("div");
-                div.className = `carousel-item ${index === 0 ? 'active' : ''}`;
+                div.className = "swiper-slide";
                 div.innerHTML = `
-                    <div class="carousel-img-wrapper">
-                        <img src="${item.imagen_url}" class="carousel-background-blur">
-                        <img src="${item.imagen_url}" class="d-block carousel-img-render">
-                        <div class="carousel-overlay"></div>
-                    </div>
-                    <div class="carousel-caption-custom">
-                        <h6 class="carousel-title-animate">${item.titulo || ''}</h6>
-                        <div class="carousel-divider"></div>
-                        <p class="carousel-desc-animate">${item.descripcion || ''}</p>
+                    <div class="carousel-item active">
+                        <div class="carousel-img-wrapper">
+                            <img src="${item.imagen_url}" class="carousel-background-blur">
+                            <img src="${item.imagen_url}" class="d-block carousel-img-render">
+                            <div class="carousel-overlay"></div>
+                        </div>
+                        <div class="carousel-caption-custom">
+                            <h6 class="carousel-title-animate">${item.titulo || ''}</h6>
+                            <div class="carousel-divider"></div>
+                            <p class="carousel-desc-animate">${item.descripcion || ''}</p>
+                        </div>
                     </div>`;
                 carouselInner.appendChild(div);
             }
         });
-
-        if (carouselInner && carouselInner.children.length > 0) {
-            const carouselElem = document.getElementById('carouselPromo');
-            const bCarousel = bootstrap.Carousel.getInstance(carouselElem) || new bootstrap.Carousel(carouselElem, { 
-                interval: 5000, 
-                ride: 'carousel', 
-                pause: false 
-            });
-            bCarousel.to(0);
-        }
+        if (swiperInstance) swiperInstance.destroy();
+        swiperInstance = new Swiper('.swiperPromo', {
+            loop: true,
+            effect: 'fade',
+            fadeEffect: { crossFade: true },
+            autoplay: { delay: 5000, disableOnInteraction: false },
+            pagination: { el: '.swiper-pagination', clickable: true },
+            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }
+        });
     } catch (e) { console.error("Error al cargar publicidad", e); }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     cargarMarketing();
-    
     setInterval(() => {
         if (notificacionesDisponibles.length > 0) {
             const indiceAleatorio = Math.floor(Math.random() * notificacionesDisponibles.length);
@@ -210,12 +183,21 @@ document.addEventListener("DOMContentLoaded", () => {
             mostrarToastPublicidad(e.imagen_url, e.titulo, e.descripcion);
         }
     }, 12000);
-
     monitorearCambiosCatalogo();
     setInterval(monitorearCambiosCatalogo, 10000);
 });
 
 document.addEventListener("click", () => { initAudioContext(); }, { once: true });
+
+(function() {
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = function() { window.history.pushState(null, "", window.location.href); };
+    window.onpageshow = function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            window.location.reload();
+        }
+    };
+})();
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

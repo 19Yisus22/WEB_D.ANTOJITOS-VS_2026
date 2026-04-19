@@ -81,7 +81,7 @@ async function verificarAccesoAdmin() {
                     <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
                         <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
                         <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador. Tu sesión será redirigida.</p>
+                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
                         <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
                         <br>
                         <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const btnGuardar = document.getElementById('btnGuardarPagos');
     if (btnGuardar) btnGuardar.addEventListener('click', guardarCambiosPagos);
-    
+
     const btnAgregar = document.getElementById('btnAgregarTemporal');
     if (btnAgregar) btnAgregar.addEventListener('click', agregarMetodoPago);
 
@@ -147,12 +147,12 @@ function agregarMetodoPago() {
     const numero = document.getElementById('numeroCuenta').value.trim();
     const titular = document.getElementById('titularCuenta').value.trim();
     const fileInput = document.getElementById('archivoQR');
-    
+
     if (!numero || !titular) {
         showMessage("Ingrese número y titular", true);
         return;
     }
-    
+
     const file = fileInput.files[0];
     const datos = {
         entidad, tipo_cuenta: tipo, numero, titular,
@@ -160,7 +160,7 @@ function agregarMetodoPago() {
         cambio_img: !!file,
         file: file || (editIndex !== -1 ? metodosPagoArray[editIndex].file : null)
     };
-    
+
     if (editIndex !== -1) {
         metodosPagoArray[editIndex] = datos;
         showMessage("Lista actualizada");
@@ -176,14 +176,19 @@ function renderizarLista() {
     const lista = document.getElementById('listaMetodosPago');
     const preview = document.getElementById('previewContenedorFinal');
     if (!lista || !preview) return;
-    
+
     lista.innerHTML = "";
     preview.innerHTML = "";
-    
+
+    if (metodosPagoArray.length === 0) {
+        lista.innerHTML = `<div class="col-12 text-center text-muted py-3"><i class="bi bi-inbox fs-4"></i><p class="mt-2 mb-0">No hay métodos de pago configurados</p></div>`;
+        return;
+    }
+
     metodosPagoArray.forEach((m, index) => {
         const imgSrc = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
         const badge = getBadgeClass(m.entidad);
-        
+
         lista.innerHTML += `
             <div class="col-12 col-md-6">
                 <div class="metodo-card p-3 d-flex align-items-center justify-content-between border rounded bg-white shadow-sm">
@@ -201,7 +206,7 @@ function renderizarLista() {
                     </div>
                 </div>
             </div>`;
-            
+
         preview.innerHTML += `
             <div class="col-6 text-center">
                 <div class="p-2 border rounded bg-light">
@@ -221,7 +226,7 @@ function editarMetodo(index) {
     document.getElementById('numeroCuenta').value = m.numero;
     document.getElementById('titularCuenta').value = m.titular;
     document.getElementById('previewPagoImg').src = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
-    
+
     const btn = document.getElementById('btnAgregarTemporal');
     btn.innerHTML = `<i class="bi bi-check-circle"></i> ACTUALIZAR EN LISTA`;
     btn.className = "btn btn-warning w-100 py-3 shadow-sm";
@@ -230,24 +235,23 @@ function editarMetodo(index) {
 
 function eliminarFila(index) {
     metodosPagoArray.splice(index, 1);
-    renderizarLista();
     if (editIndex === index) resetearFormulario();
+    renderizarLista();
 }
 
 async function guardarCambiosPagos() {
     const btn = document.getElementById('btnGuardarPagos');
-    if (metodosPagoArray.length === 0) return showMessage("La lista está vacía", true);
-    
+
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> GUARDANDO...`;
-    
+
     const formData = new FormData();
     const metadata = metodosPagoArray.map(m => ({
         entidad: m.entidad, tipo_cuenta: m.tipo_cuenta,
         numero: m.numero, titular: m.titular,
         url_actual: m.url_actual, cambio_img: m.cambio_img
     }));
-    
+
     formData.append("metadata_pagos", JSON.stringify(metadata));
     metodosPagoArray.forEach(m => {
         if (m.cambio_img && m.file) formData.append("imagenes_qr", m.file);
@@ -284,6 +288,19 @@ function getBadgeClass(entidad) {
     const map = { 'Nequi': 'nequi-bg', 'Daviplata': 'daviplata-bg', 'Bancolombia': 'bancolombia-bg', 'NuBank': 'nubank-bg' };
     return map[entidad] || 'bg-secondary text-white';
 }
+
+(function() {
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = function() {
+        window.history.pushState(null, "", window.location.href);
+    };
+
+    window.onpageshow = function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            window.location.reload();
+        }
+    };
+})();
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

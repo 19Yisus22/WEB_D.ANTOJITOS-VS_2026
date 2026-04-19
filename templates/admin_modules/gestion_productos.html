@@ -7,88 +7,143 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style_gestion_productos.css') }}">
 </head>
 <body class="d-flex flex-column min-vh-100">
     {% include 'global_modules/navbar.html' %}
+    
     {% if session.get('user_id') and session.get('rol') == 'admin' %}
     <main class="flex-grow-1 py-4">
         <div class="container-fluid container-lg">
+
             <div class="card-title-marketing text-center mb-4">
                 <h3 class="fw-bold m-0"><i class="bi bi-box-seam me-2"></i>Panel de Productos</h3>
                 <p class="text-white-50 mb-0 small">Administra tu Inventario en tiempo real</p>
             </div>
-            <div class="d-flex justify-content-center justify-content-md-start mb-4">
-                <button class="btn btn-primary fw-bold shadow-sm w-100 w-md-auto" id="btnAgregarPostre">
-                    <i class="bi bi-plus-circle me-2"></i>Agregar Nuevo Postre
+
+            <div class="d-flex justify-content-end mb-4">
+                <button class="btn btn-primary shadow-sm" id="btnAgregarPostre">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Nuevo Postre
                 </button>
             </div>
-            <div id="formAgregarPostre" class="card p-3 p-md-4 mb-5 d-none">
-                <form id="agregarPostreForm" enctype="multipart/form-data">
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-bold small">Nombre del Postre</label>
-                            <input type="text" id="nombrePostre" class="form-control" placeholder="Ej: Torta de Chocolate" required>
+
+            <div id="formAgregarPostre" class="form-panel mb-5 d-none">
+                <div class="p-4 bg-white border rounded shadow-sm">
+                    <h4 class="mb-4 text-primary" id="formPanelTitle">Configuración de Producto</h4>
+                    <form id="agregarPostreForm" enctype="multipart/form-data">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Nombre del Postre</label>
+                                <input type="text" id="nombrePostre" class="form-control" placeholder="Ej: Torta de Chocolate" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Imagen</label>
+                                <input type="file" id="fotoPostre" class="form-control" accept="image/*">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Precio (COP)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" id="precioPostre" class="form-control" placeholder="0" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Stock</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-boxes"></i></span>
+                                    <input type="number" id="stockPostre" class="form-control" placeholder="0" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Descripción</label>
+                                <textarea id="descripcionPostre" class="form-control" rows="2" placeholder="Detalles del postre..." required></textarea>
+                            </div>
                         </div>
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-bold small">Imagen</label>
-                            <input type="file" id="fotoPostre" class="form-control" accept="image/*">
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" id="btnSubmitForm" class="btn btn-success flex-grow-1">
+                                <i class="bi bi-save2 me-2"></i>Guardar Cambios
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btnCancelar">
+                                <i class="bi bi-x-circle me-1"></i>Cancelar
+                            </button>
                         </div>
-                        <div class="col-6 col-md-6">
-                            <label class="form-label fw-bold small">Precio (COP)</label>
-                            <input type="number" id="precioPostre" class="form-control" placeholder="0" min="0" required>
-                        </div>
-                        <div class="col-6 col-md-6">
-                            <label class="form-label fw-bold small">Stock</label>
-                            <input type="number" id="stockPostre" class="form-control" placeholder="0" min="0" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold small">Descripción</label>
-                            <textarea id="descripcionPostre" class="form-control" rows="2" placeholder="Detalles..." required></textarea>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit" id="btnSubmitForm" class="btn btn-success fw-bold flex-grow-1">
-                            <i class="bi bi-check-lg me-2"></i>Subir Postre
-                        </button>
-                        <button type="button" class="btn btn-secondary fw-bold" id="btnCancelar">Cancelar</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-            <div id="avisoAgotados" class="alert alert-warning d-none shadow-sm mb-4">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>Atención: Hay productos agotados.
+
+            <div id="avisoAgotados" class="alert alert-warning d-none mb-4">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Atención: Hay productos agotados en tu inventario.
             </div>
+
+            <div class="row g-3 mb-5" id="statsRow">
+                <div class="col-4">
+                    <div class="card p-3 text-center shadow-sm">
+                        <span class="h4 d-block mb-0 text-primary" id="statTotalNum">0</span>
+                        <small class="text-muted text-uppercase fw-bold">Total</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card p-3 text-center shadow-sm border-start border-success border-4">
+                        <span class="h4 d-block mb-0 text-success" id="statDispNum">0</span>
+                        <small class="text-muted text-uppercase fw-bold">Disponibles</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card p-3 text-center shadow-sm border-start border-danger border-4">
+                        <span class="h4 d-block mb-0 text-danger" id="statAgotNum">0</span>
+                        <small class="text-muted text-uppercase fw-bold">Agotados</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group mb-4 shadow-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" id="searchProductos" class="form-control border-start-0" placeholder="Buscar por nombre...">
+            </div>
+
             <section class="mb-5">
-                <h5 class="section-divider mb-4"><i class="bi bi-check2-circle text-success me-2"></i>Disponibles</h5>
-                <div id="listaPostresDisponibles" class="row g-2 g-md-4"></div>
+                <div class="border-bottom pb-2 mb-4">
+                    <h5 class="fw-bold text-dark"><i class="bi bi-check2-circle text-success me-2"></i>Productos Disponibles</h5>
+                </div>
+                <div id="listaPostresDisponibles" class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4"></div>
+                <div id="emptyDisponibles" class="text-center py-5 d-none">
+                    <p class="text-muted">No hay productos en inventario activo</p>
+                </div>
             </section>
+
             <section class="mb-5">
-                <h5 class="section-divider mb-4 text-danger"><i class="bi bi-x-circle me-2"></i>Agotados</h5>
-                <div id="listaPostresAgotados" class="row g-2 g-md-4"></div>
+                <div class="border-bottom pb-2 mb-4">
+                    <h5 class="fw-bold text-dark"><i class="bi bi-x-circle text-danger me-2"></i>Productos Agotados</h5>
+                </div>
+                <div id="listaPostresAgotados" class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4"></div>
+                <div id="emptyAgotados" class="text-center py-5 d-none">
+                    <p class="text-muted">Sin productos agotados</p>
+                </div>
             </section>
         </div>
     </main>
+
     <div class="modal fade" id="modalPostre" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalNombre"></h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 bg-light">
+                    <h5 class="modal-title fw-bold" id="modalNombre">Detalle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body text-center p-4">
-                    <img id="modalFoto" class="img-fluid mb-3 rounded-4 shadow" style="max-height: 300px; width: 100%; object-fit: cover;">
-                    <p id="modalDescripcion" class="text-muted mb-3"></p>
-                    <h3 id="modalPrecio" class="fw-bold text-primary mb-3"></h3>
-                    <span class="badge bg-dark px-3 py-2">Stock: <span id="modalStock"></span></span>
+                <div class="modal-body">
+                    <img id="modalFoto" class="img-fluid rounded mb-3 shadow-sm w-100" style="height: 250px; object-fit: cover;">
+                    <h4 class="text-primary" id="modalNombreH3"></h4>
+                    <p class="text-muted small" id="modalDescripcion"></p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="h4 mb-0 text-dark fw-bold" id="modalPrecio"></span>
+                        <span class="badge bg-secondary" id="modalStock"></span>
+                    </div>
                 </div>
-                <div class="modal-footer bg-light border-0 d-flex flex-wrap justify-content-center gap-2">
-                    <button class="btn btn-warning px-4" id="btnEditar">
-                        <i class="bi bi-pencil-square me-2"></i>Editar
-                    </button>
-                    <button class="btn btn-danger px-4" id="btnEliminar">
-                        <i class="bi bi-trash me-2"></i>Eliminar
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-warning w-100 mb-2" id="btnEditar">Editar Registro</button>
+                    <button class="btn btn-outline-danger w-100" id="btnEliminar">Eliminar Permanentemente</button>
                 </div>
             </div>
         </div>
@@ -96,10 +151,9 @@
     {% else %}
     <script>setTimeout(() => { window.location.href = "{{ url_for('inicio') }}"; }, 3000);</script>
     {% endif %}
+
     {% include 'global_modules/footer.html' %}
-    <div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;">
-        <style>#toastContainer > div { pointer-events: auto; }</style>
-    </div>
+    <div id="toastContainer"></div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/admin_js/gestion_productos.js') }}"></script>
 </body>

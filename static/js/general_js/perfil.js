@@ -17,6 +17,42 @@ function showMessage(msg, isError = false) {
     setTimeout(() => toastEl.remove(), 4000);
 }
 
+function showConfirmCustom(titulo, mensaje, callback) {
+    const modalId = 'customConfirmModal';
+    let modalEl = document.getElementById(modalId);
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = modalId;
+        modalEl.className = 'modal fade';
+        modalEl.setAttribute('tabindex', '-1');
+        modalEl.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                    <div class="modal-body p-4 text-center">
+                        <i class="bi bi-exclamation-circle text-danger mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="fw-bold mb-2">${titulo}</h5>
+                        <p class="text-muted mb-4">${mensaje}</p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" id="confirmActionBtn" class="btn btn-danger px-4 rounded-pill">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        document.body.appendChild(modalEl);
+    }
+    
+    const confirmBtn = modalEl.querySelector('#confirmActionBtn');
+    const bootstrapModal = new bootstrap.Modal(modalEl);
+    
+    confirmBtn.onclick = () => {
+        bootstrapModal.hide();
+        callback();
+    };
+    
+    bootstrapModal.show();
+}
+
 function setLoading(btn, isLoading, originalText) {
     if (isLoading) {
         btn.disabled = true;
@@ -30,15 +66,28 @@ function setLoading(btn, isLoading, originalText) {
 const passInput = document.getElementById("nuevaContrasena");
 const confirmInput = document.getElementById("confirmarContrasena");
 
+function updateStrengthBar(password) {
+    const bar = document.getElementById("passwordStrengthBar");
+    if (!bar) return;
+    let width = 0;
+    let color = "#e53e3e";
+    if (password.length >= 6) { width = 33; color = "#e53e3e"; }
+    if (password.length >= 10) { width = 66; color = "#f6e05e"; }
+    if (password.length >= 15) { width = 100; color = "#48bb78"; }
+    bar.style.width = width + "%";
+    bar.style.backgroundColor = color;
+}
+
 function validarPass() {
     if (typeof USER_AUTH_GOOGLE !== 'undefined' && USER_AUTH_GOOGLE) return;
     const p = passInput.value;
     const c = confirmInput.value;
+    updateStrengthBar(p);
     if (!c) {
         confirmInput.style.borderColor = "#ddd";
         return;
     }
-    if (p === c && p !== "") {
+    if (p === c && p.length >= 6) {
         confirmInput.style.borderColor = "#28a745";
         confirmInput.style.boxShadow = "0 0 0 0.25rem rgba(40, 167, 69, 0.25)";
     } else {
@@ -55,17 +104,21 @@ if (btnCambiarContrasena) {
     btnCambiarContrasena.addEventListener("click", async () => {
         const p = passInput.value;
         const c = confirmInput.value;
-        if (!p || p !== c) {
-            showMessage("Las contraseñas no coinciden o están vacías", true);
+        if (!p || p.length < 6) {
+            showMessage("La contraseña debe tener al menos 6 caracteres", true);
+            return;
+        }
+        if (p !== c) {
+            showMessage("Las contraseñas no coinciden", true);
             return;
         }
         const originalText = btnCambiarContrasena.innerHTML;
         setLoading(btnCambiarContrasena, true, originalText);
         try {
-            const res = await fetch("/cambiar_contrasena_perfil", {
+            const res = await fetch("/cambiar_contrasena", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nueva_contrasena: p })
+                body: JSON.stringify({ nueva: p })
             });
             const data = await res.json();
             if (res.ok && data.ok) {
@@ -73,6 +126,8 @@ if (btnCambiarContrasena) {
                 passInput.value = "";
                 confirmInput.value = "";
                 confirmInput.style.borderColor = "#ddd";
+                confirmInput.style.boxShadow = "none";
+                updateStrengthBar("");
             } else {
                 showMessage(data.error || "Error al cambiar contraseña", true);
             }
@@ -84,30 +139,62 @@ if (btnCambiarContrasena) {
     });
 }
 
-const btnEditarPerfil = document.getElementById("btnEditarPerfil");
-const btnActualizarPerfil = document.getElementById("btnActualizarPerfil");
-const inputs = document.querySelectorAll('#formPerfil input, #formPerfil textarea, #formPerfil select');
+const btnEliminarMiCuenta = document.getElementById("btnEliminarMiCuenta");
+if (btnEliminarMiCuenta) {
+    btnEliminarMiCuenta.addEventListener("click", () => {
+        showConfirmCustom(
+            "Eliminar Cuenta", 
+            "¿Estás completamente seguro? Esta acción es irreversible.", 
+            ejecutarAutoeleminacion
+        );
+    });
+}
 
+async function ejecutarAutoeleminacion() {
+    const btn = document.getElementById("btnEliminarMiCuenta");
+    const originalText = btn.innerHTML;
+    const correoUsuario = document.getElementById("correoPerfil")?.value;
+    if (!correoUsuario) {
+        showMessage("No se pudo obtener el correo para eliminar la cuenta", true);
+        return;
+    }
+    setLoading(btn, true, originalText);
+    try {
+        const res = await fetch("/eliminar_usuario_admin", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ correo: correoUsuario })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            showMessage("Cuenta eliminada. Redirigiendo...");
+            setTimeout(() => window.location.href = "/logout", 2000);
+        } else {
+            showMessage(data.error || "No se pudo eliminar la cuenta", true);
+            setLoading(btn, false, originalText);
+        }
+    } catch (e) {
+        showMessage("Error de red", true);
+        setLoading(btn, false, originalText);
+    }
+}
+
+const inputs = document.querySelectorAll('#formPerfil input, #formPerfil textarea, #formPerfil select');
 inputs.forEach(input => {
     const idName = (input.id || input.name || '').toLowerCase();
     const isCorreo = idName.includes('correo');
     const isCedula = idName.includes('cedula');
-
     if (isCorreo || isCedula) {
         input.addEventListener('input', function() {
             let val = this.value.toLowerCase();
-            if (isCorreo) {
-                val = val.replace(/[^a-z0-9.\-@]/g, '');
-            } else {
-                val = val.replace(/[^a-z0-9.\-]/g, '');
-            }
+            if (isCorreo) val = val.replace(/[^a-z0-9.\-@]/g, '');
+            else val = val.replace(/[^0-9]/g, '');
             this.value = val;
-
             if (allUsers.length > 0) {
                 const isDup = allUsers.some(u => {
                     if (String(u.id_cliente) === String(USER_ID)) return false;
                     if (isCorreo && u.correo && u.correo.toLowerCase() === val) return true;
-                    if (isCedula && u.cedula && String(u.cedula).toLowerCase() === val) return true;
+                    if (isCedula && u.cedula && String(u.cedula) === val) return true;
                     return false;
                 });
                 if (isDup && val !== '') {
@@ -122,12 +209,15 @@ inputs.forEach(input => {
     }
 });
 
+const btnEditarPerfil = document.getElementById("btnEditarPerfil");
+const btnActualizarPerfil = document.getElementById("btnActualizarPerfil");
 if (btnEditarPerfil) {
     btnEditarPerfil.addEventListener("click", () => {
         inputs.forEach(i => {
             if (i.id !== "correoPerfil" && !i.readOnly) i.disabled = false;
         });
-        document.getElementById("imagen_url").disabled = false;
+        const imgInput = document.getElementById("imagen_url");
+        if (imgInput) imgInput.disabled = false;
         btnActualizarPerfil.style.display = "inline-block";
         btnEditarPerfil.style.display = "none";
         showMessage("Edición habilitada");
@@ -139,47 +229,37 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     const btn = document.getElementById("btnActualizarPerfil");
     const originalText = btn.innerHTML;
     setLoading(btn, true, originalText);
-
     let hasDuplicate = false;
-    if (allUsers.length > 0) {
-        inputs.forEach(i => {
-            const idName = (i.id || i.name || '').toLowerCase();
-            const isC = idName.includes('correo');
-            const isCed = idName.includes('cedula');
-            if ((isC || isCed) && i.value) {
-                const dup = allUsers.some(u => {
-                    if (String(u.id_cliente) === String(USER_ID)) return false;
-                    if (isC && u.correo && u.correo.toLowerCase() === i.value.toLowerCase()) return true;
-                    if (isCed && u.cedula && String(u.cedula).toLowerCase() === i.value.toLowerCase()) return true;
-                    return false;
-                });
-                if (dup) hasDuplicate = true;
-            }
-        });
-    }
-
+    inputs.forEach(i => {
+        const idName = (i.id || i.name || '').toLowerCase();
+        if ((idName.includes('correo') || idName.includes('cedula')) && i.value) {
+            const dup = allUsers.some(u => {
+                if (String(u.id_cliente) === String(USER_ID)) return false;
+                if (idName.includes('correo') && u.correo && u.correo.toLowerCase() === i.value.toLowerCase()) return true;
+                if (idName.includes('cedula') && u.cedula && String(u.cedula) === i.value) return true;
+                return false;
+            });
+            if (dup) hasDuplicate = true;
+        }
+    });
     if (hasDuplicate) {
         showMessage("La cédula o correo ya están registrados", true);
         setLoading(btn, false, originalText);
         return;
     }
-
-    inputs.forEach(i => i.disabled = false);
     const formData = new FormData(e.target);
     try {
-        const res = await fetch(`/actualizar_perfil/${USER_ID}`, { 
-            method: "PUT", 
-            body: formData 
-        });
+        const res = await fetch(`/actualizar_perfil/${USER_ID}`, { method: "PUT", body: formData });
         const data = await res.json();
         if (res.ok && data.ok) {
             showMessage("Perfil actualizado");
             setTimeout(() => location.reload(), 1000);
         } else {
-            showMessage(data.error || "Error al guardar cambios", true);
-            inputs.forEach(i => {
-                if (i.id === "correoPerfil" || i.readOnly) i.disabled = true;
-            });
+            let errorMsg = data.error || "Error al guardar cambios";
+            if (errorMsg.includes("23505")) {
+                errorMsg = errorMsg.includes("correo") ? "El correo ya existe" : "La cédula ya existe";
+            }
+            showMessage(errorMsg, true);
         }
     } catch (error) {
         showMessage("Error de comunicación", true);
@@ -188,39 +268,152 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     }
 });
 
+function mostrarModalDetalles(u) {
+    const modalId = 'modalDetalleUsuario';
+    let modalEl = document.getElementById(modalId);
+    
+    if (modalEl) {
+        modalEl.remove();
+    }
+
+    const esGoogle = u.google_id || u.metodo_auth === 'google' || (u.correo && u.correo.includes('gmail.com'));
+    const rol = u.roles?.nombre_role || u.rol || 'cliente';
+
+    const formatearFecha = (fechaStr) => {
+        if (!fechaStr) return 'Sin registro';
+        const fecha = new Date(fechaStr);
+        if (isNaN(fecha.getTime())) return 'Fecha inválida';
+        
+        return fecha.toLocaleDateString('es-CO', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }) + ' ' + fecha.toLocaleTimeString('es-CO', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: true 
+        });
+    };
+
+    modalEl = document.createElement('div');
+    modalEl.id = modalId;
+    modalEl.className = 'modal fade';
+    modalEl.setAttribute('tabindex', '-1');
+    modalEl.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 25px; overflow: hidden;">
+                <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-start">
+                    <span class="badge ${rol === 'admin' ? 'bg-danger' : 'bg-primary'} text-uppercase p-2 px-3 shadow-sm" style="border-radius: 10px; font-size: 0.7rem; letter-spacing: 1px;">
+                        ${rol}
+                    </span>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="position-relative d-inline-block mb-3">
+                        <img src="${u.imagen_url || '/static/default_icon_profile.png'}" 
+                             class="rounded-circle border shadow" 
+                             width="120" height="120" 
+                             style="object-fit:cover; border: 4px solid #fff !important;">
+                        <div class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow d-flex align-items-center justify-content-center border" 
+                             style="width:35px; height:35px; transform: translate(-5px, -5px);">
+                            ${esGoogle ? 
+                                '<img src="/static/uploads/googlogo.ico" style="width:20px; height:20px; object-fit:contain;">' : 
+                                '<i class="bi bi-envelope-at-fill text-primary" style="font-size: 1.1rem;"></i>'}
+                        </div>
+                    </div>
+                    
+                    <h4 class="fw-bold mb-1 text-dark">${u.nombre} ${u.apellido}</h4>
+                    <p class="text-muted mb-4 small"><i class="bi bi-person-badge me-1"></i>ID: ${u.id_cliente || 'N/A'}</p>
+                    
+                    <div class="row g-3 text-start bg-light p-3 rounded-4 mx-1">
+                        <div class="col-12">
+                            <label class="small text-muted d-block mb-1">Correo Electrónico</label>
+                            <div class="d-flex align-items-center text-dark fw-medium">
+                                <i class="bi bi-envelope me-2 text-secondary"></i> ${u.correo}
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="small text-muted d-block mb-1">Cédula / ID</label>
+                            <div class="d-flex align-items-center text-dark fw-medium">
+                                <i class="bi bi-card-text me-2 text-secondary"></i> ${u.cedula || 'No registrada'}
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="small text-muted d-block mb-1">Teléfono</label>
+                            <div class="d-flex align-items-center text-dark fw-medium">
+                                <i class="bi bi-telephone me-2 text-secondary"></i> ${u.telefono || 'No registrado'}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="small text-muted d-block mb-1">Dirección</label>
+                            <div class="d-flex align-items-center text-dark fw-medium">
+                                <i class="bi bi-geo-alt me-2 text-secondary"></i> ${u.direccion || 'No registrada'}
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 border-top pt-3 mt-3">
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="small text-muted d-block mb-1">Fecha de Creación</label>
+                                    <div class="d-flex align-items-center text-dark small fw-medium">
+                                        <i class="bi bi-calendar-check me-2 text-secondary"></i> ${formatearFecha(u.fecha_creacion)}
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="small text-muted d-block mb-1">Última Conexión</label>
+                                    <div class="d-flex align-items-center text-dark small fw-medium">
+                                        <i class="bi bi-clock-history me-2 text-secondary"></i> ${formatearFecha(u.ultima_conexion)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 border-top pt-2 mt-3">
+                            <label class="small text-muted d-block mb-1">Método de Registro</label>
+                            <div class="d-flex align-items-center text-dark fw-medium">
+                                <i class="bi ${esGoogle ? 'bi-google' : 'bi-shield-lock'} me-2 text-secondary"></i> 
+                                ${esGoogle ? 'Cuenta de Google' : 'Registro Directo (Email)'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-dark w-100 rounded-pill py-2 fw-bold shadow-sm" data-bs-dismiss="modal">Cerrar Detalle</button>
+                </div>
+            </div>
+        </div>`;
+
+    document.body.appendChild(modalEl);
+    const bootstrapModal = new bootstrap.Modal(modalEl);
+    bootstrapModal.show();
+}
+
 async function eliminarUsuarioPorCorreo() {
     const input = document.getElementById('correoEliminar');
     if (!input) return;
-    
     const correo = input.value.trim().toLowerCase();
-    if (!correo) {
-        showMessage("Ingrese el correo para eliminar", true);
-        return;
-    }
-    
-    const btn = document.getElementById("btnEliminarUsuario");
-    const originalText = btn.innerHTML;
-    setLoading(btn, true, originalText);
-    
-    try {
-        const res = await fetch("/eliminar_usuario_admin", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ correo: correo })
-        });
-        const data = await res.json();
-        if (res.ok && data.ok) {
-            showMessage("Usuario eliminado correctamente");
-            input.value = "";
-            fetchUsuarios();
-        } else {
-            showMessage(data.error || "Error al eliminar", true);
-        }
-    } catch (error) {
-        showMessage("Error de conexión", true);
-    } finally {
-        setLoading(btn, false, originalText);
-    }
+    if (!correo) { showMessage("Ingrese el correo para eliminar", true); return; }
+    showConfirmCustom("Eliminar Usuario", `¿Desea eliminar a ${correo}?`, async () => {
+        const btn = document.getElementById("btnEliminarUsuario");
+        const originalText = btn.innerHTML;
+        setLoading(btn, true, originalText);
+        try {
+            const res = await fetch("/eliminar_usuario_admin", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ correo: correo })
+            });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                showMessage("Usuario eliminado correctamente");
+                input.value = "";
+                fetchUsuarios();
+            } else {
+                showMessage(data.error || "Error al eliminar", true);
+            }
+        } catch (error) { showMessage("Error de conexión", true); }
+        finally { setLoading(btn, false, originalText); }
+    });
 }
 
 const btnEliminar = document.getElementById("btnEliminarUsuario");
@@ -231,44 +424,31 @@ async function fetchUsuarios() {
         const res = await fetch("/listar_usuarios");
         if (res.ok) {
             let data = await res.json();
-            allUsers = data.sort((a, b) => {
-                const nombreA = `${a.nombre} ${a.apellido}`.toLowerCase();
-                const nombreB = `${b.nombre} ${b.apellido}`.toLowerCase();
-                return nombreA.localeCompare(nombreB);
-            });
+            allUsers = data.sort((a, b) => `${a.nombre} ${a.apellido}`.toLowerCase().localeCompare(`${b.nombre} ${b.apellido}`.toLowerCase()));
             filteredUsers = [...allUsers];
             renderUserTable();
         }
-    } catch (e) {
-        console.error("Error fetching users", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 function renderUserTable() {
     const list = document.getElementById("usuariosList");
     if (!list) return;
     list.innerHTML = "";
-
     const start = (currentPage - 1) * recordsPerPage;
     const pageItems = filteredUsers.slice(start, start + recordsPerPage);
-
-    const admins = pageItems.filter(u => (u.roles?.nombre_role || u.rol) === 'admin');
-    const clientes = pageItems.filter(u => (u.roles?.nombre_role || u.rol) !== 'admin');
-
     const renderSection = (users, title, badgeClass) => {
         if (users.length === 0) return;
         const header = document.createElement("div");
         header.className = "p-2 bg-light border-bottom border-top mt-3 mb-2 fw-bold text-uppercase small text-muted d-flex justify-content-between align-items-center";
         header.innerHTML = `<span>${title}</span> <span class="badge ${badgeClass} opacity-75">${users.length}</span>`;
         list.appendChild(header);
-
         users.forEach(u => {
             const div = document.createElement("div");
             div.className = "list-group-item d-flex align-items-center justify-content-between py-3 border-0 border-bottom fade-in";
             const rol = u.roles?.nombre_role || u.rol || 'cliente';
             const esYo = String(u.id_cliente) === String(USER_ID);
             const esGoogle = u.google_id || u.metodo_auth === 'google' || (u.correo && u.correo.includes('gmail.com'));
-
             div.innerHTML = `
                 <div class="d-flex align-items-center">
                     <div class="position-relative">
@@ -289,8 +469,8 @@ function renderUserTable() {
                     </div>
                 </div>`;
             list.appendChild(div);
-            
-            document.getElementById(`btnVer-${u.id_cliente}`).onclick = () => mostrarModalDetalles(u);
+            const btnVer = document.getElementById(`btnVer-${u.id_cliente}`);
+            if (btnVer) btnVer.onclick = () => mostrarModalDetalles(u);
             const btnR = document.getElementById(`btnRol-${u.id_cliente}`);
             if (!esYo && btnR) {
                 btnR.onclick = async () => {
@@ -302,81 +482,9 @@ function renderUserTable() {
             }
         });
     };
-
-    renderSection(admins, "Administradores", "bg-danger");
-    renderSection(clientes, "Clientes", "bg-primary");
-
-    document.getElementById("countVisible").textContent = pageItems.length;
-    document.getElementById("countUsers").textContent = filteredUsers.length;
+    renderSection(pageItems.filter(u => (u.roles?.nombre_role || u.rol) === 'admin'), "Administradores", "bg-danger");
+    renderSection(pageItems.filter(u => (u.roles?.nombre_role || u.rol) !== 'admin'), "Clientes", "bg-primary");
     renderPagination();
-}
-
-function mostrarModalDetalles(u) {
-    let modalEl = document.getElementById('imgModal');
-    if (!modalEl) {
-        const html = `
-            <div class="modal fade" id="imgModal" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow-lg">
-                        <div class="modal-header bg-dark text-white border-0">
-                            <h5 class="modal-title fw-bold"><i class="bi bi-person-badge me-2"></i>Expediente de Usuario</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body p-0" id="modalDetallesBody"></div>
-                        <div class="modal-footer border-0 p-3">
-                            <button type="button" class="btn btn-outline-dark w-100 fw-bold" data-bs-dismiss="modal">Cerrar</button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        document.body.insertAdjacentHTML('beforeend', html);
-        modalEl = document.getElementById('imgModal');
-    }
-    const rol = u.roles?.nombre_role || u.rol || 'cliente';
-    const esGoogle = u.google_id || u.metodo_auth === 'google' || (u.correo && u.correo.includes('gmail.com'));
-    const fecha = u.fecha_creacion ? new Date(u.fecha_creacion).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : 'No disponible';
-
-    document.getElementById("modalDetallesBody").innerHTML = `
-        <div class="text-center p-4 bg-light">
-            <div class="position-relative d-inline-block">
-                <img src="${u.imagen_url || '/static/default_icon_profile.png'}" class="rounded-circle border border-4 border-white shadow mb-3" width="120" height="120" style="object-fit:cover;">
-                <div class="position-absolute top-0 end-0 bg-white rounded-circle shadow-sm border p-1" style="width:30px; height:30px; transform: translate(5px, 5px);">
-                    ${esGoogle ? `<img src="/static/uploads/googlogo.ico" style="width:100%; height:100%; object-fit:contain;">` : '<i class="bi bi-envelope-at-fill text-primary" style="font-size: 1rem;"></i>'}
-                </div>
-            </div>
-            <h4 class="fw-bold mb-1">${u.nombre} ${u.apellido}</h4>
-            <span class="badge rounded-pill ${rol === 'admin' ? 'bg-danger' : 'bg-primary'} px-3 mb-2">${rol.toUpperCase()}</span>
-            <div class="text-muted small">ID: ${u.id_cliente}</div>
-        </div>
-        <div class="p-4">
-            <div class="row g-3">
-                <div class="col-12 mb-2">
-                    <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Correo Electrónico</small>
-                    <div class="p-2 bg-light rounded border fw-bold text-dark">${u.correo}</div>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Cédula / Documento</small>
-                    <div class="fw-bold"><i class="bi bi-card-text me-2"></i>${u.cedula || '---'}</div>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Teléfono</small>
-                    <div class="fw-bold"><i class="bi bi-telephone me-2"></i>${u.telefono || '---'}</div>
-                </div>
-                <div class="col-12">
-                    <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Dirección Física</small>
-                    <div class="fw-bold text-wrap"><i class="bi bi-geo-alt me-2"></i>${u.direccion || 'No registrada'}</div>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Método de Pago</small>
-                    <span class="badge bg-dark px-2">${u.metodo_pago || 'Efectivo'}</span>
-                </div>
-                <div class="col-6 text-end">
-                    <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Fecha de Creación</small>
-                    <small class="fw-bold text-muted">${fecha}</small>
-                </div>
-            </div>
-        </div>`;
-    new bootstrap.Modal(modalEl).show();
 }
 
 async function cambiarRol(id, nuevo) {
@@ -386,16 +494,12 @@ async function cambiarRol(id, nuevo) {
     }
     try {
         const res = await fetch("/actualizar_rol_usuario", {
-            method: "PUT", headers: { "Content-Type": "application/json" },
+            method: "PUT", 
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: id, rol: nuevo })
         });
-        if (res.ok) { 
-            showMessage(`Se cambió el rol a ${nuevo.toUpperCase()}`); 
-            fetchUsuarios(); 
-        }
-    } catch (e) {
-        showMessage("Error al procesar cambio", true);
-    }
+        if (res.ok) { showMessage(`Se cambió el rol a ${nuevo.toUpperCase()}`); fetchUsuarios(); }
+    } catch (e) { showMessage("Error al procesar cambio", true); }
 }
 
 function renderPagination() {
@@ -413,6 +517,12 @@ function renderPagination() {
     }
 }
 
+(function() {
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = () => window.history.pushState(null, "", window.location.href);
+    window.onpageshow = (event) => { if (event.persisted || (window.performance && window.performance.navigation.type === 2)) window.location.reload(); };
+})();
+
 document.addEventListener("DOMContentLoaded", () => {
     const inputImagen = document.getElementById("imagen_url");
     if (inputImagen) {
@@ -420,25 +530,20 @@ document.addEventListener("DOMContentLoaded", () => {
             const file = this.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function (e) {
+                reader.onload = (e) => {
                     const imgPerfil = document.querySelector("#formPerfil img");
                     if (imgPerfil) imgPerfil.src = e.target.result;
-                }
+                };
                 reader.readAsDataURL(file);
             }
         });
     }
-
     if (typeof USER_ROLE !== 'undefined' && USER_ROLE === 'admin') {
         const searchInput = document.getElementById('userSearch');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 const t = e.target.value.toLowerCase();
-                filteredUsers = allUsers.filter(u => 
-                    (u.nombre + " " + u.apellido).toLowerCase().includes(t) || 
-                    u.correo.toLowerCase().includes(t) ||
-                    (u.cedula && String(u.cedula).includes(t))
-                );
+                filteredUsers = allUsers.filter(u => (u.nombre + " " + u.apellido).toLowerCase().includes(t) || u.correo.toLowerCase().includes(t) || (u.cedula && String(u.cedula).includes(t)));
                 currentPage = 1;
                 renderUserTable();
             });

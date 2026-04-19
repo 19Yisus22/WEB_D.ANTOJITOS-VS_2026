@@ -93,6 +93,12 @@
             </div>
 
             <div class="sticky-bottom bg-white p-3 border-top shadow-lg rounded-4 mb-5 mx-2" style="z-index: 1000;">
+                <div id="progressContainer" class="d-none mb-3">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted mt-1" id="progressText">Subiendo imágenes...</small>
+                </div>
                 <button id="btnGuardarMarketing" class="btn btn-dark btn-lg w-100 fw-bold py-3 shadow">
                     <i class="bi bi-cloud-arrow-up-fill"></i> GUARDAR TODOS LOS CAMBIOS
                 </button>
@@ -101,7 +107,7 @@
             <div class="mb-5 pb-5">
                 <div class="d-flex align-items-center justify-content-center gap-2 mb-4">
                     <i class="bi bi-eye-fill fs-4 text-muted"></i>
-                    <h5 class="m-0 text-muted text-uppercase fw-bold">Previsualización en Vivo</h5>
+                    <h5 class="m-0 text-muted text-uppercase fw-bold">Previsualización de Publicidad</h5>
                 </div>
                 <div id="previewInicio" class="border shadow-lg overflow-hidden">
                     <div class="promo-banner bg-dark py-2 overflow-hidden gap-cinta-carrusel">

@@ -100,7 +100,14 @@
                             <input type="password" id="confirmarContrasena" class="form-control custom-input" placeholder="********" {% if user.contrasena == 'GOOGLE_AUTH_EXTERNAL' %} disabled {% endif %}>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-warning w-100 mt-3 fw-bold text-uppercase" id="btnCambiarContrasena" {% if user.contrasena == 'GOOGLE_AUTH_EXTERNAL' %} disabled {% endif %}>Aplicar Contraseña</button>
+                    <button type="button" class="btn btn-warning w-100 mt-3 fw-bold text-uppercase shadow-sm" id="btnCambiarContrasena" {% if user.contrasena == 'GOOGLE_AUTH_EXTERNAL' %} disabled {% endif %}>Aplicar Nueva Contraseña</button>
+                </div>
+                <div class="mt-4 p-4 border border-danger rounded-3 bg-danger bg-opacity-10">
+                    <h5 class="text-danger mb-3 fw-bold"><i class="bi bi-exclamation-octagon me-2"></i>Zona de Peligro</h5>
+                    <p class="small text-muted mb-3">Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate.</p>
+                    <button type="button" class="btn btn-outline-danger btn-sm fw-bold" id="btnEliminarMiCuenta">
+                        <i class="bi bi-person-x-fill me-2"></i>ELIMINAR MI CUENTA DEFINITIVAMENTE
+                    </button>
                 </div>
             </form>
         </div>
@@ -141,7 +148,6 @@
     </main>
     <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3"></div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script>
         const USER_ID = "{{ user.id_cliente }}";
         const USER_ROLE = "{{ user.roles.nombre_role if user.roles else 'cliente' }}";

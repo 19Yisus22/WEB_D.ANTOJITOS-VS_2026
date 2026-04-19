@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style_inicio.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='/uploads/logo.ico') }}">
 </head>
 <body class="body-fondo-logo">
@@ -37,20 +38,17 @@
                     </div>
 
                     <div class="carousel-container-custom shadow-lg rounded-4 overflow-hidden mb-4">
-                        <div id="carouselPromo" class="carousel slide carousel-fade" data-bs-ride="carousel">
-                            <div class="carousel-inner" id="carouselItems">
-                                <div class="carousel-item active">
+                        <div class="swiper swiperPromo">
+                            <div class="swiper-wrapper" id="carouselItems">
+                                <div class="swiper-slide">
                                     <div class="d-flex justify-content-center align-items-center bg-light" style="height: 400px;">
                                         <div class="spinner-border text-primary" role="status"></div>
                                     </div>
                                 </div>
                             </div>
-                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselPromo" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon" aria-hidden="true" style="filter: invert(1);"></span>
-                            </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#carouselPromo" data-bs-slide="next">
-                                <span class="carousel-control-next-icon" aria-hidden="true" style="filter: invert(1);"></span>
-                            </button>
+                            <div class="swiper-pagination"></div>
+                            <div class="swiper-button-prev"></div>
+                            <div class="swiper-button-next"></div>
                         </div>
                     </div>
 
@@ -122,6 +120,7 @@
     {% include 'global_modules/footer.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/general_js/inicio.js') }}"></script>
 </body>
 </html>

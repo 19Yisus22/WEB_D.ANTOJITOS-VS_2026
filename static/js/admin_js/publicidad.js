@@ -155,7 +155,7 @@ async function verificarAccesoAdmin() {
                     <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
                         <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
                         <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador. Tu sesión será redirigida.</p>
+                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
                         <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
                         <br>
                         <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
@@ -186,8 +186,8 @@ function validarArchivo(file) {
         toast("Formato no soportado (JPG, PNG, WEBP, GIF, AVIF)", "danger");
         return false;
     }
-    if (file.size > 10 * 1024 * 1024) {
-        toast("Imagen demasiado pesada (Máx 10MB)", "danger");
+    if (file.size > 50 * 1024 * 1024) {
+        toast("Imagen demasiado pesada (Máx 50MB)", "danger");
         return false;
     }
     return true;
@@ -202,8 +202,8 @@ async function comprimirImagen(file) {
             img.src = event.target.result;
             img.onload = () => {
                 const canvas = document.createElement("canvas");
-                const MAX_WIDTH = 1280;
-                const MAX_HEIGHT = 720;
+                const MAX_WIDTH = 1920;
+                const MAX_HEIGHT = 1080;
                 let width = img.width;
                 let height = img.height;
                 if (width > height) {
@@ -215,9 +215,13 @@ async function comprimirImagen(file) {
                 canvas.height = height;
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0, width, height);
+
+                const quality = file.size > 5 * 1024 * 1024 ? 0.75 : file.size > 1 * 1024 * 1024 ? 0.80 : 0.85;
+                const format = 'image/webp'; // Mejor compresión que JPEG
+
                 canvas.toBlob((blob) => {
-                    resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() }));
-                }, "image/jpeg", 0.7);
+                    resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: format, lastModified: Date.now() }));
+                }, format, quality);
             };
         };
     });
@@ -466,7 +470,18 @@ async function guardarMarketing() {
     procesamientoEnCurso = true;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> GUARDANDO...';
+
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBar = progressContainer.querySelector(".progress-bar");
+    const progressText = document.getElementById("progressText");
+    progressContainer.classList.remove("d-none");
+    progressBar.style.width = "0%";
+    progressText.textContent = "Preparando archivos...";
+
     const formData = new FormData();
+    let totalFiles = 0;
+    let uploadedFiles = 0;
+
     const extraerSeccion = async (containerId, metaKey, filePrefix) => {
         const metadata = [];
         const items = document.querySelectorAll(`#${containerId} .section-preview`);
@@ -474,7 +489,11 @@ async function guardarMarketing() {
             const div = items[index];
             const fileInput = div.querySelector('input[type="file"]');
             if (fileInput.files[0]) {
+                totalFiles++;
                 formData.append(`${filePrefix}_${index}`, await comprimirImagen(fileInput.files[0]));
+                uploadedFiles++;
+                progressBar.style.width = `${(uploadedFiles / totalFiles) * 50}%`;
+                progressText.textContent = `Comprimiendo ${uploadedFiles}/${totalFiles} imágenes...`;
             }
             metadata.push({
                 index,
@@ -487,16 +506,28 @@ async function guardarMarketing() {
         }
         formData.append(metaKey, JSON.stringify(metadata));
     };
+
     await extraerSeccion("carruselContainer", "metadata_carrusel", "file_carrusel");
     await extraerSeccion("seccionesContainer", "metadata_secciones", "file_secciones");
     await extraerSeccion("cintaContainer", "metadata_cinta", "file_cinta");
+
+    progressBar.style.width = "75%";
+    progressText.textContent = "Subiendo al servidor...";
+
     try {
         const res = await fetch("/publicidad_page", { method: "POST", body: formData });
         const data = await res.json();
-        if (data.ok) { toast("Publicidad actualizada"); setTimeout(() => location.reload(), 1000); }
+        progressBar.style.width = "100%";
+        progressText.textContent = "Completado";
+        if (data.ok) { toast("Publicidad actualizada", "success"); setTimeout(() => location.reload(), 1000); }
         else toast(data.error || "Error al guardar", "danger");
     } catch (e) { toast("Error de conexión", "danger"); }
-    finally { procesamientoEnCurso = false; btn.disabled = false; btn.innerHTML = originalText; }
+    finally {
+        procesamientoEnCurso = false;
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        setTimeout(() => progressContainer.classList.add("d-none"), 2000);
+    }
 }
 
 function initDrag(containerId) {
@@ -520,13 +551,29 @@ function initDrag(containerId) {
     });
 }
 
-function cambioImg(input) {
+async function cambioImg(input) {
     const file = input.files[0];
     if (!validarArchivo(file)) { input.value = ""; return; }
     const container = input.closest(".section-preview");
-    const r = new FileReader();
-    r.onload = e => { container.querySelector("img").src = e.target.result; container.dataset.cambioImagen = "true"; actualizarPreview(); };
-    r.readAsDataURL(file);
+    const imgElement = container.querySelector("img");
+
+    try {
+        const comprimido = await comprimirImagen(file);
+        const r = new FileReader();
+        r.onload = e => {
+            imgElement.src = e.target.result;
+            container.dataset.cambioImagen = "true";
+            actualizarPreview();
+            const sizeOrig = (file.size / 1024 / 1024).toFixed(2);
+            const sizeComp = (comprimido.size / 1024 / 1024).toFixed(2);
+            const reduccion = ((1 - comprimido.size / file.size) * 100).toFixed(1);
+            toast(`Comprimido: ${sizeOrig}MB → ${sizeComp}MB (${reduccion}% reducción)`, "info");
+        };
+        r.readAsDataURL(comprimido);
+    } catch (e) {
+        toast("Error al comprimir imagen", "danger");
+        input.value = "";
+    }
 }
 
 async function borrarSec(btn) {
@@ -562,6 +609,19 @@ document.addEventListener("DOMContentLoaded", () => {
         document.addEventListener("click", () => initAudioContext(), { once: true });
     }
 });
+
+(function() {
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = function() {
+        window.history.pushState(null, "", window.location.href);
+    };
+
+    window.onpageshow = function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            window.location.reload();
+        }
+    };
+})();
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
