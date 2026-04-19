@@ -63,6 +63,17 @@ function setLoading(btn, isLoading, originalText) {
     }
 }
 
+function esCuentaGoogle(usuario) {
+    const authMethod = String(usuario.auth_method || '').toLowerCase();
+    if (authMethod) return authMethod === 'google';
+
+    const contrasena = String(usuario.contrasena || '').trim();
+    if (contrasena.toUpperCase() === 'GOOGLE_AUTH_EXTERNAL') return true;
+    if (contrasena.includes('$') && /^[0-9a-f]{64}\$[0-9a-f]{64}$/i.test(contrasena)) return false;
+
+    return Boolean(usuario.google_id || String(usuario.metodo_auth || '').toLowerCase() === 'google');
+}
+
 const passInput = document.getElementById("nuevaContrasena");
 const confirmInput = document.getElementById("confirmarContrasena");
 
@@ -197,7 +208,7 @@ inputs.forEach(input => {
                     if (isCedula && u.cedula && String(u.cedula) === val) return true;
                     return false;
                 });
-                if (isDup && val !== '') {
+                if ((isCedula && val !== '' && val.length < 7) || isDup) {
                     this.style.borderColor = "#dc3545";
                     this.style.boxShadow = "0 0 0 0.25rem rgba(220, 53, 69, 0.25)";
                 } else {
@@ -242,6 +253,15 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
             if (dup) hasDuplicate = true;
         }
     });
+    const cedulaField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase().includes('cedula'));
+    if (cedulaField) {
+        const cedulaValue = cedulaField.value.trim();
+        if (cedulaValue !== '' && cedulaValue.length < 7) {
+            showMessage("La cédula debe tener al menos 7 caracteres", true);
+            setLoading(btn, false, originalText);
+            return;
+        }
+    }
     if (hasDuplicate) {
         showMessage("La cédula o correo ya están registrados", true);
         setLoading(btn, false, originalText);
@@ -276,7 +296,7 @@ function mostrarModalDetalles(u) {
         modalEl.remove();
     }
 
-    const esGoogle = u.google_id || u.metodo_auth === 'google' || (u.correo && u.correo.includes('gmail.com'));
+    const esGoogle = esCuentaGoogle(u);
     const rol = u.roles?.nombre_role || u.rol || 'cliente';
 
     const formatearFecha = (fechaStr) => {
@@ -435,8 +455,16 @@ function renderUserTable() {
     const list = document.getElementById("usuariosList");
     if (!list) return;
     list.innerHTML = "";
+    const totalPages = Math.max(Math.ceil(filteredUsers.length / recordsPerPage), 1);
+    if (currentPage > totalPages) currentPage = totalPages;
     const start = (currentPage - 1) * recordsPerPage;
     const pageItems = filteredUsers.slice(start, start + recordsPerPage);
+
+    const countVisibleEl = document.getElementById("countVisible");
+    const countUsersEl = document.getElementById("countUsers");
+    if (countVisibleEl) countVisibleEl.textContent = pageItems.length;
+    if (countUsersEl) countUsersEl.textContent = filteredUsers.length;
+
     const renderSection = (users, title, badgeClass) => {
         if (users.length === 0) return;
         const header = document.createElement("div");
@@ -448,7 +476,8 @@ function renderUserTable() {
             div.className = "list-group-item d-flex align-items-center justify-content-between py-3 border-0 border-bottom fade-in";
             const rol = u.roles?.nombre_role || u.rol || 'cliente';
             const esYo = String(u.id_cliente) === String(USER_ID);
-            const esGoogle = u.google_id || u.metodo_auth === 'google' || (u.correo && u.correo.includes('gmail.com'));
+            const esGoogle = esCuentaGoogle(u);
+            const metodoRegistro = esGoogle ? 'Google' : 'Email';
             div.innerHTML = `
                 <div class="d-flex align-items-center">
                     <div class="position-relative">
@@ -459,18 +488,37 @@ function renderUserTable() {
                     </div>
                     <div>
                         <h6 class="mb-0 fw-bold">${u.nombre} ${u.apellido} ${esYo ? '<span class="badge bg-success ms-1" style="font-size: 0.6rem;">TÚ</span>' : ''}</h6>
-                        <small class="text-muted">${u.correo}</small>
+                        <small class="text-muted d-flex align-items-center gap-2">
+                            <span>${u.correo}</span>
+                            <span class="badge ${esGoogle ? 'bg-info text-white' : 'bg-secondary text-white'}" style="font-size: 0.55rem;">${metodoRegistro}</span>
+                        </small>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-dark shadow-sm" ${esYo ? 'disabled' : ''} id="btnRol-${u.id_cliente}"><i class="bi bi-person-up"></i></button>
-                        <button class="btn btn-sm btn-light border shadow-sm" id="btnVer-${u.id_cliente}"><i class="bi bi-eye"></i></button>
+                        <button class="btn btn-sm btn-outline-primary shadow-sm" ${esYo ? 'disabled' : ''} id="btnRol-${u.id_cliente}" title="Cambiar rol">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary shadow-sm" id="btnCopiar-${u.id_cliente}" title="Copiar correo">
+                            <i class="bi bi-clipboard-fill"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light border shadow-sm" id="btnVer-${u.id_cliente}" title="Ver detalles"><i class="bi bi-eye"></i></button>
                     </div>
                 </div>`;
             list.appendChild(div);
             const btnVer = document.getElementById(`btnVer-${u.id_cliente}`);
             if (btnVer) btnVer.onclick = () => mostrarModalDetalles(u);
+            const btnCopiar = document.getElementById(`btnCopiar-${u.id_cliente}`);
+            if (btnCopiar) {
+                btnCopiar.onclick = async () => {
+                    try {
+                        await navigator.clipboard.writeText(u.correo || '');
+                        showMessage('Correo copiado al portapapeles');
+                    } catch (error) {
+                        showMessage('No se pudo copiar el correo', true);
+                    }
+                };
+            }
             const btnR = document.getElementById(`btnRol-${u.id_cliente}`);
             if (!esYo && btnR) {
                 btnR.onclick = async () => {

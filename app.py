@@ -425,12 +425,15 @@ def actualizar_rol_usuario():
 
 @app.route("/listar_usuarios", methods=["GET"])
 def listar_usuarios():
-    res = supabase.table("usuarios").select("id_cliente,imagen_url,cedula,nombre,apellido,telefono,correo,direccion,metodo_pago,fecha_creacion,roles(nombre_role)").execute()
+    res = supabase.table("usuarios").select("id_cliente,imagen_url,cedula,nombre,apellido,telefono,correo,direccion,metodo_pago,fecha_creacion,contrasena,roles(nombre_role)").execute()
     usuarios = res.data if res.data else []
 
     for u in usuarios:
         u["nombre_completo"] = f"{u.get('nombre','')} {u.get('apellido','')}".strip()
         u["rol"] = u.get("roles", {}).get("nombre_role") if u.get("roles") else None
+        contrasena = u.get("contrasena", "")
+        u["auth_method"] = "google" if str(contrasena).upper() == "GOOGLE_AUTH_EXTERNAL" else "email"
+        u.pop("contrasena", None)
     return jsonify(usuarios)
 
 @app.route("/cambiar_contrasena", methods=["PUT"])
@@ -860,8 +863,6 @@ def finalizar_compra():
 @app.route("/gestionar_facturas_page")
 @sin_cache
 def gestionar_facturas_page():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
     return render_template("general_modules/facturas.html")
 
 @app.route("/buscar_facturas_page", methods=["GET"])
@@ -975,6 +976,7 @@ def obtener_facturas_page():
 @app.route("/anular_factura_page/<numero_factura>", methods=["PUT"])
 def anular_factura_page(numero_factura):
     user_id = session.get("user_id")
+    rol = session.get("rol")
     if not user_id:
         return jsonify({"message": "Autenticación requerida"}), 401
     try:
@@ -988,7 +990,7 @@ def anular_factura_page(numero_factura):
             return jsonify({"message": "Factura no encontrada"}), 404
             
         f = factura.data
-        if str(f["id_cliente"]) != str(user_id):
+        if str(f["id_cliente"]) != str(user_id) and rol not in ["admin", "superadmin"]:
             return jsonify({"message": "No tiene permiso para anular esta factura"}), 403
             
         if f["estado"].lower() in ["anulada", "cancelada", "pagada", "entregado", "finalizado"]:
@@ -1004,6 +1006,30 @@ def anular_factura_page(numero_factura):
             .eq("id_pedido", f["id_pedido"]) \
             .execute()
             
+        detalles_res = supabase.table("pedido_detalle") \
+            .select("id_producto, cantidad") \
+            .eq("id_pedido", f["id_pedido"]) \
+            .execute()
+            
+        for detalle in (detalles_res.data or []):
+            id_prod = detalle.get("id_producto")
+            cantidad = int(detalle.get("cantidad", 0))
+            
+            prod_res = supabase.table("gestion_productos") \
+                .select("stock") \
+                .eq("id_producto", id_prod) \
+                .single() \
+                .execute()
+                
+            if prod_res.data:
+                stock_actual = int(prod_res.data.get("stock", 0))
+                nuevo_stock = stock_actual + cantidad
+                
+                supabase.table("gestion_productos") \
+                    .update({"stock": nuevo_stock}) \
+                    .eq("id_producto", id_prod) \
+                    .execute()
+            
         return jsonify({"message": "Factura anulada correctamente"}), 200
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
@@ -1011,6 +1037,7 @@ def anular_factura_page(numero_factura):
 @app.route("/actualizar_estado_factura_page/<numero_factura>", methods=["PUT"])
 def actualizar_estado_factura_page(numero_factura):
     user_id = session.get("user_id")
+    rol = session.get("rol")
     if not user_id:
         return jsonify({"message": "Autenticación requerida"}), 401
     data = request.get_json(silent=True) or {}
@@ -1027,7 +1054,7 @@ def actualizar_estado_factura_page(numero_factura):
         if not factura.data:
             return jsonify({"message": "Factura no encontrada"}), 404
         f = factura.data
-        if str(f["id_cliente"]) != str(user_id):
+        if str(f["id_cliente"]) != str(user_id) and rol not in ["admin", "superadmin"]:
             return jsonify({"message": "No tiene permiso para modificar esta factura"}), 403
         supabase.table("facturas") \
             .update({"estado": nuevo_estado}) \
@@ -1043,6 +1070,30 @@ def actualizar_estado_factura_page(numero_factura):
                 .update({"estado": "Cancelado"}) \
                 .eq("id_pedido", f["id_pedido"]) \
                 .execute()
+                
+            detalles_res = supabase.table("pedido_detalle") \
+                .select("id_producto, cantidad") \
+                .eq("id_pedido", f["id_pedido"]) \
+                .execute()
+                
+            for detalle in (detalles_res.data or []):
+                id_prod = detalle.get("id_producto")
+                cantidad = int(detalle.get("cantidad", 0))
+                
+                prod_res = supabase.table("gestion_productos") \
+                    .select("stock") \
+                    .eq("id_producto", id_prod) \
+                    .single() \
+                    .execute()
+                    
+                if prod_res.data:
+                    stock_actual = int(prod_res.data.get("stock", 0))
+                    nuevo_stock = stock_actual + cantidad
+                    
+                    supabase.table("gestion_productos") \
+                        .update({"stock": nuevo_stock}) \
+                        .eq("id_producto", id_prod) \
+                        .execute()
         return jsonify({"message": "Estado actualizado correctamente"}), 200
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
@@ -1670,7 +1721,6 @@ def eliminar_metodo_pago(id_pago):
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 
 # MÓDULOS DE TÉRMINOS Y CONDICIONES | POLÍTICAS DE PRIVACIDAD | MANUAL

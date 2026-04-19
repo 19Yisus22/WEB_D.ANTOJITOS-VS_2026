@@ -12,42 +12,6 @@ const FormateadorCosto = new Intl.NumberFormat('es-CO', {
     maximumFractionDigits: 0
 });
 
-async function verificarAccesoAdmin() {
-    try {
-        const res = await fetch("/facturacion_page", {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        
-        if (res.status === 401 || res.status === 403) {
-            document.body.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
-                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
-                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
-                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere iniciar sesión obligatoriamnete.</p>
-                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                        <br>
-                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
-                    </div>
-                </div>
-                <style>
-                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-                </style>`;
-            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
-            return false;
-        }
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-    const tieneAcceso = await verificarAccesoAdmin();
-    if (!tieneAcceso) return;
-    
-});
-
 function showConfirmToast(msg, callback) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -597,20 +561,40 @@ function paginar(totalItems) {
     nav.appendChild(frag);
 }
 
-(function() {
-    window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() {
-        window.history.pushState(null, "", window.location.href);
-    };
-
-    window.onpageshow = function(event) {
-        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-            window.location.reload();
+async function verificarAccesoAdmin() {
+    try {
+        const res = await fetch("/facturacion_page", {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        
+        if (res.status === 401 || res.status === 403) {
+            document.body.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
+                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
+                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
+                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
+                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere estar logueado, Inicie Sesión.</p>
+                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+                        <br>
+                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
+                    </div>
+                </div>
+                <style>
+                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+                </style>`;
+            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
+            return false;
         }
-    };
-})();
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    const tieneAcceso = await verificarAccesoAdmin();
+    if (!tieneAcceso) return;
+
     cargarMetodosPago();
     if ("Notification" in window && Notification.permission !== "granted") {
         Notification.requestPermission();

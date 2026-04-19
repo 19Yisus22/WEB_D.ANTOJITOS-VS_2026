@@ -81,6 +81,8 @@
                                 <small class="text-muted">Explora nuestros postres frescos</small>
                             </div>
                         </a>
+
+                        {% if session.get('user') %}
                         <a href="/carrito_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
                             <i class="bi bi-cart3 fs-3 me-3 text-success"></i>
                             <div>
@@ -88,6 +90,8 @@
                                 <small class="text-muted">Revisa tus pedidos seleccionados</small>
                             </div>
                         </a>
+                        {% endif %}
+                        
                         <a href="/comentarios_page" id="btnSugerencias" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
                             <i class="bi bi-chat-heart fs-3 me-3 text-danger"></i>
                             <div>
