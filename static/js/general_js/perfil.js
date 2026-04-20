@@ -343,29 +343,29 @@ function mostrarModalDetalles(u) {
                     </div>
                     
                     <h4 class="fw-bold mb-1 text-dark">${u.nombre} ${u.apellido}</h4>
-                    <p class="text-muted mb-4 small"><i class="bi bi-person-badge me-1"></i>ID: ${u.id_cliente || 'N/A'}</p>
+                    <p class="text-muted mb-4 small"><i class="bi bi-person-badge me-1"></i>ID Usuario: ${u.id_cliente || 'N/A'}</p>
                     
                     <div class="row g-3 text-start bg-light p-3 rounded-4 mx-1">
                         <div class="col-12">
-                            <label class="small text-muted d-block mb-1">Correo Electrónico</label>
+                            <label class="small text-muted d-block mb-1">Correo Electrónico:</label>
                             <div class="d-flex align-items-center text-dark fw-medium">
                                 <i class="bi bi-envelope me-2 text-secondary"></i> ${u.correo}
                             </div>
                         </div>
                         <div class="col-6">
-                            <label class="small text-muted d-block mb-1">Cédula / ID</label>
+                            <label class="small text-muted d-block mb-1">Cédula:</label>
                             <div class="d-flex align-items-center text-dark fw-medium">
                                 <i class="bi bi-card-text me-2 text-secondary"></i> ${u.cedula || 'No registrada'}
                             </div>
                         </div>
                         <div class="col-6">
-                            <label class="small text-muted d-block mb-1">Teléfono</label>
+                            <label class="small text-muted d-block mb-1">Teléfono:</label>
                             <div class="d-flex align-items-center text-dark fw-medium">
                                 <i class="bi bi-telephone me-2 text-secondary"></i> ${u.telefono || 'No registrado'}
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="small text-muted d-block mb-1">Dirección</label>
+                            <label class="small text-muted d-block mb-1">Dirección:</label>
                             <div class="d-flex align-items-center text-dark fw-medium">
                                 <i class="bi bi-geo-alt me-2 text-secondary"></i> ${u.direccion || 'No registrada'}
                             </div>
@@ -391,7 +391,7 @@ function mostrarModalDetalles(u) {
                         <div class="col-12 border-top pt-2 mt-3">
                             <label class="small text-muted d-block mb-1">Método de Registro:</label>
                             <div class="d-flex align-items-center text-dark fw-medium">
-                                <i class="bi ${esGoogle ? 'bi-google' : 'bi-shield-lock'} me-2 text-secondary"></i> 
+                                <i class="bi ${esGoogle ? 'bi-google' : 'bi-envelope-at-fill'} me-2 text-secondary"></i> 
                                 ${esGoogle ? 'Cuenta de Google' : 'Cuenta de E-mail'}
                             </div>
                         </div>
