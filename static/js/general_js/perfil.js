@@ -374,25 +374,25 @@ function mostrarModalDetalles(u) {
                         <div class="col-12 border-top pt-3 mt-3">
                             <div class="row">
                                 <div class="col-6">
-                                    <label class="small text-muted d-block mb-1">Fecha de Creación</label>
+                                    <label class="small text-muted d-block mb-1">Fecha de Creación:</label>
                                     <div class="d-flex align-items-center text-dark small fw-medium">
                                         <i class="bi bi-calendar-check me-2 text-secondary"></i> ${formatearFecha(u.fecha_creacion)}
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <label class="small text-muted d-block mb-1">Última Conexión</label>
+                                    <label class="small text-muted d-block mb-1">Última Conexión:</label>
                                     <div class="d-flex align-items-center text-dark small fw-medium">
-                                        <i class="bi bi-clock-history me-2 text-secondary"></i> ${formatearFecha(u.ultima_conexion)}
+                                        <i class="bi bi-clock-history me-2 text-secondary"></i> ${(u.ultima_conexion)}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-12 border-top pt-2 mt-3">
-                            <label class="small text-muted d-block mb-1">Método de Registro</label>
+                            <label class="small text-muted d-block mb-1">Método de Registro:</label>
                             <div class="d-flex align-items-center text-dark fw-medium">
                                 <i class="bi ${esGoogle ? 'bi-google' : 'bi-shield-lock'} me-2 text-secondary"></i> 
-                                ${esGoogle ? 'Cuenta de Google' : 'Registro Directo (Email)'}
+                                ${esGoogle ? 'Cuenta de Google' : 'Cuenta de E-mail'}
                             </div>
                         </div>
                     </div>
