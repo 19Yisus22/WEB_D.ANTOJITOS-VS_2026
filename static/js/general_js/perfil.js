@@ -382,7 +382,7 @@ function mostrarModalDetalles(u) {
                                 <div class="col-6">
                                     <label class="small text-muted d-block mb-1">Última Conexión:</label>
                                     <div class="d-flex align-items-center text-dark small fw-medium">
-                                        <i class="bi bi-clock-history me-2 text-secondary"></i> ${(u.ultima_conexion)}
+                                        <i class="bi bi-clock-history me-2 text-secondary"></i> ${u.ultima_conexion}
                                     </div>
                                 </div>
                             </div>
@@ -398,7 +398,7 @@ function mostrarModalDetalles(u) {
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">
-                    <button type="button" class="btn btn-dark w-100 rounded-pill py-2 fw-bold shadow-sm" data-bs-dismiss="modal">Cerrar Detalle</button>
+                    <button type="button" class="btn btn-dark w-100 rounded-pill py-2 fw-bold shadow-sm" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>`;
