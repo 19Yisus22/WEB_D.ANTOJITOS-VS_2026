@@ -20,7 +20,7 @@
             <h1 class="display-4 fw-bold">
                 Bienvenid@ a D'Antojitos{% if session.get('user') %} - {{ session.user.nombre }}{% endif %}
             </h1>
-            
+            <div class="divider" style="width: 120px; height: 3px; margin:center auto 0 auto; background-color: #d6336c;"></div>
             <p class="text-muted mt-3" id="mensajeBienvenidaDinamico">Endulza tu día con deliciosos postres caseros!!</p>
 
             {% if session.get('user') and (session.user.rol == 'admin' or (session.user.roles and session.user.roles.nombre_role == 'admin')) %}
@@ -28,7 +28,6 @@
             </div>
             {% endif %}
         </header>
-        <div class="divider" style="width: 120px; height: 3px; margin:center auto 0 auto; background-color: #d6336c;"></div>
         <div class="row g-4">
             <div class="col-lg-8">
                 <section id="vision" class="fade-in">
