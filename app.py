@@ -425,12 +425,13 @@ def actualizar_rol_usuario():
 
 @app.route("/listar_usuarios", methods=["GET"])
 def listar_usuarios():
-    res = supabase.table("usuarios").select("id_cliente,imagen_url,cedula,nombre,apellido,telefono,correo,direccion,metodo_pago,fecha_creacion,contrasena,roles(nombre_role)").execute()
+    res = supabase.table("usuarios").select("id_cliente,imagen_url,cedula,nombre,apellido,telefono,correo,direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role)").execute()
     usuarios = res.data if res.data else []
 
     for u in usuarios:
         u["nombre_completo"] = f"{u.get('nombre','')} {u.get('apellido','')}".strip()
         u["rol"] = u.get("roles", {}).get("nombre_role") if u.get("roles") else None
+        u["ultima_conexion"] = u.get("ultima_conexion")
         contrasena = u.get("contrasena", "")
         u["auth_method"] = "google" if str(contrasena).upper() == "GOOGLE_AUTH_EXTERNAL" else "email"
         u.pop("contrasena", None)
@@ -1561,6 +1562,19 @@ def admin_notificaciones():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/admin/notificaciones/estado/<id_publicidad>", methods=["POST"])
+def admin_estado_notificacion(id_publicidad):
+    if not session.get("user_id") or session.get("rol") != "admin":
+        return jsonify({"error": "No autorizado"}), 401
+    
+    try:
+        data = request.get_json()
+        estado = data.get("estado")
+        supabase.table("publicidad").update({"estado": estado}).eq("id_publicidad", id_publicidad).execute()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/admin/notificaciones/<id_publicidad>", methods=["PUT", "DELETE"])
 def admin_gestion_notificacion(id_publicidad):
     if not session.get("user_id") or session.get("rol") != "admin":
@@ -1587,11 +1601,11 @@ def admin_gestion_notificacion(id_publicidad):
                 if url_actual:
                     delete_image_from_cloudinary(url_actual)
                 nueva_url = upload_image_to_cloudinary(archivo, folder="publicidad_DAntojitos")
+            
             supabase.table("publicidad").update({
                 "titulo": request.form.get("titulo", notificacion_actual.get("titulo")),
                 "descripcion": request.form.get("descripcion", notificacion_actual.get("descripcion")),
-                "imagen_url": nueva_url,
-                "estado": True
+                "imagen_url": nueva_url
             }).eq("id_publicidad", id_publicidad).execute()
             return jsonify({"ok": True})
 
@@ -1777,7 +1791,7 @@ if __name__ == "__main__":
     port = 8000
     local_ip = get_local_ip()
 
-    debug_mode = True
+    debug_mode = False
 
     if debug_mode:
         print("⚡ Ejecutando en modo DEBUG con servidor de desarrollo de Flask")

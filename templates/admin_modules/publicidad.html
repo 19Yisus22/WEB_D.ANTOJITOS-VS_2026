@@ -17,7 +17,7 @@
         <div class="container-central">
             <div class="card-title-marketing mb-4 text-center">
                 <h3 class="display-6 fw-bold m-0"><i class="bi bi-megaphone"></i> Panel de Publicidad</h3>
-                <p class="text-white-50 mb-0">Gestión de Notificaciones y Contenido Visual</p>
+                <p class="text-white-50 mb-0">GESTIONA TUS PUBLICIDADES</p>
             </div>
 
             <div class="card section-notificaciones shadow-sm mb-4">
@@ -28,11 +28,15 @@
                     </div>
                     <div class="row g-3">
                         <div class="col-12 col-lg-4">
-                            <label class="form-label fw-bold small">IMAGEN (OPCIONAL)</label>
-                            <div id="previewNotificacion" class="preview-img-box mb-3">
-                                <img id="previewNotificacionImg" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1OacDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJBSURBVHgB7d0xbhNREIDh90YpSClpSInS06ByAnp6SByBk9ByAnp6ChonSInS06ByApSClpSClpSChv9vYScbe9be9Xp3Z76Pst6stZun8f72zZunMREp6vUf97ZOfn64fP9scfH+mYgG9fbt+6f7n8/vXrz6eC6isfrz5p8mIkW9e/dhIu6IKOp8+SyiqPP7DyIa9PHe2XfTjMREpKgzmYh9Ihp0/vEisS+isfrtHxEfXkU06uXFpyciGrW9efZ0Ihp0t3k6EQ26ubqbiCtiIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIynL17/wEunS4O3C+hNwAAAABJRU5ErkJggg==" alt="Vista previa">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Subir Imagen (Opcional)</label>
+                            <div id="previewNotificacion" class="preview-img-box mb-3 d-flex align-items-center justify-content-center border rounded-4 bg-light overflow-hidden shadow-sm" style="height: 210px; border: 2px dashed #cbd5e0 !important; position: relative; transition: all 0.3s ease; background-color: #f8fafc !important;">
+                                <div id="placeholderNotif" class="text-center text-muted">
+                                    <i class="bi bi-image" style="font-size: 3.5rem; color: #cbd5e0; display: block; margin-bottom: 5px;"></i>
+                                    <span class="fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px; color: #94a3b8;">Seleccionar Imagen</span>
+                                </div>
+                                <img id="previewNotificacionImg" src="" alt="Vista previa" class="w-100 h-100 d-none" style="object-fit: contain; background: #f8fafc;" onload="this.classList.remove('d-none'); document.getElementById('placeholderNotif').classList.add('d-none')" onerror="this.classList.add('d-none'); document.getElementById('placeholderNotif').classList.remove('d-none')">
                             </div>
-                            <input type="file" id="archivoNotificacion" class="form-control" accept="image/*">
+                            <input type="file" id="archivoNotificacion" class="form-control shadow-none" accept="image/*" onchange="actualizarPreviewNotif(this)">
                         </div>
                         <div class="col-12 col-lg-4">
                             <label class="form-label fw-bold small">TÍTULO</label>

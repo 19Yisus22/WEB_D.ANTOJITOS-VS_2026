@@ -30,10 +30,14 @@ async function verificarAccesoAdmin() {
                         <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
                         <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
                         <br>
+                        <i><small style="color: #555;">Redirigiendo...</small></i>
+                        <br><br>
                         <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
                     </div>
                 </div>
-                <style>@keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }</style>`;
+                <style>
+                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+                </style>`;
             setTimeout(() => { window.location.href = "/inicio"; }, 3500);
             return false;
         }
@@ -146,7 +150,6 @@ function actualizarEstadisticas(listaAMostrar) {
     const total = listaAMostrar.length;
     const disponibles = listaAMostrar.filter(p => parseInt(p.stock) > 0).length;
     const agotados = total - disponibles;
-
     document.getElementById("statTotalNum").textContent = total;
     document.getElementById("statDispNum").textContent = disponibles;
     document.getElementById("statAgotNum").textContent = agotados;
@@ -154,25 +157,20 @@ function actualizarEstadisticas(listaAMostrar) {
 
 function renderPostres(filtro = "") {
     if (!listaPostresDisponibles || !listaPostresAgotados) return;
-    
     listaPostresDisponibles.innerHTML = "";
     listaPostresAgotados.innerHTML = "";
-    
     const productosFiltrados = postres.filter(p => 
         p.nombre.toLowerCase().includes(filtro.toLowerCase())
     );
-
     actualizarEstadisticas(productosFiltrados);
     let countDisp = 0;
     let countAgot = 0;
-
     productosFiltrados.forEach((p) => {
         const indexOriginal = postres.findIndex(pr => pr.id_producto === p.id_producto);
         const card = document.createElement("div");
         card.className = "col";
         const stockActual = parseInt(p.stock) || 0;
         const isAgotado = stockActual <= 0;
-        
         card.innerHTML = `
         <div class="card h-100 shadow-sm ${isAgotado ? 'gris' : ''}" data-id="${p.id_producto}">
             <img src="${p.imagen_url || '/static/uploads/default.png'}" class="postre-img card-img-top" alt="${p.nombre}">
@@ -185,9 +183,7 @@ function renderPostres(filtro = "") {
                 </div>
             </div>
         </div>`;
-
         card.querySelector(".card").onclick = () => abrirModalPostre(indexOriginal);
-
         if (!isAgotado) {
             listaPostresDisponibles.appendChild(card);
             countDisp++;
@@ -196,7 +192,6 @@ function renderPostres(filtro = "") {
             countAgot++;
         }
     });
-
     document.getElementById("emptyDisponibles").classList.toggle("d-none", countDisp > 0);
     document.getElementById("emptyAgotados").classList.toggle("d-none", countAgot > 0);
     if (avisoAgotados) avisoAgotados.classList.toggle("d-none", countAgot === 0);
@@ -214,6 +209,16 @@ function abrirModalPostre(index) {
     if (modal) modal.show();
 }
 
+function resetPrevisualizador() {
+    const previewImg = document.getElementById("previewNotificacionImg");
+    const placeholder = document.getElementById("placeholderNotif");
+    if (previewImg && placeholder) {
+        previewImg.src = "";
+        previewImg.classList.add("d-none");
+        placeholder.classList.remove("d-none");
+    }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     if (!await verificarAccesoAdmin()) return;
 
@@ -226,6 +231,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     await cargarPostres();
     setInterval(() => cargarPostres(true), 10000);
 
+    const inputFoto = document.getElementById("fotoPostre");
+    if (inputFoto) {
+        inputFoto.addEventListener("change", function() {
+            const previewImg = document.getElementById("previewNotificacionImg");
+            const placeholder = document.getElementById("placeholderNotif");
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove("d-none");
+                    placeholder.classList.add("d-none");
+                };
+                reader.readAsDataURL(this.files[0]);
+            } else {
+                resetPrevisualizador();
+            }
+        });
+    }
+
     if (searchInput) {
         searchInput.addEventListener("input", (e) => renderPostres(e.target.value));
     }
@@ -234,6 +258,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         btnAgregarPostre.onclick = () => {
             indexActual = null;
             agregarPostreForm.reset();
+            resetPrevisualizador();
             document.getElementById("formPanelTitle").textContent = "Nuevo Postre";
             btnSubmitForm.innerHTML = '<i class="bi bi-save2 me-2"></i>Guardar Nuevo Postre';
             formAgregarPostre.classList.remove("d-none");
@@ -245,6 +270,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         btnCancelar.onclick = () => {
             formAgregarPostre.classList.add("d-none");
             agregarPostreForm.reset();
+            resetPrevisualizador();
             indexActual = null;
         };
     }
@@ -274,6 +300,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("precioPostre").value = p.precio;
         document.getElementById("descripcionPostre").value = p.descripcion || "";
         document.getElementById("stockPostre").value = p.stock;
+        
+        const previewImg = document.getElementById("previewNotificacionImg");
+        const placeholder = document.getElementById("placeholderNotif");
+        if (p.imagen_url) {
+            previewImg.src = p.imagen_url;
+            previewImg.classList.remove("d-none");
+            placeholder.classList.add("d-none");
+        } else {
+            resetPrevisualizador();
+        }
+
         document.getElementById("formPanelTitle").textContent = "Editar Producto";
         btnSubmitForm.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Actualizar Cambios';
         formAgregarPostre.classList.remove("d-none");
@@ -293,7 +330,6 @@ if (agregarPostreForm) {
         formData.append("descripcion", document.getElementById("descripcionPostre").value);
         formData.append("stock", document.getElementById("stockPostre").value);
         formData.append("categoria", "Postre");
-
         if (file) {
             const reader = new FileReader();
             reader.onloadend = async () => {
@@ -308,19 +344,6 @@ if (agregarPostreForm) {
     };
 }
 
-(function() {
-    window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() {
-        window.history.pushState(null, "", window.location.href);
-    };
-
-    window.onpageshow = function(event) {
-        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-            window.location.reload();
-        }
-    };
-})();
-
 async function enviarFormulario(formData) {
     const esEdicion = indexActual !== null;
     const metodo = esEdicion ? "PUT" : "POST";
@@ -330,6 +353,7 @@ async function enviarFormulario(formData) {
         if (res.ok) {
             formAgregarPostre.classList.add("d-none");
             agregarPostreForm.reset();
+            resetPrevisualizador();
             indexActual = null;
             await cargarPostres();
             showMessage(`Producto ${esEdicion ? 'actualizado' : 'creado'} correctamente`);
@@ -340,4 +364,22 @@ async function enviarFormulario(formData) {
     } catch (e) { showMessage("Error de red", true); }
 }
 
+(function() {
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = function() { window.history.pushState(null, "", window.location.href); };
+    window.onpageshow = function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            window.location.reload();
+        }
+    };
+})();
+
 document.addEventListener("click", () => initAudioContext(), { once: true });
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/js/workers/service-worker-gestion_productos.js')
+            .then(() => console.log('SW OK'))
+            .catch(err => console.error('SW Error', err));
+    });
+}

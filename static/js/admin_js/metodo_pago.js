@@ -84,6 +84,8 @@ async function verificarAccesoAdmin() {
                         <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
                         <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
                         <br>
+                        <i><small style="color: #555;">Redirigiendo...</small></i>
+                        <br><br>
                         <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
                     </div>
                 </div>

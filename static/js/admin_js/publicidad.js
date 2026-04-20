@@ -58,7 +58,6 @@ function mostrarAlerta({
         productosNotificados.add(idUnico);
         setTimeout(() => productosNotificados.delete(idUnico), duracion + 1000);
     }
-
     let cont = document.getElementById("toastContainer");
     if (!cont) {
         cont = document.createElement("div");
@@ -66,19 +65,16 @@ function mostrarAlerta({
         cont.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px;";
         document.body.appendChild(cont);
     }
-
     if (sonido) {
         const soundType = (tipo === 'error' || tipo === 'agotado' || tipo === 'warning' || tipo === 'danger') ? 'error' : 'default';
         playNotificationSound(soundType);
     }
-
     const esError = tipo === 'error' || tipo === 'agotado' || tipo === 'warning' || tipo === 'danger';
     const colorPrimario = esError ? "#ff4757" : "#ff9800";
     const iconClass = esError ? 'bi-exclamation-triangle-fill' : 
                       tipo === 'bienvenida' ? 'bi-emoji-smile-fill' : 
                       tipo === 'favorito' ? 'bi-heart-fill' : 
                       tipo === 'success' ? 'bi-check-circle-fill' : 'bi-stars';
-
     const toast = document.createElement("div");
     toast.style.cssText = `
         background: #121212;
@@ -96,10 +92,8 @@ function mostrarAlerta({
         opacity: 0;
         margin-bottom: 8px;
     `;
-
     const textoContenido = descripcion || mensaje;
     const tituloFinal = titulo || (esError ? "Sistema" : "Notificación");
-
     toast.innerHTML = `
         <div class="d-flex align-items-center w-100">
             <div style="position: relative; flex-shrink: 0;">
@@ -117,19 +111,16 @@ function mostrarAlerta({
             </button>
         </div>
     `;
-
     cont.appendChild(toast);
     setTimeout(() => {
         toast.style.transform = "translateX(0)";
         toast.style.opacity = "1";
     }, 50);
-
     const remove = () => {
         toast.style.transform = "translateX(120%)";
         toast.style.opacity = "0";
         setTimeout(() => toast.remove(), 400);
     };
-
     toast.querySelector('.btn-close-toast').onclick = remove;
     setTimeout(remove, duracion);
 }
@@ -148,7 +139,6 @@ async function verificarAccesoAdmin() {
         const res = await fetch("/facturacion_page", {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
-        
         if (res.status === 401 || res.status === 403) {
             document.body.innerHTML = `
                 <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
@@ -158,6 +148,8 @@ async function verificarAccesoAdmin() {
                         <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
                         <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
                         <br>
+                        <i><small style="color: #555;">Redirigiendo...</small></i>
+                        <br><br>
                         <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
                     </div>
                 </div>
@@ -172,12 +164,6 @@ async function verificarAccesoAdmin() {
         return false;
     }
 }
-
-document.addEventListener('DOMContentLoaded', async () => {
-    const tieneAcceso = await verificarAccesoAdmin();
-    if (!tieneAcceso) return;
-    
-});
 
 function validarArchivo(file) {
     if (!file) return false;
@@ -215,10 +201,8 @@ async function comprimirImagen(file) {
                 canvas.height = height;
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0, width, height);
-
                 const quality = file.size > 5 * 1024 * 1024 ? 0.75 : file.size > 1 * 1024 * 1024 ? 0.80 : 0.85;
-                const format = 'image/webp'; // Mejor compresión que JPEG
-
+                const format = 'image/webp';
                 canvas.toBlob((blob) => {
                     resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: format, lastModified: Date.now() }));
                 }, format, quality);
@@ -255,7 +239,6 @@ function actualizarPreview() {
             bsCarousel.to(0);
         }
     }
-
     const pCinta = document.getElementById("previewCintaMarquee");
     if (pCinta) {
         pCinta.innerHTML = "";
@@ -270,7 +253,6 @@ function actualizarPreview() {
                     <span class="fw-bold text-white text-uppercase" style="letter-spacing:1px; font-size: 0.9rem;">${tit}</span>
                 </div>`;
         });
-
         if (trackContent) {
             pCinta.style.display = "flex";
             pCinta.style.justifyContent = "flex-start";
@@ -281,7 +263,6 @@ function actualizarPreview() {
                 </div>`;
         }
     }
-
     const pSec = document.getElementById("previewSecciones");
     if (pSec) {
         pSec.innerHTML = "";
@@ -336,6 +317,26 @@ async function crearNotificacion() {
     }
 }
 
+async function toggleEstadoAlerta(id, estado) {
+    if (!id || id === "undefined" || id === "null") return;
+    try {
+        const res = await fetch(`/api/admin/notificaciones/estado/${id}`, {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: estado })
+        });
+        const data = await res.json();
+        if (data.ok) toast(estado ? "Alerta activada" : "Alerta desactivada", "info");
+        else {
+            toast("Error en servidor", "danger");
+            cargarAlertasActivas();
+        }
+    } catch (e) {
+        toast("Error de red", "danger");
+        cargarAlertasActivas();
+    }
+}
+
 async function cargarAlertasActivas() {
     const cont = document.getElementById("contenedorAlertas");
     if (!cont) return;
@@ -345,7 +346,8 @@ async function cargarAlertasActivas() {
         cont.innerHTML = alertas.length ? "" : '<p class="text-muted small py-2 text-center">No hay alertas activas</p>';
         alertas.forEach(alerta => {
             const div = document.createElement("div");
-            div.className = "alert-admin-lista mb-2 d-flex align-items-center justify-content-between";
+            div.className = "alert-admin-lista mb-2 d-flex align-items-center justify-content-between p-2 border rounded";
+            const isChecked = alerta.estado ? 'checked' : '';
             div.innerHTML = `
                 <div class="d-flex align-items-center gap-2 overflow-hidden">
                     ${alerta.imagen_url ? `<img src="${alerta.imagen_url}" class="img-notificacion-lista" style="width:35px;height:35px;border-radius:4px;object-fit:cover;">` : '<i class="bi bi-bell p-2"></i>'}
@@ -354,9 +356,14 @@ async function cargarAlertasActivas() {
                         <div class="extra-small text-muted text-truncate">${alerta.descripcion}</div>
                     </div>
                 </div>
-                <button class="btn btn-sm text-danger border-0" onclick="eliminarAlerta('${alerta.id_publicidad}')">
-                    <i class="bi bi-trash3-fill"></i>
-                </button>`;
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" ${isChecked} onchange="toggleEstadoAlerta('${alerta.id_publicidad}', this.checked)">
+                    </div>
+                    <button class="btn btn-sm text-danger border-0" onclick="eliminarAlerta('${alerta.id_publicidad}')">
+                        <i class="bi bi-trash3-fill"></i>
+                    </button>
+                </div>`;
             cont.appendChild(div);
         });
     } catch (e) {
@@ -366,6 +373,7 @@ async function cargarAlertasActivas() {
 
 async function eliminarAlerta(id) {
     if (!id || id === "undefined") return toast("ID no válido", "danger");
+    if (!confirm("¿Eliminar esta alerta?")) return;
     try {
         const res = await fetch(`/api/admin/notificaciones/${id}`, { method: "DELETE" });
         const data = await res.json();
@@ -390,10 +398,19 @@ function agregarCarrusel(url = "", titulo = "", desc = "", id = "") {
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
         <div class="section-content row g-3 m-0 w-100 align-items-center">
             <div class="col-md-3">
-                <div class="preview-img-box mb-2 border rounded overflow-hidden shadow-sm" style="height: 120px; background: #f8f9fa;">
-                    <img src="${url || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1OacDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJBSURBVHgB7d0xbhNREIDh90YpSClpSInS06ByAnp6SByBk9ByAnp6ChonSInS06ByApSClpSClpSChv9vYScbe9be9Xp3Z76Pst6stZun8f72zZunMREp6vUf97ZOfn64fP9scfH+mYgG9fbt+6f7n8/vXrz6eC6isfrz5p8mIkW9e/dhIu6IKOp8+SyiqPP7DyIa9PHe2XfTjMREpKgzmYh9Ihp0/vEisS+isfrtHxEfXkU06uXFpyciGrW9efZ0Ihp0t3k6EQ26ubqbiCtiIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIynL17/wEunS4O3C+hNwAAAABJRU5ErkJggg=='}" class="w-100 h-100" style="object-fit: cover;">
+                <div class="preview-img-box mb-2 border rounded overflow-hidden shadow-sm d-flex align-items-center justify-content-center" style="height: 120px; background: #f1f3f5; position: relative;">
+                    <img src="${url || ''}" 
+                        class="w-100 h-100 ${!url ? 'd-none' : ''}" 
+                        style="object-fit: cover;" 
+                        onload="this.classList.remove('d-none'); this.nextElementSibling.classList.add('d-none')"
+                        onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none')">
+                    
+                    <div class="placeholder-icon text-center text-muted ${url ? 'd-none' : ''}">
+                        <i class="bi bi-image-fill" style="font-size: 2.5rem; opacity: 0.4;"></i>
+                        <div style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-top: -5px;">Sin Imagen</div>
+                    </div>
                 </div>
-                <input type="file" class="form-control form-control-sm mt-2" accept=".jpg,.jpeg,.png,.webp,.gif,.avif" onchange="cambioImg(this)">
+                <input type="file" class="form-control form-control-sm mt-2 shadow-none" accept=".jpg,.jpeg,.png,.webp,.gif,.avif" onchange="cambioImg(this)">
             </div>
             <div class="col-md-9">
                 <div class="pe-3">
@@ -422,8 +439,16 @@ function agregarSeccion(url = "", titulo = "", id = "") {
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
         <div class="section-content d-flex align-items-center gap-4 w-100 p-2">
-            <div class="preview-img-box shadow-sm border" style="width:90px; height:90px; border-radius: 50%; min-width: 90px; overflow: hidden; background: #f8f9fa;">
-                <img src="${url || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1OacDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJBSURBVHgB7d0xbhNREIDh90YpSClpSInS06ByAnp6SByBk9ByAnp6ChonSInS06ByApSClpSClpSChv9vYScbe9be9Xp3Z76Pst6stZun8f72zZunMREp6vUf97ZOfn64fP9scfH+mYgG9fbt+6f7n8/vXrz6eC6isfrz5p8mIkW9e/dhIu6IKOp8+SyiqPP7DyIa9PHe2XfTjMREpKgzmYh9Ihp0/vEisS+isfrtHxEfXkU06uXFpyciGrW9efZ0Ihp0t3k6EQ26ubqbiCtiIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIynL17/wEunS4O3C+hNwAAAABJRU5ErkJggg=='}" class="w-100 h-100" style="object-fit: cover;">
+            <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:90px; height:90px; border-radius: 50%; min-width: 90px; overflow: hidden; background: #f1f3f5; position: relative;">
+                <img src="${url || ''}" 
+                    class="w-100 h-100 ${!url ? 'd-none' : ''}" 
+                    style="object-fit: cover;" 
+                    onload="this.classList.remove('d-none'); this.nextElementSibling.classList.add('d-none')"
+                    onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none')">
+                
+                <div class="placeholder-icon text-center text-muted ${url ? 'd-none' : ''}">
+                    <i class="bi bi-image" style="font-size: 1.8rem; opacity: 0.4;"></i>
+                </div>
             </div>
             <div class="flex-grow-1">
                 <div class="row g-2 align-items-end">
@@ -448,8 +473,16 @@ function agregarCinta(url = "", titulo = "", id = "") {
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-4"></i></div>
         <div class="section-content d-flex align-items-center gap-3 w-100 py-2 px-3 border rounded">
-            <div class="preview-img-box shadow-sm border" style="width:50px; height:50px; border-radius: 50%; min-width: 50px; overflow: hidden; background: #f8f9fa;">
-                <img src="${url || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1OacDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJBSURBVHgB7d0xbhNREIDh90YpSClpSInS06ByAnp6SByBk9ByAnp6ChonSInS06ByApSClpSClpSChv9vYScbe9be9Xp3Z76Pst6stZun8f72zZunMREp6vUf97ZOfn64fP9scfH+mYgG9fbt+6f7n8/vXrz6eC6isfrz5p8mIkW9e/dhIu6IKOp8+SyiqPP7DyIa9PHe2XfTjMREpKgzmYh9Ihp0/vEisS+isfrtHxEfXkU06uXFpyciGrW9efZ0Ihp0t3k6EQ26ubqbiCtiIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIynL17/wEunS4O3C+hNwAAAABJRU5ErkJggg=='}" class="w-100 h-100" style="object-fit: cover;">
+            <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:50px; height:50px; border-radius: 50%; min-width: 50px; overflow: hidden; background: #f1f3f5; position: relative;">
+                <img src="${url || ''}" 
+                    class="w-100 h-100 ${!url ? 'd-none' : ''}" 
+                    style="object-fit: cover;"
+                    onload="this.classList.remove('d-none'); if(this.nextElementSibling) this.nextElementSibling.classList.add('d-none');"
+                    onerror="this.classList.add('d-none'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('d-none');">
+                
+                <div class="placeholder-icon text-muted ${url ? 'd-none' : ''}">
+                    <i class="bi bi-card-image" style="font-size: 1.2rem; opacity: 0.5;"></i>
+                </div>
             </div>
             <div class="flex-grow-1">
                 <div class="row g-2 align-items-center">
@@ -470,18 +503,15 @@ async function guardarMarketing() {
     procesamientoEnCurso = true;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> GUARDANDO...';
-
     const progressContainer = document.getElementById("progressContainer");
     const progressBar = progressContainer.querySelector(".progress-bar");
     const progressText = document.getElementById("progressText");
     progressContainer.classList.remove("d-none");
     progressBar.style.width = "0%";
     progressText.textContent = "Preparando archivos...";
-
     const formData = new FormData();
     let totalFiles = 0;
     let uploadedFiles = 0;
-
     const extraerSeccion = async (containerId, metaKey, filePrefix) => {
         const metadata = [];
         const items = document.querySelectorAll(`#${containerId} .section-preview`);
@@ -506,14 +536,11 @@ async function guardarMarketing() {
         }
         formData.append(metaKey, JSON.stringify(metadata));
     };
-
     await extraerSeccion("carruselContainer", "metadata_carrusel", "file_carrusel");
     await extraerSeccion("seccionesContainer", "metadata_secciones", "file_secciones");
     await extraerSeccion("cintaContainer", "metadata_cinta", "file_cinta");
-
     progressBar.style.width = "75%";
     progressText.textContent = "Subiendo al servidor...";
-
     try {
         const res = await fetch("/publicidad_page", { method: "POST", body: formData });
         const data = await res.json();
@@ -556,7 +583,6 @@ async function cambioImg(input) {
     if (!validarArchivo(file)) { input.value = ""; return; }
     const container = input.closest(".section-preview");
     const imgElement = container.querySelector("img");
-
     try {
         const comprimido = await comprimirImagen(file);
         const r = new FileReader();
@@ -564,10 +590,6 @@ async function cambioImg(input) {
             imgElement.src = e.target.result;
             container.dataset.cambioImagen = "true";
             actualizarPreview();
-            const sizeOrig = (file.size / 1024 / 1024).toFixed(2);
-            const sizeComp = (comprimido.size / 1024 / 1024).toFixed(2);
-            const reduccion = ((1 - comprimido.size / file.size) * 100).toFixed(1);
-            toast(`Comprimido: ${sizeOrig}MB → ${sizeComp}MB (${reduccion}% reducción)`, "info");
         };
         r.readAsDataURL(comprimido);
     } catch (e) {
@@ -579,11 +601,13 @@ async function cambioImg(input) {
 async function borrarSec(btn) {
     const container = btn.closest(".section-preview");
     const dbId = container.dataset.dbId;
-    if (!dbId || dbId === "null") { container.remove(); actualizarPreview(); return; }
+    if (!dbId || dbId === "null" || dbId === "") { container.remove(); actualizarPreview(); return; }
+    if (!confirm("¿Eliminar este elemento permanentemente?")) return;
     try {
         const r = await fetch(`/api/admin/publicidad/delete/${dbId}`, { method: "DELETE" });
-        if ((await r.json()).ok) { container.remove(); actualizarPreview(); toast("Eliminado", "info"); }
-    } catch (e) { toast("Error", "danger"); }
+        const res = await r.json();
+        if (res.ok) { container.remove(); actualizarPreview(); toast("Eliminado", "info"); }
+    } catch (e) { toast("Error al eliminar", "danger"); }
 }
 
 function cargarPublicidadActiva() {
@@ -595,10 +619,23 @@ function cargarPublicidadActiva() {
             else if (item.tipo === 'cinta') agregarCinta(item.imagen_url, item.titulo, item.id_publicidad);
         });
         actualizarPreview();
-    });
+    }).catch(e => console.error("Error cargando publicidad:", e));
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    const tieneAcceso = await verificarAccesoAdmin();
+    if (!tieneAcceso) return;
+    const inputArchivo = document.getElementById("archivoNotificacion");
+    if (inputArchivo) {
+        inputArchivo.addEventListener("change", function() {
+            const previewImg = document.getElementById("previewNotificacionImg");
+            if (this.files && this.files[0] && previewImg) {
+                const reader = new FileReader();
+                reader.onload = (e) => previewImg.src = e.target.result;
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
     if (document.getElementById("carruselContainer")) {
         cargarPublicidadActiva();
         cargarAlertasActivas();
@@ -612,10 +649,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 (function() {
     window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() {
-        window.history.pushState(null, "", window.location.href);
-    };
-
+    window.onpopstate = function() { window.history.pushState(null, "", window.location.href); };
     window.onpageshow = function(event) {
         if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
             window.location.reload();

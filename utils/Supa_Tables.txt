@@ -124,6 +124,15 @@ CREATE TABLE publicidad (
     fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE config_inicio (
+    id SERIAL PRIMARY KEY,
+    mensaje_bienvenida TEXT DEFAULT 'Endulza tu día con deliciosos postres caseros!!',
+    titulo_contenido TEXT DEFAULT 'Nuestra historia y pasión',
+    carrusel_posicion TEXT DEFAULT 'arriba' CHECK (carrusel_posicion IN ('arriba', 'abajo')),
+    contenido_texto TEXT,
+    fecha_actualizacion TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 ALTER TABLE facturas 
 ALTER COLUMN numero_factura TYPE TEXT;
 ALTER TABLE pedidos 

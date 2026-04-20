@@ -3,8 +3,8 @@ const ASSETS = [
     '/',
     '/catalogo_page',
     '/static/css/style_catalogo.css',
-    '/static/js/catalogo.js',
-    '/static/js/inicio.js',
+    '/static/js/general_js/catalogo.js',
+    '/static/js/general_js/inicio.js',
     '/static/uploads/logo.ico',
     '/static/uploads/googlogo.ico',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
@@ -25,7 +25,16 @@ const EXCLUDED_PATHS = [
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(ASSETS))
+            .then(cache => {
+                return Promise.allSettled(
+                    ASSETS.map(url => 
+                        fetch(url).then(response => {
+                            if (!response.ok) throw new Error(`Status ${response.status}`);
+                            return cache.put(url, response);
+                        }).catch(() => {})
+                    )
+                );
+            })
             .then(() => self.skipWaiting())
     );
 });
@@ -70,7 +79,7 @@ self.addEventListener('fetch', event => {
             }
 
             return fetch(event.request).then(networkResponse => {
-                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                if (networkResponse && networkResponse.status === 200) {
                     const responseToCache = networkResponse.clone();
                     caches.open(CACHE_NAME).then(cache => {
                         cache.put(event.request, responseToCache);
@@ -80,6 +89,9 @@ self.addEventListener('fetch', event => {
             }).catch(() => {
                 if (event.request.mode === 'navigate') {
                     return caches.match('/catalogo_page') || caches.match('/');
+                }
+                if (event.request.destination === 'image') {
+                    return caches.match('/static/uploads/logo.png');
                 }
             });
         })
