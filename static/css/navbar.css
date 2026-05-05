@@ -22,6 +22,7 @@
 
 #main-navbar-container .status-dot {
     width: 9px !important;
+    font-family: 'DM Sans', sans-serif;
     height: 9px !important;
     background-color: #2ecc71 !important;
     border-radius: 50% !important;
@@ -40,7 +41,7 @@
 }
 
 #main-navbar-container .user-name-nav {
-    font-family: 'DM Sans', sans-serif !important;
+    font-family: 'DM Sans', sans-serif;
     font-size: 0.88rem !important;
     font-weight: 800 !important;
     color: #2c3e50 !important;
@@ -63,6 +64,7 @@
 }
 
 #main-navbar-container .dropdown-arrow-icon {
+    font-family: 'DM Sans', sans-serif;
     font-size: 0.75rem;
     color: #2c3e50;
     margin-left: 4px;
