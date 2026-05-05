@@ -1,6 +1,7 @@
 #main-navbar-container .profile-pill-trigger {
     text-decoration: none !important;
     background-color: #fff0f3 !important;
+    font-family: 'DM Sans', sans-serif;
     padding: 6px 16px;
     border-radius: 50px;
     display: flex;
@@ -10,6 +11,7 @@
 }
 
 #main-navbar-container .user-status-nav {
+    font-family: 'DM Sans', sans-serif;
     font-size: 0.72rem !important;
     font-weight: 700 !important;
     color: #27ae60 !important;
@@ -24,7 +26,6 @@
     background-color: #2ecc71 !important;
     border-radius: 50% !important;
     margin-right: 6px !important;
-    font-family: 'DM Sans', sans-serif !important;
     display: inline-block !important;
     box-shadow: 0 0 6px rgba(46, 204, 113, 0.5) !important;
 }
