@@ -24,6 +24,7 @@
     background-color: #2ecc71 !important;
     border-radius: 50% !important;
     margin-right: 6px !important;
+    font-family: 'DM Sans', sans-serif !important;
     display: inline-block !important;
     box-shadow: 0 0 6px rgba(46, 204, 113, 0.5) !important;
 }
@@ -38,6 +39,7 @@
 }
 
 #main-navbar-container .user-name-nav {
+    font-family: 'DM Sans', sans-serif !important;
     font-size: 0.88rem !important;
     font-weight: 800 !important;
     color: #2c3e50 !important;
