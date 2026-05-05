@@ -189,27 +189,21 @@ async function monitorearCambiosFacturas() {
 
     try {
         const res = await fetch(`/buscar_facturas_page?cedula=${encodeURIComponent(criterio)}`);
+        if (res.status === 401) {
+            window.location.reload();
+            return;
+        }
         if (!res.ok) return;
         
         const facturasServidor = await res.json();
-        let huboCambio = false;
 
         if (facturasLocalesCache.length > 0) {
-            if (facturasServidor.length !== facturasLocalesCache.length) {
-                huboCambio = true;
-            } else {
-                facturasServidor.forEach(fServ => {
-                    const fLocal = facturasLocalesCache.find(l => l.numero_factura === fServ.numero_factura);
-                    if (!fLocal) {
-                        huboCambio = true;
-                    } else if (fLocal.estado !== fServ.estado) {
-                        lanzarNotificacionMultidispositivo(fServ, fServ.estado);
-                        huboCambio = true;
-                    }
-                });
-            }
-        } else {
-            huboCambio = true;
+            facturasServidor.forEach(fServ => {
+                const fLocal = facturasLocalesCache.find(l => l.numero_factura === fServ.numero_factura);
+                if (fLocal && fLocal.estado !== fServ.estado) {
+                    lanzarNotificacionMultidispositivo(fServ, fServ.estado);
+                }
+            });
         }
 
         facturasLocalesCache = JSON.parse(JSON.stringify(facturasServidor));
@@ -531,6 +525,10 @@ async function procesarAnulacion(numFactura) {
     showConfirmToast("¿Deseas anular este registro?", async () => {
         try {
             const res = await fetch(`/anular_factura_page/${numFactura}`, { method: "PUT" });
+            if (res.status === 401) {
+                window.location.reload();
+                return;
+            }
             if (res.ok) {
                 await monitorearCambiosFacturas();
                 showMessage("Anulado exitosamente");
@@ -598,9 +596,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!tieneAcceso) return;
 
     cargarMetodosPago();
+    
     if ("Notification" in window && Notification.permission !== "granted") {
         Notification.requestPermission();
     }
+    
     const inputInput = document.getElementById("buscarFactura");
     const selectFiltro = document.getElementById("filtroEstadoFactura");
     
