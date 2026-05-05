@@ -405,7 +405,7 @@ function mostrarFacturasBuscadas() {
             <div class="text-center p-5 bg-white rounded-5 shadow-sm border">
                 <div class="display-1 text-muted opacity-10 mb-3"><i class="bi bi-folder2-open"></i></div>
                 <h5 class="fw-bold text-dark">Sin registros</h5>
-                <p class="text-muted small">No hay facturas con los criterios seleccionados.</p>
+                <p class="text-muted small">No se encontraron facturas con esa cédula.</p>
             </div>`;
         paginar(0);
         return;
