@@ -184,11 +184,11 @@ function lanzarNotificacionMultidispositivo(fObj, estado) {
 
 async function monitorearCambiosFacturas() {
     const inputBuscar = document.getElementById("buscarFactura");
-    const cedula = inputBuscar ? inputBuscar.value.trim() : "";
-    if (!cedula || cedula.length < 6) return;
+    const criterio = inputBuscar ? inputBuscar.value.trim() : "";
+    if (!criterio) return;
 
     try {
-        const res = await fetch(`/buscar_facturas_page?cedula=${encodeURIComponent(cedula)}`);
+        const res = await fetch(`/buscar_facturas_page?cedula=${encodeURIComponent(criterio)}`);
         if (!res.ok) return;
         
         const facturasServidor = await res.json();
@@ -205,8 +205,6 @@ async function monitorearCambiosFacturas() {
                     } else if (fLocal.estado !== fServ.estado) {
                         lanzarNotificacionMultidispositivo(fServ, fServ.estado);
                         huboCambio = true;
-                    } else if (JSON.stringify(fLocal) !== JSON.stringify(fServ)) {
-                        huboCambio = true;
                     }
                 });
             }
@@ -215,12 +213,16 @@ async function monitorearCambiosFacturas() {
         }
 
         facturasLocalesCache = JSON.parse(JSON.stringify(facturasServidor));
-        facturasActuales = facturasServidor.sort((a, b) => new Date(b.fecha_emision || b.created_at) - new Date(a.fecha_emision || a.created_at));
-
-        if (huboCambio) {
-            mostrarFacturasBuscadas();
-        }
         
+        const term = criterio.toLowerCase();
+        facturasActuales = facturasServidor
+            .filter(f => 
+                f.numero_factura.toLowerCase().includes(term) || 
+                (f.cedula && f.cedula.toString().includes(term))
+            )
+            .sort((a, b) => new Date(b.fecha_emision || b.created_at) - new Date(a.fecha_emision || a.created_at));
+
+        mostrarFacturasBuscadas();
         ultimaSincronizacion = new Date();
     } catch (e) {
         console.error(e);
@@ -563,7 +565,7 @@ function paginar(totalItems) {
 
 async function verificarAccesoAdmin() {
     try {
-        const res = await fetch("/facturacion_page", {
+        const res = await fetch("/verificar_sesion", {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
         
@@ -576,13 +578,13 @@ async function verificarAccesoAdmin() {
                         <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere estar logueado, Inicie Sesión.</p>
                         <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
                         <br>
-                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
+                        <button onclick="window.location.href='/login'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">INICIAR SESIÓN</button>
                     </div>
                 </div>
                 <style>
                     @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
                 </style>`;
-            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
+            setTimeout(() => { window.location.href = "/login"; }, 3500);
             return false;
         }
         return true;
@@ -601,29 +603,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const inputInput = document.getElementById("buscarFactura");
     const selectFiltro = document.getElementById("filtroEstadoFactura");
+    
     if (inputInput) {
         let timerBusqueda;
         inputInput.addEventListener("input", function() {
             clearTimeout(timerBusqueda);
             const val = this.value.trim();
-            if (val.length >= 6) {
+            if (val.length >= 3) {
                 timerBusqueda = setTimeout(() => {
                     paginaActual = 1;
                     monitorearCambiosFacturas();
                 }, 500);
-            } else {
+            } else if (val.length === 0) {
                 facturasActuales = [];
                 facturasLocalesCache = [];
                 mostrarFacturasBuscadas();
             }
         });
     }
+    
     if (selectFiltro) {
         selectFiltro.addEventListener("change", () => {
             paginaActual = 1;
             mostrarFacturasBuscadas();
         });
     }
+    
     setInterval(() => {
         if (facturasActuales.length > 0) monitorearCambiosFacturas();
     }, 12000);
