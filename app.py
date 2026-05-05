@@ -209,8 +209,7 @@ def registro_google():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 401
 
-@app.route("/login", methods=["GET", "POST"])
-@sin_cache
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
         if "user_id" in session:
@@ -244,8 +243,7 @@ def login():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
-@app.route("/registro", methods=["GET", "POST"])
-@sin_cache
+@app.route("/registro", methods=["GET", "POST"])
 def registro():
     if request.method == "GET":
         return render_template("global_modules/registro.html")
