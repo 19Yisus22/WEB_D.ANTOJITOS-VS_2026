@@ -4,124 +4,311 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="referrer" content="no-referrer-when-downgrade">
-    <title>Panel Inicio | D'Antojitos©</title>
+    <title>D'Antojitos - Repostería Artesanal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_inicio.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_inicio.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='/uploads/logo.ico') }}">
 </head>
-<body class="body-fondo-logo">
-
+<body>
     {% include 'global_modules/navbar.html' %}
 
-    <main class="container mt-4 mt-md-5">
-        <header class="catalog-header text-center mb-5 fade-in">
-            <h1 class="display-4 fw-bold">
-                Bienvenid@ a D'Antojitos{% if session.get('user') %} - {{ session.user.nombre }}{% endif %}
+    <section class="hero-section">
+        <div class="hero-gradient-1"></div>
+        <div class="hero-gradient-2"></div>
+        <div class="hero-gradient-3"></div>
+        <div class="container hero-content">
+            <div class="hero-badge animate-float">
+                <i class="bi bi-cake2 me-1"></i> Postres Artesanales
+            </div>
+            <h1 class="hero-title animate-title">
+                Bienvenid@ a <span class="hero-brand">D'Antojitos</span>
+                {% if session.get('user') %}<span class="hero-name">, {{ session.user.nombre }}</span>{% endif %}
             </h1>
-            <div class="divider mx-auto" style="background-color: #d35400; width: 60px; height: 4px; border-radius: 2px;"></div>
-            <p class="text-muted mt-3" id="mensajeBienvenidaDinamico">Endulza tu día con deliciosos postres caseros!!</p>
+            <p class="hero-subtitle animate-subtitle" id="mensajeBienvenidaDinamico">Cada bocado es una celebración del sabor artesanal</p>
 
             {% if session.get('user') and session.user.rol == 'admin' %}
-            <div class="admin-edit-zone mx-auto mb-4" style="max-width: 500px; margin-top: 15px;">
-                <div class="input-group input-group-sm shadow-sm">
-                    <input type="text" id="inputMensajeAdmin" class="form-control border-warning" placeholder="Nuevo mensaje de bienvenida...">
-                    <button class="btn btn-warning fw-bold" onclick="actualizarMensajeBienvenida()">
-                        <i class="bi bi-save2 me-1"></i> Actualizar
+            <div class="hero-admin-zone animate-slide-up">
+                <div class="admin-input-group">
+                    <i class="bi bi-pencil-square admin-input-icon"></i>
+                    <input type="text" id="inputMensajeAdmin" placeholder="Nuevo mensaje de bienvenida...">
+                    <button class="btn-update" onclick="actualizarMensajeBienvenida()">
+                        <i class="bi bi-check2 me-1"></i> Guardar
                     </button>
                 </div>
             </div>
             {% endif %}
 
             {% if not session.get('user') %}
-            <div class="d-flex flex-column flex-md-row justify-content-center gap-3 mt-4 px-3">
-                <a href="/login" class="btn btn-outline-dark px-4 py-2 rounded-pill fw-bold">
-                    <i class="bi bi-envelope-at me-2"></i> Iniciar con Correo
+            <div class="hero-cta-group animate-slide-up" style="animation-delay: 0.3s;">
+                <a href="/login" class="btn-primary-hero">
+                    <i class="bi bi-envelope-at me-2"></i> Iniciar Sesión
                 </a>
-                <a href="/login" class="btn btn-white border shadow-sm px-4 py-2 rounded-pill fw-bold" style="background: white;">
-                    <img src="{{ url_for('static', filename='uploads/googlogo.ico') }}" width="18" height="18" class="me-2" alt="Google">
-                    Iniciar con Google
+                <a href="/login" class="btn-secondary-hero">
+                    <i class="bi bi-google me-2"></i> Google
                 </a>
             </div>
             {% endif %}
-        </header>
+        </div>
+        <div class="hero-wave">
+            <svg viewBox="0 0 1440 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                <path d="M0,50 Q360,100 720,50 T1440,50 L1440,100 L0,100 Z" fill="#f8f4f0"/>
+            </svg>
+        </div>
+    </section>
 
-        <div class="row g-4">
-            <div class="col-lg-8">
-                <section id="vision" class="fade-in">
-                    <div class="d-flex flex-column mb-4 align-items-start">
-                        <h3 class="fw-bold h5 text-uppercase">Nuestra historia y pasión</h3>
-                        <div class="divider" style="width: 40px; height: 3px; margin-top: 5px; background-color: #d6336c; margin-left: 0;"></div>
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card animate-scale-in">
+                    <div class="stat-icon-wrapper">
+                        <i class="bi bi-cake2"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number" data-target="120">0</span>
+                        <span class="stat-label">Productos Frescos</span>
+                    </div>
+                </div>
+                <div class="stat-card animate-scale-in" style="animation-delay: 0.1s;">
+                    <div class="stat-icon-wrapper">
+                        <i class="bi bi-emoji-smile"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number" data-target="850">0</span>
+                        <span class="stat-label">Clientes Felices</span>
+                    </div>
+                </div>
+                <div class="stat-card animate-scale-in" style="animation-delay: 0.2s;">
+                    <div class="stat-icon-wrapper">
+                        <i class="bi bi-award"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number" data-target="5">0</span>
+                        <span class="stat-label">Años de Pasión</span>
+                    </div>
+                </div>
+                <div class="stat-card animate-scale-in" style="animation-delay: 0.3s;">
+                    <div class="stat-icon-wrapper">
+                        <i class="bi bi-heart-fill"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number" data-target="100">0</span>
+                        <span class="stat-label">% Hecho con Amor</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="container-fluid main-content">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-8">
+                    <div class="section-header animate-slide-up">
+                        <span class="section-tag">Nuestra Esencia</span>
+                        <h2 class="section-title">Donde el Arte y el Sabor Convergen</h2>
+                        <div class="section-divider"></div>
                     </div>
 
-                    <div class="carousel-container-custom shadow-lg rounded-4 overflow-hidden mb-4">
-                        <div id="carouselPromo" class="carousel slide carousel-fade" data-bs-ride="carousel">
-                            <div class="carousel-inner" id="carouselItems">
-                                <div class="carousel-item active">
-                                    <div class="d-flex justify-content-center align-items-center bg-light" style="height: 400px;">
-                                        <div class="spinner-border text-primary" role="status"></div>
+                    <div class="carousel-wrapper animate-slide-up" style="animation-delay: 0.1s;">
+                        <div class="swiper swiperPromo">
+                            <div class="swiper-wrapper" id="carouselItems">
+                                <div class="swiper-slide">
+                                    <div class="carousel-placeholder">
+                                        <div class="spinner-border text-light" role="status"></div>
                                     </div>
                                 </div>
                             </div>
-                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselPromo" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon" aria-hidden="true" style="filter: invert(1);"></span>
-                            </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#carouselPromo" data-bs-slide="next">
-                                <span class="carousel-control-next-icon" aria-hidden="true" style="filter: invert(1);"></span>
-                            </button>
+                            <div class="swiper-pagination"></div>
+                            <div class="swiper-button-next"></div>
+                            <div class="swiper-button-prev"></div>
                         </div>
                     </div>
 
-                    <div class="mt-4 content-text">
-                        <p class="descripcion-postre">
-                            Le damos la bienvenida a <strong>D'Antojitos</strong>, un espacio donde la pasión por la repostería se convierte en experiencias inolvidables. Nuestro emprendimiento nace del amor por los sabores auténticos y la creatividad en cada detalle, transformando ingredientes frescos y de la más alta calidad en postres que deleitan tanto la vista como el paladar.
-                        </p>
-                        <p class="descripcion-postre">
-                            En <strong>D'Antojitos</strong> creemos que los momentos más simples pueden convertirse en recuerdos extraordinarios con un toque de dulzura. Nos esforzamos por llevar alegría y satisfacción a tu mesa, ofreciendo desde clásicos reconfortantes hasta creaciones sorprendentes que despiertan todos tus sentidos.
-                        </p>
-                        <p class="descripcion-postre">
-                            Descubre con nosotros un mundo donde la imaginación y el sabor se encuentran, y déjate llevar por la experiencia de probar postres que no solo alimentan, sino que inspiran, conectan y celebran la vida en cada bocado.
-                        </p>
-                        <h4 id="tituloInicio" class="mt-4 fw-bold"></h4>
-                        <p class="descripcion-postre" id="infoInicioTexto"></p>
+                    <div class="story-section animate-slide-up" style="animation-delay: 0.2s;">
+                        <h3 class="story-title">La Historia detrás de D'Antojitos</h3>
+                        <p class="story-text">D'Antojitos nace de la pasión por transformar momentos ordinarios en experiencias extraordinarias. Cada receta es el resultado de años de dedicación, investigación y amor por la repostería artesanal. Creemos que los ingredientes de la máxima calidad, combinados con técnicas tradicionales y un toque de creatividad, crean la magia en cada postre.</p>
+                        <p class="story-text">Nuestro compromiso es simple pero profundo: entregar productos que no solo deleitan el paladar, sino que también alimentan el alma. En D'Antojitos, cada cliente es parte de nuestra familia, y cada pedido recibe la atención y el cuidado que merece.</p>
+                        <h4 id="tituloInicio" class="dynamic-title"></h4>
+                        <p id="infoInicioTexto" class="dynamic-text"></p>
                     </div>
-                </section>
-            </div>
 
-            <div class="col-lg-4">
-                <div id="seccionesAlFrente" class="d-flex flex-column gap-3 mb-4"></div>
-                
-                <div class="sidebar-custom fade-in p-4 bg-white rounded-4 shadow-sm border">
-                    <h5 class="mb-4 fw-bold" style="color: #333; border-left: 4px solid #d35400; padding-left: 12px;">Explorar</h5>
-                    <nav class="d-flex flex-column gap-2">
-                        <a href="/catalogo_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
-                            <i class="bi bi-shop fs-3 me-3 text-primary"></i>
-                            <div>
-                                <span class="d-block fw-bold text-dark">Catálogo de Dulces</span>
-                                <small class="text-muted">Explora nuestros postres frescos</small>
+                    <div class="features-section animate-slide-up" style="animation-delay: 0.3s;">
+                        <div class="features-grid">
+                            <div class="feature-item">
+                                <div class="feature-icon-box">
+                                    <i class="bi bi-flower1"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <h5>Ingredientes Premium</h5>
+                                    <p>Selección diaria de los mejores ingredientes naturales para garantizar frescura y sabor incomparable en cada creación.</p>
+                                </div>
                             </div>
-                        </a>
-                        <a href="/carrito_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
-                            <i class="bi bi-cart3 fs-3 me-3 text-success"></i>
-                            <div>
-                                <span class="d-block fw-bold text-dark">Mi Carrito</span>
-                                <small class="text-muted">Revisa tus pedidos seleccionados</small>
+                            <div class="feature-item">
+                                <div class="feature-icon-box">
+                                    <i class="bi bi-award"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <h5>Recetas Exclusivas</h5>
+                                    <p>Fórmulas propias diseñadas especialmente, respaldadas por experiencia, técnica y pasión en cada bocado.</p>
+                                </div>
                             </div>
-                        </a>
-                        <a href="/comentarios_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
-                            <i class="bi bi-chat-heart fs-3 me-3 text-danger"></i>
-                            <div>
-                                <span class="d-block fw-bold text-dark">Tu Opinión</span>
-                                <small class="text-muted">Comentarios y sugerencias</small>
+                            <div class="feature-item">
+                                <div class="feature-icon-box">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <h5>Entrega Rápida</h5>
+                                    <p>Servicio de entrega coordinado para garantizar que recibas tus dulces frescos, perfectos y a tiempo.</p>
+                                </div>
                             </div>
-                        </a>
-                    </nav>
+                            <div class="feature-item">
+                                <div class="feature-icon-box">
+                                    <i class="bi bi-chat-heart"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <h5>Atención Personal</h5>
+                                    <p>Equipo dedicado que te acompaña desde la selección hasta disfrutar tu postre favorito con satisfacción total.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="process-section animate-slide-up" style="animation-delay: 0.4s;">
+                        <div class="section-header">
+                            <span class="section-tag">Proceso Simple</span>
+                            <h3 class="section-title">4 Pasos Hacia la Dulzura</h3>
+                            <div class="section-divider"></div>
+                        </div>
+                        <div class="process-steps">
+                            <div class="process-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h5>Explora</h5>
+                                    <p>Descubre nuestro catálogo completo de postres artesanales.</p>
+                                </div>
+                            </div>
+                            <div class="process-connector"></div>
+                            <div class="process-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h5>Elige</h5>
+                                    <p>Selecciona tus favoritos y agrégalos al carrito.</p>
+                                </div>
+                            </div>
+                            <div class="process-connector"></div>
+                            <div class="process-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h5>Confirma</h5>
+                                    <p>Completa tu pedido con seguridad en pocos clics.</p>
+                                </div>
+                            </div>
+                            <div class="process-connector"></div>
+                            <div class="process-step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h5>Disfruta</h5>
+                                    <p>Recibe tus postres frescos en tu puerta.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="sidebar-container">
+                        <div id="seccionesAlFrente"></div>
+
+                        <div class="quick-nav animate-slide-up" style="animation-delay: 0.1s;">
+                            <div class="quick-nav-header">
+                                <i class="bi bi-lightning-charge"></i> Acceso Rápido
+                            </div>
+                            <nav class="quick-links">
+                                <a href="/catalogo_page" class="quick-link-item">
+                                    <div class="link-icon">
+                                        <i class="bi bi-shop"></i>
+                                    </div>
+                                    <div class="link-info">
+                                        <strong>Catálogo</strong>
+                                        <small>Nuestros postres frescos</small>
+                                    </div>
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                                <a href="/carrito_page" class="quick-link-item">
+                                    <div class="link-icon">
+                                        <i class="bi bi-cart3"></i>
+                                    </div>
+                                    <div class="link-info">
+                                        <strong>Mi Carrito</strong>
+                                        <small>Revisa tu selección</small>
+                                    </div>
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                                <a href="/comentarios_page" class="quick-link-item">
+                                    <div class="link-icon">
+                                        <i class="bi bi-chat-heart"></i>
+                                    </div>
+                                    <div class="link-info">
+                                        <strong>Opiniones</strong>
+                                        <small>Comparte tu experiencia</small>
+                                    </div>
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </nav>
+                        </div>
+
+                        <div class="offer-banner animate-slide-up" style="animation-delay: 0.2s;">
+                            <div class="offer-content">
+                                <i class="bi bi-gift"></i>
+                                <div>
+                                    <strong>Pedido Especial</strong>
+                                    <p>¿Evento importante? Contáctanos.</p>
+                                </div>
+                            </div>
+                            <a href="/comentarios_page" class="offer-btn">Solicitar</a>
+                        </div>
+
+                        <div class="social-section animate-slide-up" style="animation-delay: 0.3s;">
+                            <p class="social-title">Síguenos</p>
+                            <div class="social-icons">
+                                <a href="#" class="social-icon instagram">
+                                    <i class="bi bi-instagram"></i>
+                                </a>
+                                <a href="#" class="social-icon facebook">
+                                    <i class="bi bi-facebook"></i>
+                                </a>
+                                <a href="#" class="social-icon whatsapp">
+                                    <i class="bi bi-whatsapp"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="newsletter-box animate-slide-up" style="animation-delay: 0.4s;">
+                            <h5>Newsletter</h5>
+                            <p>Recibe nuestras ofertas y novedades.</p>
+                            <form class="newsletter-form">
+                                <input type="email" placeholder="Tu correo" required>
+                                <button type="submit" class="btn-newsletter">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <section class="mt-5 pb-5">
-            <div id="seccionesDebajo" class="row g-4 justify-content-start fade-in"></div>
+        <section class="marketing-grid">
+            <div class="container">
+                <div class="section-header text-center animate-slide-up">
+                    <span class="section-tag">Destacados</span>
+                    <h2 class="section-title">Lo Mejor Para Ti</h2>
+                    <div class="section-divider mx-auto"></div>
+                </div>
+                <div id="seccionesDebajo" class="row g-4 justify-content-start animate-slide-up" style="animation-delay: 0.1s;"></div>
+            </div>
         </section>
     </main>
 
@@ -130,6 +317,27 @@
     {% include 'global_modules/footer.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/general_js/inicio.js') }}"></script>
+    <script>
+        const counters = document.querySelectorAll('.stat-number');
+        const animateCounters = () => {
+            counters.forEach(el => {
+                const target = +el.dataset.target;
+                const step = Math.ceil(target / 60);
+                let current = 0;
+                const timer = setInterval(() => {
+                    current += step;
+                    if (current >= target) { el.textContent = target; clearInterval(timer); }
+                    else el.textContent = current;
+                }, 20);
+            });
+        };
+        const statsObserver = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) { animateCounters(); statsObserver.disconnect(); } });
+        }, { threshold: 0.4 });
+        const statsStrip = document.querySelector('.stats-section');
+        if (statsStrip) statsObserver.observe(statsStrip);
+    </script>
 </body>
 </html>

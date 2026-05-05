@@ -31,9 +31,30 @@ main {
     animation: fadeInSmooth 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+.notification-fade-out {
+    animation: fadeOutSmooth 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @keyframes fadeInSmooth {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOutSmooth {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
 }
 
 .carousel-container-custom {

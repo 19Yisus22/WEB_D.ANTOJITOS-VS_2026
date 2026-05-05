@@ -2,7 +2,73 @@ let metodosPagoArray = [];
 let editIndex = -1;
 let audioCtx = null;
 
-const IMG_DEFAULT = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1OacDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJBSURBVHgB7d0xbhNREIDh90YpSClpSInS06ByAnp6SByBk9ByAnp6ChonSInS06ByApSClpSClpSChv9vYScbe9be9Xp3Z76Pst6stZun8f72zZunMREp6vUf97ZOfn64fP9scfH+mYgG9fbt+6f7n8/vXrz6eC6isfrz5p8mIkW9e/dhIu6IKOp8+SyiqPP7DyIa9PHe2XfTjMREpKgzmYh9Ihp0/vEisS+isfrtHxEfXkU06uXFpyciGrW9efZ0Ihp0t3k6EQ26ubqbiCtiIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIynL17/wEunS4O3C+hNwAAAABJRU5ErkJggg==";
+const IMG_DEFAULT = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1OacDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJBSURBVHgB7d0xbhNREIDh90YpSClpSInS06ByAnp6SByBk9ByAnp6ChonSInS06ByApSClpSClpSChv9vYScbe9be9Xp3Z76Pst6stZun8f72zZunMREp6vUf97ZOfn64fP9scfH+mYgG9fbt+6f7n8/vXrz6eC6isfrz5p8mIkW9e/dhIu6IKOp8+SyiqPP7DyIa9PHe2XfTjMREpKgzmYh9Ihp0/vEisS+isfrtHxEfXkU06uXFpyciGrW9efZ0Ihp0t3k6EQ26ubqbiCtiIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIynL17/wEunS4O3C+hNwAAAABJRU5ErkJggg==";
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const acceso = await verificarAccesoAdmin();
+    if (!acceso) return;
+
+    cargarMetodosDesdeHTML();
+
+    const archivoQR = document.getElementById('archivoQR');
+    if (archivoQR) {
+        archivoQR.addEventListener('change', async function() {
+            if (this.files && this.files[0]) {
+                const optimizedFile = await procesarImagenOptimizada(this.files[0]);
+                
+                const dt = new DataTransfer();
+                dt.items.add(optimizedFile);
+                this.files = dt.files;
+
+                const reader = new FileReader();
+                reader.onload = (e) => { 
+                    document.getElementById('previewPagoImg').src = e.target.result; 
+                };
+                reader.readAsDataURL(optimizedFile);
+            }
+        });
+    }
+
+    const btnGuardar = document.getElementById('btnGuardarPagos');
+    if (btnGuardar) btnGuardar.addEventListener('click', guardarCambiosPagos);
+
+    const btnAgregar = document.getElementById('btnAgregarTemporal');
+    if (btnAgregar) btnAgregar.addEventListener('click', agregarMetodoPago);
+
+    document.addEventListener('click', () => initAudioContext(), { once: true });
+});
+
+async function verificarAccesoAdmin() {
+    try {
+        const res = await fetch("/facturacion_page", {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        
+        if (res.status === 401 || res.status === 403) {
+            document.body.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
+                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
+                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
+                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
+                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
+                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+                        <br>
+                        <i><small style="color: #555;">Redirigiendo...</small></i>
+                        <br><br>
+                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
+                    </div>
+                </div>
+                <style>
+                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+                </style>`;
+            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
+            return false;
+        }
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
 
 function initAudioContext() {
     if (!audioCtx) {
@@ -46,87 +112,92 @@ function showMessage(msg, isError = false) {
     if (!container) {
         container = document.createElement("div");
         container.id = "toastContainer";
-        container.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px;";
         document.body.appendChild(container);
     }
     const toast = document.createElement('div');
-    const color = isError ? "#ff4757" : "#00b894";
+    toast.className = 'custom-toast';
+    const color = isError ? "#ff4757" : "#d35400";
     const icon = isError ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill';
-    toast.style.cssText = `
-        background: #121212; color: white; padding: 12px 20px; border-radius: 10px;
-        display: flex; align-items: center; min-width: 300px; border-left: 5px solid ${color};
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.3s; transform: translateX(120%);
-    `;
+    
+    toast.style.borderLeft = `6px solid ${color}`;
     toast.innerHTML = `
-        <i class="bi ${icon} me-3" style="color: ${color}; font-size: 1.2rem;"></i>
-        <div class="flex-grow-1" style="font-size: 0.9rem;">${msg}</div>
+        <div class="toast-content">
+            <div class="toast-icon-wrapper" style="color: ${color}">
+                <i class="bi ${icon}"></i>
+            </div>
+            <div class="toast-text">
+                <div class="toast-main-text">${msg}</div>
+            </div>
+        </div>
     `;
     container.appendChild(toast);
-    setTimeout(() => { toast.style.transform = "translateX(0)"; }, 10);
     setTimeout(() => {
-        toast.style.transform = "translateX(120%)";
-        setTimeout(() => toast.remove(), 300);
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 500);
     }, 4000);
 }
 
-async function verificarAccesoAdmin() {
-    try {
-        const res = await fetch("/facturacion_page", {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        
-        if (res.status === 401 || res.status === 403) {
-            document.body.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
-                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
-                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
-                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
-                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                        <br>
-                        <i><small style="color: #555;">Redirigiendo...</small></i>
-                        <br><br>
-                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
-                    </div>
-                </div>
-                <style>
-                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-                </style>`;
-            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
-            return false;
-        }
-        return true;
-    } catch (e) {
-        return false;
-    }
+async function procesarImagenOptimizada(file) {
+    const MAX_WIDTH = 800;
+    const QUALITY = 0.7;
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                if (width > MAX_WIDTH) {
+                    height = Math.round((height * MAX_WIDTH) / width);
+                    width = MAX_WIDTH;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob((blob) => {
+                    const optimizedFile = new File([blob], file.name, {
+                        type: "image/jpeg",
+                        lastModified: Date.now()
+                    });
+                    actualizarIndicadorEspacio(blob.size);
+                    resolve(optimizedFile);
+                }, "image/jpeg", QUALITY);
+            };
+        };
+    });
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    const acceso = await verificarAccesoAdmin();
-    if (!acceso) return;
-
-    cargarMetodosDesdeHTML();
-
-    const archivoQR = document.getElementById('archivoQR');
-    const previewImg = document.getElementById('previewPagoImg');
-    if (archivoQR) {
-        archivoQR.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => { previewImg.src = e.target.result; };
-                reader.readAsDataURL(this.files[0]);
-            }
-        });
+function actualizarIndicadorEspacio(nuevoTamanoBytes = 0) {
+    const limiteTotal = 5 * 1024 * 1024;
+    let usado = 0;
+    try {
+        const datosCargados = JSON.stringify(metodosPagoArray);
+        usado = new Blob([datosCargados]).size + nuevoTamanoBytes;
+    } catch (e) {
+        usado = nuevoTamanoBytes;
     }
-
-    const btnGuardar = document.getElementById('btnGuardarPagos');
-    if (btnGuardar) btnGuardar.addEventListener('click', guardarCambiosPagos);
-
-    const btnAgregar = document.getElementById('btnAgregarTemporal');
-    if (btnAgregar) btnAgregar.addEventListener('click', agregarMetodoPago);
-
-    document.addEventListener('click', () => initAudioContext(), { once: true });
-});
+    const restante = Math.max(0, limiteTotal - usado);
+    const porcentaje = (usado / limiteTotal) * 100;
+    const infoEspacio = document.getElementById('infoEspacioAlmacenamiento');
+    if (infoEspacio) {
+        const restanteMB = (restante / (1024 * 1024)).toFixed(2);
+        infoEspacio.innerHTML = `
+            <div class="mt-3 p-3 border rounded bg-white shadow-sm" style="animation: slideInUp 0.4s ease;">
+                <div class="d-flex justify-content-between mb-2">
+                    <small class="fw-bold text-dark">ALMACENAMIENTO DISPONIBLE</small>
+                    <small class="text-muted fw-bold">${restanteMB} MB</small>
+                </div>
+                <div class="progress" style="height: 8px; border-radius: 10px; background: #eee;">
+                    <div class="progress-bar ${porcentaje > 80 ? 'bg-danger' : 'bg-success'}" 
+                         role="progressbar" style="width: ${porcentaje}%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                </div>
+            </div>`;
+    }
+}
 
 function cargarMetodosDesdeHTML() {
     const res = document.getElementById('metodos_iniciales_data');
@@ -139,6 +210,7 @@ function cargarMetodosDesdeHTML() {
                 url_actual: m.qr_url, cambio_img: false, file: null
             }));
             renderizarLista();
+            actualizarIndicadorEspacio();
         } catch (e) { metodosPagoArray = []; }
     }
 }
@@ -172,6 +244,7 @@ function agregarMetodoPago() {
     }
     resetearFormulario();
     renderizarLista();
+    actualizarIndicadorEspacio();
 }
 
 function renderizarLista() {
@@ -183,7 +256,7 @@ function renderizarLista() {
     preview.innerHTML = "";
 
     if (metodosPagoArray.length === 0) {
-        lista.innerHTML = `<div class="col-12 text-center text-muted py-3"><i class="bi bi-inbox fs-4"></i><p class="mt-2 mb-0">No hay métodos de pago configurados</p></div>`;
+        lista.innerHTML = `<div class="col-12 text-center text-muted py-3"><i class="bi bi-inbox fs-4"></i><p class="mt-2 mb-0">No hay métodos de pago</p></div>`;
         return;
     }
 
@@ -192,8 +265,8 @@ function renderizarLista() {
         const badge = getBadgeClass(m.entidad);
 
         lista.innerHTML += `
-            <div class="col-12 col-md-6">
-                <div class="metodo-card p-3 d-flex align-items-center justify-content-between border rounded bg-white shadow-sm">
+            <div class="col-12 col-md-6 mb-3">
+                <div class="metodo-card p-3 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-3">
                         <img src="${imgSrc}" style="width:50px; height:50px; object-fit:cover;" class="rounded border">
                         <div>
@@ -210,7 +283,7 @@ function renderizarLista() {
             </div>`;
 
         preview.innerHTML += `
-            <div class="col-6 text-center">
+            <div class="col-6 text-center mb-3">
                 <div class="p-2 border rounded bg-light">
                     <img src="${imgSrc}" class="img-fluid rounded mb-1" style="max-height:80px; object-fit:contain;">
                     <p class="small fw-bold m-0" style="font-size:10px;">${m.entidad}</p>
@@ -239,11 +312,11 @@ function eliminarFila(index) {
     metodosPagoArray.splice(index, 1);
     if (editIndex === index) resetearFormulario();
     renderizarLista();
+    actualizarIndicadorEspacio();
 }
 
 async function guardarCambiosPagos() {
     const btn = document.getElementById('btnGuardarPagos');
-
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> GUARDANDO...`;
 
@@ -280,7 +353,7 @@ function resetearFormulario() {
     document.getElementById('numeroCuenta').value = "";
     document.getElementById('titularCuenta').value = "";
     document.getElementById('archivoQR').value = "";
-    document.getElementById('previewPagoImg').src = "https://via.placeholder.com/200?text=Subir+QR";
+    document.getElementById('previewPagoImg').src = IMG_DEFAULT;
     const btn = document.getElementById('btnAgregarTemporal');
     btn.innerHTML = `<i class="bi bi-node-plus-fill"></i> Agregar a Lista`;
     btn.className = "btn btn-primary w-100 py-3 shadow-sm";
@@ -296,7 +369,6 @@ function getBadgeClass(entidad) {
     window.onpopstate = function() {
         window.history.pushState(null, "", window.location.href);
     };
-
     window.onpageshow = function(event) {
         if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
             window.location.reload();

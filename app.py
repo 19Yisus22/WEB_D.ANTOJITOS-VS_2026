@@ -24,7 +24,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 
 if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-    raise ValueError("Faltan las credenciales de Supabase en el archivo .env o en la configuración de Vercel")
+    raise ValueError("Err .env - Faltan las credenciales de Supabase")
 
 opts = ClientOptions(
     postgrest_client_timeout=120,
@@ -40,7 +40,7 @@ CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
 if not CLOUDINARY_CLOUD_NAME or not CLOUDINARY_API_KEY or not CLOUDINARY_API_SECRET:
-    raise ValueError("Faltan las credenciales de Cloudinary en el archivo .env")
+    raise ValueError("Err .env - Faltan las credenciales de Cloudinary")
 
 cloudinary.config(
     cloud_name=CLOUDINARY_CLOUD_NAME, 
@@ -198,7 +198,7 @@ def registro_google():
         elif user.get("nombre_role"):
             rol_nombre = user["nombre_role"]
 
-        session.permanent = True
+        session.permanent = False
         session["user_id"] = str(user["id_cliente"])
         session["user"] = user
         session["rol"] = rol_nombre
@@ -232,7 +232,7 @@ def login():
             return jsonify({"ok": False, "error": "Contraseña incorrecta"}), 401
             
         user = res.data
-        session.permanent = True
+        session.permanent = False
         session["user_id"] = user["id_cliente"]
         session["rol"] = user["roles"]["nombre_role"]
         session["user"] = user 
@@ -1791,8 +1791,7 @@ if __name__ == "__main__":
     port = 8000
     local_ip = get_local_ip()
 
-    debug_mode = False
-
+    debug_mode = True
     if debug_mode:
         print("⚡ Ejecutando en modo DEBUG con servidor de desarrollo de Flask")
         print(f"- Acceso local: http://localhost:{port}")

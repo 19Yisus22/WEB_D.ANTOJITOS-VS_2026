@@ -13,73 +13,92 @@
 <body>
     <div id="toastContainer" class="position-fixed bottom-0 start-0 p-3" style="z-index: 1080;"></div>
 
-    <div class="card card-registro shadow-lg">
-        <div class="logo-container">
-            <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo D'Antojitos" class="floating">
+    <div class="registro-wrapper">
+        <div class="card-registro">
+
+            <div class="registro-header">
+                <div class="logo-wrap">
+                    <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo D'Antojitos" class="registro-logo floating">
+                </div>
+                <h2>Crear Cuenta</h2>
+                <p class="registro-subtitle">Únete a nuestra dulce comunidad</p>
+            </div>
+
+            <form id="registerForm" autocomplete="off">
+
+                <div class="fields-grid">
+
+                    <div class="field-group">
+                        <label for="nombre" class="field-label">Nombre</label>
+                        <div class="field-input-wrap">
+                            <i class="bi bi-person field-icon-left"></i>
+                            <input type="text" id="nombre" name="nombre" class="field-input" required placeholder="Su nombre">
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="apellido" class="field-label">Apellido</label>
+                        <div class="field-input-wrap">
+                            <i class="bi bi-person-fill field-icon-left"></i>
+                            <input type="text" id="apellido" name="apellido" class="field-input" required placeholder="Su apellido">
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="cedula" class="field-label">Cédula</label>
+                        <div class="field-input-wrap">
+                            <i class="bi bi-card-text field-icon-left"></i>
+                            <input type="text" id="cedula" name="cedula" class="field-input" required placeholder="Solo números">
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="telefono" class="field-label">Teléfono</label>
+                        <div class="field-input-wrap">
+                            <i class="bi bi-telephone field-icon-left"></i>
+                            <input type="tel" id="telefono" name="telefono" class="field-input" placeholder="Solo números">
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="correo" class="field-label">Correo Electrónico</label>
+                        <div class="field-input-wrap">
+                            <i class="bi bi-envelope field-icon-left"></i>
+                            <input type="email" id="correo" name="correo" class="field-input" required placeholder="usuario@example.com">
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="contrasena" class="field-label">Contraseña</label>
+                        <div class="field-input-wrap">
+                            <i class="bi bi-lock field-icon-left"></i>
+                            <input type="password" id="contrasena" name="contrasena" class="field-input has-right-icon" required placeholder="Ingrese contraseña">
+                            <i class="bi bi-eye field-icon-right" id="togglePassword" style="cursor:pointer;"></i>
+                        </div>
+                        <div class="strength-bar-wrap">
+                            <div class="strength-bar">
+                                <div id="passwordStrengthBar" class="strength-fill"></div>
+                            </div>
+                            <span id="strengthLabel" class="strength-label"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <button type="submit" id="btnSubmit" class="btn-gradient">
+                    <span>Crear Cuenta</span>
+                    <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+            </form>
+
+            <p class="registro-footer-text">
+                ¿Ya tienes cuenta? <a href="/login" class="link-highlight">Inicia sesión aquí</a>
+            </p>
+
         </div>
-        
-        <h2>Crear Cuenta</h2>
-        <p class="text-center text-muted small mb-4">Únete a nuestra dulce comunidad</p>
-
-        <form id="registerForm" autocomplete="off">
-            <div class="row g-3">
-                <div class="col-md-6 mb-2">
-                    <label for="nombre" class="form-label">Nombre</label>
-                    <div class="input-group-custom">
-                        <input type="text" id="nombre" name="nombre" class="form-control" required placeholder="Su nombre">
-                    </div>
-                </div>
-                <div class="col-md-6 mb-2">
-                    <label for="apellido" class="form-label">Apellido</label>
-                    <div class="input-group-custom">
-                        <input type="text" id="apellido" name="apellido" class="form-control" required placeholder="Su apellido">
-                    </div>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="cedula" class="form-label">Cédula</label>
-                <div class="input-group-custom">
-                    <input type="text" id="cedula" name="cedula" class="form-control" required placeholder="Solo números">
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="telefono" class="form-label">Teléfono</label>
-                <div class="input-group-custom">
-                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="Solo números">
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="correo" class="form-label">Correo Electrónico</label>
-                <div class="input-group-custom">
-                    <input type="email" id="correo" name="correo" class="form-control" required placeholder="usuario@example.com">
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="contrasena" class="form-label">Contraseña</label>
-                <div class="position-relative input-group-custom">
-                    <input type="password" id="contrasena" name="contrasena" class="form-control" required placeholder="Ingrese contraseña">
-                    <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3 toggle-icon" id="togglePassword" style="cursor: pointer;"></i>
-                </div>
-                <div class="progress mt-2" style="height: 6px; border-radius: 10px; background-color: #eee;">
-                    <div id="passwordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%; transition: all 0.3s ease;"></div>
-                </div>
-            </div>
-
-            <button type="submit" id="btnSubmit" class="btn btn-gradient text-uppercase w-100">
-                <span>Comenzar Registro</span>
-            </button>
-        </form>
-
-        <p class="text-center mt-4 mb-0 small text-muted">
-            ¿Ya tienes cuenta? <a href="/login" class="text-link">Inicia sesión aquí</a>
-        </p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/admin_js/login_registro.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/general_js/login_registro.js') }}"></script>
 </body>
 </html>
