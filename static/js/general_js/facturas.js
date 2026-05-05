@@ -288,7 +288,7 @@ function abrirModalPago(facturaNum, total) {
             </div>
             <div class="mt-4 p-3 bg-warning bg-opacity-10 border border-warning border-dashed rounded-4 text-center">
                 <p class="small text-dark mb-0 fw-medium">
-                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>Envía el comprobante vía WhatsApp al 3115699825 o vía correo a d.antojitos1968@gmail.com tras realizar la transferencia.
+                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>Envía el comprobante vía WhatsApp al +573115699825 o vía correo a terugag@hotmail.com tras realizar la transferencia.
                 </p>
             </div>`;
     }
