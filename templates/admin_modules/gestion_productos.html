@@ -21,14 +21,29 @@
                 <p class="text-white-50 mb-0 small text-uppercase ls-1">Administración de Inventario Real</p>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mb-4 gap-3">
-                <div class="input-group search-group shadow-sm rounded-3">
-                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                    <input type="text" id="searchProductos" class="form-control border-start-0 shadow-none" placeholder="Buscar por nombre de producto...">
+            <div class="row g-3 mb-4 align-items-center">
+                <div class="col-12 col-lg-5">
+                    <div class="input-group search-group shadow-sm rounded-3">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchProductos" class="form-control border-start-0 shadow-none" placeholder="Buscar por nombre de producto...">
+                    </div>
                 </div>
-                <button class="btn btn-primary shadow-sm whitespace-nowrap" id="btnAgregarPostre">
-                    <i class="bi bi-plus-circle-fill me-2"></i>Nuevo Postre
-                </button>
+                <div class="col-12 col-lg-4">
+                    <div class="storage-container bg-white p-2 px-3 rounded-3 shadow-sm border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="fw-bold text-muted" style="font-size: 0.7rem;"><i class="bi bi-cloud-check-fill me-1"></i>ALMACENAMIENTO CLOUDINARY</small>
+                            <small id="storageText" class="text-primary fw-bold" style="font-size: 0.7rem;">Cargando...</small>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div id="storageProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-3 text-lg-end">
+                    <button class="btn btn-primary shadow-sm w-100 py-2 fw-bold" id="btnAgregarPostre">
+                        <i class="bi bi-plus-circle-fill me-2"></i>NUEVO POSTRE
+                    </button>
+                </div>
             </div>
 
             <div id="formAgregarPostre" class="form-panel mb-5 d-none">
@@ -73,6 +88,9 @@
                                     <img id="previewNotificacionImg" src="" alt="Vista previa" class="w-100 h-100 d-none">
                                 </div>
                                 <input type="file" id="fotoPostre" class="form-control form-control-sm shadow-none" accept="image/*">
+                                <div class="mt-2 text-center">
+                                    <small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-info-circle me-1"></i>La imagen será comprimida automáticamente para ahorrar espacio.</small>
+                                </div>
                             </div>
                         </div>
                         
