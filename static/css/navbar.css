@@ -1,13 +1,19 @@
 #main-navbar-container .profile-pill-trigger {
     text-decoration: none !important;
-    background-color: #fff0f3 !important;
-    font-family: 'DM Sans', sans-serif;
+    background-color: var(--brand-glow) !important;
     padding: 6px 16px;
     border-radius: 50px;
     display: flex;
     align-items: center;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(219, 112, 147, 0.2) !important;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    border: 1px solid var(--border) !important;
+    font-family: 'DM Sans', sans-serif;
+}
+
+#main-navbar-container .profile-pill-trigger:hover {
+    background-color: rgba(211, 84, 0, 0.25) !important;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 #main-navbar-container .user-status-nav {
@@ -22,7 +28,6 @@
 
 #main-navbar-container .status-dot {
     width: 9px !important;
-    font-family: 'DM Sans', sans-serif;
     height: 9px !important;
     background-color: #2ecc71 !important;
     border-radius: 50% !important;
@@ -32,11 +37,11 @@
 }
 
 #main-navbar-container .user-data-main.is-inactive .user-status-nav {
-    color: #94a3b8 !important;
+    color: var(--text-muted) !important;
 }
 
 #main-navbar-container .user-data-main.is-inactive .status-dot {
-    background-color: #94a3b8 !important;
+    background-color: var(--text-muted) !important;
     box-shadow: none !important;
 }
 
@@ -44,7 +49,7 @@
     font-family: 'DM Sans', sans-serif;
     font-size: 0.88rem !important;
     font-weight: 800 !important;
-    color: #2c3e50 !important;
+    color: var(--dark) !important;
     line-height: 1 !important;
 }
 
@@ -53,8 +58,9 @@
     height: 38px;
     border-radius: 50%;
     overflow: hidden;
-    border: 2px solid white;
-    background: white;
+    border: 2px solid var(--white);
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
 }
 
 #main-navbar-container .profile-img-container img {
@@ -64,21 +70,23 @@
 }
 
 #main-navbar-container .dropdown-arrow-icon {
-    font-family: 'DM Sans', sans-serif;
     font-size: 0.75rem;
-    color: #2c3e50;
+    color: var(--text);
     margin-left: 4px;
 }
 
 #main-navbar-container .animate-dropdown {
-    animation: dropdownPop 0.3s ease-out;
-    border-radius: 15px !important;
+    animation: dropdownPop 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: var(--radius-sm) !important;
     padding: 0.8rem !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: var(--shadow-md) !important;
+    background: var(--card-bg) !important;
 }
 
 @keyframes dropdownPop {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(10px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 #main-navbar-container .scroll-progress-container {
@@ -93,7 +101,7 @@
 
 #main-navbar-container #scroll-progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #db7093, #ffb6c1, #db7093);
+    background: linear-gradient(90deg, var(--brand), var(--brand-light), var(--brand));
     background-size: 200% 100%;
     animation: gradientMove 3s linear infinite;
     width: 0%;
