@@ -100,11 +100,19 @@ def cloudinary_storage_info():
     try:
         from cloudinary import api
         usage = api.usage()
-        plan_limit = usage['resources']['limit'] / (1024 ** 3) if 'resources' in usage else 25.0
-        plan_used = usage['resources']['usage'] / (1024 ** 3) if 'resources' in usage else 0.0
+        
+        storage_data = usage.get('storage', {})
+        used_bytes = storage_data.get('usage', 0)
+        limit_bytes = storage_data.get('limit', 0)
+
+        used_gb = used_bytes / (1024 ** 3)
+        limit_gb = limit_bytes / (1024 ** 3)
+
+        if limit_gb == 0: limit_gb = 25.0
+
         return jsonify({
-            "used_gb": round(plan_used, 6),
-            "limit_gb": round(plan_limit, 2)
+            "used_gb": used_gb,
+            "limit_gb": round(limit_gb, 2)
         })
     except:
         return jsonify({"used_gb": 0, "limit_gb": 25}), 200
