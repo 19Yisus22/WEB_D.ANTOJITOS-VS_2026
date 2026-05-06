@@ -25,6 +25,19 @@
                 <p class="text-white-50 mb-0 mt-1 fw-500">Gestiona tus métodos de pago habilitados</p>
             </div>
 
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="fw-bold text-dark text-uppercase">Espacio en Cloudinary</small>
+                        <small id="storageText" class="text-muted fw-bold">Cargando...</small>
+                    </div>
+                    <div class="progress" style="height: 12px; border-radius: 20px; background: #f0f0f0;">
+                        <div id="storageProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%; border-radius: 20px;"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-2 mb-4">
@@ -40,11 +53,9 @@
                                     <i class="bi bi-qr-code-scan" style="font-size: 3.2rem; display: block; color: #adb5bd; margin-bottom: 8px;"></i>
                                     <span style="font-size: 0.7rem; letter-spacing: 1px; font-weight: 700; text-transform: uppercase; color: #94a3b8;">Subir Imagen QR</span>
                                 </div>
-                                <img id="previewPagoImg" src="" alt="Vista Previa"
-                                    class="w-100 h-100 d-none"
-                                    style="object-fit: contain;">
+                                <img id="previewPagoImg" src="" alt="Vista Previa" class="w-100 h-100 d-none" style="object-fit: contain;">
                             </div>
-                            <input type="file" id="archivoQR" class="form-control shadow-none" accept="image/*" onchange="previewQR(this)">
+                            <input type="file" id="archivoQR" class="form-control shadow-none" accept="image/*">
                         </div>
 
                         <div class="col-12 col-md-4">
