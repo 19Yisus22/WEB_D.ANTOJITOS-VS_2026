@@ -212,11 +212,47 @@ function abrirModalPostre(index) {
 function resetPrevisualizador() {
     const previewImg = document.getElementById("previewNotificacionImg");
     const placeholder = document.getElementById("placeholderNotif");
+    const progressWrapper = document.getElementById("progressWrapper");
     if (previewImg && placeholder) {
         previewImg.src = "";
         previewImg.classList.add("d-none");
         placeholder.classList.remove("d-none");
     }
+    if (progressWrapper) progressWrapper.classList.add("d-none");
+    const bar = document.getElementById("progressBarSubida");
+    if (bar) {
+        bar.style.width = "0%";
+        bar.textContent = "";
+    }
+}
+
+async function comprimirImagen(archivo) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(archivo);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let width = img.width;
+                let height = img.height;
+                const max = 1200;
+                if (width > height) {
+                    if (width > max) { height *= max / width; width = max; }
+                } else {
+                    if (height > max) { width *= max / height; height = max; }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob((blob) => {
+                    resolve(blob);
+                }, "image/jpeg", 0.7);
+            };
+        };
+    });
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -233,17 +269,36 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const inputFoto = document.getElementById("fotoPostre");
     if (inputFoto) {
-        inputFoto.addEventListener("change", function() {
+        inputFoto.addEventListener("change", async function() {
             const previewImg = document.getElementById("previewNotificacionImg");
             const placeholder = document.getElementById("placeholderNotif");
+            const progressWrapper = document.getElementById("progressWrapper");
+            const progressBar = document.getElementById("progressBarSubida");
+            const infoEspacio = document.getElementById("infoEspacioImagen");
+
             if (this.files && this.files[0]) {
+                const originalFile = this.files[0];
+                const originalSize = (originalFile.size / 1024).toFixed(2);
+                
+                progressWrapper.classList.remove("d-none");
+                progressBar.style.width = "50%";
+                progressBar.textContent = "Comprimiendo...";
+
+                const blobComprimido = await comprimirImagen(originalFile);
+                const compressedSize = (blobComprimido.size / 1024).toFixed(2);
+                
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     previewImg.src = e.target.result;
                     previewImg.classList.remove("d-none");
                     placeholder.classList.add("d-none");
+                    progressBar.style.width = "100%";
+                    progressBar.textContent = "¡Listo!";
+                    infoEspacio.innerHTML = `Original: ${originalSize}KB | Comprimido: <strong>${compressedSize}KB</strong>`;
+                    setTimeout(() => progressWrapper.classList.add("d-none"), 2000);
                 };
-                reader.readAsDataURL(this.files[0]);
+                reader.readAsDataURL(blobComprimido);
+                this.compressedBlob = blobComprimido;
             } else {
                 resetPrevisualizador();
             }
@@ -323,7 +378,7 @@ if (agregarPostreForm) {
     agregarPostreForm.onsubmit = async (e) => {
         e.preventDefault();
         const fileInput = document.getElementById("fotoPostre");
-        const file = fileInput.files[0];
+        const file = fileInput.compressedBlob || fileInput.files[0];
         const formData = new FormData();
         formData.append("nombre", document.getElementById("nombrePostre").value);
         formData.append("precio", document.getElementById("precioPostre").value);
@@ -334,7 +389,7 @@ if (agregarPostreForm) {
             const reader = new FileReader();
             reader.onloadend = async () => {
                 formData.append("foto_base64", reader.result.split(",")[1]);
-                formData.append("foto_name", file.name);
+                formData.append("foto_name", fileInput.files[0].name);
                 await enviarFormulario(formData);
             };
             reader.readAsDataURL(file);
