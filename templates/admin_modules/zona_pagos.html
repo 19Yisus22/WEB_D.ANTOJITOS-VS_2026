@@ -25,15 +25,14 @@
                 <p class="text-white-50 mb-0 mt-1 fw-500">Gestiona tus métodos de pago habilitados</p>
             </div>
 
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small class="fw-bold text-dark text-uppercase">Espacio en Cloudinary</small>
-                        <small id="storageText" class="text-muted fw-bold">Cargando...</small>
+            <div class="card border-0 mb-4 bg-transparent">
+                <div class="storage-mini-container">
+                    <div class="storage-header">
+                        <span class="storage-title"><i class="bi bi-cloud-check-fill me-1"></i>Cloud Storage</span>
+                        <span id="storageText" class="storage-stats">Cargando...</span>
                     </div>
-                    <div class="progress" style="height: 12px; border-radius: 20px; background: #f0f0f0;">
-                        <div id="storageProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
-                             role="progressbar" style="width: 0%; border-radius: 20px;"></div>
+                    <div class="progress progress-thin">
+                        <div id="storageProgressBar" class="progress-bar progress-bar-subtle" role="progressbar" style="width: 0%;"></div>
                     </div>
                 </div>
             </div>
