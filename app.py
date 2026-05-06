@@ -93,7 +93,6 @@ def delete_image_from_cloudinary(public_url):
         return False
 
 @app.route("/cloudinary_storage_info")
-@sin_cache
 def cloudinary_storage_info():
     if not session.get('user_id') or session.get('rol') != 'admin':
         return jsonify({"error": "No autorizado"}), 403
@@ -110,10 +109,14 @@ def cloudinary_storage_info():
 
         if limit_gb == 0: limit_gb = 25.0
 
-        return jsonify({
+        response = make_response(jsonify({
             "used_gb": used_gb,
             "limit_gb": round(limit_gb, 2)
-        })
+        }))
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
     except:
         return jsonify({"used_gb": 0, "limit_gb": 25}), 200
 
