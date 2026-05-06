@@ -1,21 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,700&display=swap');
 
 :root {
-    --primary: #d35400;
-    --dark: #1a1a1a;
-    --bg-invoice: #f8f9fa;
-    --border-invoice: #dee2e6;
-    --accent: #e67e22;
-    --success-soft: #d1e7dd;
-    --danger-soft: #f8d7da;
-    --info-soft: #cff4fc;
-    --success-bg: #198754;
-    --danger-bg: #dc3545;
-    --warning-bg: #ffc107;
-    --info-bg: #0dcaf0;
-    --shadow: 0 15px 40px rgba(0, 0, 0, 0.10);
-    --transition: all 0.45s cubic-bezier(0.23, 1, 0.32, 1);
-    --radius: 16px;
+    --primary-color: #d35400;
+    --primary-light: #e67e22;
+    --dark-bg: #1a1a1a;
+    --transition-smooth: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    --gray-muted: #6c757d;
+    --bg-light: #fcfcfc;
+    --shadow-elegant: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
 html,
