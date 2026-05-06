@@ -141,10 +141,10 @@ async function actualizarAlmacenamiento() {
         if (!res.ok) return;
         
         const data = await res.json();
-        const progress = document.getElementById("storageProgressBar");
+        const circle = document.getElementById("storageCircle");
         const text = document.getElementById("storageText");
         
-        if (progress && text) {
+        if (circle && text) {
             const used = parseFloat(data.used_gb);
             const limit = parseFloat(data.limit_gb);
             
@@ -158,15 +158,22 @@ async function actualizarAlmacenamiento() {
                 usedLabel = used.toFixed(2) + " GB";
             }
 
-            progress.style.width = percent.toFixed(2) + "%";
-            text.textContent = `${usedLabel} / ${limit.toFixed(1)} GB (${((used/limit)*100).toFixed(2)}%)`;
+            const circumference = 125.66;
+            const offset = circumference - (percent / 100 * circumference);
+            circle.style.strokeDashoffset = offset;
 
-            progress.classList.remove("bg-success", "bg-warning", "bg-danger");
-            if (percent > 85) progress.classList.add("bg-danger");
-            else if (percent > 60) progress.classList.add("bg-warning");
-            else progress.classList.add("bg-success");
+            text.textContent = `${usedLabel} / ${limit.toFixed(1)} GB (${percent.toFixed(2)}%)`;
+
+            circle.style.stroke = percent > 85 ? "#dc3545" : percent > 60 ? "#ffc107" : "#28a745";
         }
     } catch (e) {}
+}
+
+function showStorageDetails() {
+    const text = document.getElementById("storageText");
+    if (text) {
+        alert(`Detalles del Almacenamiento:\n${text.textContent}`);
+    }
 }
 
 async function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
@@ -295,6 +302,11 @@ function resetPrevisualizador() {
 
 document.addEventListener("DOMContentLoaded", async () => {
     if (!await verificarAccesoAdmin()) return;
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    await actualizarAlmacenamiento();
     const cached = localStorage.getItem('postresCache');
     if (cached) {
         postres = JSON.parse(cached);

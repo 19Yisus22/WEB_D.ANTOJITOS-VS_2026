@@ -32,7 +32,7 @@
                         <label for="nombre" class="field-label">Nombre</label>
                         <div class="field-input-wrap">
                             <i class="bi bi-person field-icon-left"></i>
-                            <input type="text" id="nombre" name="nombre" class="field-input" required placeholder="Su nombre">
+                            <input type="text" id="nombre" name="nombre" class="field-input" required placeholder="Su nombre" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ ]+" inputmode="text" autocomplete="given-name">
                         </div>
                     </div>
 
@@ -40,7 +40,7 @@
                         <label for="apellido" class="field-label">Apellido</label>
                         <div class="field-input-wrap">
                             <i class="bi bi-person-fill field-icon-left"></i>
-                            <input type="text" id="apellido" name="apellido" class="field-input" required placeholder="Su apellido">
+                            <input type="text" id="apellido" name="apellido" class="field-input" required placeholder="Su apellido" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ ]+" inputmode="text" autocomplete="family-name">
                         </div>
                     </div>
 
@@ -48,7 +48,7 @@
                         <label for="cedula" class="field-label">Cédula</label>
                         <div class="field-input-wrap">
                             <i class="bi bi-card-text field-icon-left"></i>
-                            <input type="text" id="cedula" name="cedula" class="field-input" required placeholder="Solo números">
+                            <input type="text" id="cedula" name="cedula" class="field-input" required placeholder="Solo números" pattern="\d{6,}" inputmode="numeric" minlength="6">
                         </div>
                     </div>
 
@@ -56,7 +56,7 @@
                         <label for="telefono" class="field-label">Teléfono</label>
                         <div class="field-input-wrap">
                             <i class="bi bi-telephone field-icon-left"></i>
-                            <input type="tel" id="telefono" name="telefono" class="field-input" placeholder="Solo números">
+                            <input type="tel" id="telefono" name="telefono" class="field-input" placeholder="Solo números" pattern="\d{10,}" inputmode="tel" minlength="10">
                         </div>
                     </div>
 

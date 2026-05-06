@@ -5,7 +5,7 @@ const STATIC_ASSETS = [
     '/static/css/style_mi_perfil.css',
     '/static/js/perfil.js',
     '/static/uploads/logo.ico',
-    '/static/default_icon_profile.png',
+    '/static/uploads/default_icon_profile.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',

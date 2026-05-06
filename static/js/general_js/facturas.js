@@ -5,6 +5,7 @@ const itemsPorPagina = 10;
 let facturasLocalesCache = [];
 let metodosPagoCache = [];
 let ultimaSincronizacion = new Date();
+let mostrarArchivadas = false;
 
 const FormateadorCosto = new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -379,7 +380,10 @@ function mostrarFacturasBuscadas() {
     if (!container) return;
     
     const ocultas = JSON.parse(localStorage.getItem('facturas_ocultas') || "[]");
-    let filtradas = facturasActuales.filter(f => !ocultas.includes(f.numero_factura));
+    let filtradas = facturasActuales.filter(f => {
+        const archivada = ocultas.includes(f.numero_factura);
+        return mostrarArchivadas ? archivada : !archivada;
+    });
     
     if (filtroEstado && filtroEstado.value !== "todos") {
         const valFiltro = filtroEstado.value.toLowerCase();
@@ -401,11 +405,12 @@ function mostrarFacturasBuscadas() {
     const paginadas = filtradas.slice(inicio, inicio + itemsPorPagina);
 
     if (paginadas.length === 0) {
+        const mensaje = mostrarArchivadas ? "No hay facturas archivadas para mostrar." : "No se encontraron facturas con esa cédula.";
         container.innerHTML = `
             <div class="text-center p-5 bg-white rounded-5 shadow-sm border">
                 <div class="display-1 text-muted opacity-10 mb-3"><i class="bi bi-folder2-open"></i></div>
                 <h5 class="fw-bold text-dark">Sin registros</h5>
-                <p class="text-muted small">No se encontraron facturas con esa cédula.</p>
+                <p class="text-muted small">${mensaje}</p>
             </div>`;
         paginar(0);
         return;
@@ -568,21 +573,26 @@ async function verificarAccesoAdmin() {
         });
         
         if (res.status === 401 || res.status === 403) {
-            document.body.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
-                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
-                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
-                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere estar logueado, Inicie Sesión.</p>
-                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                        <br>
-                        <button onclick="window.location.href='/login'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">INICIAR SESIÓN</button>
+            const overlay = document.getElementById("accessOverlay");
+            if (overlay) {
+                overlay.classList.remove("d-none");
+                document.body.classList.add("no-scroll");
+            } else {
+                document.body.innerHTML = `
+                    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
+                        <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
+                            <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
+                            <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
+                            <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere estar logueado, Inicie Sesión.</p>
+                            <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+                            <br>
+                            <button onclick="window.location.href='/login'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">INICIAR SESIÓN</button>
+                        </div>
                     </div>
-                </div>
-                <style>
-                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-                </style>`;
-            setTimeout(() => { window.location.href = "/login"; }, 3500);
+                    <style>
+                        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+                    </style>`;
+            }
             return false;
         }
         return true;
@@ -603,6 +613,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const inputInput = document.getElementById("buscarFactura");
     const selectFiltro = document.getElementById("filtroEstadoFactura");
+    const btnArchivadas = document.getElementById("btnToggleArchivadas");
+    
+    if (btnArchivadas) {
+        btnArchivadas.addEventListener("click", () => {
+            mostrarArchivadas = !mostrarArchivadas;
+            btnArchivadas.textContent = mostrarArchivadas ? "Ocultar archivadas" : "Mostrar archivadas";
+            btnArchivadas.classList.toggle("btn-primary", mostrarArchivadas);
+            btnArchivadas.classList.toggle("btn-outline-primary", !mostrarArchivadas);
+            paginaActual = 1;
+            mostrarFacturasBuscadas();
+        });
+    }
     
     if (inputInput) {
         let timerBusqueda;

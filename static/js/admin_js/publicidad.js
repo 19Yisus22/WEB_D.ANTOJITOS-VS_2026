@@ -3,6 +3,55 @@ let procesamientoEnCurso = false;
 let audioCtx = null;
 const productosNotificados = new Set();
 
+async function actualizarAlmacenamiento() {
+    try {
+        const timestamp = new Date().getTime();
+        const res = await fetch(`/cloudinary_storage_info?t=${timestamp}`, {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+        
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        const circle = document.getElementById("storageCircle");
+        const text = document.getElementById("storageText");
+        
+        if (circle && text) {
+            const used = parseFloat(data.used_gb);
+            const limit = parseFloat(data.limit_gb);
+            
+            let percent = (used / limit) * 100;
+            if (used > 0 && percent < 0.5) percent = 0.5; 
+
+            let usedLabel;
+            if (used < 0.1) {
+                usedLabel = (used * 1024).toFixed(2) + " MB";
+            } else {
+                usedLabel = used.toFixed(2) + " GB";
+            }
+
+            const circumference = 125.66;
+            const offset = circumference - (percent / 100 * circumference);
+            circle.style.strokeDashoffset = offset;
+
+            text.textContent = `${usedLabel} / ${limit.toFixed(1)} GB (${percent.toFixed(2)}%)`;
+
+            circle.style.stroke = percent > 85 ? "#dc3545" : percent > 60 ? "#ffc107" : "#28a745";
+        }
+    } catch (e) {}
+}
+
+function showStorageDetails() {
+    const text = document.getElementById("storageText");
+    if (text) {
+        alert(`Detalles del Almacenamiento:\n${text.textContent}`);
+    }
+}
+
 function initAudioContext() {
     if (!audioCtx) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -625,6 +674,11 @@ function cargarPublicidadActiva() {
 document.addEventListener("DOMContentLoaded", async () => {
     const tieneAcceso = await verificarAccesoAdmin();
     if (!tieneAcceso) return;
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    await actualizarAlmacenamiento();
     const inputArchivo = document.getElementById("archivoNotificacion");
     if (inputArchivo) {
         inputArchivo.addEventListener("change", function() {

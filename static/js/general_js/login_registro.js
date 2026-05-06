@@ -4,6 +4,10 @@ const passwordInput = document.getElementById("contrasena");
 const linkRegistro = document.getElementById("linkRegistro");
 const linkInicio = document.getElementById("linkInicio");
 
+const onlyLettersRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+const onlyDigitsRegex = /^\d+$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 async function actualizarConexionDB(userId) {
     if (!userId) return;
     try {
@@ -213,12 +217,24 @@ if (form) {
             const nombre = document.getElementById("nombre").value.trim();
             const apellido = document.getElementById("apellido").value.trim();
 
-            if (!/^\d+$/.test(cedula) || cedula.length < 6 || cedula.length > 10) {
-                showMessage("Cédula Inválida", "Solo números (6-10 dígitos)", false);
+            if (!nombre || !onlyLettersRegex.test(nombre)) {
+                showMessage("Nombre inválido", "El nombre debe contener solo letras", false);
                 return;
             }
-            if (telefono.length < 10) {
-                showMessage("Teléfono Inválido", "Mínimo 10 dígitos", false);
+            if (!apellido || !onlyLettersRegex.test(apellido)) {
+                showMessage("Apellido inválido", "El apellido debe contener solo letras", false);
+                return;
+            }
+            if (!onlyDigitsRegex.test(cedula) || cedula.length < 6) {
+                showMessage("Cédula inválida", "Solo números y al menos 6 dígitos", false);
+                return;
+            }
+            if (!onlyDigitsRegex.test(telefono) || telefono.length < 10) {
+                showMessage("Teléfono inválido", "Solo números y al menos 10 dígitos", false);
+                return;
+            }
+            if (!emailPattern.test(correo)) {
+                showMessage("Correo inválido", "Ingresa un correo electrónico válido", false);
                 return;
             }
 

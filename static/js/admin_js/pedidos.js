@@ -10,6 +10,7 @@ let pedidosFijados = JSON.parse(localStorage.getItem("pedidosFijados") || "[]");
 let paginaActual = 1;
 let contadorFacturasPorAnio = JSON.parse(localStorage.getItem("contadorFacturasPorAnio") || "{}");
 let ultimoIdPedidoNotificado = parseInt(localStorage.getItem("ultimoIdPedidoNotificado") || "0");
+let debounceTimer;
 
 const sonidoNuevoPedido = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
 sonidoNuevoPedido.volume = 0.9;
@@ -114,29 +115,35 @@ function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
     setTimeout(eliminar, duracionMs);
 }
 
+function debouncedCargarPedidos(isAutoRefresh = false) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => cargarPedidos(isAutoRefresh), 1000);
+}
+
 function escucharEventosTiempoReal() {
-    // Detectar cambios en tiempo real via Storage API
+
     window.addEventListener('storage', (e) => {
         if (e.key === 'nuevoPedidoDetectado') {
-            cargarPedidos(true);
+            debouncedCargarPedidos(true);
         }
         if (e.key === 'pedidoAnuladoRecientemente' && e.newValue) {
             const data = JSON.parse(e.newValue);
             mostrarAlerta(`CRÍTICO: El cliente ${data.nombre.toUpperCase()} canceló el pedido #${data.id}`, true, 7000);
             sonidoNuevoPedido.play().catch(() => {});
-            cargarPedidos(true);
+            debouncedCargarPedidos(true);
+        }
+        if (e.key === 'facturaActualizada') {
+            debouncedCargarPedidos(true);
         }
     });
 
-    // Escuchar cambios en documento para actualizaciones en tiempo real
     document.addEventListener('pedidosActualizados', () => {
         aplicarFiltros();
     });
 
-    // Monitorear cambios de foco de ventana
     window.addEventListener('focus', () => {
         console.log('[TIEMPO REAL] Ventana enfocada - sincronizando pedidos...');
-        cargarPedidos(true);
+        debouncedCargarPedidos(true);
     });
 }
 
@@ -281,17 +288,11 @@ async function iniciarModuloPedidos() {
 
     ajustarBarraBusqueda();
     inicializarSelectAnios();
-    
     localStorage.setItem("moduloPedidosIniciado", "true");
-    
     await cargarPedidos();
     mostrarNotificacionBienvenida();
     escucharEventosTiempoReal();
-
-    setInterval(() => cargarPedidos(true), 5000);
-
     document.getElementById("btnGenerarPDF")?.addEventListener("click", generarReporteConfigurado);
-
     const inputsFiltro = ["inputBusquedaNombre", "inputBusquedaCedula", "inputNumeroFactura", "selectAnio", "filtroEstado"];
     inputsFiltro.forEach(id => {
         const el = document.getElementById(id);
@@ -458,7 +459,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                         if (res.ok) {
                             estadosPagoGuardados[itemId] = ahoraPagado;
                             localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
-                            await cargarPedidos(true);
+                            debouncedCargarPedidos(true);
                             mostrarAlerta("Pago actualizado exitosamente");
                         } else {
                             throw new Error();
@@ -490,7 +491,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                     });
                     
                     if (res.ok) {
-                        await cargarPedidos(true);
+                        debouncedCargarPedidos(true);
                         mostrarAlerta(`Estado actualizado a: ${nuevoEstado.toUpperCase()}`);
                     } else {
                         mostrarAlerta("Error al actualizar el estado", true);

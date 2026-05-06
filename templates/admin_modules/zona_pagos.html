@@ -26,13 +26,19 @@
             </div>
 
             <div class="card border-0 mb-4 bg-transparent">
-                <div class="storage-mini-container">
-                    <div class="storage-header">
-                        <span class="storage-title"><i class="bi bi-cloud-fill me-1"></i>Espacio Cloudinary Optimizado</span>
-                        <span id="storageText" class="storage-stats">0.00 MB / 25 MB</span>
-                    </div>
-                    <div class="progress progress-thin">
-                        <div id="storageProgressBar" class="progress-bar progress-bar-subtle" role="progressbar" style="width: 0%;"></div>
+                <div class="storage-mini-container d-flex align-items-center justify-content-end">
+                    <div class="storage-container bg-white p-2 px-3 rounded-3 shadow-sm border d-flex align-items-center" data-bs-toggle="tooltip" data-bs-placement="top" title="Clic para ver detalles del almacenamiento">
+                        <div class="cloud-icon position-relative d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; cursor: pointer;" onclick="showStorageDetails()">
+                            <i class="bi bi-cloud-fill text-primary" style="font-size: 1.5rem; z-index: 2;"></i>
+                            <svg class="position-absolute top-0 start-0" width="48" height="48" viewBox="0 0 48 48" style="pointer-events: none;">
+                                <circle cx="24" cy="24" r="20" stroke="#e9ecef" stroke-width="4" fill="none"></circle>
+                                <circle id="storageCircle" cx="24" cy="24" r="20" stroke="#007bff" stroke-width="4" fill="none" stroke-dasharray="125.66" stroke-dashoffset="125.66" transform="rotate(-90 24 24)"></circle>
+                            </svg>
+                        </div>
+                        <div class="ms-3">
+                            <small class="fw-bold text-muted" style="font-size: 0.7rem;">ALMACENAMIENTO CLOUDINARY</small><br>
+                            <small id="storageText" class="text-primary fw-bold" style="font-size: 0.7rem;">Cargando...</small>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -19,7 +19,7 @@ CREATE TABLE roles (
 
 CREATE TABLE usuarios (
     id_cliente UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    imagen_url TEXT DEFAULT 'static/uploads/default_icon_profile.png',
+    imagen_url TEXT DEFAULT '/static/uploads/default_icon_profile.png',
     nombre TEXT NOT NULL,
     apellido TEXT NOT NULL,
     telefono TEXT,

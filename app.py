@@ -3,6 +3,7 @@ from waitress import serve
 from functools import wraps
 from flask_cors import CORS
 from dotenv import load_dotenv
+import re
 from supabase import create_client, ClientOptions
 from datetime import datetime, timezone, timedelta
 from google.oauth2 import id_token
@@ -133,6 +134,22 @@ def verify_password(contrasena, hashed):
     except:
         return False
 
+def is_valid_name(value):
+    if not value or not isinstance(value, str):
+        return False
+    return bool(re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+", value.strip()))
+
+def is_valid_numeric(value, min_length=1):
+    if not value or not isinstance(value, str):
+        return False
+    return bool(re.fullmatch(r"\d+", value.strip())) and len(value.strip()) >= min_length
+
+def is_valid_email(value):
+    if not value or not isinstance(value, str):
+        return False
+    value = value.strip()
+    return bool(re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+", value))
+
 def verificar_token_google(token):
     try:
         idinfo = id_token.verify_oauth2_token(
@@ -198,6 +215,10 @@ def registro_google():
                 .eq("id_cliente", user_data["id_cliente"])\
                 .execute()
             user = user_data
+            imagen_url = user.get("imagen_url") or "/static/uploads/default_icon_profile.png"
+            if isinstance(imagen_url, str) and imagen_url.startswith("static/"):
+                imagen_url = "/" + imagen_url
+            user["imagen_url"] = imagen_url
         else:
             cedula_gen = f"G-{uuid.uuid4().hex[:8]}"
             nuevo_usuario = {
@@ -207,7 +228,7 @@ def registro_google():
                 "correo": correo,
                 "contrasena": "GOOGLE_AUTH_EXTERNAL",
                 "metodo_pago": "Efectivo",
-                "imagen_url": idinfo.get('picture', ""),
+                "imagen_url": idinfo.get('picture') or "/static/uploads/default_icon_profile.png",
                 "ultima_conexion": ahora
             }
             
@@ -260,10 +281,14 @@ def login():
             return jsonify({"ok": False, "error": "Contraseña incorrecta"}), 401
             
         user = res.data
+        imagen_url = user.get("imagen_url") or "/static/uploads/default_icon_profile.png"
+        if isinstance(imagen_url, str) and imagen_url.startswith("static/"):
+            imagen_url = "/" + imagen_url
+        user["imagen_url"] = imagen_url
         session.permanent = False
-        session["user_id"] = user["id_cliente"]
-        session["rol"] = user["roles"]["nombre_role"]
-        session["user"] = user 
+        session["user_id"] = str(user["id_cliente"])
+        session["rol"] = user.get("roles", {}).get("nombre_role", "cliente")
+        session["user"] = user
         session["just_logged_in"] = True
         
         supabase.table("usuarios").update({"ultima_conexion": datetime.now(timezone.utc).isoformat()}).eq("id_cliente", user["id_cliente"]).execute()
@@ -281,7 +306,26 @@ def registro():
     payload = request.get_json()
     correo = payload.get("correo", "").strip().lower()
     contrasena = payload.get("contrasena", "")
-    
+    nombre = payload.get("nombre", "").strip()
+    apellido = payload.get("apellido", "").strip()
+    cedula = payload.get("cedula", "").strip()
+    telefono = payload.get("telefono", "").strip()
+
+    if not nombre or not apellido or not is_valid_name(nombre) or not is_valid_name(apellido):
+        return jsonify({"ok": False, "error": "Nombre y apellido deben contener solo letras."}), 400
+
+    if not is_valid_numeric(cedula, 6):
+        return jsonify({"ok": False, "error": "La cédula debe contener solo números y al menos 6 dígitos."}), 400
+
+    if not is_valid_numeric(telefono, 10):
+        return jsonify({"ok": False, "error": "El teléfono debe contener solo números y al menos 10 dígitos."}), 400
+
+    if not is_valid_email(correo):
+        return jsonify({"ok": False, "error": "El correo electrónico no es válido."}), 400
+
+    if len(contrasena) < 6:
+        return jsonify({"ok": False, "error": "La contraseña debe tener al menos 6 caracteres."}), 400
+
     try:
         hashed = hash_password(contrasena)
         
@@ -293,7 +337,7 @@ def registro():
             "correo": correo,
             "contrasena": hashed,
             "metodo_pago": "Efectivo",
-            "imagen_url": "static/uploads/default_icon_profile.png",
+            "imagen_url": "/static/uploads/default_icon_profile.png",
             "ultima_conexion": datetime.now(timezone.utc).isoformat()
         }).execute()
         
@@ -363,7 +407,10 @@ def mi_perfil():
 
     res_usuario = supabase.table("usuarios").select("*, roles(nombre_role)").eq("id_cliente", user_id).single().execute()
     usuario = res_usuario.data if res_usuario.data else {}
-    usuario["imagen_url"] = usuario.get("imagen_url") or "/static/default_icon_profile.png"
+    imagen_url = usuario.get("imagen_url") or "/static/uploads/default_icon_profile.png"
+    if isinstance(imagen_url, str) and imagen_url.startswith("static/"):
+        imagen_url = "/" + imagen_url
+    usuario["imagen_url"] = imagen_url
 
     if request.method == "POST":
         updates = {}
@@ -371,6 +418,17 @@ def mi_perfil():
             valor = request.form.get(campo)
             if valor:
                 updates[campo] = valor.strip().lower() if campo == "correo" else valor.strip()
+
+        if "nombre" in updates and not is_valid_name(updates["nombre"]):
+            return render_template("general_modules/mi_perfil.html", user=usuario, error="Nombre debe contener solo letras.")
+        if "apellido" in updates and not is_valid_name(updates["apellido"]):
+            return render_template("general_modules/mi_perfil.html", user=usuario, error="Apellido debe contener solo letras.")
+        if "cedula" in updates and not is_valid_numeric(updates["cedula"], 6):
+            return render_template("general_modules/mi_perfil.html", user=usuario, error="La cédula debe contener solo números y al menos 6 dígitos.")
+        if "telefono" in updates and not is_valid_numeric(updates["telefono"], 10):
+            return render_template("general_modules/mi_perfil.html", user=usuario, error="El teléfono debe contener solo números y al menos 10 dígitos.")
+        if "correo" in updates and not is_valid_email(updates["correo"]):
+            return render_template("general_modules/mi_perfil.html", user=usuario, error="El correo electrónico no es válido.")
 
         imagen_file = request.files.get("imagen_url")
         eliminar_foto = request.form.get("eliminar_foto") == "1"
@@ -384,7 +442,7 @@ def mi_perfil():
         
         elif eliminar_foto and usuario.get("imagen_url") and "default_icon_profile.png" not in usuario["imagen_url"]:
             delete_image_from_cloudinary(usuario["imagen_url"])
-            updates["imagen_url"] = "/static/default_icon_profile.png"
+            updates["imagen_url"] = "/static/uploads/default_icon_profile.png"
 
         if updates:
             supabase.table("usuarios").update(updates).eq("id_cliente", user_id).execute()
@@ -425,6 +483,17 @@ def actualizar_perfil(id_cliente):
 
     campos_actualizar = {k: v for k, v in campos_actualizar.items() if v is not None and v != ""}
 
+    if "nombre" in campos_actualizar and not is_valid_name(campos_actualizar["nombre"]):
+        return jsonify({"ok": False, "error": "Nombre debe contener solo letras."}), 400
+    if "apellido" in campos_actualizar and not is_valid_name(campos_actualizar["apellido"]):
+        return jsonify({"ok": False, "error": "Apellido debe contener solo letras."}), 400
+    if "cedula" in campos_actualizar and not is_valid_numeric(campos_actualizar["cedula"], 6):
+        return jsonify({"ok": False, "error": "La cédula debe contener solo números y al menos 6 dígitos."}), 400
+    if "telefono" in campos_actualizar and not is_valid_numeric(campos_actualizar["telefono"], 10):
+        return jsonify({"ok": False, "error": "El teléfono debe contener solo números y al menos 10 dígitos."}), 400
+    if "correo" in campos_actualizar and not is_valid_email(campos_actualizar["correo"]):
+        return jsonify({"ok": False, "error": "El correo electrónico no es válido."}), 400
+
     if not campos_actualizar:
         return jsonify({"ok": False, "error": "No hay datos válidos para actualizar"}), 400
 
@@ -432,7 +501,24 @@ def actualizar_perfil(id_cliente):
         supabase.table("usuarios").update(campos_actualizar).eq("id_cliente", id_cliente).execute()
         res_final = supabase.table("usuarios").select("*, roles(nombre_role)").eq("id_cliente", id_cliente).single().execute()
         usuario_final = res_final.data
-        usuario_final["imagen_url"] = usuario_final.get("imagen_url") or "/static/default_icon_profile.png"
+        imagen_url = usuario_final.get("imagen_url") or "/static/uploads/default_icon_profile.png"
+        if isinstance(imagen_url, str) and imagen_url.startswith("static/"):
+            imagen_url = "/" + imagen_url
+        usuario_final["imagen_url"] = imagen_url
+        if str(user_id) == str(id_cliente):
+            session_user = session.get("user", {})
+            session_user.update({
+                "nombre": usuario_final.get("nombre"),
+                "apellido": usuario_final.get("apellido"),
+                "telefono": usuario_final.get("telefono"),
+                "correo": usuario_final.get("correo"),
+                "direccion": usuario_final.get("direccion"),
+                "cedula": usuario_final.get("cedula"),
+                "metodo_pago": usuario_final.get("metodo_pago"),
+                "imagen_url": usuario_final.get("imagen_url")
+            })
+            session["user"] = session_user
+            session.modified = True
         return jsonify({"ok": True, "usuario": usuario_final})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
@@ -1819,7 +1905,7 @@ if __name__ == "__main__":
     port = 8000
     local_ip = get_local_ip()
 
-    debug_mode = True
+    debug_mode = False
     if debug_mode:
         print("⚡ Ejecutando en modo DEBUG con servidor de desarrollo de Flask")
         print(f"- Acceso local: http://localhost:{port}")

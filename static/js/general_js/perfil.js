@@ -190,34 +190,50 @@ async function ejecutarAutoeleminacion() {
     }
 }
 
+const onlyLettersRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+const onlyDigitsRegex = /^\d+$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const inputs = document.querySelectorAll('#formPerfil input, #formPerfil textarea, #formPerfil select');
 inputs.forEach(input => {
     const idName = (input.id || input.name || '').toLowerCase();
     const isCorreo = idName.includes('correo');
     const isCedula = idName.includes('cedula');
-    if (isCorreo || isCedula) {
-        input.addEventListener('input', function() {
-            let val = this.value.toLowerCase();
-            if (isCorreo) val = val.replace(/[^a-z0-9.\-@]/g, '');
-            else val = val.replace(/[^0-9]/g, '');
-            this.value = val;
-            if (allUsers.length > 0) {
-                const isDup = allUsers.some(u => {
-                    if (String(u.id_cliente) === String(USER_ID)) return false;
-                    if (isCorreo && u.correo && u.correo.toLowerCase() === val) return true;
-                    if (isCedula && u.cedula && String(u.cedula) === val) return true;
-                    return false;
-                });
-                if ((isCedula && val !== '' && val.length < 7) || isDup) {
-                    this.style.borderColor = "#dc3545";
-                    this.style.boxShadow = "0 0 0 0.25rem rgba(220, 53, 69, 0.25)";
-                } else {
-                    this.style.borderColor = "";
-                    this.style.boxShadow = "";
-                }
+    const isTelefono = idName.includes('telefono');
+    const isNombre = idName === 'nombreperfil';
+    const isApellido = idName === 'apellidoperfil';
+
+    input.addEventListener('input', function() {
+        let val = this.value;
+        if (isCorreo) {
+            val = val.replace(/\s/g, '');
+        } else if (isCedula || isTelefono) {
+            val = val.replace(/[^0-9]/g, '');
+        } else if (isNombre || isApellido) {
+            val = val.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+        }
+        this.value = val;
+
+        const showInvalid = (condition) => {
+            if (condition) {
+                this.style.borderColor = "#dc3545";
+                this.style.boxShadow = "0 0 0 0.25rem rgba(220, 53, 69, 0.25)";
+            } else {
+                this.style.borderColor = "";
+                this.style.boxShadow = "";
             }
-        });
-    }
+        };
+
+        if (isCedula) {
+            showInvalid(val !== '' && val.length < 6);
+        } else if (isTelefono) {
+            showInvalid(val !== '' && val.length < 10);
+        } else if (isNombre || isApellido) {
+            showInvalid(val !== '' && !onlyLettersRegex.test(val));
+        } else if (isCorreo) {
+            showInvalid(val !== '' && !emailPattern.test(val));
+        }
+    });
 });
 
 const btnEditarPerfil = document.getElementById("btnEditarPerfil");
@@ -253,11 +269,49 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
             if (dup) hasDuplicate = true;
         }
     });
+
+    const nombreField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase() === 'nombreperfil');
+    const apellidoField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase() === 'apellidoperfil');
     const cedulaField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase().includes('cedula'));
+    const telefonoField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase().includes('telefono'));
+    const correoField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase().includes('correo'));
+
+    if (nombreField) {
+        const nombreValue = nombreField.value.trim();
+        if (!nombreValue || !onlyLettersRegex.test(nombreValue)) {
+            showMessage("Nombre inválido", "El nombre debe contener solo letras", true);
+            setLoading(btn, false, originalText);
+            return;
+        }
+    }
+    if (apellidoField) {
+        const apellidoValue = apellidoField.value.trim();
+        if (!apellidoValue || !onlyLettersRegex.test(apellidoValue)) {
+            showMessage("Apellido inválido", "El apellido debe contener solo letras", true);
+            setLoading(btn, false, originalText);
+            return;
+        }
+    }
     if (cedulaField) {
         const cedulaValue = cedulaField.value.trim();
-        if (cedulaValue !== '' && cedulaValue.length < 7) {
-            showMessage("La cédula debe tener al menos 7 caracteres", true);
+        if (cedulaValue !== '' && (!onlyDigitsRegex.test(cedulaValue) || cedulaValue.length < 6)) {
+            showMessage("Cédula inválida", "La cédula debe ser numérica y tener al menos 6 dígitos", true);
+            setLoading(btn, false, originalText);
+            return;
+        }
+    }
+    if (telefonoField) {
+        const telefonoValue = telefonoField.value.trim();
+        if (telefonoValue !== '' && (!onlyDigitsRegex.test(telefonoValue) || telefonoValue.length < 10)) {
+            showMessage("Teléfono inválido", "El teléfono debe ser numérico y tener al menos 10 dígitos", true);
+            setLoading(btn, false, originalText);
+            return;
+        }
+    }
+    if (correoField) {
+        const correoValue = correoField.value.trim();
+        if (correoValue !== '' && !emailPattern.test(correoValue)) {
+            showMessage("Correo inválido", "Ingresa un correo electrónico válido", true);
             setLoading(btn, false, originalText);
             return;
         }
@@ -330,7 +384,7 @@ function mostrarModalDetalles(u) {
                 </div>
                 <div class="modal-body p-4 text-center">
                     <div class="position-relative d-inline-block mb-3">
-                        <img src="${u.imagen_url || '/static/default_icon_profile.png'}" 
+                        <img src="${u.imagen_url || '/static/uploads/default_icon_profile.png'}" 
                              class="rounded-circle border shadow" 
                              width="120" height="120" 
                              style="object-fit:cover; border: 4px solid #fff !important;">
@@ -481,7 +535,7 @@ function renderUserTable() {
             div.innerHTML = `
                 <div class="d-flex align-items-center">
                     <div class="position-relative">
-                        <img src="${u.imagen_url || '/static/default_icon_profile.png'}" class="rounded-circle border shadow-sm me-3" width="50" height="50" style="object-fit:cover;">
+                        <img src="${u.imagen_url || '/static/uploads/default_icon_profile.png'}" class="rounded-circle border shadow-sm me-3" width="50" height="50" style="object-fit:cover;">
                         <div class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center border" style="width:22px; height:22px; transform: translate(-10px, 2px); padding: 2px;">
                             ${esGoogle ? '<img src="/static/uploads/googlogo.ico" style="width:14px; height:14px; object-fit:contain;">' : '<i class="bi bi-envelope-at-fill text-primary" style="font-size: 0.75rem;"></i>'}
                         </div>
