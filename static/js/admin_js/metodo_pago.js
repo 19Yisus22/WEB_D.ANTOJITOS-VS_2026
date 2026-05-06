@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const acceso = await verificarAccesoAdmin();
     if (!acceso) return;
 
+    await actualizarAlmacenamiento();
     cargarMetodosDesdeHTML();
 
     const archivoQR = document.getElementById('archivoQR');
@@ -24,8 +25,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 reader.onload = (e) => { 
                     const previewImg = document.getElementById('previewPagoImg');
                     const placeholder = document.getElementById('placeholderQR');
-                    previewImg.src = e.target.result; 
-                    previewImg.classList.remove('d-none');
+                    if (previewImg) {
+                        previewImg.src = e.target.result; 
+                        previewImg.classList.remove('d-none');
+                    }
                     if (placeholder) placeholder.classList.add('d-none');
                 };
                 reader.readAsDataURL(optimizedFile);
@@ -33,117 +36,59 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    const btnGuardar = document.getElementById('btnGuardarPagos');
-    if (btnGuardar) btnGuardar.addEventListener('click', guardarCambiosPagos);
-
-    const btnAgregar = document.getElementById('btnAgregarTemporal');
-    if (btnAgregar) btnAgregar.addEventListener('click', agregarMetodoPago);
-
+    document.getElementById('btnGuardarPagos')?.addEventListener('click', guardarCambiosPagos);
+    document.getElementById('btnAgregarTemporal')?.addEventListener('click', agregarMetodoPago);
     document.addEventListener('click', () => initAudioContext(), { once: true });
 });
 
 async function verificarAccesoAdmin() {
     try {
-        const res = await fetch("/facturacion_page", {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        const res = await fetch("/facturacion_page", { 
+            headers: { 'X-Requested-With': 'XMLHttpRequest' } 
         });
-        
         if (res.status === 401 || res.status === 403) {
-            document.body.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
-                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
-                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
-                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
-                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                        <br>
-                        <i><small style="color: #555;">Redirigiendo...</small></i>
-                        <br><br>
-                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
-                    </div>
-                </div>
-                <style>
-                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-                </style>`;
-            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
+            window.location.href = "/inicio";
             return false;
         }
         return true;
-    } catch (e) {
-        return false;
+    } catch (e) { 
+        return false; 
     }
 }
 
-function initAudioContext() {
-    if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) audioCtx = new AudioContextClass();
-    }
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-}
-
-function playNotificationSound(isError = false) {
+async function actualizarAlmacenamiento() {
     try {
-        initAudioContext();
-        if (!audioCtx) return;
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        if (isError) {
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.3);
-        } else {
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(500, audioCtx.currentTime + 0.1);
-            gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.15);
+        const timestamp = new Date().getTime();
+        const res = await fetch(`/cloudinary_storage_info?t=${timestamp}`);
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        const progress = document.getElementById("storageProgressBar");
+        const text = document.getElementById("storageText");
+        
+        if (progress && text) {
+            const used = parseFloat(data.used_gb);
+            const limit = parseFloat(data.limit_gb);
+            let percent = (used / limit) * 100;
+            
+            if (used > 0 && percent < 0.5) percent = 0.5;
+            
+            let usedLabel = used < 0.1 ? (used * 1024).toFixed(2) + " MB" : used.toFixed(2) + " GB";
+            
+            progress.style.width = percent.toFixed(2) + "%";
+            text.textContent = `${usedLabel} / ${limit.toFixed(1)} GB (${((used / limit) * 100).toFixed(2)}%)`;
+            
+            progress.classList.remove("bg-success", "bg-warning", "bg-danger");
+            if (percent > 85) progress.classList.add("bg-danger");
+            else if (percent > 60) progress.classList.add("bg-warning");
+            else progress.classList.add("bg-success");
         }
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
     } catch (e) {}
 }
 
-function showMessage(msg, isError = false) {
-    playNotificationSound(isError);
-    let container = document.getElementById('toastContainer');
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toastContainer";
-        document.body.appendChild(container);
-    }
-    const toast = document.createElement('div');
-    toast.className = 'custom-toast';
-    const color = isError ? "#ff4757" : "#d35400";
-    const icon = isError ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill';
-    
-    toast.style.borderLeft = `6px solid ${color}`;
-    toast.innerHTML = `
-        <div class="toast-content">
-            <div class="toast-icon-wrapper" style="color: ${color}">
-                <i class="bi ${icon}"></i>
-            </div>
-            <div class="toast-text">
-                <div class="toast-main-text">${msg}</div>
-            </div>
-        </div>
-    `;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.animation = "slideOutUp 0.5s forwards";
-        setTimeout(() => toast.remove(), 500);
-    }, 4000);
-}
-
 async function procesarImagenOptimizada(file) {
-    const MAX_WIDTH = 600;
-    const QUALITY = 0.6;
+    const MAX_WIDTH = 800;
+    const QUALITY = 0.7;
     return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -161,49 +106,60 @@ async function procesarImagenOptimizada(file) {
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(img, 0, 0, width, height);
                 canvas.toBlob((blob) => {
-                    const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
-                        type: "image/jpeg",
-                        lastModified: Date.now()
-                    });
-                    resolve(optimizedFile);
+                    resolve(new File([blob], file.name.split('.')[0] + ".jpg", { 
+                        type: "image/jpeg", 
+                        lastModified: Date.now() 
+                    }));
                 }, "image/jpeg", QUALITY);
             };
         };
     });
 }
 
-function actualizarIndicadorEspacio() {
-    const limiteTotalMB = 25;
-    const limiteTotalBytes = limiteTotalMB * 1024 * 1024;
-    let totalUsado = 0;
-
-    metodosPagoArray.forEach(m => {
-        if (m.file) {
-            totalUsado += m.file.size;
-        } else if (m.url_actual && m.url_actual.startsWith('data:')) {
-            totalUsado += m.url_actual.length * 0.75;
-        }
-    });
-
-    const porcentaje = Math.min((totalUsado / limiteTotalBytes) * 100, 100);
-    const usadoMB = (totalUsado / (1024 * 1024)).toFixed(2);
-    
-    const textElem = document.getElementById('storageText');
-    const barElem = document.getElementById('storageProgressBar');
-
-    if (textElem && barElem) {
-        textElem.innerText = `${usadoMB} MB / ${limiteTotalMB} MB`;
-        barElem.style.width = `${porcentaje}%`;
-        
-        barElem.className = "progress-bar progress-bar-subtle";
-        if (porcentaje > 70) barElem.classList.add('bg-warning');
-        if (porcentaje > 90) barElem.classList.add('bg-danger');
-        if (porcentaje <= 70) barElem.classList.add('bg-success');
+function initAudioContext() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
     }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playNotificationSound(isError = false) {
+    try {
+        initAudioContext();
+        if (!audioCtx) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = isError ? 'sawtooth' : 'sine';
+        oscillator.frequency.setValueAtTime(isError ? 300 : 1000, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.15);
+    } catch (e) {}
+}
+
+function showMessage(msg, isError = false) {
+    playNotificationSound(isError);
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "toastContainer";
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'custom-toast';
+    const color = isError ? "#ff4757" : "#d35400";
+    toast.style.borderLeft = `6px solid ${color}`;
+    toast.innerHTML = `<div class="toast-content"><div class="toast-text"><div class="toast-main-text">${msg}</div></div></div>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
 }
 
 function cargarMetodosDesdeHTML() {
@@ -217,8 +173,9 @@ function cargarMetodosDesdeHTML() {
                 url_actual: m.qr_url, cambio_img: false, file: null
             }));
             renderizarLista();
-            actualizarIndicadorEspacio();
-        } catch (e) { metodosPagoArray = []; }
+        } catch (e) { 
+            metodosPagoArray = []; 
+        }
     }
 }
 
@@ -251,7 +208,6 @@ function agregarMetodoPago() {
     }
     resetearFormulario();
     renderizarLista();
-    actualizarIndicadorEspacio();
 }
 
 function renderizarLista() {
@@ -263,7 +219,7 @@ function renderizarLista() {
     preview.innerHTML = "";
 
     if (metodosPagoArray.length === 0) {
-        lista.innerHTML = `<div class="col-12 text-center text-muted py-3"><i class="bi bi-inbox fs-4"></i><p class="mt-2 mb-0">No hay métodos de pago</p></div>`;
+        lista.innerHTML = `<div class="col-12 text-center text-muted py-3"><p class="mt-2 mb-0">No hay métodos de pago</p></div>`;
         return;
     }
 
@@ -272,13 +228,13 @@ function renderizarLista() {
         const badge = getBadgeClass(m.entidad);
 
         lista.innerHTML += `
-            <div class="col-12 col-md-6">
-                <div class="metodo-card d-flex align-items-center justify-content-between">
+            <div class="col-12 col-md-6 mb-3">
+                <div class="metodo-card p-3 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-3">
-                        <img src="${imgSrc}" style="width:45px; height:45px; object-fit:cover;" class="rounded border">
+                        <img src="${imgSrc}" style="width:50px; height:50px; object-fit:cover;" class="rounded border">
                         <div>
-                            <span class="bank-badge ${badge}">${m.entidad}</span>
-                            <h6 class="m-0 fw-bold" style="font-size: 0.9rem;">${m.titular}</h6>
+                            <span class="bank-badge ${badge} mb-1">${m.entidad}</span>
+                            <h6 class="m-0 fw-bold">${m.titular}</h6>
                             <small class="text-muted">${m.numero}</small>
                         </div>
                     </div>
@@ -311,13 +267,17 @@ function editarMetodo(index) {
     const previewImg = document.getElementById('previewPagoImg');
     const placeholder = document.getElementById('placeholderQR');
     
-    previewImg.src = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
-    previewImg.classList.remove('d-none');
+    if (previewImg) {
+        previewImg.src = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
+        previewImg.classList.remove('d-none');
+    }
     if (placeholder) placeholder.classList.add('d-none');
 
     const btn = document.getElementById('btnAgregarTemporal');
-    btn.innerHTML = `<i class="bi bi-check-circle"></i> ACTUALIZAR EN LISTA`;
-    btn.className = "btn btn-warning w-100 py-3 shadow-sm";
+    if (btn) {
+        btn.innerHTML = `<i class="bi bi-check-circle"></i> ACTUALIZAR EN LISTA`;
+        btn.className = "btn btn-warning w-100 py-3 shadow-sm";
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -325,11 +285,12 @@ function eliminarFila(index) {
     metodosPagoArray.splice(index, 1);
     if (editIndex === index) resetearFormulario();
     renderizarLista();
-    actualizarIndicadorEspacio();
 }
 
 async function guardarCambiosPagos() {
     const btn = document.getElementById('btnGuardarPagos');
+    if (!btn) return;
+
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> GUARDANDO...`;
 
@@ -350,9 +311,10 @@ async function guardarCambiosPagos() {
         const data = await res.json();
         if (data.ok) {
             showMessage("¡Configuración guardada!");
+            await actualizarAlmacenamiento();
             setTimeout(() => location.reload(), 1500);
-        } else {
-            throw new Error(data.error);
+        } else { 
+            throw new Error(data.error); 
         }
     } catch (e) {
         showMessage(e.message, true);
@@ -366,27 +328,35 @@ function resetearFormulario() {
     document.getElementById('numeroCuenta').value = "";
     document.getElementById('titularCuenta').value = "";
     document.getElementById('archivoQR').value = "";
-    document.getElementById('previewPagoImg').src = "";
-    document.getElementById('previewPagoImg').classList.add('d-none');
-    document.getElementById('placeholderQR').classList.remove('d-none');
+    
+    const previewImg = document.getElementById('previewPagoImg');
+    const placeholder = document.getElementById('placeholderQR');
     const btn = document.getElementById('btnAgregarTemporal');
-    btn.innerHTML = `<i class="bi bi-node-plus-fill"></i> Agregar a Lista`;
-    btn.className = "btn btn-primary w-100 py-3 shadow-sm";
+
+    if (previewImg) {
+        previewImg.src = "";
+        previewImg.classList.add('d-none');
+    }
+    if (placeholder) placeholder.classList.remove('d-none');
+    if (btn) {
+        btn.innerHTML = `<i class="bi bi-node-plus-fill"></i> Agregar a Lista`;
+        btn.className = "btn btn-primary w-100 py-3 shadow-sm";
+    }
 }
 
 function getBadgeClass(entidad) {
-    const map = { 'Nequi': 'nequi-bg', 'Daviplata': 'daviplata-bg', 'Bancolombia': 'bancolombia-bg', 'NuBank': 'nubank-bg' };
+    const map = { 
+        'Nequi': 'nequi-bg', 
+        'Daviplata': 'daviplata-bg', 
+        'Bancolombia': 'bancolombia-bg', 
+        'NuBank': 'nubank-bg' 
+    };
     return map[entidad] || 'bg-secondary text-white';
 }
 
 (function() {
     window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() {
-        window.history.pushState(null, "", window.location.href);
-    };
-    window.onpageshow = function(event) {
-        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-            window.location.reload();
-        }
+    window.onpopstate = function() { 
+        window.history.pushState(null, "", window.location.href); 
     };
 })();
