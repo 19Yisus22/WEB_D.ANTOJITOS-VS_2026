@@ -136,12 +136,17 @@ async function actualizarAlmacenamiento() {
             const text = document.getElementById("storageText");
             if (progress && text) {
                 const percent = (data.used_gb / data.limit_gb) * 100;
-                progress.style.width = `${percent}%`;
-                text.textContent = `${data.used_gb.toFixed(2)} GB / ${data.limit_gb} GB (${percent.toFixed(1)}%)`;
-                progress.className = "progress-bar " + (percent > 85 ? "bg-danger" : percent > 60 ? "bg-warning" : "bg-success");
+                const percentFixed = percent.toFixed(2);
+                progress.style.width = `${percentFixed}%`;
+                let usedDisplay = data.used_gb < 0.01 ? `${(data.used_gb * 1024).toFixed(2)} MB` : `${data.used_gb.toFixed(3)} GB`;
+                text.textContent = `${usedDisplay} / ${data.limit_gb} GB (${percentFixed}%)`;
+                progress.classList.remove("bg-success", "bg-warning", "bg-danger");
+                if (percent > 85) progress.classList.add("bg-danger");
+                else if (percent > 60) progress.classList.add("bg-warning");
+                else progress.classList.add("bg-success");
             }
         }
-    } catch (e) { console.error("Storage check error"); }
+    } catch (e) {}
 }
 
 async function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
@@ -190,7 +195,6 @@ async function cargarPostres(silent = false) {
         }
         await actualizarAlmacenamiento();
     } catch (error) {
-        console.error("Sync error");
     } finally {
         isUpdating = false;
     }
@@ -271,16 +275,13 @@ function resetPrevisualizador() {
 
 document.addEventListener("DOMContentLoaded", async () => {
     if (!await verificarAccesoAdmin()) return;
-
     const cached = localStorage.getItem('postresCache');
     if (cached) {
         postres = JSON.parse(cached);
         renderPostres();
     }
-    
     await cargarPostres();
     setInterval(() => cargarPostres(true), 15000);
-
     const inputFoto = document.getElementById("fotoPostre");
     if (inputFoto) {
         inputFoto.addEventListener("change", function() {
@@ -299,11 +300,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
     }
-
-    if (searchInput) {
-        searchInput.addEventListener("input", (e) => renderPostres(e.target.value));
-    }
-
+    if (searchInput) searchInput.addEventListener("input", (e) => renderPostres(e.target.value));
     if (btnAgregarPostre) {
         btnAgregarPostre.onclick = () => {
             indexActual = null;
@@ -315,7 +312,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
     }
-
     if (btnCancelar) {
         btnCancelar.onclick = () => {
             formAgregarPostre.classList.add("d-none");
@@ -324,7 +320,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             indexActual = null;
         };
     }
-
     document.getElementById("btnEliminar").onclick = () => {
         if (indexActual === null) return;
         const p = postres[indexActual];
@@ -342,7 +337,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             } catch (e) { showMessage("Error de conexión", true); }
         });
     };
-
     document.getElementById("btnEditar").onclick = () => {
         if (indexActual === null) return;
         const p = postres[indexActual];
@@ -350,7 +344,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("precioPostre").value = p.precio;
         document.getElementById("descripcionPostre").value = p.descripcion || "";
         document.getElementById("stockPostre").value = p.stock;
-        
         const previewImg = document.getElementById("previewNotificacionImg");
         const placeholder = document.getElementById("placeholderNotif");
         if (p.imagen_url) {
@@ -360,7 +353,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
             resetPrevisualizador();
         }
-
         document.getElementById("formPanelTitle").textContent = "Editar Producto";
         btnSubmitForm.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Actualizar Cambios';
         formAgregarPostre.classList.remove("d-none");
@@ -373,8 +365,7 @@ if (agregarPostreForm) {
     agregarPostreForm.onsubmit = async (e) => {
         e.preventDefault();
         btnSubmitForm.disabled = true;
-        btnSubmitForm.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando e Hidratando...';
-
+        btnSubmitForm.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
         const fileInput = document.getElementById("fotoPostre");
         const file = fileInput.files[0];
         const formData = new FormData();
@@ -383,13 +374,11 @@ if (agregarPostreForm) {
         formData.append("descripcion", document.getElementById("descripcionPostre").value);
         formData.append("stock", document.getElementById("stockPostre").value);
         formData.append("categoria", "Postre");
-
         if (file) {
             const compressedBase64 = await compressImage(file);
             formData.append("foto_base64", compressedBase64);
             formData.append("foto_name", file.name);
         }
-        
         await enviarFormulario(formData);
         btnSubmitForm.disabled = false;
     };
@@ -430,7 +419,7 @@ document.addEventListener("click", () => initAudioContext(), { once: true });
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/static/js/workers/service-worker-gestion_productos.js')
-            .then(() => console.log('SW OK'))
-            .catch(err => console.error('SW Error', err));
+            .then(() => {})
+            .catch(() => {});
     });
 }
