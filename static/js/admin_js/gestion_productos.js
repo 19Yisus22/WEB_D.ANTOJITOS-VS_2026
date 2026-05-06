@@ -129,7 +129,15 @@ function showConfirmToast(msg, callback) {
 
 async function actualizarAlmacenamiento() {
     try {
-        const res = await fetch("/cloudinary_storage_info");
+        const timestamp = new Date().getTime();
+        const res = await fetch(`/cloudinary_storage_info?t=${timestamp}`, {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+        
         if (!res.ok) return;
         
         const data = await res.json();
