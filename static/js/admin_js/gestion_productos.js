@@ -130,21 +130,33 @@ function showConfirmToast(msg, callback) {
 async function actualizarAlmacenamiento() {
     try {
         const res = await fetch("/cloudinary_storage_info");
-        if (res.ok) {
-            const data = await res.json();
-            const progress = document.getElementById("storageProgressBar");
-            const text = document.getElementById("storageText");
-            if (progress && text) {
-                const percent = (data.used_gb / data.limit_gb) * 100;
-                const percentFixed = percent.toFixed(2);
-                progress.style.width = `${percentFixed}%`;
-                let usedDisplay = data.used_gb < 0.01 ? `${(data.used_gb * 1024).toFixed(2)} MB` : `${data.used_gb.toFixed(3)} GB`;
-                text.textContent = `${usedDisplay} / ${data.limit_gb} GB (${percentFixed}%)`;
-                progress.classList.remove("bg-success", "bg-warning", "bg-danger");
-                if (percent > 85) progress.classList.add("bg-danger");
-                else if (percent > 60) progress.classList.add("bg-warning");
-                else progress.classList.add("bg-success");
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        const progress = document.getElementById("storageProgressBar");
+        const text = document.getElementById("storageText");
+        
+        if (progress && text) {
+            const used = parseFloat(data.used_gb);
+            const limit = parseFloat(data.limit_gb);
+            
+            let percent = (used / limit) * 100;
+            if (used > 0 && percent < 0.5) percent = 0.5; 
+
+            let usedLabel;
+            if (used < 0.1) {
+                usedLabel = (used * 1024).toFixed(2) + " MB";
+            } else {
+                usedLabel = used.toFixed(2) + " GB";
             }
+
+            progress.style.width = percent.toFixed(2) + "%";
+            text.textContent = `${usedLabel} / ${limit.toFixed(1)} GB (${((used/limit)*100).toFixed(2)}%)`;
+
+            progress.classList.remove("bg-success", "bg-warning", "bg-danger");
+            if (percent > 85) progress.classList.add("bg-danger");
+            else if (percent > 60) progress.classList.add("bg-warning");
+            else progress.classList.add("bg-success");
         }
     } catch (e) {}
 }
