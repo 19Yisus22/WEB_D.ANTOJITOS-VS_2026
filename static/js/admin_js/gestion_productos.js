@@ -127,6 +127,55 @@ function showConfirmToast(msg, callback) {
     };
 }
 
+async function actualizarAlmacenamiento() {
+    try {
+        const res = await fetch("/cloudinary_storage_info");
+        if (res.ok) {
+            const data = await res.json();
+            const progress = document.getElementById("storageProgressBar");
+            const text = document.getElementById("storageText");
+            if (progress && text) {
+                const percent = (data.used_gb / data.limit_gb) * 100;
+                progress.style.width = `${percent}%`;
+                text.textContent = `${data.used_gb.toFixed(2)} GB / ${data.limit_gb} GB (${percent.toFixed(1)}%)`;
+                progress.className = "progress-bar " + (percent > 85 ? "bg-danger" : percent > 60 ? "bg-warning" : "bg-success");
+            }
+        }
+    } catch (e) { console.error("Storage check error"); }
+}
+
+async function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality).split(',')[1]);
+            };
+        };
+    });
+}
+
 async function cargarPostres(silent = false) {
     if (isUpdating && !silent) return;
     isUpdating = true;
@@ -139,6 +188,7 @@ async function cargarPostres(silent = false) {
             localStorage.setItem('postresCache', JSON.stringify(postres));
             renderPostres();
         }
+        await actualizarAlmacenamiento();
     } catch (error) {
         console.error("Sync error");
     } finally {
@@ -212,47 +262,11 @@ function abrirModalPostre(index) {
 function resetPrevisualizador() {
     const previewImg = document.getElementById("previewNotificacionImg");
     const placeholder = document.getElementById("placeholderNotif");
-    const progressWrapper = document.getElementById("progressWrapper");
     if (previewImg && placeholder) {
         previewImg.src = "";
         previewImg.classList.add("d-none");
         placeholder.classList.remove("d-none");
     }
-    if (progressWrapper) progressWrapper.classList.add("d-none");
-    const bar = document.getElementById("progressBarSubida");
-    if (bar) {
-        bar.style.width = "0%";
-        bar.textContent = "";
-    }
-}
-
-async function comprimirImagen(archivo) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(archivo);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const canvas = document.createElement("canvas");
-                let width = img.width;
-                let height = img.height;
-                const max = 1200;
-                if (width > height) {
-                    if (width > max) { height *= max / width; width = max; }
-                } else {
-                    if (height > max) { width *= max / height; height = max; }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0, width, height);
-                canvas.toBlob((blob) => {
-                    resolve(blob);
-                }, "image/jpeg", 0.7);
-            };
-        };
-    });
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -265,40 +279,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     
     await cargarPostres();
-    setInterval(() => cargarPostres(true), 10000);
+    setInterval(() => cargarPostres(true), 15000);
 
     const inputFoto = document.getElementById("fotoPostre");
     if (inputFoto) {
-        inputFoto.addEventListener("change", async function() {
+        inputFoto.addEventListener("change", function() {
             const previewImg = document.getElementById("previewNotificacionImg");
             const placeholder = document.getElementById("placeholderNotif");
-            const progressWrapper = document.getElementById("progressWrapper");
-            const progressBar = document.getElementById("progressBarSubida");
-            const infoEspacio = document.getElementById("infoEspacioImagen");
-
             if (this.files && this.files[0]) {
-                const originalFile = this.files[0];
-                const originalSize = (originalFile.size / 1024).toFixed(2);
-                
-                progressWrapper.classList.remove("d-none");
-                progressBar.style.width = "50%";
-                progressBar.textContent = "Comprimiendo...";
-
-                const blobComprimido = await comprimirImagen(originalFile);
-                const compressedSize = (blobComprimido.size / 1024).toFixed(2);
-                
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     previewImg.src = e.target.result;
                     previewImg.classList.remove("d-none");
                     placeholder.classList.add("d-none");
-                    progressBar.style.width = "100%";
-                    progressBar.textContent = "¡Listo!";
-                    infoEspacio.innerHTML = `Original: ${originalSize}KB | Comprimido: <strong>${compressedSize}KB</strong>`;
-                    setTimeout(() => progressWrapper.classList.add("d-none"), 2000);
                 };
-                reader.readAsDataURL(blobComprimido);
-                this.compressedBlob = blobComprimido;
+                reader.readAsDataURL(this.files[0]);
             } else {
                 resetPrevisualizador();
             }
@@ -377,25 +372,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 if (agregarPostreForm) {
     agregarPostreForm.onsubmit = async (e) => {
         e.preventDefault();
+        btnSubmitForm.disabled = true;
+        btnSubmitForm.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando e Hidratando...';
+
         const fileInput = document.getElementById("fotoPostre");
-        const file = fileInput.compressedBlob || fileInput.files[0];
+        const file = fileInput.files[0];
         const formData = new FormData();
         formData.append("nombre", document.getElementById("nombrePostre").value);
         formData.append("precio", document.getElementById("precioPostre").value);
         formData.append("descripcion", document.getElementById("descripcionPostre").value);
         formData.append("stock", document.getElementById("stockPostre").value);
         formData.append("categoria", "Postre");
+
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-                formData.append("foto_base64", reader.result.split(",")[1]);
-                formData.append("foto_name", fileInput.files[0].name);
-                await enviarFormulario(formData);
-            };
-            reader.readAsDataURL(file);
-        } else {
-            await enviarFormulario(formData);
+            const compressedBase64 = await compressImage(file);
+            formData.append("foto_base64", compressedBase64);
+            formData.append("foto_name", file.name);
         }
+        
+        await enviarFormulario(formData);
+        btnSubmitForm.disabled = false;
     };
 }
 
