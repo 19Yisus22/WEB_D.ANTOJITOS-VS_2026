@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const acceso = await verificarAccesoAdmin();
     if (!acceso) return;
 
+    await actualizarAlmacenamiento();
     cargarMetodosDesdeHTML();
 
     const archivoQR = document.getElementById('archivoQR');
@@ -15,7 +16,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         archivoQR.addEventListener('change', async function() {
             if (this.files && this.files[0]) {
                 const optimizedFile = await procesarImagenOptimizada(this.files[0]);
-                
                 const dt = new DataTransfer();
                 dt.items.add(optimizedFile);
                 this.files = dt.files;
@@ -23,118 +23,52 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const reader = new FileReader();
                 reader.onload = (e) => { 
                     document.getElementById('previewPagoImg').src = e.target.result; 
+                    document.getElementById('previewPagoImg').classList.remove('d-none');
+                    document.getElementById('placeholderQR').classList.add('d-none');
                 };
                 reader.readAsDataURL(optimizedFile);
             }
         });
     }
 
-    const btnGuardar = document.getElementById('btnGuardarPagos');
-    if (btnGuardar) btnGuardar.addEventListener('click', guardarCambiosPagos);
-
-    const btnAgregar = document.getElementById('btnAgregarTemporal');
-    if (btnAgregar) btnAgregar.addEventListener('click', agregarMetodoPago);
-
+    document.getElementById('btnGuardarPagos')?.addEventListener('click', guardarCambiosPagos);
+    document.getElementById('btnAgregarTemporal')?.addEventListener('click', agregarMetodoPago);
     document.addEventListener('click', () => initAudioContext(), { once: true });
 });
 
 async function verificarAccesoAdmin() {
     try {
-        const res = await fetch("/facturacion_page", {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        
+        const res = await fetch("/facturacion_page", { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         if (res.status === 401 || res.status === 403) {
-            document.body.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
-                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
-                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
-                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
-                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                        <br>
-                        <i><small style="color: #555;">Redirigiendo...</small></i>
-                        <br><br>
-                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
-                    </div>
-                </div>
-                <style>
-                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-                </style>`;
-            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
+            window.location.href = "/inicio";
             return false;
         }
         return true;
-    } catch (e) {
-        return false;
-    }
+    } catch (e) { return false; }
 }
 
-function initAudioContext() {
-    if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) audioCtx = new AudioContextClass();
-    }
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-}
-
-function playNotificationSound(isError = false) {
+async function actualizarAlmacenamiento() {
     try {
-        initAudioContext();
-        if (!audioCtx) return;
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        if (isError) {
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.3);
-        } else {
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(500, audioCtx.currentTime + 0.1);
-            gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.15);
+        const timestamp = new Date().getTime();
+        const res = await fetch(`/cloudinary_storage_info?t=${timestamp}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const progress = document.getElementById("storageProgressBar");
+        const text = document.getElementById("storageText");
+        if (progress && text) {
+            const used = parseFloat(data.used_gb);
+            const limit = parseFloat(data.limit_gb);
+            let percent = (used / limit) * 100;
+            if (used > 0 && percent < 0.5) percent = 0.5;
+            let usedLabel = used < 0.1 ? (used * 1024).toFixed(2) + " MB" : used.toFixed(2) + " GB";
+            progress.style.width = percent.toFixed(2) + "%";
+            text.textContent = `${usedLabel} / ${limit.toFixed(1)} GB (${((used/limit)*100).toFixed(2)}%)`;
+            progress.classList.remove("bg-success", "bg-warning", "bg-danger");
+            if (percent > 85) progress.classList.add("bg-danger");
+            else if (percent > 60) progress.classList.add("bg-warning");
+            else progress.classList.add("bg-success");
         }
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
     } catch (e) {}
-}
-
-function showMessage(msg, isError = false) {
-    playNotificationSound(isError);
-    let container = document.getElementById('toastContainer');
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toastContainer";
-        document.body.appendChild(container);
-    }
-    const toast = document.createElement('div');
-    toast.className = 'custom-toast';
-    const color = isError ? "#ff4757" : "#d35400";
-    const icon = isError ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill';
-    
-    toast.style.borderLeft = `6px solid ${color}`;
-    toast.innerHTML = `
-        <div class="toast-content">
-            <div class="toast-icon-wrapper" style="color: ${color}">
-                <i class="bi ${icon}"></i>
-            </div>
-            <div class="toast-text">
-                <div class="toast-main-text">${msg}</div>
-            </div>
-        </div>
-    `;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.add('hide');
-        setTimeout(() => toast.remove(), 500);
-    }, 4000);
 }
 
 async function procesarImagenOptimizada(file) {
@@ -159,44 +93,48 @@ async function procesarImagenOptimizada(file) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 canvas.toBlob((blob) => {
-                    const optimizedFile = new File([blob], file.name, {
-                        type: "image/jpeg",
-                        lastModified: Date.now()
-                    });
-                    actualizarIndicadorEspacio(blob.size);
-                    resolve(optimizedFile);
+                    resolve(new File([blob], file.name.split('.')[0] + ".jpg", { type: "image/jpeg", lastModified: Date.now() }));
                 }, "image/jpeg", QUALITY);
             };
         };
     });
 }
 
-function actualizarIndicadorEspacio(nuevoTamanoBytes = 0) {
-    const limiteTotal = 5 * 1024 * 1024;
-    let usado = 0;
+function initAudioContext() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playNotificationSound(isError = false) {
     try {
-        const datosCargados = JSON.stringify(metodosPagoArray);
-        usado = new Blob([datosCargados]).size + nuevoTamanoBytes;
-    } catch (e) {
-        usado = nuevoTamanoBytes;
-    }
-    const restante = Math.max(0, limiteTotal - usado);
-    const porcentaje = (usado / limiteTotal) * 100;
-    const infoEspacio = document.getElementById('infoEspacioAlmacenamiento');
-    if (infoEspacio) {
-        const restanteMB = (restante / (1024 * 1024)).toFixed(2);
-        infoEspacio.innerHTML = `
-            <div class="mt-3 p-3 border rounded bg-white shadow-sm" style="animation: slideInUp 0.4s ease;">
-                <div class="d-flex justify-content-between mb-2">
-                    <small class="fw-bold text-dark">ALMACENAMIENTO DISPONIBLE</small>
-                    <small class="text-muted fw-bold">${restanteMB} MB</small>
-                </div>
-                <div class="progress" style="height: 8px; border-radius: 10px; background: #eee;">
-                    <div class="progress-bar ${porcentaje > 80 ? 'bg-danger' : 'bg-success'}" 
-                         role="progressbar" style="width: ${porcentaje}%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);"></div>
-                </div>
-            </div>`;
-    }
+        initAudioContext();
+        if (!audioCtx) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = isError ? 'sawtooth' : 'sine';
+        oscillator.frequency.setValueAtTime(isError ? 300 : 1000, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.15);
+    } catch (e) {}
+}
+
+function showMessage(msg, isError = false) {
+    playNotificationSound(isError);
+    let container = document.getElementById('toastContainer') || document.createElement("div");
+    if (!container.id) { container.id = "toastContainer"; document.body.appendChild(container); }
+    const toast = document.createElement('div');
+    toast.className = 'custom-toast';
+    const color = isError ? "#ff4757" : "#d35400";
+    toast.style.borderLeft = `6px solid ${color}`;
+    toast.innerHTML = `<div class="toast-content"><div class="toast-text"><div class="toast-main-text">${msg}</div></div></div>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 500); }, 4000);
 }
 
 function cargarMetodosDesdeHTML() {
@@ -210,7 +148,6 @@ function cargarMetodosDesdeHTML() {
                 url_actual: m.qr_url, cambio_img: false, file: null
             }));
             renderizarLista();
-            actualizarIndicadorEspacio();
         } catch (e) { metodosPagoArray = []; }
     }
 }
@@ -244,7 +181,6 @@ function agregarMetodoPago() {
     }
     resetearFormulario();
     renderizarLista();
-    actualizarIndicadorEspacio();
 }
 
 function renderizarLista() {
@@ -256,7 +192,7 @@ function renderizarLista() {
     preview.innerHTML = "";
 
     if (metodosPagoArray.length === 0) {
-        lista.innerHTML = `<div class="col-12 text-center text-muted py-3"><i class="bi bi-inbox fs-4"></i><p class="mt-2 mb-0">No hay métodos de pago</p></div>`;
+        lista.innerHTML = `<div class="col-12 text-center text-muted py-3"><p class="mt-2 mb-0">No hay métodos de pago</p></div>`;
         return;
     }
 
@@ -301,6 +237,8 @@ function editarMetodo(index) {
     document.getElementById('numeroCuenta').value = m.numero;
     document.getElementById('titularCuenta').value = m.titular;
     document.getElementById('previewPagoImg').src = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
+    document.getElementById('previewPagoImg').classList.remove('d-none');
+    document.getElementById('placeholderQR').classList.add('d-none');
 
     const btn = document.getElementById('btnAgregarTemporal');
     btn.innerHTML = `<i class="bi bi-check-circle"></i> ACTUALIZAR EN LISTA`;
@@ -312,7 +250,6 @@ function eliminarFila(index) {
     metodosPagoArray.splice(index, 1);
     if (editIndex === index) resetearFormulario();
     renderizarLista();
-    actualizarIndicadorEspacio();
 }
 
 async function guardarCambiosPagos() {
@@ -337,10 +274,9 @@ async function guardarCambiosPagos() {
         const data = await res.json();
         if (data.ok) {
             showMessage("¡Configuración guardada!");
+            await actualizarAlmacenamiento();
             setTimeout(() => location.reload(), 1500);
-        } else {
-            throw new Error(data.error);
-        }
+        } else { throw new Error(data.error); }
     } catch (e) {
         showMessage(e.message, true);
         btn.disabled = false;
@@ -353,7 +289,9 @@ function resetearFormulario() {
     document.getElementById('numeroCuenta').value = "";
     document.getElementById('titularCuenta').value = "";
     document.getElementById('archivoQR').value = "";
-    document.getElementById('previewPagoImg').src = IMG_DEFAULT;
+    document.getElementById('previewPagoImg').src = "";
+    document.getElementById('previewPagoImg').classList.add('d-none');
+    document.getElementById('placeholderQR').classList.remove('d-none');
     const btn = document.getElementById('btnAgregarTemporal');
     btn.innerHTML = `<i class="bi bi-node-plus-fill"></i> Agregar a Lista`;
     btn.className = "btn btn-primary w-100 py-3 shadow-sm";
@@ -366,20 +304,5 @@ function getBadgeClass(entidad) {
 
 (function() {
     window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() {
-        window.history.pushState(null, "", window.location.href);
-    };
-    window.onpageshow = function(event) {
-        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-            window.location.reload();
-        }
-    };
+    window.onpopstate = function() { window.history.pushState(null, "", window.location.href); };
 })();
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/js/workers/service-worker-zona_pagos.js')
-        .then(() => console.log('SW OK'))
-        .catch(() => console.log('SW Error'));
-    });
-}
