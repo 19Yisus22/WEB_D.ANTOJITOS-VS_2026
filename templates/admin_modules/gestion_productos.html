@@ -7,156 +7,189 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style_gestion_productos.css') }}">
 </head>
 <body class="d-flex flex-column min-vh-100">
     {% include 'global_modules/navbar.html' %}
     
     {% if session.get('user_id') and session.get('rol') == 'admin' %}
-    <main class="flex-grow-1 py-4">
-        <div class="container-fluid container-lg">
+    <main class="flex-grow-1 py-5">
+        <div class="container-fluid px-4 px-md-5">
 
-            <div class="card-title-marketing text-center mb-4">
-                <h3 class="fw-bold m-0"><i class="bi bi-box-seam me-2"></i>Panel de Productos</h3>
-                <p class="text-white-50 mb-0 small">GESTIONA TUS PRODUCTOS</p>
+            <div class="card-title-marketing text-center mb-5">
+                <h3 class="display-6 fw-extrabold m-0"><i class="bi bi-box-seam-fill me-3"></i>Gestión de Inventario</h3>
+                <p class="text-white-50 mb-0 mt-2 letter-spacing-2">ADMINISTRACIÓN CENTRAL DE PRODUCTOS</p>
             </div>
 
-            <div class="d-flex justify-content-end mb-4">
-                <button class="btn btn-primary shadow-sm" id="btnAgregarPostre">
-                    <i class="bi bi-plus-circle-fill me-2"></i>Nuevo Postre
+            <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+                <div class="search-wrapper flex-grow-1">
+                    <div class="input-group input-group-lg shadow-smooth">
+                        <span class="input-group-text border-0 bg-white"><i class="bi bi-search text-primary"></i></span>
+                        <input type="text" id="searchProductos" class="form-control border-0 shadow-none" placeholder="Buscar productos por nombre, descripción...">
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-lg shadow-primary px-5" id="btnAgregarPostre">
+                    <i class="bi bi-plus-lg me-2"></i>Añadir Nuevo Producto
                 </button>
             </div>
 
             <div id="formAgregarPostre" class="form-panel mb-5 d-none">
-                <div class="p-4 bg-white border rounded shadow-sm">
-                    <h4 class="mb-4 text-primary" id="formPanelTitle">Configuración de Producto</h4>
+                <div class="p-5 bg-white border-0 rounded-4 shadow-lg-smooth">
+                    <h4 class="mb-4 fw-bold text-dark d-flex align-items-center" id="formPanelTitle">
+                        <span class="indicator-dot me-3"></span>Configuración de Producto
+                    </h4>
                     <form id="agregarPostreForm" enctype="multipart/form-data">
-                        <div class="row g-3">
-                            <div class="col-12 col-md-8">
-                                <div class="row g-3">
+                        <div class="row g-4">
+                            <div class="col-12 col-xl-8">
+                                <div class="row g-4">
                                     <div class="col-12">
-                                        <label class="form-label fw-bold small">Nombre del Postre</label>
-                                        <input type="text" id="nombrePostre" class="form-control shadow-none" placeholder="Ej: Torta de Chocolate" required>
+                                        <label class="form-label-custom">Nombre del Postre</label>
+                                        <input type="text" id="nombrePostre" class="form-control-custom shadow-none" placeholder="Ej: Torta de Chocolate Premium" required>
                                     </div>
-                                    <div class="col-6">
-                                        <label class="form-label fw-bold small">Precio (COP)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">$</span>
-                                            <input type="number" id="precioPostre" class="form-control shadow-none" placeholder="0" min="0" required>
+                                    <div class="col-md-6">
+                                        <label class="form-label-custom">Precio Unitario (COP)</label>
+                                        <div class="input-group-custom">
+                                            <span class="prefix">$</span>
+                                            <input type="number" id="precioPostre" class="form-control-custom shadow-none" placeholder="0" min="0" required>
                                         </div>
                                     </div>
-                                    <div class="col-6">
-                                        <label class="form-label fw-bold small">Stock</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-boxes"></i></span>
-                                            <input type="number" id="stockPostre" class="form-control shadow-none" placeholder="0" min="0" required>
+                                    <div class="col-md-6">
+                                        <label class="form-label-custom">Unidades en Stock</label>
+                                        <div class="input-group-custom">
+                                            <span class="prefix"><i class="bi bi-boxes"></i></span>
+                                            <input type="number" id="stockPostre" class="form-control-custom shadow-none" placeholder="0" min="0" required>
                                         </div>
                                     </div>
                                     <div class="col-12">
-                                        <label class="form-label fw-bold small">Descripción</label>
-                                        <textarea id="descripcionPostre" class="form-control shadow-none" rows="3" placeholder="Detalles del postre..." required></textarea>
+                                        <label class="form-label-custom">Descripción Detallada</label>
+                                        <textarea id="descripcionPostre" class="form-control-custom shadow-none" rows="4" placeholder="Escribe los ingredientes o detalles especiales del producto..." required></textarea>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="col-12 col-md-4 text-center">
-                                <label class="form-label fw-bold small">Imagen del Producto</label>
-                                <div id="previewNotificacion" class="preview-img-box mb-3 d-flex align-items-center justify-content-center border rounded-4 bg-light overflow-hidden shadow-sm" style="height: 210px; border: 2px dashed #cbd5e0 !important; position: relative; transition: all 0.3s ease;">
-                                    <div id="placeholderNotif" class="text-center text-muted">
-                                        <i class="bi bi-image" style="font-size: 3rem; color: #cbd5e0; display: block; margin-bottom: 5px;"></i>
-                                        <span class="fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Seleccionar Imagen</span>
+                            <div class="col-12 col-xl-4 text-center">
+                                <label class="form-label-custom">Imagen Representativa</label>
+                                <div id="previewNotificacion" class="preview-img-container mb-3 shadow-smooth">
+                                    <div id="placeholderNotif" class="preview-placeholder">
+                                        <i class="bi bi-cloud-arrow-up"></i>
+                                        <span>Cargar Imagen</span>
                                     </div>
-                                    <img id="previewNotificacionImg" src="" alt="Vista previa" class="w-100 h-100 d-none" style="object-fit: contain; background: #f8fafc;">
+                                    <img id="previewNotificacionImg" src="" alt="Vista previa" class="d-none img-preview-final">
                                 </div>
-                                <input type="file" id="fotoPostre" class="form-control form-control-sm shadow-none" accept="image/*">
+                                <input type="file" id="fotoPostre" class="form-control file-input-custom shadow-none" accept="image/*">
                             </div>
                         </div>
                         
-                        <div class="d-flex gap-2 mt-4">
-                            <button type="submit" id="btnSubmitForm" class="btn btn-success flex-grow-1 fw-bold py-2">
-                                <i class="bi bi-save2 me-2"></i>Guardar Cambios
+                        <div class="d-flex gap-3 mt-5 flex-wrap">
+                            <button type="submit" id="btnSubmitForm" class="btn btn-success btn-lg flex-grow-1 shadow-success py-3">
+                                <i class="bi bi-check-circle-fill me-2"></i>Confirmar y Guardar
                             </button>
-                            <button type="button" class="btn btn-secondary px-4 fw-bold" id="btnCancelar">
-                                <i class="bi bi-x-circle me-1"></i>Cancelar
+                            <button type="button" class="btn btn-light btn-lg px-5 border py-3" id="btnCancelar">
+                                <i class="bi bi-x-lg me-2"></i>Descartar
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <div id="avisoAgotados" class="alert alert-warning d-none mb-4 shadow-sm border-0">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                Atención: Hay productos agotados en tu inventario.
-            </div>
-
-            <div class="row g-3 mb-5" id="statsRow">
-                <div class="col-4">
-                    <div class="card p-3 text-center shadow-sm border-0 bg-white">
-                        <span class="h4 d-block mb-0 text-primary fw-bold" id="statTotalNum">0</span>
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total</small>
-                    </div>
-                </div>
-                <div class="col-4">
-                    <div class="card p-3 text-center shadow-sm border-0 border-start border-success border-4 bg-white">
-                        <span class="h4 d-block mb-0 text-success fw-bold" id="statDispNum">0</span>
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Disponibles</small>
-                    </div>
-                </div>
-                <div class="col-4">
-                    <div class="card p-3 text-center shadow-sm border-0 border-start border-danger border-4 bg-white">
-                        <span class="h4 d-block mb-0 text-danger fw-bold" id="statAgotNum">0</span>
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Agotados</small>
+            <div id="avisoAgotados" class="alert-custom-warning d-none mb-5">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-octagon-fill me-3 fs-4"></i>
+                    <div>
+                        <strong class="d-block">Inventario Crítico</strong>
+                        <span>Existen productos con stock en cero que requieren reposición inmediata.</span>
                     </div>
                 </div>
             </div>
 
-            <div class="input-group mb-4 shadow-sm rounded-3 overflow-hidden">
-                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                <input type="text" id="searchProductos" class="form-control border-start-0 shadow-none" placeholder="Buscar por nombre...">
+            <div class="row g-4 mb-5" id="statsRow">
+                <div class="col-12 col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-soft-primary"><i class="bi bi-layers"></i></div>
+                        <div class="stat-info">
+                            <h2 id="statTotalNum">0</h2>
+                            <p>Total Productos</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-soft-success"><i class="bi bi-check-all"></i></div>
+                        <div class="stat-info">
+                            <h2 id="statDispNum">0</h2>
+                            <p>Disponibles</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="stat-card border-critical">
+                        <div class="stat-icon bg-soft-danger"><i class="bi bi-dash-circle"></i></div>
+                        <div class="stat-info">
+                            <h2 id="statAgotNum">0</h2>
+                            <p>Agotados</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <section class="mb-5">
-                <div class="border-bottom pb-2 mb-4">
-                    <h5 class="fw-bold text-dark"><i class="bi bi-check2-circle text-success me-2"></i>Productos Disponibles</h5>
+            <section class="section-container mb-5">
+                <div class="section-header mb-4">
+                    <h5 class="m-0"><i class="bi bi-circle-fill text-success me-3 fs-small"></i>Catálogo Activo</h5>
+                    <div class="line"></div>
                 </div>
-                <div id="listaPostresDisponibles" class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4"></div>
-                <div id="emptyDisponibles" class="text-center py-5 d-none">
-                    <p class="text-muted">No hay productos en inventario activo</p>
+                <div id="listaPostresDisponibles" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4"></div>
+                <div id="emptyDisponibles" class="empty-state py-5 d-none">
+                    <i class="bi bi-archive mb-3 d-block fs-1 opacity-25"></i>
+                    <p>No se encontraron productos activos</p>
                 </div>
             </section>
 
-            <section class="mb-5">
-                <div class="border-bottom pb-2 mb-4">
-                    <h5 class="fw-bold text-dark"><i class="bi bi-x-circle text-danger me-2"></i>Productos Agotados</h5>
+            <section class="section-container mb-5">
+                <div class="section-header mb-4">
+                    <h5 class="m-0"><i class="bi bi-circle-fill text-danger me-3 fs-small"></i>Fuera de Stock</h5>
+                    <div class="line"></div>
                 </div>
-                <div id="listaPostresAgotados" class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4"></div>
-                <div id="emptyAgotados" class="text-center py-5 d-none">
-                    <p class="text-muted">Sin productos agotados</p>
+                <div id="listaPostresAgotados" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4"></div>
+                <div id="emptyAgotados" class="empty-state py-5 d-none">
+                    <i class="bi bi-emoji-smile mb-3 d-block fs-1 opacity-25"></i>
+                    <p>Todo el inventario cuenta con existencias</p>
                 </div>
             </section>
         </div>
     </main>
 
     <div class="modal fade" id="modalPostre" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header border-0 bg-light">
-                    <h5 class="modal-title fw-bold" id="modalNombre">Detalle</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <img id="modalFoto" class="img-fluid rounded-4 mb-3 shadow-sm w-100" style="height: 250px; object-fit: contain; background: #f8fafc;">
-                    <h4 class="text-primary fw-bold" id="modalNombreH3"></h4>
-                    <p class="text-muted small" id="modalDescripcion"></p>
-                    <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-3 mt-3">
-                        <span class="h4 mb-0 text-dark fw-bold" id="modalPrecio"></span>
-                        <span class="badge bg-secondary p-2 px-3" id="modalStock"></span>
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-2xl overflow-hidden rounded-4">
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-6">
+                            <div class="modal-img-container h-100">
+                                <img id="modalFoto" src="" class="w-100 h-100">
+                            </div>
+                        </div>
+                        <div class="col-md-6 p-5">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="badge-status" id="modalStock"></span>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <h2 class="fw-extrabold text-dark mb-3" id="modalNombreH3"></h2>
+                            <p class="text-muted mb-4 fs-5" id="modalDescripcion"></p>
+                            <div class="price-box mb-5">
+                                <small class="text-uppercase fw-bold text-muted d-block mb-1">Precio Actual</small>
+                                <span class="display-6 fw-bold text-primary" id="modalPrecio"></span>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-warning btn-lg fw-bold py-3 shadow-warning" id="btnEditar">
+                                    <i class="bi bi-pencil-square me-2"></i>Modificar Información
+                                </button>
+                                <button class="btn btn-link text-danger fw-bold mt-2" id="btnEliminar">
+                                    Eliminar de la Base de Datos
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button class="btn btn-warning w-100 mb-2 fw-bold" id="btnEditar">Editar Registro</button>
-                    <button class="btn btn-outline-danger w-100 fw-bold" id="btnEliminar">Eliminar Permanentemente</button>
                 </div>
             </div>
         </div>
