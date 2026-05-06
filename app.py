@@ -92,6 +92,23 @@ def delete_image_from_cloudinary(public_url):
     except:
         return False
 
+@app.route("/cloudinary_storage_info")
+@sin_cache
+def cloudinary_storage_info():
+    if not session.get('user_id') or session.get('rol') != 'admin':
+        return jsonify({"error": "No autorizado"}), 403
+    try:
+        from cloudinary import api
+        usage = api.usage()
+        plan_limit = usage['resources']['limit'] / (1024 ** 3) if 'resources' in usage else 25.0
+        plan_used = usage['resources']['usage'] / (1024 ** 3) if 'resources' in usage else 0.0
+        return jsonify({
+            "used_gb": round(plan_used, 6),
+            "limit_gb": round(plan_limit, 2)
+        })
+    except:
+        return jsonify({"used_gb": 0, "limit_gb": 25}), 200
+
 def hash_password(contrasena, salt=None):
     if not salt:
         salt = os.urandom(16).hex()
@@ -209,7 +226,8 @@ def registro_google():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 401
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
+
 def login():
     if request.method == "GET":
         if "user_id" in session:
@@ -243,7 +261,8 @@ def login():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
-@app.route("/registro", methods=["GET", "POST"])
+@app.route("/registro", methods=["GET", "POST"])
+
 def registro():
     if request.method == "GET":
         return render_template("global_modules/registro.html")
