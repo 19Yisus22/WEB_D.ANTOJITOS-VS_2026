@@ -129,15 +129,7 @@ function showConfirmToast(msg, callback) {
 
 async function actualizarAlmacenamiento() {
     try {
-        const timestamp = new Date().getTime();
-        const res = await fetch(`/cloudinary_storage_info?t=${timestamp}`, {
-            method: 'GET',
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
-        });
-        
+        const res = await fetch(`/cloudinary_storage_info?t=${new Date().getTime()}`);
         if (!res.ok) return;
         
         const data = await res.json();
@@ -145,33 +137,36 @@ async function actualizarAlmacenamiento() {
         const text = document.getElementById("storageText");
         
         if (circle && text) {
-            const used = parseFloat(data.used_gb);
-            const limit = parseFloat(data.limit_gb);
+            const used = parseFloat(data.used_gb) || 0;
+            const limit = parseFloat(data.limit_gb) || 25;
+            const percent = Math.min((used / limit) * 100, 100);
             
-            let percent = (used / limit) * 100;
-            if (used > 0 && percent < 0.5) percent = 0.5; 
-
-            let usedLabel;
-            if (used < 0.1) {
-                usedLabel = (used * 1024).toFixed(2) + " MB";
-            } else {
-                usedLabel = used.toFixed(2) + " GB";
-            }
-
-            const circumference = 125.66;
-            const offset = circumference - (percent / 100 * circumference);
+            const radius = circle.r.baseVal.value;
+            const circumference = 2 * Math.PI * radius;
+            
+            circle.style.strokeDasharray = `${circumference}`;
+            const offset = circumference - (percent / 100) * circumference;
             circle.style.strokeDashoffset = offset;
+            
+            let label = used < 0.1 ? (used * 1024).toFixed(1) + " MB" : used.toFixed(2) + " GB";
+            text.textContent = `${label} / ${limit} GB`;
 
-            text.textContent = `${usedLabel} / ${limit.toFixed(1)} GB (${percent.toFixed(2)}%)`;
-
-            circle.style.stroke = percent > 85 ? "#dc3545" : percent > 60 ? "#ffc107" : "#28a745";
+            const wrapper = document.getElementById('storageWrapper');
+            if (wrapper) {
+                const tooltipText = `Uso: ${label} / ${limit} GB (${percent.toFixed(1)}%)`;
+                wrapper.setAttribute('title', tooltipText);
+                const tooltip = bootstrap.Tooltip.getInstance(wrapper) || new bootstrap.Tooltip(wrapper);
+                tooltip.setContent({ '.tooltip-inner': tooltipText });
+            }
         }
-    } catch (e) {}
+    } catch (e) {
+        console.error("Error al obtener storage:", e);
+    }
 }
 
 function showStorageDetails() {
     const text = document.getElementById("storageText");
-    if (text) {
+    if (text && text.textContent !== "Cargando...") {
         alert(`Detalles del Almacenamiento:\n${text.textContent}`);
     }
 }

@@ -93,34 +93,6 @@ def delete_image_from_cloudinary(public_url):
     except:
         return False
 
-@app.route("/cloudinary_storage_info")
-def cloudinary_storage_info():
-    if not session.get('user_id') or session.get('rol') != 'admin':
-        return jsonify({"error": "No autorizado"}), 403
-    try:
-        from cloudinary import api
-        usage = api.usage()
-        
-        storage_data = usage.get('storage', {})
-        used_bytes = storage_data.get('usage', 0)
-        limit_bytes = storage_data.get('limit', 0)
-
-        used_gb = used_bytes / (1024 ** 3)
-        limit_gb = limit_bytes / (1024 ** 3)
-
-        if limit_gb == 0: limit_gb = 25.0
-
-        response = make_response(jsonify({
-            "used_gb": used_gb,
-            "limit_gb": round(limit_gb, 2)
-        }))
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-        return response
-    except:
-        return jsonify({"used_gb": 0, "limit_gb": 25}), 200
-
 def hash_password(contrasena, salt=None):
     if not salt:
         salt = os.urandom(16).hex()
@@ -174,6 +146,34 @@ def agregar_cabeceras(response):
 def obtener_cliente_id():
     cliente_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
     return jsonify({"client_id": cliente_id})
+
+@app.route("/cloudinary_storage_info")
+def cloudinary_storage_info():
+    if not session.get('user_id') or session.get('rol') != 'admin':
+        return jsonify({"error": "No autorizado"}), 403
+    try:
+        from cloudinary import api
+        usage = api.usage()
+        
+        storage_data = usage.get('storage', {})
+        used_bytes = storage_data.get('usage', 0)
+        limit_bytes = storage_data.get('limit', 0)
+
+        used_gb = used_bytes / (1024 ** 3)
+        limit_gb = limit_bytes / (1024 ** 3)
+
+        if limit_gb == 0: limit_gb = 25.0
+
+        response = make_response(jsonify({
+            "used_gb": used_gb,
+            "limit_gb": round(limit_gb, 2)
+        }))
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+    except:
+        return jsonify({"used_gb": 0, "limit_gb": 25}), 200
 
 
 # MÓDULO DE AUTH E INICIO SESIÓN
@@ -298,7 +298,6 @@ def login():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @app.route("/registro", methods=["GET", "POST"])
-
 def registro():
     if request.method == "GET":
         return render_template("global_modules/registro.html")
@@ -973,11 +972,13 @@ def finalizar_compra():
         return jsonify({"message": str(e), "ok": False}), 500
 
 
-# MÓDULO DE FACTURAS
+# MÓDULO DE HISTORIAL DE FACTURAS
 
 @app.route("/gestionar_facturas_page")
 @sin_cache
 def gestionar_facturas_page():
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
     return render_template("general_modules/facturas.html")
 
 @app.route("/buscar_facturas_page", methods=["GET"])
@@ -992,7 +993,7 @@ def buscar_facturas_page():
             .eq("cedula", cedula) \
             .execute()
         
-        if not usuario_res.data or len(usuario_res.data) == 0:
+        if not usuario_res.data:
             return jsonify([]), 200
             
         cliente = usuario_res.data[0]
@@ -1040,7 +1041,6 @@ def buscar_facturas_page():
         return jsonify(facturas_lista), 200
         
     except Exception as e:
-        print(f"Error critico en buscar_facturas_page: {str(e)}")
         return jsonify({"error": "Error interno del servidor", "details": str(e)}), 500
 
 @app.route("/obtener_facturas_page", methods=["GET"])
@@ -1048,6 +1048,7 @@ def obtener_facturas_page():
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "Debe iniciar sesión"}), 401
+        
     try:
         facturas_res = supabase.table("facturas") \
             .select("*, usuarios(cedula)") \
@@ -1058,19 +1059,19 @@ def obtener_facturas_page():
         resultado = []
         for f in (facturas_res.data or []):
             detalles_res = supabase.table("pedido_detalle") \
-                .select("*, productos(nombre_producto, imagen)") \
+                .select("*, gestion_productos(nombre, imagen_url)") \
                 .eq("id_pedido", f.get("id_pedido")) \
                 .execute()
             
             productos = []
             for d in (detalles_res.data or []):
-                prod = d.get("productos") or {}
+                prod = d.get("gestion_productos") or {}
                 productos.append({
-                    "nombre_producto": prod.get("nombre_producto", "Producto"),
+                    "nombre_producto": prod.get("nombre", "Producto"),
                     "cantidad": d.get("cantidad", 0),
                     "precio_unitario": float(d.get("precio_unitario") or 0),
                     "subtotal": float(d.get("subtotal") or 0),
-                    "imagen": prod.get("imagen") or "/static/uploads/default.png"
+                    "imagen": prod.get("imagen_url") or "/static/uploads/default.png"
                 })
             
             resultado.append({
@@ -1743,7 +1744,7 @@ def zona_pagos():
     if not session.get("user_id") or session.get("rol") != "admin":
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.method == "POST":
             return jsonify({"error": "No autorizado"}), 401
-        return render_template("admin_modules/zona_pagos.html", metodos=[])
+        return render_template("admin_modules/facturacion.html", metodos=[])
         
     if request.method == "POST":
         try:
@@ -1800,7 +1801,7 @@ def zona_pagos():
     except Exception as e:
         metodos_db = []
 
-    return render_template("admin_modules/zona_pagos.html", metodos=metodos_db)
+    return render_template("admin_modules/facturacion.html", metodos=metodos_db)
 
 @app.route("/actualizar_metodo_pago/<id_pago>", methods=["POST"])
 def actualizar_metodo_pago(id_pago):
@@ -1905,7 +1906,7 @@ if __name__ == "__main__":
     port = 8000
     local_ip = get_local_ip()
 
-    debug_mode = False
+    debug_mode = True
     if debug_mode:
         print("⚡ Ejecutando en modo DEBUG con servidor de desarrollo de Flask")
         print(f"- Acceso local: http://localhost:{port}")

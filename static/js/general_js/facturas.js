@@ -569,34 +569,52 @@ function paginar(totalItems) {
 async function verificarAccesoAdmin() {
     try {
         const res = await fetch("/verificar_sesion", {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            cache: 'no-store'
         });
         
         if (res.status === 401 || res.status === 403) {
-            const overlay = document.getElementById("accessOverlay");
+            const overlayId = "accessOverlay";
+            let overlay = document.getElementById(overlayId);
+
             if (overlay) {
+                overlay.style.display = "flex";
                 overlay.classList.remove("d-none");
-                document.body.classList.add("no-scroll");
             } else {
-                document.body.innerHTML = `
-                    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
-                        <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
-                            <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
-                            <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                            <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere estar logueado, Inicie Sesión.</p>
-                            <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+                const bloqueoHTML = `
+                    <div id="${overlayId}" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 999999; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; opacity: 1 !important; visibility: visible !important;">
+                        <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 28px; background: #080808; box-shadow: 0 25px 60px rgba(0,0,0,0.9); max-width: 450px; width: 90%; border: 1px solid rgba(255,255,255,0.05);">
+                            <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulseLock 2s infinite;"></i>
+                            <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.8rem; color: #fff; margin-top: 0;">ACCESO RESTRINGIDO</h2>
+                            <p style="color: #888; font-size: 1.05rem; margin-bottom: 2.5rem; line-height: 1.5;">Este módulo requiere una sesión activa. Por favor, identifíquese para continuar.</p>
+                            <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem; border-width: 0.25em;"></div>
                             <br>
-                            <button onclick="window.location.href='/login'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">INICIAR SESIÓN</button>
+                            <a href="/login" class="btn btn-danger w-100 py-3 fw-bold" style="border-radius: 14px; background-color: #dc3545; border: none; color: white; text-decoration: none; display: block; font-size: 1.1rem; transition: background 0.3s ease;">
+                                INICIAR SESIÓN
+                            </a>
                         </div>
                     </div>
                     <style>
-                        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+                        @keyframes pulseLock { 
+                            0% { opacity: 1; transform: scale(1); } 
+                            50% { opacity: 0.7; transform: scale(1.05); color: #ff6b81; } 
+                            100% { opacity: 1; transform: scale(1); } 
+                        }
+                        body.no-scroll-strict { 
+                            overflow: hidden !important; 
+                            height: 100vh !important; 
+                        }
                     </style>`;
+                
+                document.body.insertAdjacentHTML('beforeend', bloqueoHTML);
             }
+            
+            document.body.classList.add("no-scroll-strict");
             return false;
         }
         return true;
     } catch (e) {
+        console.error("Error de autenticación:", e);
         return false;
     }
 }

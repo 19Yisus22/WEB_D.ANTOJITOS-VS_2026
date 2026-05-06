@@ -7,41 +7,18 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_publicidad.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_modules/style_publicidad.css') }}">
 </head>
 <body>
-
     {% include 'global_modules/navbar.html' %}
-
     <div class="main-content">
         <div class="container-central">
-
             <div class="card-title-marketing text-center">
                 <h3 class="display-6 fw-bold m-0">
                     <i class="bi bi-megaphone me-2"></i>Panel de Publicidad
                 </h3>
                 <p class="text-white-50 mb-0 mt-1 fw-500">Gestiona todas tus publicidades desde aquí</p>
             </div>
-
-            <div class="row g-3 mb-4 align-items-center">
-                <div class="col-12 col-lg-8"></div>
-                <div class="col-12 col-lg-4">
-                    <div class="storage-container bg-white p-2 px-3 rounded-3 shadow-sm border d-flex align-items-center" data-bs-toggle="tooltip" data-bs-placement="top" title="Clic para ver detalles del almacenamiento">
-                        <div class="cloud-icon position-relative d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; cursor: pointer;" onclick="showStorageDetails()">
-                            <i class="bi bi-cloud-fill text-primary" style="font-size: 1.5rem; z-index: 2;"></i>
-                            <svg class="position-absolute top-0 start-0" width="48" height="48" viewBox="0 0 48 48" style="pointer-events: none;">
-                                <circle cx="24" cy="24" r="20" stroke="#e9ecef" stroke-width="4" fill="none"></circle>
-                                <circle id="storageCircle" cx="24" cy="24" r="20" stroke="#007bff" stroke-width="4" fill="none" stroke-dasharray="125.66" stroke-dashoffset="125.66" transform="rotate(-90 24 24)"></circle>
-                            </svg>
-                        </div>
-                        <div class="ms-3">
-                            <small class="fw-bold text-muted" style="font-size: 0.7rem;">ALMACENAMIENTO CLOUDINARY</small><br>
-                            <small id="storageText" class="text-primary fw-bold" style="font-size: 0.7rem;">Cargando...</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="card section-notificaciones mb-4">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-2 mb-4">
@@ -51,18 +28,12 @@
                     <div class="row g-4">
                         <div class="col-12 col-lg-4">
                             <label class="form-label">Imagen (Opcional)</label>
-                            <div id="previewNotificacion"
-                                class="preview-img-box mb-3"
-                                style="height: 210px;">
+                            <div id="previewNotificacion" class="preview-img-box mb-3" style="height: 210px;">
                                 <div id="placeholderNotif" class="text-center text-muted">
                                     <i class="bi bi-image" style="font-size: 3.5rem; color: #cbd5e0; display: block; margin-bottom: 8px;"></i>
                                     <span class="fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 1px; color: #94a3b8;">Seleccionar Imagen</span>
                                 </div>
-                                <img id="previewNotificacionImg" src="" alt="Vista previa"
-                                    class="w-100 h-100 d-none"
-                                    style="object-fit: contain;"
-                                    onload="this.classList.remove('d-none'); document.getElementById('placeholderNotif').classList.add('d-none')"
-                                    onerror="this.classList.add('d-none'); document.getElementById('placeholderNotif').classList.remove('d-none')">
+                                <img id="previewNotificacionImg" src="" alt="Vista previa" class="w-100 h-100 d-none" style="object-fit: contain;" onload="this.classList.remove('d-none'); document.getElementById('placeholderNotif').classList.add('d-none')" onerror="this.classList.add('d-none'); document.getElementById('placeholderNotif').classList.remove('d-none')">
                             </div>
                             <input type="file" id="archivoNotificacion" class="form-control shadow-none" accept="image/*" onchange="actualizarPreviewNotif(this)">
                         </div>
@@ -84,7 +55,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="card section-carrusel mb-4">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-2 mb-4">
@@ -97,7 +67,6 @@
                     </button>
                 </div>
             </div>
-
             <div class="card section-secundarias mb-4">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-2 mb-4">
@@ -110,7 +79,6 @@
                     </button>
                 </div>
             </div>
-
             <div class="card section-cinta mb-4">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-2 mb-4">
@@ -123,7 +91,6 @@
                     </button>
                 </div>
             </div>
-
             <div class="sticky-bottom p-3 shadow-lg mb-5 mx-1" style="z-index: 1000;">
                 <div id="progressContainer" class="d-none mb-3">
                     <div class="progress" style="height: 6px; border-radius: 10px;">
@@ -135,30 +102,43 @@
                     <i class="bi bi-cloud-arrow-up-fill me-2"></i>Guardar Todos los Cambios
                 </button>
             </div>
-
             <div class="mb-5 pb-4">
                 <div class="d-flex align-items-center justify-content-center gap-2 mb-4">
                     <i class="bi bi-eye-fill fs-4 text-muted"></i>
-                    <h5 class="m-0 text-muted text-uppercase fw-bold">Previsualización</h5>
+                    <h5 class="m-0 text-muted text-uppercase fw-bold">Previsualización en Vivo</h5>
                 </div>
-                <div id="previewInicio" class="border shadow-lg overflow-hidden rounded-4">
-                    <div class="promo-banner overflow-hidden">
-                        <div id="previewCintaMarquee" class="d-flex align-items-center"></div>
+                <div id="previewInicio" class="preview-live-container shadow-lg overflow-hidden rounded-4 bg-white">
+                    <div class="promo-banner-wrapper">
+                        <div id="previewCintaMarquee" class="promo-marquee-content"></div>
                     </div>
                     <div id="previewCarrusel" class="carousel slide" data-bs-ride="carousel">
-                        <div class="carousel-inner"></div>
+                        <div class="carousel-inner shadow-inner"></div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#previewCarrusel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#previewCarrusel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
                     </div>
                     <div id="previewSecciones" class="row g-4 p-4 justify-content-center m-0"></div>
                 </div>
             </div>
-
         </div>
     </div>
-
+    <div class="storage-fixed-wrapper">
+        <div class="storage-container shadow-lg" onclick="showStorageDetails()" data-bs-toggle="tooltip" data-bs-placement="left" title="Detalles Cloud">
+            <div class="storage-visual-wrapper">
+                <i class="bi bi-cloud-fill storage-cloud-inner"></i>
+                <svg class="storage-ring-svg" width="56" height="56" viewBox="0 0 56 56">
+                    <circle class="storage-ring-bg" cx="28" cy="28" r="24"></circle>
+                    <circle id="storageCircle" class="storage-ring-progress" cx="28" cy="28" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
+                </svg>
+            </div>
+            <small id="storageText" class="d-none"></small>
+        </div>
+    </div>
     {% include 'global_modules/footer.html' %}
-
     <div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 11000;"></div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/admin_js/publicidad.js') }}"></script>
 </body>

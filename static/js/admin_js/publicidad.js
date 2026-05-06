@@ -13,33 +13,25 @@ async function actualizarAlmacenamiento() {
                 'Pragma': 'no-cache'
             }
         });
-        
         if (!res.ok) return;
-        
         const data = await res.json();
         const circle = document.getElementById("storageCircle");
         const text = document.getElementById("storageText");
-        
         if (circle && text) {
             const used = parseFloat(data.used_gb);
             const limit = parseFloat(data.limit_gb);
-            
             let percent = (used / limit) * 100;
-            if (used > 0 && percent < 0.5) percent = 0.5; 
-
+            if (used > 0 && percent < 0.5) percent = 0.5;
             let usedLabel;
             if (used < 0.1) {
                 usedLabel = (used * 1024).toFixed(2) + " MB";
             } else {
                 usedLabel = used.toFixed(2) + " GB";
             }
-
             const circumference = 125.66;
             const offset = circumference - (percent / 100 * circumference);
             circle.style.strokeDashoffset = offset;
-
             text.textContent = `${usedLabel} / ${limit.toFixed(1)} GB (${percent.toFixed(2)}%)`;
-
             circle.style.stroke = percent > 85 ? "#dc3545" : percent > 60 ? "#ffc107" : "#28a745";
         }
     } catch (e) {}
@@ -87,9 +79,7 @@ function playNotificationSound(type = 'default') {
         }
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-    } catch (e) {
-        console.warn("Audio bloqueado");
-    }
+    } catch (e) {}
 }
 
 function mostrarAlerta({
@@ -120,10 +110,10 @@ function mostrarAlerta({
     }
     const esError = tipo === 'error' || tipo === 'agotado' || tipo === 'warning' || tipo === 'danger';
     const colorPrimario = esError ? "#ff4757" : "#ff9800";
-    const iconClass = esError ? 'bi-exclamation-triangle-fill' : 
-                      tipo === 'bienvenida' ? 'bi-emoji-smile-fill' : 
-                      tipo === 'favorito' ? 'bi-heart-fill' : 
-                      tipo === 'success' ? 'bi-check-circle-fill' : 'bi-stars';
+    const iconClass = esError ? 'bi-exclamation-triangle-fill' :
+        tipo === 'bienvenida' ? 'bi-emoji-smile-fill' :
+        tipo === 'favorito' ? 'bi-heart-fill' :
+        tipo === 'success' ? 'bi-check-circle-fill' : 'bi-stars';
     const toast = document.createElement("div");
     toast.style.cssText = `
         background: #121212;
@@ -181,6 +171,58 @@ function toast(msg, tipo = "success") {
         titulo: tipo === "success" ? "Éxito" : "Atención",
         duracion: 3500
     });
+}
+
+function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
+    const existing = document.getElementById('appModalConfirm');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'appModalConfirm';
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); display: flex; align-items: center;
+        justify-content: center; z-index: 20000; backdrop-filter: blur(5px);
+        transition: opacity 0.3s ease;
+    `;
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: #ffffff; width: 95%; max-width: 420px; padding: 35px;
+        border-radius: 25px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+        transform: scale(0.7); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    `;
+
+    modal.innerHTML = `
+        <div style="color: #ff4757; font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h2 style="margin-bottom: 12px; font-weight: 800; color: #1e272e; letter-spacing: -0.5px;">${titulo}</h2>
+        <p style="color: #485460; margin-bottom: 30px; line-height: 1.6; font-size: 1.05rem;">${mensaje}</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="btnCancelModal" class="btn btn-light" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; border: 2px solid #f1f2f6;">CANCELAR</button>
+            <button id="btnConfirmModal" class="btn btn-danger" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; background: #ff4757; border: none; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);">CONFIRMAR</button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+        modal.style.transform = 'scale(1)';
+    }, 10);
+
+    const cerrar = () => {
+        modal.style.transform = 'scale(0.7)';
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 300);
+    };
+
+    document.getElementById('btnCancelModal').onclick = cerrar;
+    document.getElementById('btnConfirmModal').onclick = () => {
+        onConfirm();
+        cerrar();
+    };
 }
 
 async function verificarAccesoAdmin() {
@@ -251,10 +293,9 @@ async function comprimirImagen(file) {
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0, width, height);
                 const quality = file.size > 5 * 1024 * 1024 ? 0.75 : file.size > 1 * 1024 * 1024 ? 0.80 : 0.85;
-                const format = 'image/webp';
                 canvas.toBlob((blob) => {
-                    resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: format, lastModified: Date.now() }));
-                }, format, quality);
+                    resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp', lastModified: Date.now() }));
+                }, 'image/webp', quality);
             };
         };
     });
@@ -288,6 +329,7 @@ function actualizarPreview() {
             bsCarousel.to(0);
         }
     }
+
     const pCinta = document.getElementById("previewCintaMarquee");
     if (pCinta) {
         pCinta.innerHTML = "";
@@ -297,21 +339,20 @@ function actualizarPreview() {
             const img = div.querySelector("img").src;
             const tit = div.querySelector(".t-tit").value;
             trackContent += `
-                <div class="d-inline-flex align-items-center gap-3 px-4">
-                    <img src="${img}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; border: 2px solid rgba(255,255,255,0.3);">
-                    <span class="fw-bold text-white text-uppercase" style="letter-spacing:1px; font-size: 0.9rem;">${tit}</span>
+                <div class="promo-item">
+                    <div class="promo-item-image">
+                        <img src="${img}" alt="${tit}">
+                    </div>
+                    <span class="promo-item-text">${tit}</span>
+                    <div class="promo-item-separator"></div>
                 </div>`;
         });
         if (trackContent) {
-            pCinta.style.display = "flex";
-            pCinta.style.justifyContent = "flex-start";
-            pCinta.style.overflow = "hidden";
-            pCinta.innerHTML = `
-                <div class="marquee-track" style="display: flex; white-space: nowrap; animation: marquee 25s linear infinite;">
-                    ${trackContent} ${trackContent} ${trackContent}
-                </div>`;
+            pCinta.innerHTML = trackContent + trackContent + trackContent;
+            pCinta.classList.remove("paused");
         }
     }
+
     const pSec = document.getElementById("previewSecciones");
     if (pSec) {
         pSec.innerHTML = "";
@@ -354,7 +395,7 @@ async function crearNotificacion() {
         if (data.ok) {
             toast("Notificación publicada");
             t.value = ""; d.value = ""; a.value = "";
-            if (previewImg) previewImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1OacDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJBSURBVHgB7d0xbhNREIDh90YpSClpSInS06ByAnp6SByBk9ByAnp6ChonSInS06ByApSClpSClpSChv9vYScbe9be9Xp3Z76Pst6stZun8f72zZunMREp6vUf97ZOfn64fP9scfH+mYgG9fbt+6f7n8/vXrz6eC6isfrz5p8mIkW9e/dhIu6IKOp8+SyiqPP7DyIa9PHe2XfTjMREpKgzmYh9Ihp0/vEisS+isfrtHxEfXkU06uXFpyciGrW9efZ0Ihp0t3k6EQ26ubqbiCtiIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIynL17/wEunS4O3C+hNwAAAABJRU5ErkJggg==";
+            if (previewImg) previewImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1OacDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJBSURBVHgB7d0xbhNREIDh90YpSClpSInS06ByAnp6SByBk9ByAnp6ChonSInS06ByApSClpSClpSChv9vYScbe9be9Xp3Z76Pst6stZun8f72zZunMREp6vUf97ZOfn64fP9scfH+mYgG9fbt+6f7n8/vXrz6eC6isfrz5p8mIkW9e/dhIu6IKOp8+SyiqPP7DyIa9PHe2XfTjMREpKgzmYh9Ihp0/vEisS+isfrtHxEfXkU06uXFpyciGrW9efZ0Ihp0t3k6EQ26ubqbiCtiIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIynL17/wEunS4O3C+hNwAAAABJRU5ErkJggg==";
             cargarAlertasActivas();
         } else {
             toast(data.error || "Error al procesar", "danger");
@@ -415,24 +456,25 @@ async function cargarAlertasActivas() {
                 </div>`;
             cont.appendChild(div);
         });
-    } catch (e) {
-        console.error(e);
-    }
+    } catch (e) {}
 }
 
 async function eliminarAlerta(id) {
     if (!id || id === "undefined") return toast("ID no válido", "danger");
-    if (!confirm("¿Eliminar esta alerta?")) return;
-    try {
-        const res = await fetch(`/api/admin/notificaciones/${id}`, { method: "DELETE" });
-        const data = await res.json();
-        if (data.ok) {
-            toast("Eliminada", "success");
-            cargarAlertasActivas();
+    mostrarConfirmacionApp("Eliminar Alerta", "¿Estás seguro de que deseas eliminar esta alerta?", async () => {
+        try {
+            const res = await fetch(`/api/admin/notificaciones/${id}`, { method: "DELETE" });
+            const data = await res.json();
+            if (data.ok) {
+                toast("Eliminada", "success");
+                cargarAlertasActivas();
+            } else {
+                toast("Error al eliminar", "danger");
+            }
+        } catch (e) {
+            toast("Error de conexión", "danger");
         }
-    } catch (e) {
-        toast("Error de conexión", "danger");
-    }
+    });
 }
 
 function agregarCarrusel(url = "", titulo = "", desc = "", id = "") {
@@ -448,12 +490,11 @@ function agregarCarrusel(url = "", titulo = "", desc = "", id = "") {
         <div class="section-content row g-3 m-0 w-100 align-items-center">
             <div class="col-md-3">
                 <div class="preview-img-box mb-2 border rounded overflow-hidden shadow-sm d-flex align-items-center justify-content-center" style="height: 120px; background: #f1f3f5; position: relative;">
-                    <img src="${url || ''}" 
-                        class="w-100 h-100 ${!url ? 'd-none' : ''}" 
-                        style="object-fit: cover;" 
+                    <img src="${url || ''}"
+                        class="w-100 h-100 ${!url ? 'd-none' : ''}"
+                        style="object-fit: cover;"
                         onload="this.classList.remove('d-none'); this.nextElementSibling.classList.add('d-none')"
                         onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none')">
-                    
                     <div class="placeholder-icon text-center text-muted ${url ? 'd-none' : ''}">
                         <i class="bi bi-image-fill" style="font-size: 2.5rem; opacity: 0.4;"></i>
                         <div style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-top: -5px;">Sin Imagen</div>
@@ -489,12 +530,11 @@ function agregarSeccion(url = "", titulo = "", id = "") {
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
         <div class="section-content d-flex align-items-center gap-4 w-100 p-2">
             <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:90px; height:90px; border-radius: 50%; min-width: 90px; overflow: hidden; background: #f1f3f5; position: relative;">
-                <img src="${url || ''}" 
-                    class="w-100 h-100 ${!url ? 'd-none' : ''}" 
-                    style="object-fit: cover;" 
+                <img src="${url || ''}"
+                    class="w-100 h-100 ${!url ? 'd-none' : ''}"
+                    style="object-fit: cover;"
                     onload="this.classList.remove('d-none'); this.nextElementSibling.classList.add('d-none')"
                     onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none')">
-                
                 <div class="placeholder-icon text-center text-muted ${url ? 'd-none' : ''}">
                     <i class="bi bi-image" style="font-size: 1.8rem; opacity: 0.4;"></i>
                 </div>
@@ -523,12 +563,11 @@ function agregarCinta(url = "", titulo = "", id = "") {
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-4"></i></div>
         <div class="section-content d-flex align-items-center gap-3 w-100 py-2 px-3 border rounded">
             <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:50px; height:50px; border-radius: 50%; min-width: 50px; overflow: hidden; background: #f1f3f5; position: relative;">
-                <img src="${url || ''}" 
-                    class="w-100 h-100 ${!url ? 'd-none' : ''}" 
+                <img src="${url || ''}"
+                    class="w-100 h-100 ${!url ? 'd-none' : ''}"
                     style="object-fit: cover;"
                     onload="this.classList.remove('d-none'); if(this.nextElementSibling) this.nextElementSibling.classList.add('d-none');"
                     onerror="this.classList.add('d-none'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('d-none');">
-                
                 <div class="placeholder-icon text-muted ${url ? 'd-none' : ''}">
                     <i class="bi bi-card-image" style="font-size: 1.2rem; opacity: 0.5;"></i>
                 </div>
@@ -595,10 +634,15 @@ async function guardarMarketing() {
         const data = await res.json();
         progressBar.style.width = "100%";
         progressText.textContent = "Completado";
-        if (data.ok) { toast("Publicidad actualizada", "success"); setTimeout(() => location.reload(), 1000); }
-        else toast(data.error || "Error al guardar", "danger");
-    } catch (e) { toast("Error de conexión", "danger"); }
-    finally {
+        if (data.ok) {
+            toast("Publicidad actualizada", "success");
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            toast(data.error || "Error al guardar", "danger");
+        }
+    } catch (e) {
+        toast("Error de conexión", "danger");
+    } finally {
         procesamientoEnCurso = false;
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -608,10 +652,15 @@ async function guardarMarketing() {
 
 function initDrag(containerId) {
     const container = document.getElementById(containerId);
-    if(!container) return;
-    container.addEventListener('dragstart', e => { if(e.target.classList.contains('section-preview')) e.target.classList.add('dragging'); });
-    container.addEventListener('dragend', e => { 
-        if(e.target.classList.contains('section-preview')) { e.target.classList.remove('dragging'); actualizarPreview(); } 
+    if (!container) return;
+    container.addEventListener('dragstart', e => {
+        if (e.target.classList.contains('section-preview')) e.target.classList.add('dragging');
+    });
+    container.addEventListener('dragend', e => {
+        if (e.target.classList.contains('section-preview')) {
+            e.target.classList.remove('dragging');
+            actualizarPreview();
+        }
     });
     container.addEventListener('dragover', e => {
         e.preventDefault();
@@ -622,7 +671,7 @@ function initDrag(containerId) {
             if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
             return closest;
         }, { offset: Number.NEGATIVE_INFINITY }).element;
-        if (dragging && afterElement == null) container.appendChild(dragging); 
+        if (dragging && afterElement == null) container.appendChild(dragging);
         else if (dragging) container.insertBefore(dragging, afterElement);
     });
 }
@@ -650,13 +699,26 @@ async function cambioImg(input) {
 async function borrarSec(btn) {
     const container = btn.closest(".section-preview");
     const dbId = container.dataset.dbId;
-    if (!dbId || dbId === "null" || dbId === "") { container.remove(); actualizarPreview(); return; }
-    if (!confirm("¿Eliminar este elemento permanentemente?")) return;
-    try {
-        const r = await fetch(`/api/admin/publicidad/delete/${dbId}`, { method: "DELETE" });
-        const res = await r.json();
-        if (res.ok) { container.remove(); actualizarPreview(); toast("Eliminado", "info"); }
-    } catch (e) { toast("Error al eliminar", "danger"); }
+    if (!dbId || dbId === "null" || dbId === "") {
+        container.remove();
+        actualizarPreview();
+        return;
+    }
+    mostrarConfirmacionApp("Eliminar Elemento", "¿Eliminar este elemento permanentemente?", async () => {
+        try {
+            const r = await fetch(`/api/admin/publicidad/delete/${dbId}`, { method: "DELETE" });
+            const res = await r.json();
+            if (res.ok) {
+                container.remove();
+                actualizarPreview();
+                toast("Eliminado", "info");
+            } else {
+                toast("Error al eliminar", "danger");
+            }
+        } catch (e) {
+            toast("Error al eliminar", "danger");
+        }
+    });
 }
 
 function cargarPublicidadActiva() {
@@ -675,13 +737,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const tieneAcceso = await verificarAccesoAdmin();
     if (!tieneAcceso) return;
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+    tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
     await actualizarAlmacenamiento();
     const inputArchivo = document.getElementById("archivoNotificacion");
     if (inputArchivo) {
-        inputArchivo.addEventListener("change", function() {
+        inputArchivo.addEventListener("change", function () {
             const previewImg = document.getElementById("previewNotificacionImg");
             if (this.files && this.files[0] && previewImg) {
                 const reader = new FileReader();
@@ -701,10 +761,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-(function() {
+(function () {
     window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() { window.history.pushState(null, "", window.location.href); };
-    window.onpageshow = function(event) {
+    window.onpopstate = function () { window.history.pushState(null, "", window.location.href); };
+    window.onpageshow = function (event) {
         if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
             window.location.reload();
         }
@@ -714,7 +774,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/static/js/workers/service-worker-publicidad.js')
-        .then(reg => { console.log('SW OK'); })
-        .catch(err => { console.error('SW Error', err); });
+            .then(() => console.log('SW OK'))
+            .catch(err => console.error('SW Error', err));
     });
 }
