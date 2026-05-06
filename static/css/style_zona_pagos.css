@@ -1,142 +1,226 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,700&display=swap');
+
 :root {
     --primary-color: #d35400;
     --primary-light: #e67e22;
-    --primary-soft: rgba(211, 84, 0, 0.1);
+    --primary-soft: rgba(211, 84, 0, 0.08);
     --dark-bg: #1a1a1a;
     --white: #ffffff;
-    --bg-gradient: linear-gradient(135deg, #fff8f0 0%, #ffe8e8 100%);
-    --transition-smooth: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-    --shadow-subtle: 0 4px 15px rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 15px 35px rgba(211, 84, 0, 0.15);
-    --danger-gradient: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    --bg-gradient: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%);
+    --transition-smooth: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 18px 40px rgba(211, 84, 0, 0.13);
+    --radius: 20px;
 }
 
-html, body {
+html,
+body {
     height: 100%;
     margin: 0;
     display: flex;
     flex-direction: column;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: 'DM Sans', sans-serif;
     background: var(--bg-gradient);
     scroll-behavior: smooth;
     overflow-x: hidden;
     width: 100%;
+    color: #2d3436;
 }
 
 .main-content {
     flex: 1 0 auto;
-    padding: 2.5rem 1rem;
+    padding: 2rem 0;
     width: 100%;
-    animation: fadeInPage 0.8s ease-out;
+    animation: fadeInPage 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes fadeInPage {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes slideInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(28px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes slideOutUp {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(-20px); }
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes fadeInCard {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes popIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.88);
+    }
+    70% {
+        transform: scale(1.03);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .container-central {
     width: 100%;
-    max-width: 1000px;
+    max-width: 100%;
     margin: 0 auto;
+    padding: 0 28px;
+    box-sizing: border-box;
 }
 
 .card-title-marketing {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
     color: white;
-    padding: 2rem;
-    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    border-radius: var(--radius);
     margin-bottom: 2.5rem;
-    box-shadow: 0 12px 30px rgba(211, 84, 0, 0.25);
+    box-shadow: 0 14px 35px rgba(211, 84, 0, 0.28);
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
     text-align: center;
 }
 
-.card-title-marketing::after {
+.card-title-marketing::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 200px;
-    height: 200px;
-    background: rgba(255, 255, 255, 0.1);
+    top: -60%;
+    left: -10%;
+    width: 260px;
+    height: 260px;
+    background: rgba(255, 255, 255, 0.06);
     border-radius: 50%;
 }
 
-.card-title-marketing h2, 
+.card-title-marketing::after {
+    content: '';
+    position: absolute;
+    bottom: -40%;
+    right: -5%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+}
+
+.card-title-marketing h2,
 .card-title-marketing h3 {
     margin: 0;
     font-weight: 800;
     letter-spacing: -0.5px;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    font-family: 'DM Sans', sans-serif;
+    color: white;
+}
+
+.card-title-marketing p {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.4px;
 }
 
 .card {
     border: none;
-    border-radius: 20px;
+    border-radius: var(--radius);
     overflow: hidden;
     transition: var(--transition-smooth);
     background: white;
     box-shadow: var(--shadow-subtle);
     margin-bottom: 2rem;
+    animation: fadeInCard 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
     box-shadow: var(--shadow-hover);
 }
 
+.card-body {
+    padding: 2rem;
+}
+
 .form-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.5px;
-    margin-bottom: 0.6rem;
-    color: #2d3436;
+    margin-bottom: 6px;
+    color: #64748b;
     text-transform: uppercase;
+    font-family: 'DM Sans', sans-serif;
 }
 
-.form-control {
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
-    border: 1px solid #edf2f7;
+.form-control,
+.form-select {
+    border-radius: 14px;
+    padding: 12px 16px;
+    border: 2px solid #f1f5f9;
+    background: #f8fafc;
     transition: var(--transition-smooth);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
 }
 
-.form-control:focus {
+.form-control:focus,
+.form-select:focus {
     border-color: var(--primary-light);
+    background: #fff;
     box-shadow: 0 0 0 4px var(--primary-soft);
     transform: translateY(-1px);
+    outline: none;
 }
 
 .preview-qr-box {
-    width: 180px;
-    height: 180px;
+    width: 100%;
+    max-width: 210px;
+    height: 210px;
     margin: 0 auto;
     background: #fdfdfd;
-    border-radius: 20px;
+    border-radius: 18px;
     border: 2px dashed #e2e8f0;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     transition: var(--transition-smooth);
+    cursor: pointer;
 }
 
 .preview-qr-box:hover {
     border-color: var(--primary-color);
     background: var(--primary-soft);
+    transform: scale(1.02);
 }
 
 .preview-qr-box img {
@@ -144,59 +228,114 @@ html, body {
     height: 100%;
     object-fit: contain;
     padding: 12px;
-    transition: var(--transition-smooth);
+    transition: transform 0.5s ease;
+}
+
+.preview-qr-box:hover img {
+    transform: scale(1.06);
 }
 
 .metodo-card {
     background: #ffffff;
-    border-radius: 15px;
-    border: 1px solid #edf2f7;
-    padding: 1rem;
+    border-radius: 16px;
+    border: 1.5px solid #edf2f7;
+    padding: 1.25rem;
     transition: var(--transition-smooth);
     cursor: pointer;
+    animation: popIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .metodo-card:hover {
     transform: scale(1.02) translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07);
     border-color: var(--primary-light);
 }
 
 .bank-badge {
-    padding: 6px 12px;
+    padding: 5px 12px;
     border-radius: 8px;
     font-size: 0.7rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-family: 'DM Sans', sans-serif;
 }
 
 .nequi-bg { background-color: #f1dfff; color: #7000ff; }
 .daviplata-bg { background-color: #ffe0e0; color: #e50000; }
-.bancolombia-bg { background-color: #fff4d1; color: #000; }
+.bancolombia-bg { background-color: #fff4d1; color: #7a6000; }
 .nubank-bg { background-color: #f3e5f5; color: #8a05be; }
+
+.btn {
+    border-radius: 14px;
+    font-weight: 700;
+    padding: 12px 26px;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.2px;
+}
+
+.btn:active {
+    transform: translateY(1px) scale(0.98);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    border: none;
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 24px rgba(52, 152, 219, 0.28);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #27ae60 0%, #219a52 100%);
+    border: none;
+    color: white;
+}
+
+.btn-success:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 26px rgba(39, 174, 96, 0.3);
+    color: white;
+}
 
 .sticky-bottom {
     position: sticky;
-    bottom: 25px;
+    bottom: 22px;
     z-index: 1000;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(15px);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
     border: 1px solid rgba(211, 84, 0, 0.1);
-    border-radius: 20px;
+    border-radius: var(--radius);
     padding: 1.2rem;
-    box-shadow: 0 -10px 30px rgba(0,0,0,0.08);
-    margin-top: 2rem;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.08);
+    margin-top: 1.5rem;
 }
 
 .factura-mockup {
     background: #fff;
     border: 1px solid #e2e8f0;
-    border-top: 10px solid var(--dark-bg);
-    border-radius: 12px;
+    border-top: 8px solid var(--dark-bg);
+    border-radius: 16px;
     position: relative;
     padding: 2rem;
     box-shadow: var(--shadow-subtle);
+    max-width: 560px;
+    margin: 0 auto;
+    transition: var(--transition-smooth);
+}
+
+.factura-mockup:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-3px);
 }
 
 .factura-mockup::after {
@@ -213,8 +352,8 @@ html, body {
 
 #toastContainer {
     position: fixed;
-    top: 30px;
-    right: 30px;
+    top: 24px;
+    right: 24px;
     z-index: 10000;
     display: flex;
     flex-direction: column;
@@ -224,34 +363,36 @@ html, body {
 
 .custom-toast {
     pointer-events: auto;
-    background: rgba(26, 26, 26, 0.98);
-    backdrop-filter: blur(10px);
+    background: rgba(26, 26, 26, 0.97);
+    backdrop-filter: blur(14px);
     color: white;
-    min-width: 350px;
-    border-radius: 15px;
+    min-width: 340px;
+    border-radius: 16px;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-    border-left: 6px solid var(--primary-color);
-    animation: slideInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+    border-left: 5px solid var(--primary-color);
+    font-family: 'DM Sans', sans-serif;
+    animation: slideInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .custom-toast.hide {
-    animation: slideOutUp 0.5s ease-in forwards;
+    animation: slideOutUp 0.45s ease-in forwards;
 }
 
 .toast-content {
     display: flex;
     align-items: center;
-    padding: 18px 24px;
+    padding: 18px 22px;
 }
 
 .toast-icon-wrapper {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     color: var(--primary-color);
-    margin-right: 15px;
+    margin-right: 14px;
     display: flex;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .toast-text {
@@ -259,17 +400,19 @@ html, body {
 }
 
 .toast-main-text {
-    font-size: 0.95rem;
+    font-size: 0.93rem;
     font-weight: 700;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
+    font-family: 'DM Sans', sans-serif;
 }
 
 .toast-close {
     cursor: pointer;
-    font-size: 0.9rem;
-    opacity: 0.5;
+    font-size: 0.88rem;
+    opacity: 0.45;
     transition: var(--transition-smooth);
-    margin-left: 12px;
+    margin-left: 14px;
+    flex-shrink: 0;
 }
 
 .toast-close:hover {
@@ -278,36 +421,54 @@ html, body {
     transform: rotate(90deg);
 }
 
-@media (max-width: 768px) {
-    .card-title-marketing {
-        padding: 1.5rem;
-        border-radius: 15px;
+@media (max-width: 1200px) {
+    .container-central {
+        padding: 0 20px;
     }
-    
+}
+
+@media (max-width: 768px) {
+    .container-central {
+        padding: 0 14px;
+    }
+
+    .card-body {
+        padding: 1.4rem;
+    }
+
+    .card-title-marketing {
+        padding: 1.6rem 1.25rem;
+        border-radius: 16px;
+    }
+
     .card-title-marketing h3 {
         font-size: 1.3rem;
     }
 
     .preview-qr-box {
-        width: 140px;
-        height: 140px;
+        max-width: 160px;
+        height: 160px;
     }
 
     #toastContainer {
         top: auto;
-        bottom: 20px;
-        right: 15px;
-        left: 15px;
+        bottom: 18px;
+        right: 14px;
+        left: 14px;
     }
-    
+
     .custom-toast {
         min-width: auto;
         width: 100%;
     }
 
     .sticky-bottom {
-        bottom: 15px;
-        border-radius: 15px;
+        bottom: 14px;
+        border-radius: 16px;
         padding: 1rem;
+    }
+
+    .btn {
+        padding: 11px 18px;
     }
 }
