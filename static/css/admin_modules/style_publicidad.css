@@ -63,9 +63,9 @@ body {
     to { transform: translateX(-100%); }
 }
 
-@keyframes slideInRight {
-    from { opacity: 0; transform: translateX(50px); }
-    to { opacity: 1; transform: translateX(0); }
+@keyframes cloudFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-3px) scale(1.05); }
 }
 
 .container-central {
@@ -87,6 +87,7 @@ body {
     overflow: hidden;
     margin-bottom: 2.5rem;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
@@ -95,25 +96,23 @@ body {
 .card-title-marketing::before {
     content: '';
     position: absolute;
-    top: -50px;
-    left: -50px;
-    width: 150px;
-    height: 150px;
-    background: rgba(255, 255, 255, 0.15);
+    top: -60%;
+    left: -10%;
+    width: 260px;
+    height: 260px;
+    background: rgba(255, 255, 255, 0.06);
     border-radius: 50%;
-    pointer-events: none;
 }
 
 .card-title-marketing::after {
     content: '';
     position: absolute;
-    bottom: -30px;
-    right: -30px;
-    width: 120px;
-    height: 120px;
-    background: rgba(255, 255, 255, 0.1);
+    bottom: -40%;
+    right: -5%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 50%;
-    pointer-events: none;
 }
 
 .card-title-marketing h3 {
@@ -121,9 +120,20 @@ body {
     font-weight: 800;
     letter-spacing: -0.5px;
     text-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    font-family: 'DM Sans', sans-serif;
     color: white;
     position: relative;
     z-index: 2;
+    text-align: center;
+}
+
+.card-title-marketing p {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    position: relative;
+    z-index: 2;
+    text-align: center;
 }
 
 .card {
@@ -418,6 +428,7 @@ body {
     color: var(--cloudinary-blue);
     font-size: 1.3rem;
     z-index: 5;
+    animation: cloudFloat 3s ease-in-out infinite;
 }
 
 @media (max-width: 768px) {
@@ -431,4 +442,29 @@ body {
     .promo-item img { height: 75px; width: 75px; }
     .promo-item span { font-size: 1.1rem; }
     .promo-marquee-content { animation-duration: 10s; }
+}
+
+.custom-toast-alert,
+.custom-toast {
+    pointer-events: auto;
+    background: rgba(18, 18, 18, 0.97);
+    backdrop-filter: blur(14px);
+    color: var(--white);
+    padding: 16px 22px;
+    border-radius: 16px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-width: 340px;
+    border-left: 5px solid var(--primary-color);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+    animation: slideInRight 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.custom-toast,
+.custom-toast-alert {
+    position: relative;
 }

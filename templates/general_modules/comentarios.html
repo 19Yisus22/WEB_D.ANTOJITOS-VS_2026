@@ -13,30 +13,55 @@
 
     {% include 'global_modules/navbar.html' %}
 
-    <main class="flex-grow-1 d-flex align-items-center justify-content-center py-0 py-md-4">
-        <div class="container-fluid container-lg h-100 d-flex justify-content-center">
-            <div class="chat-container">
-                <header class="chat-header p-3 border-bottom shadow-sm">
-                    <h5 class="mb-0 text-center text-md-start d-flex align-items-center justify-content-center justify-content-md-start">
-                        <i class="bi bi-chat-dots-fill me-2"></i>Muro de Sugerencias
+    <main class="flex-grow-1 d-flex align-items-center justify-content-center py-2 py-md-4">
+        <div class="container-fluid px-2 px-md-4">
+            <div class="chat-container mx-auto">
+                <header class="chat-header p-3 d-flex align-items-center justify-content-between shadow-sm">
+                    <h5 class="mb-0 d-flex align-items-center text-white">
+                        <i class="bi bi-chat-heart-fill me-3"></i>
+                        <span>Muro de Sugerencias</span>
                     </h5>
+                    <div class="header-status d-flex align-items-center bg-white bg-opacity-25 px-3 py-1 rounded-pill">
+                        <small id="statusCounter" class="fw-bold text-white">
+                            <i class="bi bi-people-fill me-1"></i> Cargando...
+                        </small>
+                    </div>
                 </header>
                 
-                <div id="chatBox" class="p-3"></div>
+                <div id="chatBox" class="p-3 p-md-4"></div>
                 
                 <div class="chat-input-area p-3 border-top bg-white">
-                    <div class="d-flex flex-column gap-2">
-                        <textarea id="mensajeInput" 
-                                  class="form-control shadow-none" 
-                                  rows="1" 
-                                  placeholder="Escribe tu opinión aquí..."></textarea>
-                        
-                        <button id="sendBtn" class="btn btn-primary fw-bold py-2 shadow-sm">
-                            <i class="bi bi-send-fill me-2"></i>Enviar Sugerencia
+                    <div class="toolbar d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex gap-1 overflow-auto emoji-bar pe-2">
+                            <span class="emoji-item" onclick="insertEmoji('😊')">😊</span>
+                            <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
+                            <span class="emoji-item" onclick="insertEmoji('😍')">😍</span>
+                            <span class="emoji-item" onclick="insertEmoji('🙌')">🙌</span>
+                            <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
+                            <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
+                            <span class="emoji-item" onclick="insertEmoji('🍕')">🍕</span>
+                            <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-light border-0 text-muted" onclick="insertFormat('\n- ', '')">
+                            <i class="bi bi-list-ul fs-5"></i>
                         </button>
                     </div>
-                    <div class="text-center mt-2">
-                        <small class="text-muted" style="font-size: 0.7rem;">Déjanos saber lo que piensas, ayúdanos con tu sugerencia.</small>
+
+                    <div class="input-wrapper d-flex flex-column gap-3">
+                        <textarea id="mensajeInput" 
+                                  class="form-control shadow-none" 
+                                  rows="2" 
+                                  placeholder="Escribe tu sugerencia aquí..."></textarea>
+                        
+                        <div class="d-flex flex-column align-items-center">
+                            <button id="sendBtn" class="btn btn-primary fw-bold px-5 py-2 shadow-sm d-flex align-items-center justify-content-center">
+                                <span>Enviar Sugerencia</span>
+                                <i class="bi bi-send-fill ms-2"></i>
+                            </button>
+                            <p class="text-muted mb-0 mt-2 d-none d-md-block" style="font-size: 0.8rem;">
+                                Déjanos saber lo que piensas, ayúdanos con tu sugerencia.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -49,10 +74,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const USER_CONFIG = {
-            userId: String("{{ user_id or '' }}"),
-            isLogged: {{ 'true' if session.get('user_id') else 'false' }}
-        };
+        const USER_CONFIG = {userId: String("{{ user_id or '' }}"), isLogged: {{ 'true' if session.get('user_id') else 'false' }}};
     </script>
     <script src="{{ url_for('static', filename='js/general_js/comentarios.js') }}"></script>
 </body>

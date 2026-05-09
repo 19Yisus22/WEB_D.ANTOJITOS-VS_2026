@@ -39,7 +39,11 @@
                     <p class="form-subtitle">Ingresa tus credenciales para continuar</p>
                 </div>
 
-                <div id="buttonDiv" class="google-btn-wrap"></div>
+                <div id="buttonDiv" class="google-btn-wrap d-flex justify-content-center align-items-center" style="min-height: 50px; width: 100%;">
+                    <div id="googleLoading" class="text-muted small">
+                        <i class="bi bi-google me-2"></i>Cargando botón de Google...
+                    </div>
+                </div>
 
                 <div class="divider">
                     <span>o usa tu correo</span>
@@ -88,6 +92,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/general_js/login_registro.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/global_js/login_registro.js') }}"></script>
 </body>
 </html>

@@ -15,44 +15,6 @@ let debounceTimer;
 const sonidoNuevoPedido = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
 sonidoNuevoPedido.volume = 0.9;
 
-async function verificarAccesoAdmin() {
-    try {
-        const res = await fetch("/facturacion_page", {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        
-        if (res.status === 401 || res.status === 403) {
-            document.body.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
-                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
-                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
-                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
-                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                        <br>
-                        <i><small style="color: #555;">Redirigiendo...</small></i>
-                        <br><br>
-                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
-                    </div>
-                </div>
-                <style>
-                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-                </style>`;
-            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
-            return false;
-        }
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-    const tieneAcceso = await verificarAccesoAdmin();
-    if (!tieneAcceso) return;
-    
-});
-
 function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
     let container = document.getElementById('toastContainer');
     if (!container) {
@@ -64,7 +26,6 @@ function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
 
     const toast = document.createElement('div');
     toast.className = 'custom-toast-alert';
-    
     const colorPrimario = esError ? "#ff4757" : "#2ed573";
     const sombraColor = esError ? "rgba(255, 71, 87, 0.2)" : "rgba(46, 213, 115, 0.2)";
     
@@ -117,32 +78,21 @@ function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
 
 function debouncedCargarPedidos(isAutoRefresh = false) {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => cargarPedidos(isAutoRefresh), 1000);
+    debounceTimer = setTimeout(() => cargarPedidos(isAutoRefresh), 800);
 }
 
 function escucharEventosTiempoReal() {
-
     window.addEventListener('storage', (e) => {
-        if (e.key === 'nuevoPedidoDetectado') {
-            debouncedCargarPedidos(true);
-        }
-        if (e.key === 'pedidoAnuladoRecientemente' && e.newValue) {
-            const data = JSON.parse(e.newValue);
-            mostrarAlerta(`CRÍTICO: El cliente ${data.nombre.toUpperCase()} canceló el pedido #${data.id}`, true, 7000);
-            sonidoNuevoPedido.play().catch(() => {});
-            debouncedCargarPedidos(true);
-        }
-        if (e.key === 'facturaActualizada') {
+        if (e.key === 'nuevoPedidoDetectado' || e.key === 'facturaActualizada' || e.key === 'pedidoAnuladoRecientemente') {
             debouncedCargarPedidos(true);
         }
     });
 
     document.addEventListener('pedidosActualizados', () => {
-        aplicarFiltros();
+        debouncedCargarPedidos(true);
     });
 
     window.addEventListener('focus', () => {
-        console.log('[TIEMPO REAL] Ventana enfocada - sincronizando pedidos...');
         debouncedCargarPedidos(true);
     });
 }
@@ -152,43 +102,35 @@ function mostrarNotificacionBienvenida() {
     if (yaNotificado) return;
 
     try {
-        const pedidos = pedidosDatosRaw;
-        if (pedidos.length === 0) {
+        if (pedidosDatosRaw.length === 0) {
             mostrarAlerta("Sistema listo. No hay pedidos pendientes.", false, 3000);
-            sessionStorage.setItem("notificacionBienvenidaMostrada", "true");
-            return;
+        } else {
+            const maxIdActual = Math.max(...pedidosDatosRaw.map(p => p.id_pedido));
+            const ultimoPedido = pedidosDatosRaw.find(p => p.id_pedido === maxIdActual);
+            if (ultimoPedido) {
+                const numFactura = generarNumeroFactura(ultimoPedido.id_pedido, ultimoPedido.fecha_pedido);
+                const cliente = `${ultimoPedido.usuarios?.nombre || 'Cliente'} ${ultimoPedido.usuarios?.apellido || ''}`;
+                mostrarAlerta(`✓ Bienvenido. Último pedido: ${numFactura} (${cliente})`, false, 5000);
+            }
         }
-
-        const maxIdActual = Math.max(...pedidos.map(p => p.id_pedido));
-        const ultimoPedido = pedidos.find(p => p.id_pedido === maxIdActual);
-        
-        if (ultimoPedido) {
-            const numFactura = generarNumeroFactura(ultimoPedido.id_pedido, ultimoPedido.fecha_pedido);
-            const cliente = `${ultimoPedido.usuarios?.nombre || 'Cliente'} ${ultimoPedido.usuarios?.apellido || ''}`;
-            const estado = ultimoPedido.estado;
-            
-            mostrarAlerta(`✓ Bienvenido. Último pedido: ${numFactura} (${cliente}) - ${estado}`, false, 5000);
-        }
-
         sessionStorage.setItem("notificacionBienvenidaMostrada", "true");
-    } catch (e) {
-        console.log('[NOTIFICACIÓN] Error en bienvenida:', e);
-    }
+    } catch (e) {}
 }
 
 function notificarNuevoPedido(pedidos) {
     if (!Array.isArray(pedidos) || pedidos.length === 0) return;
 
     const maxIdActual = Math.max(...pedidos.map(p => p.id_pedido));
-    if (ultimoIdPedidoNotificado !== 0 && maxIdActual > ultimoIdPedidoNotificado) {
+    if (maxIdActual > ultimoIdPedidoNotificado) {
         const nuevoP = pedidos.find(p => p.id_pedido === maxIdActual);
-        const nombreFull = `${nuevoP.usuarios?.nombre || 'Nuevo'} ${nuevoP.usuarios?.apellido || 'Usuario'}`;
-        mostrarAlerta(`NUEVO PEDIDO: ${nombreFull.toUpperCase()} (#${maxIdActual})`, false, 9000);
-        sonidoNuevoPedido.play().catch(() => {});
+        if (nuevoP) {
+            const nombreFull = `${nuevoP.usuarios?.nombre || 'Nuevo'} ${nuevoP.usuarios?.apellido || 'Usuario'}`;
+            mostrarAlerta(`NUEVO PEDIDO: ${nombreFull.toUpperCase()} (#${maxIdActual})`, false, 8000);
+            sonidoNuevoPedido.play().catch(() => {});
+        }
+        ultimoIdPedidoNotificado = maxIdActual;
+        localStorage.setItem("ultimoIdPedidoNotificado", ultimoIdPedidoNotificado);
     }
-
-    ultimoIdPedidoNotificado = maxIdActual;
-    localStorage.setItem("ultimoIdPedidoNotificado", ultimoIdPedidoNotificado);
 }
 
 function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
@@ -283,9 +225,6 @@ function ajustarBarraBusqueda() {
 }
 
 async function iniciarModuloPedidos() {
-    const tieneAcceso = await verificarAccesoAdmin();
-    if (!tieneAcceso) return;
-
     ajustarBarraBusqueda();
     inicializarSelectAnios();
     localStorage.setItem("moduloPedidosIniciado", "true");
@@ -293,6 +232,7 @@ async function iniciarModuloPedidos() {
     mostrarNotificacionBienvenida();
     escucharEventosTiempoReal();
     document.getElementById("btnGenerarPDF")?.addEventListener("click", generarReporteConfigurado);
+
     const inputsFiltro = ["inputBusquedaNombre", "inputBusquedaCedula", "inputNumeroFactura", "selectAnio", "filtroEstado"];
     inputsFiltro.forEach(id => {
         const el = document.getElementById(id);
@@ -304,308 +244,10 @@ async function iniciarModuloPedidos() {
             });
         }
     });
-}
 
-async function cargarPedidos(isAutoRefresh = false) {
-    if (isAutoRefresh && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) return;
-
-    try {
-        const res = await fetch("/obtener_pedidos");
-        if (!res.ok) throw new Error("Error de conexión");
-        const pedidos = await res.json();
-        if (!Array.isArray(pedidos)) return;
-
-        if (pedidos.length > 0) {
-            const maxIdActual = Math.max(...pedidos.map(p => p.id_pedido));
-            if (ultimoIdPedidoNotificado !== 0 && maxIdActual > ultimoIdPedidoNotificado) {
-                const nuevoP = pedidos.find(p => p.id_pedido === maxIdActual);
-                const nombreFull = `${nuevoP.usuarios?.nombre || 'Nuevo'} ${nuevoP.usuarios?.apellido || 'Usuario'}`;
-                mostrarAlerta(`NUEVA VENTA: ${nombreFull.toUpperCase()} (#${maxIdActual})`, false, 9000);
-                sonidoNuevoPedido.play().catch(() => {});
-            }
-            ultimoIdPedidoNotificado = maxIdActual;
-            localStorage.setItem("ultimoIdPedidoNotificado", ultimoIdPedidoNotificado);
-        }
-
-        const idsActualesCancelados = pedidos.filter(p => p.estado === 'Cancelado').map(p => String(p.id_pedido));
-        ultimosIdsCancelados = idsActualesCancelados;
-
-        pedidosDatosRaw = pedidos;
-        pedidosGlobal = pedidos.map(pedido => {
-            const idStr = String(pedido.id_pedido);
-            const numFacturaCompuesta = generarNumeroFactura(pedido.id_pedido, pedido.fecha_pedido);
-            const facturaAMostrar = pedido.numero_factura || numFacturaCompuesta;
-            const esFijado = pedidosFijados.includes(idStr);
-            const user = pedido.usuarios || {};
-            
-            const cardExistente = document.getElementById(`pedido-${pedido.id_pedido}`);
-            const estabaAbierta = cardExistente ? !cardExistente.classList.contains('card-collapsed') : false;
-
-            let totalPendiente = 0;
-            const itemsRows = (pedido.pedido_detalle || []).map((item, idx) => {
-                const itemId = `${pedido.id_pedido}-${idx}`;
-                const pagado = estadosPagoGuardados[itemId] ?? (item.pagado ?? pedido.pagado ?? false);
-                const subtotalItem = Number(item.subtotal || 0);
-                if (!pagado) totalPendiente += subtotalItem;
-
-                return `
-                <tr style="vertical-align: middle;">
-                    <td class="text-start ps-3 fw-medium">${item.gestion_productos?.nombre || item.nombre_producto || 'Producto'}</td>
-                    <td class="fw-bold">${item.cantidad}</td>
-                    <td class="text-primary">${subtotalItem.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</td>
-                    <td>
-                        <div class="form-check form-switch d-flex justify-content-center">
-                            <input class="form-check-input toggle-pago-item-switch" type="checkbox" role="switch" 
-                                   ${pagado ? 'checked' : ''}
-                                   data-item-id="${itemId}" 
-                                   data-indice="${idx}"
-                                   data-subtotal="${subtotalItem}"
-                                   style="cursor:pointer; width: 40px; height: 20px;">
-                        </div>
-                    </td>
-                </tr>`;
-            }).join("");
-
-            const todosPagos = (pedido.pedido_detalle || []).every((_, i) => {
-                const id = `${pedido.id_pedido}-${i}`;
-                return estadosPagoGuardados[id] ?? (pedido.pedido_detalle[i]?.pagado ?? pedido.pagado ?? false);
-            });
-
-            const esTerminado = pedido.estado === 'Entregado' && todosPagos;
-            const esAnulado = pedido.estado === 'Cancelado';
-            const bloqueado = esTerminado || esAnulado;
-            const estadoClase = esAnulado ? "pedido-anulado border-danger" : (esTerminado ? "pedido-finalizado" : "pedido-activo");
-
-            const card = document.createElement("div");
-            card.className = `pedido-card col-12 mb-4 p-2 shadow-sm rounded-4 bg-white border-start border-5 ${estadoClase} ${esFijado ? 'fijado border-primary' : ''} ${estabaAbierta ? '' : 'card-collapsed'}`;
-            card.id = `pedido-${pedido.id_pedido}`;
-            card.dataset.id_real = idStr;
-
-            card.innerHTML = `
-                <div class="card border-0 bg-transparent">
-                    <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0 py-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <i class="bi ${esFijado ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle text-muted'} fs-4 btn-fijar" style="cursor:pointer"></i>
-                            <img src="${user.imagen_url || '/static/uploads/default.png'}" class="rounded-circle border border-2 border-white shadow-sm" style="width:45px;height:45px;object-fit:cover;">
-                            <div class="lh-sm">
-                                <strong class="d-block text-dark" style="font-size:1.05rem">${facturaAMostrar}</strong>
-                                <small class="status-info ${esAnulado ? 'text-danger fw-bold' : 'text-muted'}" style="font-size:0.8rem">
-                                    <span class="badge ${esAnulado ? 'bg-danger' : 'bg-secondary'}">${pedido.estado}</span>
-                                </small>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <button class="btn btn-light btn-sm rounded-circle toggle-detalle" style="width:35px; height:35px;">
-                                <i class="bi bi-chevron-down icono"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body pt-0 collapse-content">
-                        <div class="table-responsive rounded-3 border">
-                            <table class="table table-hover text-center mb-0">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th class="text-start ps-3">Producto</th>
-                                        <th>Cant.</th>
-                                        <th>Precio</th>
-                                        <th>¿Pagó?</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${itemsRows}</tbody>
-                                <tfoot class="bg-white border-top-2">
-                                    <tr style="height: 60px;">
-                                        <td colspan="2" class="text-end align-middle fw-bold">SALDO PENDIENTE:</td>
-                                        <td colspan="2" class="text-start align-middle fw-bolder ${totalPendiente === 0 ? 'text-success' : 'text-danger'} fs-5 ps-3 saldo-pendiente-valor">
-                                            ${totalPendiente === 0 ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-4 bg-light p-3 rounded-3">
-                            <select class="form-select estado-select shadow-none" style="max-width:200px;" ${bloqueado ? 'disabled' : ''}>
-                                <option value="Pendiente" ${pedido.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                                <option value="Enviado" ${pedido.estado === 'Enviado' ? 'selected' : ''}>Enviado</option>
-                                <option value="Entregado" ${pedido.estado === 'Entregado' ? 'selected' : ''}>Finalizado</option>
-                                <option value="Cancelado" ${pedido.estado === 'Cancelado' ? 'selected' : ''}>Anular</option>
-                            </select>
-                            <button class="btn btn-primary actualizar-btn px-4 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2" ${bloqueado ? 'disabled' : ''}>
-                                <i class="bi bi-arrow-repeat icono-btn"></i>
-                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                                <span class="texto-btn">Actualizar Estado</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>`;
-
-            card.querySelectorAll(".toggle-pago-item-switch").forEach(sw => {
-                sw.onchange = async () => {
-                    const itemId = sw.dataset.itemId;
-                    const indice = parseInt(sw.dataset.indice);
-                    const subtotalValor = parseFloat(sw.dataset.subtotal);
-                    const ahoraPagado = sw.checked;
-
-                    const saldoElement = card.querySelector(".saldo-pendiente-valor");
-                    let saldoActual = parseFloat(saldoElement.innerText.replace(/[^0-9]/g, '')) || 0;
-                    saldoActual = ahoraPagado ? saldoActual - subtotalValor : saldoActual + subtotalValor;
-                    saldoElement.innerText = Math.max(0, saldoActual).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
-
-                    try {
-                        const res = await fetch(`/actualizar_pago_item/${pedido.id_pedido}`, {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ indice, pagado: ahoraPagado })
-                        });
-                        if (res.ok) {
-                            estadosPagoGuardados[itemId] = ahoraPagado;
-                            localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
-                            debouncedCargarPedidos(true);
-                            mostrarAlerta("Pago actualizado exitosamente");
-                        } else {
-                            throw new Error();
-                        }
-                    } catch {
-                        sw.checked = !ahoraPagado;
-                        mostrarAlerta("Error al sincronizar el pago", true);
-                    }
-                };
-            });
-
-            card.querySelector(".actualizar-btn").onclick = async function() {
-                const btn = this;
-                const icono = btn.querySelector(".icono-btn");
-                const spinner = btn.querySelector(".spinner-border");
-                const texto = btn.querySelector(".texto-btn");
-                const nuevoEstado = card.querySelector(".estado-select").value;
-
-                btn.disabled = true;
-                icono.classList.add("d-none");
-                spinner.classList.remove("d-none");
-                texto.innerText = "Actualizando...";
-
-                try {
-                    const res = await fetch(`/actualizar_estado/${pedido.id_pedido}`, { 
-                        method: "PUT", 
-                        headers: { "Content-Type": "application/json" }, 
-                        body: JSON.stringify({ estado: nuevoEstado }) 
-                    });
-                    
-                    if (res.ok) {
-                        debouncedCargarPedidos(true);
-                        mostrarAlerta(`Estado actualizado a: ${nuevoEstado.toUpperCase()}`);
-                    } else {
-                        mostrarAlerta("Error al actualizar el estado", true);
-                        btn.disabled = false;
-                        icono.classList.remove("d-none");
-                        spinner.classList.add("d-none");
-                        texto.innerText = "Actualizar Estado";
-                    }
-                } catch {
-                    mostrarAlerta("Error de conexión", true);
-                    btn.disabled = false;
-                    icono.classList.remove("d-none");
-                    spinner.classList.add("d-none");
-                    texto.innerText = "Actualizar Estado";
-                }
-            };
-
-            return card;
-        });
-
-        aplicarFiltros();
-    } catch (e) {
-        console.error("Error:", e);
-    }
-}
-
-function normalizarTexto(texto) {
-    if (!texto) return "";
-    return texto.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
-}
-
-function renderizarPaginacion(lista) {
-    const totalPaginas = Math.ceil(lista.length / itemsPorPagina) || 1;
-    const pagUl = document.getElementById("pagination");
-    if (!pagUl) return;
-    pagUl.innerHTML = "";
-    if (paginaActual > totalPaginas) paginaActual = totalPaginas;
-
-    const crearLink = (num, texto, activo = false, deshabilitado = false) => {
-        const li = document.createElement("li");
-        li.className = `page-item ${activo ? 'active' : ''} ${deshabilitado ? 'disabled' : ''}`;
-        li.innerHTML = `<a class="page-link shadow-sm mx-1 rounded" href="#">${texto}</a>`;
-        if (!deshabilitado) {
-            li.addEventListener("click", (e) => {
-                e.preventDefault();
-                paginaActual = num;
-                mostrarPagina(lista, num);
-                renderizarPaginacion(lista);
-            });
-        }
-        return li;
-    };
-
-    pagUl.appendChild(crearLink(paginaActual - 1, '<i class="bi bi-chevron-left"></i>', false, paginaActual === 1));
-
-    for (let i = 1; i <= totalPaginas; i++) {
-        if (i === 1 || i === totalPaginas || (i >= paginaActual - 1 && i <= paginaActual + 1)) {
-            pagUl.appendChild(crearLink(i, i, i === paginaActual));
-        } else if (i === paginaActual - 2 || i === paginaActual + 2) {
-            const dots = document.createElement("li");
-            dots.className = "page-item disabled";
-            dots.innerHTML = '<span class="page-link border-0">...</span>';
-            pagUl.appendChild(dots);
-        }
-    }
-
-    pagUl.appendChild(crearLink(paginaActual + 1, '<i class="bi bi-chevron-right"></i>', false, paginaActual === totalPaginas));
-
-    actualizarTituloTabla();
-    mostrarPagina(lista, paginaActual);
-}
-
-function mostrarPagina(lista, pagina) {
-    const cont = document.getElementById("tablaPedidos");
-    if (!cont) return;
-    cont.innerHTML = "";
-    const inicio = (pagina - 1) * itemsPorPagina;
-    const fin = inicio + itemsPorPagina;
-    const items = lista.slice(inicio, fin);
-
-    if (items.length === 0) {
-        cont.innerHTML = `
-            <tr>
-                <td class="text-center py-5">
-                    <i class="bi bi-search fs-1 text-muted d-block mb-3"></i>
-                    <p class="text-muted fw-bold">No se encontraron pedidos que coincidan con la búsqueda.</p>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    items.forEach(card => {
-        const tr = document.createElement("tr");
-        const td = document.createElement("td");
-        td.style.border = "none";
-        td.appendChild(card);
-        tr.appendChild(td);
-        cont.appendChild(tr);
-    });
-}
-
-function actualizarTituloTabla() {
-    const titulo = document.getElementById("tituloTabla");
-    if (!titulo) return;
-    const filtro = document.getElementById("filtroEstado").value;
-    const titulos = {
-        "Todos": "LISTANDO TODOS LOS PEDIDOS",
-        "FiltroPagoPendiente": "GESTIÓN DE PAGOS PENDIENTES",
-        "Pendiente": "LISTANDO PEDIDOS PENDIENTS",
-        "Entregado": "LISTANDO PEDIDOS FINALIZADOS",
-        "Cancelado": "LISTANDO PEDIDOS ANULADOS"
-    };
-    titulo.innerHTML = `<i class="bi bi-journal-text me-2"></i> ${titulos[filtro] || "GESTIÓN DE PEDIDOS"}`;
+    setInterval(() => {
+        if (document.visibilityState === "visible") debouncedCargarPedidos(true);
+    }, 7000);
 }
 
 async function cargarPedidos(isAutoRefresh = false) {
@@ -648,11 +290,8 @@ async function cargarPedidos(isAutoRefresh = false) {
             const itemsRows = (pedido.pedido_detalle || []).map((item, idx) => {
                 const itemId = `${pedido.id_pedido}-${idx}`;
                 const pagado = estadosPagoGuardados[itemId] ?? (item.pagado ?? pedido.pagado ?? false);
-                
                 const subtotalItem = Number(item.subtotal || 0);
-                if (!pagado) {
-                    totalPendiente += subtotalItem;
-                }
+                if (!pagado) totalPendiente += subtotalItem;
 
                 return `
                 <tr style="vertical-align: middle;">
@@ -790,13 +429,11 @@ async function cargarPedidos(isAutoRefresh = false) {
                     </div>
                 </div>`;
 
+            // Eventos
             card.querySelectorAll(".toggle-pago-item-switch").forEach(sw => {
                 sw.onchange = async () => {
-                    if (bloqueado) {
-                        sw.checked = !sw.checked;
-                        return;
-                    }
-
+                    if (bloqueado) { sw.checked = !sw.checked; return; }
+                    // ... (mantengo tu lógica original de pago)
                     const itemId = sw.dataset.itemId;
                     const indice = parseInt(sw.dataset.indice);
                     const subtotalValor = parseFloat(sw.dataset.subtotal);
@@ -806,16 +443,11 @@ async function cargarPedidos(isAutoRefresh = false) {
                     const saldoHeader = card.querySelector(".saldo-header");
                     let saldoActual = parseFloat(saldoElement.innerText.replace(/[^0-9]/g, '')) || 0;
                     
-                    if (ahoraPagado) {
-                        saldoActual -= subtotalValor;
-                    } else {
-                        saldoActual += subtotalValor;
-                    }
-                    
+                    if (ahoraPagado) saldoActual -= subtotalValor;
+                    else saldoActual += subtotalValor;
+
                     const estaPagado = saldoActual <= 0;
-                    const saldoFormato = estaPagado
-                        ? 'PAGADO'
-                        : saldoActual.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+                    const saldoFormato = estaPagado ? 'PAGADO' : saldoActual.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
                     saldoElement.innerText = saldoFormato;
                     saldoElement.classList.toggle('text-success', estaPagado);
@@ -836,15 +468,15 @@ async function cargarPedidos(isAutoRefresh = false) {
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ indice, pagado: ahoraPagado })
                         });
-                        if (!res.ok) throw new Error();
-                        mostrarAlerta("Pago actualizado exitosamente");
+                        if (res.ok) mostrarAlerta("Pago actualizado exitosamente");
+                        else throw new Error();
                     } catch {
                         sw.checked = !ahoraPagado;
                         delete estadosPagoGuardados[itemId];
                         localStorage.setItem("estadosPagoItems", JSON.stringify(estadosPagoGuardados));
-                        actualizarCardLocalmente(card, pedido.id_pedido, pedido);
                         mostrarAlerta("Error al sincronizar con el servidor", true);
                     }
+                    debouncedCargarPedidos(true);
                 };
             });
 
@@ -853,7 +485,6 @@ async function cargarPedidos(isAutoRefresh = false) {
                 const nuevoF = !pedidosFijados.includes(id);
                 if (nuevoF) pedidosFijados.push(id);
                 else pedidosFijados = pedidosFijados.filter(x => x !== id);
-                
                 localStorage.setItem("pedidosFijados", JSON.stringify(pedidosFijados));
                 card.dataset.fijado = nuevoF.toString();
                 card.querySelector(".btn-fijar").className = `bi ${nuevoF ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle text-muted'} fs-4 btn-fijar`;
@@ -863,23 +494,19 @@ async function cargarPedidos(isAutoRefresh = false) {
             };
 
             card.querySelector(".btn-eliminar-individual").onclick = () => {
-                mostrarConfirmacionApp(
-                    "ELIMINAR REGISTRO", 
-                    "¿Eliminar este pedido permanentemente? Esta acción no se puede deshacer.",
-                    async () => {
-                        const res = await fetch("/eliminar_pedidos", { 
-                            method: "DELETE", 
-                            headers: { "Content-Type": "application/json" }, 
-                            body: JSON.stringify({ ids: [idStr] }) 
-                        });
-                        if (res.ok) {
-                            mostrarAlerta("Pedido eliminado del sistema");
-                            pedidosGlobal = pedidosGlobal.filter(c => c.dataset.id_real !== idStr);
-                            pedidosDatosRaw = pedidosDatosRaw.filter(p => String(p.id_pedido) !== idStr);
-                            aplicarFiltros();
-                        }
+                mostrarConfirmacionApp("ELIMINAR REGISTRO", "¿Eliminar este pedido permanentemente? Esta acción no se puede deshacer.", async () => {
+                    const res = await fetch("/eliminar_pedidos", { 
+                        method: "DELETE", 
+                        headers: { "Content-Type": "application/json" }, 
+                        body: JSON.stringify({ ids: [idStr] }) 
+                    });
+                    if (res.ok) {
+                        mostrarAlerta("¡Pedido eliminado del sistema con éxito!", true);
+                        pedidosGlobal = pedidosGlobal.filter(c => c.dataset.id_real !== idStr);
+                        pedidosDatosRaw = pedidosDatosRaw.filter(p => String(p.id_pedido) !== idStr);
+                        aplicarFiltros();
                     }
-                );
+                });
             };
 
             const toggleBtn = card.querySelector(".toggle-detalle");
@@ -899,7 +526,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                 if (res.ok) {
                     mostrarAlerta(`Estado actualizado a: ${nuevoEstado.toUpperCase()}`);
                     card.dataset.estado = nuevoEstado;
-                    actualizarCardLocalmente(card, pedido.id_pedido, pedido, nuevoEstado);
+                    debouncedCargarPedidos(true);
                 } else {
                     mostrarAlerta("Error al actualizar el estado", true);
                 }
@@ -913,6 +540,96 @@ async function cargarPedidos(isAutoRefresh = false) {
     } catch (e) {
         console.error("Fallo en carga de pedidos:", e);
     }
+}
+
+function normalizarTexto(texto) {
+    if (!texto) return "";
+    return texto.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function renderizarPaginacion(lista) {
+    const totalPaginas = Math.ceil(lista.length / itemsPorPagina) || 1;
+    const pagUl = document.getElementById("pagination");
+    if (!pagUl) return;
+    pagUl.innerHTML = "";
+    if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+
+    const crearLink = (num, texto, activo = false, deshabilitado = false) => {
+        const li = document.createElement("li");
+        li.className = `page-item ${activo ? 'active' : ''} ${deshabilitado ? 'disabled' : ''}`;
+        li.innerHTML = `<a class="page-link shadow-sm mx-1 rounded" href="#">${texto}</a>`;
+        if (!deshabilitado) {
+            li.addEventListener("click", (e) => {
+                e.preventDefault();
+                paginaActual = num;
+                mostrarPagina(lista, num);
+                renderizarPaginacion(lista);
+            });
+        }
+        return li;
+    };
+
+    pagUl.appendChild(crearLink(paginaActual - 1, '<i class="bi bi-chevron-left"></i>', false, paginaActual === 1));
+
+    for (let i = 1; i <= totalPaginas; i++) {
+        if (i === 1 || i === totalPaginas || (i >= paginaActual - 1 && i <= paginaActual + 1)) {
+            pagUl.appendChild(crearLink(i, i, i === paginaActual));
+        } else if (i === paginaActual - 2 || i === paginaActual + 2) {
+            const dots = document.createElement("li");
+            dots.className = "page-item disabled";
+            dots.innerHTML = '<span class="page-link border-0">...</span>';
+            pagUl.appendChild(dots);
+        }
+    }
+
+    pagUl.appendChild(crearLink(paginaActual + 1, '<i class="bi bi-chevron-right"></i>', false, paginaActual === totalPaginas));
+
+    actualizarTituloTabla();
+    mostrarPagina(lista, paginaActual);
+}
+
+function mostrarPagina(lista, pagina) {
+    const cont = document.getElementById("tablaPedidos");
+    if (!cont) return;
+    cont.innerHTML = "";
+    const inicio = (pagina - 1) * itemsPorPagina;
+    const fin = inicio + itemsPorPagina;
+    const items = lista.slice(inicio, fin);
+
+    if (items.length === 0) {
+        cont.innerHTML = `
+            <tr>
+                <td class="text-center py-5">
+                    <i class="bi bi-search fs-1 text-muted d-block mb-3"></i>
+                    <p class="text-muted fw-bold">No se encontraron pedidos que coincidan con la búsqueda.</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    items.forEach(card => {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.style.border = "none";
+        td.appendChild(card);
+        tr.appendChild(td);
+        cont.appendChild(tr);
+    });
+}
+
+function actualizarTituloTabla() {
+    const titulo = document.getElementById("tituloTabla");
+    if (!titulo) return;
+    const filtro = document.getElementById("filtroEstado").value;
+    const titulos = {
+        "Todos": "LISTANDO TODOS LOS PEDIDOS",
+        "FiltroPagoPendiente": "GESTIÓN DE PAGOS PENDIENTES",
+        "Pendiente": "LISTANDO PEDIDOS PENDIENTES",
+        "Entregado": "LISTANDO PEDIDOS FINALIZADOS",
+        "Cancelado": "LISTANDO PEDIDOS ANULADOS"
+    };
+    titulo.innerHTML = `<i class="bi bi-journal-text me-2"></i> ${titulos[filtro] || "GESTIÓN DE PEDIDOS"}`;
 }
 
 function actualizarCardLocalmente(card, idPedido, pedidoData, nuevoEstado = null) {
@@ -931,9 +648,7 @@ function actualizarCardLocalmente(card, idPedido, pedidoData, nuevoEstado = null
     });
 
     const estaPagado = totalPendiente <= 0;
-    const textoSaldo = estaPagado
-        ? 'PAGADO'
-        : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+    const textoSaldo = estaPagado ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
     const saldoFooter = card.querySelector("tfoot td:nth-child(2)");
     if (saldoFooter) {
@@ -1036,18 +751,10 @@ function aplicarFiltros() {
 
     const listaFinal = [];
 
-    if (grupos.urgentes.length) {
-        listaFinal.push(crearSeparador("PEDIDOS PRIORITARIOS / FIJADOS", "bg-primary"), ...grupos.urgentes.sort(sortFn));
-    }
-    if (grupos.normales.length) {
-        listaFinal.push(crearSeparador("PEDIDOS EN PROCESO", "bg-info text-dark"), ...grupos.normales.sort(sortFn));
-    }
-    if (grupos.finalizados.length) {
-        listaFinal.push(crearSeparador("HISTORIAL DE VENTAS EXITOSAS", "bg-success"), ...grupos.finalizados.sort(sortFn));
-    }
-    if (grupos.anulados.length) {
-        listaFinal.push(crearSeparador("PEDIDOS DESCARTADOS / ANULADOS", "bg-danger"), ...grupos.anulados.sort(sortFn));
-    }
+    if (grupos.urgentes.length) listaFinal.push(crearSeparador("PEDIDOS PRIORITARIOS / FIJADOS", "bg-primary"), ...grupos.urgentes.sort(sortFn));
+    if (grupos.normales.length) listaFinal.push(crearSeparador("PEDIDOS EN PROCESO", "bg-info text-dark"), ...grupos.normales.sort(sortFn));
+    if (grupos.finalizados.length) listaFinal.push(crearSeparador("HISTORIAL DE VENTAS EXITOSAS", "bg-success"), ...grupos.finalizados.sort(sortFn));
+    if (grupos.anulados.length) listaFinal.push(crearSeparador("PEDIDOS DESCARTADOS / ANULADOS", "bg-danger"), ...grupos.anulados.sort(sortFn));
 
     pedidosFiltrados = listaFinal;
     renderizarPaginacion(pedidosFiltrados);
@@ -1107,8 +814,8 @@ async function generarReporteConfigurado() {
     if (!lista.length) return mostrarAlerta("No existen datos para los filtros seleccionados", true);
 
     const doc = new jsPDF();
-    const colorPrimario = [211, 84, 0]; // Naranja Corporativo
-    const colorOscuro = [44, 62, 80];   // Gris Oxford para textos serios
+    const colorPrimario = [211, 84, 0];
+    const colorOscuro = [44, 62, 80];
 
     try {
         const img = new Image(); 
@@ -1237,7 +944,6 @@ async function generarReporteConfigurado() {
 }
 
 window.onload = iniciarModuloPedidos;
-
 document.addEventListener("DOMContentLoaded", iniciarModuloPedidos);
 
 (function() {
@@ -1254,9 +960,5 @@ document.addEventListener("DOMContentLoaded", iniciarModuloPedidos);
 })();
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/js/workers/service-worker-pedidos.js')
-            .then(() => console.log('SW OK'))
-            .catch(err => console.error('SW Error', err));
-    });
+    window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-pedidos.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }

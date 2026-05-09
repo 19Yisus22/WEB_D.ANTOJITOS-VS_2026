@@ -17,8 +17,8 @@
     <main class="flex-grow-1 py-4">
         <div class="container-fluid px-lg-5">
             <div class="card-title-marketing text-center mb-4">
-                <h3 class="fw-bold m-0"><i class="bi bi-box-seam me-2"></i>Panel de Productos</h3>
-                <p class="text-white-50 mb-0 small text-uppercase ls-1">Administración de Inventario Real</p>
+                <h3 class="fw-bold m-0"><i class="bi bi-box-seam me-2"></i> Panel de Productos</h3>
+                <p class="text-white-50 mb-0 small ls-1">Administra todos los prodcutos del catálogo de D'Antojitos.</p>
             </div>
 
             <div class="row g-3 mb-4 align-items-center">
@@ -145,24 +145,20 @@
             </section>
         </div>
 
-        <div class="storage-fixed-wrapper">
-            <div class="storage-container shadow-lg" 
-                 id="storageWrapper"
-                 onclick="showStorageDetails()" 
-                 data-bs-toggle="tooltip" 
-                 data-bs-placement="left" 
-                 data-bs-html="true"
-                 title="Cargando...">
-                <div class="storage-visual-wrapper">
-                    <i class="bi bi-cloud-fill storage-cloud-inner"></i>
-                    <svg class="storage-ring-svg" width="56" height="56" viewBox="0 0 56 56">
-                        <circle class="storage-ring-bg" cx="28" cy="28" r="24"></circle>
-                        <circle id="storageCircle" class="storage-ring-progress" cx="28" cy="28" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
-                    </svg>
+        <div class="storage-fixed-wrapper" id="storageWrapper" onclick="showStorageDetails()" style="cursor: pointer;">
+        <div class="storage-container">
+            <div class="storage-visual-wrapper">
+                <svg class="storage-ring-svg" width="60" height="60">
+                    <circle class="storage-ring-bg" cx="30" cy="30" r="26"></circle>
+                    <circle id="storageCircle" class="storage-ring-progress" cx="30" cy="30" r="26"></circle>
+                </svg>
+                <div class="storage-cloud-inner">
+                    <i class="bi bi-cloud-fill"></i>
                 </div>
-                <small id="storageText" class="d-none"></small>
             </div>
+            <span id="storageText" class="d-none">Cargando...</span>
         </div>
+    </div>
     </main>
 
     <div class="modal fade" id="modalPostre" tabindex="-1">

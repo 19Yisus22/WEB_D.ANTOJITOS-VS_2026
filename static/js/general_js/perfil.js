@@ -279,7 +279,7 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     if (nombreField) {
         const nombreValue = nombreField.value.trim();
         if (!nombreValue || !onlyLettersRegex.test(nombreValue)) {
-            showMessage("Nombre inválido", "El nombre debe contener solo letras", true);
+            showMessage("Nombre inválido", true);
             setLoading(btn, false, originalText);
             return;
         }
@@ -287,7 +287,7 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     if (apellidoField) {
         const apellidoValue = apellidoField.value.trim();
         if (!apellidoValue || !onlyLettersRegex.test(apellidoValue)) {
-            showMessage("Apellido inválido", "El apellido debe contener solo letras", true);
+            showMessage("Apellido inválido", true);
             setLoading(btn, false, originalText);
             return;
         }
@@ -295,7 +295,7 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     if (cedulaField) {
         const cedulaValue = cedulaField.value.trim();
         if (cedulaValue !== '' && (!onlyDigitsRegex.test(cedulaValue) || cedulaValue.length < 6)) {
-            showMessage("Cédula inválida", "La cédula debe ser numérica y tener al menos 6 dígitos", true);
+            showMessage("Cédula inválida", true);
             setLoading(btn, false, originalText);
             return;
         }
@@ -303,7 +303,7 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     if (telefonoField) {
         const telefonoValue = telefonoField.value.trim();
         if (telefonoValue !== '' && (!onlyDigitsRegex.test(telefonoValue) || telefonoValue.length < 10)) {
-            showMessage("Teléfono inválido", "El teléfono debe ser numérico y tener al menos 10 dígitos", true);
+            showMessage("Teléfono inválido", true);
             setLoading(btn, false, originalText);
             return;
         }
@@ -311,7 +311,7 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     if (correoField) {
         const correoValue = correoField.value.trim();
         if (correoValue !== '' && !emailPattern.test(correoValue)) {
-            showMessage("Correo inválido", "Ingresa un correo electrónico válido", true);
+            showMessage("Correo inválido", true);
             setLoading(btn, false, originalText);
             return;
         }
@@ -461,37 +461,6 @@ function mostrarModalDetalles(u) {
     const bootstrapModal = new bootstrap.Modal(modalEl);
     bootstrapModal.show();
 }
-
-async function eliminarUsuarioPorCorreo() {
-    const input = document.getElementById('correoEliminar');
-    if (!input) return;
-    const correo = input.value.trim().toLowerCase();
-    if (!correo) { showMessage("Ingrese el correo para eliminar", true); return; }
-    showConfirmCustom("Eliminar Usuario", `¿Desea eliminar a ${correo}?`, async () => {
-        const btn = document.getElementById("btnEliminarUsuario");
-        const originalText = btn.innerHTML;
-        setLoading(btn, true, originalText);
-        try {
-            const res = await fetch("/eliminar_usuario_admin", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ correo: correo })
-            });
-            const data = await res.json();
-            if (res.ok && data.ok) {
-                showMessage("Usuario eliminado correctamente");
-                input.value = "";
-                fetchUsuarios();
-            } else {
-                showMessage(data.error || "Error al eliminar", true);
-            }
-        } catch (error) { showMessage("Error de conexión", true); }
-        finally { setLoading(btn, false, originalText); }
-    });
-}
-
-const btnEliminar = document.getElementById("btnEliminarUsuario");
-if (btnEliminar) btnEliminar.addEventListener("click", eliminarUsuarioPorCorreo);
 
 async function fetchUsuarios() {
     try {
@@ -655,9 +624,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/js/workers/service-worker-perfil.js')
-            .then(() => console.log('SW OK'))
-            .catch(err => console.error('SW Error', err));
-    });
+    window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-perfil.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }

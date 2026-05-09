@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Mi Perfil | D'Antojitos©</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/general_modules/style_perfil.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+<body>
+    {% include 'global_modules/navbar.html' %}
+
+    <main class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-11 col-xl-10">
+                
+                <div class="section-header text-center mb-5 fade-in">
+                    <h2 class="display-5 fw-bold">Mi Perfil</h2>
+                    <p class="text-muted px-3">Administra tus datos y preferencias de cuenta.</p>
+                    <div class="divider mx-auto"></div>
+                </div>
+
+                <div class="card p-3 p-md-5 mb-5 shadow-sm fade-in border-0">
+                    <form id="formPerfil" enctype="multipart/form-data">
+                        
+                        <div class="d-flex flex-column align-items-center mb-5">
+                            <div class="profile-img-wrapper">
+                                <label for="imagen_url" class="profile-img-container d-block cursor-pointer">
+                                    <img id="previewImagen" 
+                                         src="{{ user.imagen_url or url_for('static', filename='uploads/default_icon_profile.png') }}" 
+                                         alt="Perfil">
+                                    <input type="file" id="imagen_url" name="imagen_url" accept="image/*" style="display:none">
+                                </label>
+                            </div>
+                            <p class="mt-3 text-muted small fw-medium">Presione la imagen para cambiarla</p>
+
+                            <div class="mt-2">
+                                {% if user.contrasena == 'GOOGLE_AUTH_EXTERNAL' %}
+                                <span class="badge rounded-pill auth-badge bg-white text-dark shadow-sm p-2 px-3 border">
+                                    <img src="{{ url_for('static', filename='uploads/googlogo.ico') }}" width="16" class="me-2">Autenticado con Google
+                                </span>
+                                {% else %}
+                                <span class="badge rounded-pill auth-badge bg-dark shadow-sm p-2 px-3">
+                                    <i class="bi bi-envelope-fill me-2 text-warning"></i>Correo D'Antojitos
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Cédula / ID</label>
+                                <input type="text" id="cedulaPerfil" name="cedulaPerfil" class="form-control custom-input" value="{{ user.cedula or '' }}" required disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" id="nombrePerfil" name="nombrePerfil" class="form-control custom-input" value="{{ user.nombre or '' }}" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellido</label>
+                                <input type="text" id="apellidoPerfil" name="apellidoPerfil" class="form-control custom-input" value="{{ user.apellido or '' }}" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Teléfono</label>
+                                <input type="text" id="telefonoPerfil" name="telefonoPerfil" class="form-control custom-input" value="{{ user.telefono or '' }}" disabled>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Correo Electrónico</label>
+                                <input type="email" id="correoPerfil" name="correoPerfil" class="form-control custom-input" value="{{ user.correo or '' }}" required disabled>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Dirección de Entrega</label>
+                                <textarea id="direccionPerfil" name="direccionPerfil" class="form-control custom-input" rows="2" required disabled>{{ user.direccion or '' }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Método de Pago Preferido</label>
+                                <select id="metodoPagoPerfil" name="metodoPagoPerfil" class="form-select custom-input" required disabled>
+                                    <option value="Efectivo" {% if user.metodo_pago=='Efectivo' %}selected{% endif %}>Efectivo</option>
+                                    <option value="Transferencia" {% if user.metodo_pago=='Transferencia' %}selected{% endif %}>Transferencia</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Tipo de Usuario</label>
+                                <input type="text" class="form-control custom-input bg-light" value="{{ (user.roles.nombre_role if user.roles else 'cliente') | capitalize }}" readonly disabled>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-5">
+                            <button type="button" class="btn btn-primary px-5 btn-soft" id="btnEditarPerfil">
+                                <i class="bi bi-pencil-square me-2"></i>Editar Perfil
+                            </button>
+                            <button type="submit" class="btn btn-success px-5 btn-soft" id="btnActualizarPerfil" style="display:none">
+                                <i class="bi bi-cloud-arrow-up-fill me-2"></i>Actualizar Ahora
+                            </button>
+                        </div>
+
+                        <div class="mt-5 p-4 border rounded-4 bg-light-soft shadow-inner" id="seccionSeguridad" style="{% if user.contrasena == 'GOOGLE_AUTH_EXTERNAL' %}opacity: 0.6; pointer-events: none; grayscale(1);{% endif %}">
+                            <h5 class="mb-4 text-dark fw-bold"><i class="bi bi-shield-lock-fill me-2 text-warning"></i>Seguridad de la Cuenta</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Nueva Contraseña</label>
+                                    <input type="password" id="nuevaContrasena" class="form-control custom-input" placeholder="Min. 8 caracteres">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Confirmar Contraseña</label>
+                                    <input type="password" id="confirmarContrasena" class="form-control custom-input" placeholder="Repita la contraseña">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-dark w-100 mt-4 fw-bold shadow-sm py-3" id="btnCambiarContrasena">RESETEAR CONTRASEÑA</button>
+                        </div>
+
+                        <div class="mt-4 p-4 border border-danger border-opacity-25 rounded-4 bg-danger bg-opacity-10">
+                            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+                                <div>
+                                    <h5 class="text-danger mb-3 fw-bold"><i class="bi bi-exclamation-octagon me-2"></i> ¡Zona de Peligro!</h5>
+                                    <p class="small text-muted mb-1">Se eliminarán todos tus registros de forma permanente una vez que confirmes la eliminación de tu cuenta.</p>
+                                </div>
+                                <button type="button" class="btn btn-danger fw-bold px-4 py-2" id="btnEliminarMiCuenta">Eliminar Cuenta</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                {% if user.roles.nombre_role=='admin' %}
+                <div class="admin-section mt-5 fade-in">
+                    <h4 class="mb-4 text-dark fw-bold d-flex align-items-center">
+                        <i class="bi bi-person-gear me-3 text-primary"></i> Listado de Usuarios
+                    </h4>
+                    
+                    <div class="card p-3 mb-4 shadow-sm border-0">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="userSearch" class="form-control border-start-0 custom-input" placeholder="Buscar usuarios por nombre, correo o cédula...">
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <input type="email" id="correoEliminar" class="form-control custom-input" placeholder="Ingrese correo a eliminar">
+                                    <button id="btnEliminarUsuario" class="btn btn-danger px-4">Eliminar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="table-responsive">
+                            <div id="usuariosList" class="list-group list-group-flush min-w-600">
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white py-3 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 border-top">
+                            <small class="text-muted">Mostrando <span id="countVisible" class="fw-bold text-dark">0</span> usuarios activos</small>
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </main>
+
+    <div id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const USER_ID = "{{ user.id_cliente }}";
+        const USER_ROLE = "{{ user.roles.nombre_role if user.roles else 'cliente' }}";
+        const USER_AUTH_GOOGLE = ("{{ user.contrasena }}" === "GOOGLE_AUTH_EXTERNAL");
+    </script>
+    <script src="{{ url_for('static', filename='js/general_js/perfil.js') }}"></script>
+</body>
+</html>X

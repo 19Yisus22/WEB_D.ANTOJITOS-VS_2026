@@ -6,51 +6,33 @@ const IMG_DEFAULT = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAA
 
 async function actualizarAlmacenamiento() {
     try {
-        const res = await fetch(`/cloudinary_storage_info?t=${new Date().getTime()}`);
+        const res = await fetch(`/cloudinary_storage_info?t=${Date.now()}`);
         if (!res.ok) return;
-        
         const data = await res.json();
         const circle = document.getElementById("storageCircle");
         const text = document.getElementById("storageText");
-        
-        if (circle && text) {
-            const used = parseFloat(data.used_gb) || 0;
-            const limit = parseFloat(data.limit_gb) || 25;
-            const percent = Math.min((used / limit) * 100, 100);
-            
-            const radius = circle.r.baseVal.value;
-            const circumference = 2 * Math.PI * radius;
-            
-            circle.style.strokeDasharray = `${circumference}`;
-            const offset = circumference - (percent / 100) * circumference;
-            circle.style.strokeDashoffset = offset;
-            
-            let label = used < 0.1 ? (used * 1024).toFixed(1) + " MB" : used.toFixed(2) + " GB";
-            text.textContent = `${label} / ${limit} GB`;
-
-            const wrapper = document.getElementById('storageWrapper');
-            if (wrapper) {
-                const tooltipText = `Uso: ${label} / ${limit} GB (${percent.toFixed(1)}%)`;
-                wrapper.setAttribute('title', tooltipText);
-                const tooltip = bootstrap.Tooltip.getInstance(wrapper) || new bootstrap.Tooltip(wrapper);
-                tooltip.setContent({ '.tooltip-inner': tooltipText });
-            }
+        if (!circle || !text) return;
+        const used = parseFloat(data.used_gb) || 0;
+        const limit = parseFloat(data.limit_gb) || 25;
+        const percent = Math.min((used / limit) * 100, 100);
+        const circumference = 2 * Math.PI * circle.r.baseVal.value;
+        circle.style.strokeDasharray = `${circumference}`;
+        circle.style.strokeDashoffset = circumference - (percent / 100) * circumference;
+        const label = used < 0.1 ? (used * 1024).toFixed(1) + " MB" : used.toFixed(2) + " GB";
+        text.textContent = `${label} / ${limit} GB`;
+        const wrapper = document.getElementById("storageWrapper");
+        if (wrapper) {
+            const tooltipText = `Uso: ${label} / ${limit} GB (${percent.toFixed(1)}%)`;
+            wrapper.setAttribute("title", tooltipText);
+            const tooltip = bootstrap.Tooltip.getInstance(wrapper) || new bootstrap.Tooltip(wrapper);
+            tooltip.setContent({ ".tooltip-inner": tooltipText });
         }
     } catch (e) {
         console.error("Error al obtener storage:", e);
     }
 }
 
-function showStorageDetails() {
-    const text = document.getElementById("storageText");
-    if (text && text.textContent !== "Cargando...") {
-        alert(`Detalles del Almacenamiento:\n${text.textContent}`);
-    }
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
-    const acceso = await verificarAccesoAdmin();
-    if (!acceso) return;
 
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -91,21 +73,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnAgregarTemporal')?.addEventListener('click', agregarMetodoPago);
     document.addEventListener('click', () => initAudioContext(), { once: true });
 });
-
-async function verificarAccesoAdmin() {
-    try {
-        const res = await fetch("/facturacion_page", { 
-            headers: { 'X-Requested-With': 'XMLHttpRequest' } 
-        });
-        if (res.status === 401 || res.status === 403) {
-            window.location.href = "/inicio";
-            return false;
-        }
-        return true;
-    } catch (e) { 
-        return false; 
-    }
-}
 
 async function procesarImagenOptimizada(file) {
     const MAX_WIDTH = 800;
@@ -163,24 +130,66 @@ function playNotificationSound(isError = false) {
     } catch (e) {}
 }
 
-function showMessage(msg, isError = false) {
-    playNotificationSound(isError);
+function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement("div");
         container.id = "toastContainer";
+        container.style.cssText = "position: fixed; top: 25px; right: 25px; z-index: 10000; display: flex; flex-direction: column; gap: 12px;";
         document.body.appendChild(container);
     }
+
     const toast = document.createElement('div');
-    toast.className = 'custom-toast';
-    const color = isError ? "#ff4757" : "#d35400";
-    toast.style.borderLeft = `6px solid ${color}`;
-    toast.innerHTML = `<div class="toast-content"><div class="toast-text"><div class="toast-main-text">${msg}</div></div></div>`;
+    toast.className = 'custom-toast-alert';
+    
+    const colorPrimario = esError ? "#ff4757" : "#2ed573";
+    const sombraColor = esError ? "rgba(255, 71, 87, 0.2)" : "rgba(46, 213, 115, 0.2)";
+    
+    toast.style.cssText = `
+        background: #ffffff; 
+        color: #2f3542; 
+        padding: 16px 24px; 
+        border-radius: 12px; 
+        box-shadow: 0 10px 30px ${sombraColor}; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        min-width: 350px; 
+        max-width: 450px;
+        border-left: 6px solid ${colorPrimario}; 
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform: translateX(100%);
+        opacity: 0;
+    `;
+    
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <div style="background: ${colorPrimario}; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                <i class="bi ${esError ? 'bi-x-circle-fill' : 'bi-check-circle-fill'} text-white fs-5"></i>
+            </div>
+            <div>
+                <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #747d8c;">Notificación de Sistema</strong>
+                <span style="font-size: 0.95rem; font-weight: 600;">${mensaje}</span>
+            </div>
+        </div>
+        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 1rem; color: #a4b0be;"></i>
+    `;
+    
     container.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.add('hide');
+
+    requestAnimationFrame(() => {
+        toast.style.transform = "translateX(0)";
+        toast.style.opacity = "1";
+    });
+
+    const eliminar = () => {
+        toast.style.transform = "translateX(120%)";
+        toast.style.opacity = "0";
         setTimeout(() => toast.remove(), 500);
-    }, 4000);
+    };
+
+    toast.querySelector('.btn-close-toast').onclick = eliminar;
+    setTimeout(eliminar, duracionMs);
 }
 
 function cargarMetodosDesdeHTML() {
@@ -208,7 +217,7 @@ function agregarMetodoPago() {
     const fileInput = document.getElementById('archivoQR');
 
     if (!numero || !titular) {
-        showMessage("Ingrese número y titular", true);
+        mostrarAlerta("Ingrese número y titular", true);
         return;
     }
 
@@ -222,10 +231,10 @@ function agregarMetodoPago() {
 
     if (editIndex !== -1) {
         metodosPagoArray[editIndex] = datos;
-        showMessage("Lista actualizada");
+        mostrarAlerta("¡Lista actualizada con éxito!");
     } else {
         metodosPagoArray.push(datos);
-        showMessage("Agregado a la lista");
+        mostrarAlerta("¡Agregado a la lista con éxito!");
     }
     resetearFormulario();
     renderizarLista();
@@ -331,14 +340,14 @@ async function guardarCambiosPagos() {
         const res = await fetch("/facturacion_page", { method: "POST", body: formData });
         const data = await res.json();
         if (data.ok) {
-            showMessage("¡Configuración guardada!");
+            mostrarAlerta("¡Configuración guardada!");
             await actualizarAlmacenamiento();
             setTimeout(() => location.reload(), 1500);
         } else { 
             throw new Error(data.error); 
         }
     } catch (e) {
-        showMessage(e.message, true);
+        mostrarAlerta(e.message, true);
         btn.disabled = false;
         btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill"></i> Guardar Cambios en Servidor`;
     }

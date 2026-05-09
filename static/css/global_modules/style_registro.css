@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -19,71 +21,64 @@ body {
 
 .registro-wrapper {
     width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    max-width: 620px;
 }
 
 .card-registro {
-    width: 100%;
-    max-width: 620px;
     background: #ffffff;
-    border-radius: 22px;
-    padding: 2.2rem 2.2rem 1.8rem;
-    box-shadow: 0 24px 45px rgba(15, 23, 42, 0.08);
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    animation: entrance 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 25px 50px rgba(15, 23, 42, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    animation: entrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 @keyframes entrance {
-    from { opacity: 0; transform: scale(0.93) translateY(28px); }
+    from { opacity: 0; transform: scale(0.92) translateY(30px); }
     to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .registro-header {
     text-align: center;
-    margin-bottom: 1.8rem;
+    margin-bottom: 2rem;
 }
 
 .logo-wrap {
-    margin-bottom: 0.8rem;
+    margin-bottom: 1rem;
 }
 
 .registro-logo {
-    width: 68px;
-    height: 68px;
+    width: 78px;
+    height: 78px;
     object-fit: contain;
-    filter: drop-shadow(0 8px 18px rgba(214, 51, 108, 0.25));
+    filter: drop-shadow(0 10px 20px rgba(214, 51, 108, 0.25));
+    animation: float 3.8s ease-in-out infinite;
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-8px); }
-}
-
-.floating {
-    animation: float 3.5s ease-in-out infinite;
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
 
 .registro-header h2 {
-    color: #111827;
     font-weight: 800;
-    font-size: 1.85rem;
-    letter-spacing: -0.4px;
-    margin-bottom: 0.2rem;
+    font-size: 1.9rem;
+    letter-spacing: -0.5px;
+    color: #111827;
+    margin-bottom: 0.3rem;
 }
 
 .registro-subtitle {
     color: #6b7280;
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 500;
 }
 
 .fields-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.9rem 1.2rem;
-    margin-bottom: 0.5rem;
+    gap: 1.1rem 1.4rem;
+    margin-bottom: 1rem;
 }
 
 .field-group {
@@ -91,12 +86,15 @@ body {
     flex-direction: column;
 }
 
+.field-group.full-width {
+    grid-column: 1 / -1;
+}
+
 .field-label {
     color: #374151;
     font-weight: 600;
-    font-size: 0.85rem;
-    margin-bottom: 0.35rem;
-    display: block;
+    font-size: 0.88rem;
+    margin-bottom: 0.4rem;
 }
 
 .field-input-wrap {
@@ -105,179 +103,119 @@ body {
 
 .field-icon-left {
     position: absolute;
-    left: 13px;
+    left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #8b5cf6;
-    font-size: 0.95rem;
+    color: #7c3aed;
+    font-size: 1.1rem;
     pointer-events: none;
-    transition: color 0.3s ease;
 }
 
 .field-icon-right {
     position: absolute;
-    right: 13px;
+    right: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #8b5cf6;
-    font-size: 0.95rem;
+    color: #7c3aed;
+    font-size: 1.1rem;
     cursor: pointer;
-    transition: color 0.3s ease;
-}
-
-.field-icon-right:hover {
-    color: #6d28d9;
 }
 
 .field-input {
     width: 100%;
-    border: 1px solid rgba(148, 163, 184, 0.35);
+    border: 1.5px solid #e2e8f0;
     border-radius: 14px;
-    padding: 0.75rem 1rem 0.75rem 2.5rem;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.92rem;
-    color: #111827;
-    background: #ffffff;
-    outline: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    padding: 0.85rem 1rem 0.85rem 2.8rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
 }
 
 .field-input.has-right-icon {
-    padding-right: 2.5rem;
-}
-
-.field-input::placeholder {
-    color: #94a3b8;
-    font-size: 0.88rem;
+    padding-right: 2.8rem;
 }
 
 .field-input:focus {
     border-color: #7c3aed;
-    box-shadow: 0 12px 24px rgba(124, 58, 237, 0.18);
-    transform: translateY(-1px);
-}
-
-.field-input-wrap:focus-within .field-icon-left {
-    color: #7c3aed;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+    outline: none;
 }
 
 .strength-bar-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 6px;
-    padding-left: 4px;
+    margin-top: 8px;
+    width: 100%;
 }
 
 .strength-bar {
-    flex: 1;
-    height: 5px;
-    border-radius: 999px;
+    width: 100%;
+    height: 6px;
     background: #e5e7eb;
+    border-radius: 999px;
     overflow: hidden;
 }
 
 .strength-fill {
     height: 100%;
     width: 0%;
-    border-radius: 999px;
-    transition: width 0.35s ease, background-color 0.35s ease;
+    background: linear-gradient(90deg, #22c55e, #eab308);
+    transition: width 0.4s ease;
 }
 
 .strength-label {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 600;
-    color: #475569;
-    white-space: nowrap;
-    min-width: 45px;
+    margin-top: 4px;
+    display: block;
+    text-align: right;
 }
 
 .btn-gradient {
     width: 100%;
-    margin-top: 1.2rem;
+    margin-top: 1.5rem;
     background: linear-gradient(135deg, #7c3aed, #6366f1);
+    color: white;
     border: none;
     border-radius: 16px;
-    color: #ffffff;
-    padding: 0.96rem 1rem;
-    font-family: 'Poppins', sans-serif;
+    padding: 1rem;
     font-weight: 700;
-    font-size: 0.96rem;
-    letter-spacing: 0.4px;
-    cursor: pointer;
+    font-size: 1.05rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    box-shadow: 0 18px 30px rgba(99, 102, 241, 0.25);
-    transition: transform 0.28s ease, box-shadow 0.28s ease, filter 0.28s ease;
+    gap: 10px;
+    box-shadow: 0 15px 30px rgba(124, 58, 237, 0.3);
+    transition: all 0.3s ease;
 }
 
 .btn-gradient:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 22px 36px rgba(99, 102, 241, 0.32);
-}
-
-.btn-gradient:active {
-    transform: translateY(0) scale(0.98);
+    transform: translateY(-3px);
+    box-shadow: 0 20px 35px rgba(124, 58, 237, 0.35);
 }
 
 .registro-footer-text {
     text-align: center;
-    margin-top: 1.25rem;
-    font-size: 0.86rem;
+    margin-top: 1.5rem;
     color: #6b7280;
+    font-size: 0.9rem;
 }
 
 .link-highlight {
     color: #7c3aed;
     font-weight: 700;
     text-decoration: none;
-    position: relative;
-    transition: color 0.25s ease;
-}
-
-.link-highlight::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 2px;
-    bottom: -2px;
-    left: 0;
-    background: #7c3aed;
-    transition: width 0.3s ease;
-}
-
-.link-highlight:hover::after {
-    width: 100%;
-}
-
-.link-highlight:hover {
-    color: #5b21b6;
 }
 
 @media (max-width: 600px) {
     body {
         padding: 1rem;
-        align-items: flex-start;
     }
-
     .card-registro {
         padding: 2rem 1.5rem;
-        border-radius: 24px;
     }
-
     .fields-grid {
         grid-template-columns: 1fr;
-        gap: 0.8rem;
+        gap: 1rem;
     }
-
     .registro-header h2 {
-        font-size: 1.45rem;
-    }
-
-    .registro-logo {
-        width: 55px;
-        height: 55px;
+        font-size: 1.6rem;
     }
 }

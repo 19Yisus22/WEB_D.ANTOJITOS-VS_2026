@@ -16,37 +16,6 @@ let indexActual = null;
 let isUpdating = false;
 let audioCtx = null;
 
-async function verificarAccesoAdmin() {
-    try {
-        const res = await fetch("/facturacion_page", {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        if (res.status === 401 || res.status === 403) {
-            document.body.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
-                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
-                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
-                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
-                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                        <br>
-                        <i><small style="color: #555;">Redirigiendo...</small></i>
-                        <br><br>
-                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
-                    </div>
-                </div>
-                <style>
-                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-                </style>`;
-            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
-            return false;
-        }
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-
 function initAudioContext() {
     if (!audioCtx) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -67,140 +36,148 @@ function playNotificationSound(type = 'default') {
             oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.3);
             gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.4);
         } else {
             oscillator.type = 'sine';
             oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
             oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
             gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.2);
         }
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.4);
     } catch (e) {}
 }
 
-function showMessage(msg, isError = false) {
-    if (!toastContainer) return;
-    playNotificationSound(isError ? 'error' : 'default');
-    const toast = document.createElement('div');
-    const colorPrimario = isError ? "#ff4757" : "#2ed573";
-    toast.className = "custom-toast";
-    toast.style.borderLeftColor = colorPrimario;
-    toast.innerHTML = `
-        <div class="d-flex align-items-center w-100">
-            <i class="bi ${isError ? 'bi-x-circle-fill' : 'bi-check-circle-fill'} me-3" style="color: ${colorPrimario}; font-size: 1.2rem;"></i>
-            <div class="flex-grow-1">
-                <div style="font-size: 0.9rem;">${msg}</div>
-            </div>
-        </div>`;
-    toastContainer.appendChild(toast);
-    setTimeout(() => {
-        toast.style.transform = "translateX(120%)";
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 400);
-    }, 3000);
+function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
+    const existing = document.getElementById('appModalConfirm');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'appModalConfirm';
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); display: flex; align-items: center;
+        justify-content: center; z-index: 20000; backdrop-filter: blur(5px);
+        transition: opacity 0.3s ease;
+    `;
+
+    const modalBox = document.createElement('div');
+    modalBox.style.cssText = `
+        background: #ffffff; width: 95%; max-width: 420px; padding: 35px;
+        border-radius: 25px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+        transform: scale(0.7); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    `;
+
+    modalBox.innerHTML = `
+        <div style="color: #ff4757; font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h2 style="margin-bottom: 12px; font-weight: 800; color: #1e272e; letter-spacing: -0.5px;">${titulo}</h2>
+        <p style="color: #485460; margin-bottom: 30px; line-height: 1.6; font-size: 1.05rem;">${mensaje}</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="btnCancelModal" class="btn btn-light" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; border: 2px solid #f1f2f6;">CANCELAR</button>
+            <button id="btnConfirmModal" class="btn btn-danger" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; background: #ff4757; border: none; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);">CONFIRMAR</button>
+        </div>
+    `;
+
+    overlay.appendChild(modalBox);
+    document.body.appendChild(overlay);
+
+    setTimeout(() => modalBox.style.transform = 'scale(1)', 10);
+
+    const cerrar = () => {
+        modalBox.style.transform = 'scale(0.7)';
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 300);
+    };
+
+    document.getElementById('btnCancelModal').onclick = cerrar;
+    document.getElementById('btnConfirmModal').onclick = () => {
+        onConfirm();
+        cerrar();
+    };
 }
 
-function showConfirmToast(msg, callback) {
-    if (!toastContainer) return;
-    playNotificationSound('error');
-    const t = document.createElement('div');
-    t.className = "custom-toast flex-column align-items-start";
-    t.style.borderLeftColor = "#ffc107";
-    t.style.background = "#1a1a1a";
-    t.innerHTML = `
-        <div class="mb-2"><strong>Confirmar</strong></div>
-        <div class="small mb-3 text-white-50">${msg}</div>
-        <div class="d-flex gap-2 w-100 justify-content-end">
-            <button class="btn btn-sm btn-outline-light border-0 btn-cancelar-confirm">Cancelar</button>
-            <button class="btn btn-sm btn-warning btn-aceptar-confirm">Confirmar</button>
-        </div>`;
-    toastContainer.appendChild(t);
-    t.querySelector('.btn-cancelar-confirm').onclick = () => t.remove();
-    t.querySelector('.btn-aceptar-confirm').onclick = () => {
-        callback();
-        t.remove();
+function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "toastContainer";
+        container.style.cssText = "position: fixed; top: 25px; right: 25px; z-index: 10000; display: flex; flex-direction: column; gap: 12px;";
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'custom-toast-alert';
+    const colorPrimario = esError ? "#ff4757" : "#2ed573";
+    const sombraColor = esError ? "rgba(255, 71, 87, 0.2)" : "rgba(46, 213, 115, 0.2)";
+    
+    toast.style.cssText = `
+        background: #ffffff; 
+        color: #2f3542; 
+        padding: 16px 24px; 
+        border-radius: 12px; 
+        box-shadow: 0 10px 30px ${sombraColor}; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        min-width: 350px; 
+        max-width: 450px;
+        border-left: 6px solid ${colorPrimario}; 
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform: translateX(100%);
+        opacity: 0;
+    `;
+    
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <div style="background: ${colorPrimario}; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                <i class="bi ${esError ? 'bi-x-circle-fill' : 'bi-check-circle-fill'} text-white fs-5"></i>
+            </div>
+            <div>
+                <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #747d8c;">Notificación de Sistema</strong>
+                <span style="font-size: 0.95rem; font-weight: 600;">${mensaje}</span>
+            </div>
+        </div>
+        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 1rem; color: #a4b0be;"></i>
+    `;
+    
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.style.transform = "translateX(0)";
+        toast.style.opacity = "1";
+    });
+
+    const eliminar = () => {
+        toast.style.transform = "translateX(120%)";
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 500);
     };
+
+    toast.querySelector('.btn-close-toast').onclick = eliminar;
+    setTimeout(eliminar, duracionMs);
 }
 
 async function actualizarAlmacenamiento() {
     try {
-        const res = await fetch(`/cloudinary_storage_info?t=${new Date().getTime()}`);
+        const res = await fetch(`/cloudinary_storage_info?t=${Date.now()}`);
         if (!res.ok) return;
-        
         const data = await res.json();
         const circle = document.getElementById("storageCircle");
         const text = document.getElementById("storageText");
-        
-        if (circle && text) {
-            const used = parseFloat(data.used_gb) || 0;
-            const limit = parseFloat(data.limit_gb) || 25;
-            const percent = Math.min((used / limit) * 100, 100);
-            
-            const radius = circle.r.baseVal.value;
-            const circumference = 2 * Math.PI * radius;
-            
-            circle.style.strokeDasharray = `${circumference}`;
-            const offset = circumference - (percent / 100) * circumference;
-            circle.style.strokeDashoffset = offset;
-            
-            let label = used < 0.1 ? (used * 1024).toFixed(1) + " MB" : used.toFixed(2) + " GB";
-            text.textContent = `${label} / ${limit} GB`;
-
-            const wrapper = document.getElementById('storageWrapper');
-            if (wrapper) {
-                const tooltipText = `Uso: ${label} / ${limit} GB (${percent.toFixed(1)}%)`;
-                wrapper.setAttribute('title', tooltipText);
-                const tooltip = bootstrap.Tooltip.getInstance(wrapper) || new bootstrap.Tooltip(wrapper);
-                tooltip.setContent({ '.tooltip-inner': tooltipText });
-            }
-        }
-    } catch (e) {
-        console.error("Error al obtener storage:", e);
-    }
-}
-
-function showStorageDetails() {
-    const text = document.getElementById("storageText");
-    if (text && text.textContent !== "Cargando...") {
-        alert(`Detalles del Almacenamiento:\n${text.textContent}`);
-    }
-}
-
-async function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                if (width > height) {
-                    if (width > maxWidth) {
-                        height *= maxWidth / width;
-                        width = maxWidth;
-                    }
-                } else {
-                    if (height > maxHeight) {
-                        width *= maxHeight / height;
-                        height = maxHeight;
-                    }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', quality).split(',')[1]);
-            };
-        };
-    });
+        if (!circle || !text) return;
+        const used = parseFloat(data.used_gb) || 0;
+        const limit = parseFloat(data.limit_gb) || 25;
+        const percent = Math.min((used / limit) * 100, 100);
+        const circumference = 2 * Math.PI * circle.r.baseVal.value;
+        circle.style.strokeDasharray = `${circumference}`;
+        circle.style.strokeDashoffset = circumference - (percent / 100) * circumference;
+        const label = used < 0.1 ? (used * 1024).toFixed(1) + " MB" : used.toFixed(2) + " GB";
+        text.textContent = `${label} / ${limit} GB`;
+    } catch (e) {}
 }
 
 async function cargarPostres(silent = false) {
@@ -210,10 +187,18 @@ async function cargarPostres(silent = false) {
         const res = await fetch("/gestionar_productos", { cache: 'no-store' });
         if (!res.ok) return;
         const nuevosPostres = await res.json();
+
         if (JSON.stringify(nuevosPostres) !== JSON.stringify(postres)) {
+            const prevAgotados = new Set(postres.filter(p => parseInt(p.stock) <= 0).map(p => p.id_producto));
             postres = nuevosPostres;
             localStorage.setItem('postresCache', JSON.stringify(postres));
             renderPostres();
+            nuevosPostres.forEach(p => {
+                if (parseInt(p.stock) <= 0 && !prevAgotados.has(p.id_producto)) {
+                    mostrarAlerta(`¡Se ha agotado el producto! ${p.nombre.toUpperCase()}`, true, 4000);
+                    playNotificationSound('error');
+                }
+            });
         }
         await actualizarAlmacenamiento();
     } catch (error) {
@@ -235,18 +220,23 @@ function renderPostres(filtro = "") {
     if (!listaPostresDisponibles || !listaPostresAgotados) return;
     listaPostresDisponibles.innerHTML = "";
     listaPostresAgotados.innerHTML = "";
+
     const productosFiltrados = postres.filter(p => 
         p.nombre.toLowerCase().includes(filtro.toLowerCase())
     );
+
     actualizarEstadisticas(productosFiltrados);
+
     let countDisp = 0;
     let countAgot = 0;
+
     productosFiltrados.forEach((p) => {
         const indexOriginal = postres.findIndex(pr => pr.id_producto === p.id_producto);
         const card = document.createElement("div");
         card.className = "col";
         const stockActual = parseInt(p.stock) || 0;
         const isAgotado = stockActual <= 0;
+
         card.innerHTML = `
         <div class="card h-100 shadow-sm ${isAgotado ? 'gris' : ''}" data-id="${p.id_producto}">
             <img src="${p.imagen_url || '/static/uploads/default.png'}" class="postre-img card-img-top" alt="${p.nombre}">
@@ -259,7 +249,9 @@ function renderPostres(filtro = "") {
                 </div>
             </div>
         </div>`;
+
         card.querySelector(".card").onclick = () => abrirModalPostre(indexOriginal);
+
         if (!isAgotado) {
             listaPostresDisponibles.appendChild(card);
             countDisp++;
@@ -268,6 +260,7 @@ function renderPostres(filtro = "") {
             countAgot++;
         }
     });
+
     document.getElementById("emptyDisponibles").classList.toggle("d-none", countDisp > 0);
     document.getElementById("emptyAgotados").classList.toggle("d-none", countAgot > 0);
     if (avisoAgotados) avisoAgotados.classList.toggle("d-none", countAgot === 0);
@@ -296,11 +289,6 @@ function resetPrevisualizador() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    if (!await verificarAccesoAdmin()) return;
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
     await actualizarAlmacenamiento();
     const cached = localStorage.getItem('postresCache');
     if (cached) {
@@ -309,6 +297,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     await cargarPostres();
     setInterval(() => cargarPostres(true), 15000);
+
     const inputFoto = document.getElementById("fotoPostre");
     if (inputFoto) {
         inputFoto.addEventListener("change", function() {
@@ -327,18 +316,21 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
     }
+
     if (searchInput) searchInput.addEventListener("input", (e) => renderPostres(e.target.value));
+
     if (btnAgregarPostre) {
         btnAgregarPostre.onclick = () => {
             indexActual = null;
             agregarPostreForm.reset();
             resetPrevisualizador();
             document.getElementById("formPanelTitle").textContent = "Nuevo Postre";
-            btnSubmitForm.innerHTML = '<i class="bi bi-save2 me-2"></i>Guardar Nuevo Postre';
+            btnSubmitForm.innerHTML = '<i class="bi bi-save2 me-2"></i>Agregar nuevo producto';
             formAgregarPostre.classList.remove("d-none");
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
     }
+
     if (btnCancelar) {
         btnCancelar.onclick = () => {
             formAgregarPostre.classList.add("d-none");
@@ -347,23 +339,25 @@ document.addEventListener("DOMContentLoaded", async () => {
             indexActual = null;
         };
     }
+
     document.getElementById("btnEliminar").onclick = () => {
         if (indexActual === null) return;
         const p = postres[indexActual];
-        showConfirmToast(`¿Eliminar permanentemente "${p.nombre}"?`, async () => {
+        mostrarConfirmacionApp("Eliminar Producto", `¿Eliminar permanentemente "${p.nombre}"?`, async () => {
             try {
                 const res = await fetch(`/eliminar_producto/${p.id_producto}`, { method: "DELETE" });
                 if (res.ok) {
-                    showMessage("Producto eliminado");
+                    mostrarAlerta("¡Producto eliminado con éxito!", true);
                     modal.hide();
                     await cargarPostres();
                 } else {
                     const err = await res.json();
-                    showMessage(err.error || "Error al eliminar", true);
+                    mostrarAlerta(err.error || "Error al eliminar", true);
                 }
-            } catch (e) { showMessage("Error de conexión", true); }
+            } catch (e) { mostrarAlerta("Error de conexión", true); }
         });
     };
+
     document.getElementById("btnEditar").onclick = () => {
         if (indexActual === null) return;
         const p = postres[indexActual];
@@ -411,10 +405,38 @@ if (agregarPostreForm) {
     };
 }
 
+async function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                } else {
+                    if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality).split(',')[1]);
+            };
+        };
+    });
+}
+
 async function enviarFormulario(formData) {
     const esEdicion = indexActual !== null;
     const metodo = esEdicion ? "PUT" : "POST";
     const url = esEdicion ? `/actualizar_producto/${postres[indexActual].id_producto}` : "/gestionar_productos";
+    const stockNuevo = parseInt(formData.get("stock"));
+
     try {
         const res = await fetch(url, { method: metodo, body: formData });
         if (res.ok) {
@@ -423,12 +445,20 @@ async function enviarFormulario(formData) {
             resetPrevisualizador();
             indexActual = null;
             await cargarPostres();
-            showMessage(`Producto ${esEdicion ? 'actualizado' : 'creado'} correctamente`);
+            mostrarAlerta(`¡Producto ${esEdicion ? 'actualizado' : 'creado'} con éxito!`);
+
+            if (stockNuevo <= 0) {
+                mostrarAlerta("¡PRODUCTO AGOTADO REGISTRADO!", true, 6000);
+                playNotificationSound('error');
+            }
+            await actualizarAlmacenamiento();
         } else {
             const errorData = await res.json();
-            showMessage(errorData.error || "Error en la operación", true);
+            mostrarAlerta(errorData.error || "Error en la operación", true);
         }
-    } catch (e) { showMessage("Error de red", true); }
+    } catch (e) { 
+        mostrarAlerta("Error de red", true); 
+    }
 }
 
 (function() {
@@ -444,9 +474,5 @@ async function enviarFormulario(formData) {
 document.addEventListener("click", () => initAudioContext(), { once: true });
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/js/workers/service-worker-gestion_productos.js')
-            .then(() => {})
-            .catch(() => {});
-    });
+    window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-gestion_productos.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }

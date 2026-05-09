@@ -5,18 +5,22 @@ const toastContainer = document.getElementById('toastContainer');
 let editandoComentario = null;
 let comentariosActuales = [];
 
-const toastSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
-
 const monitorConexion = {
     intervalo: null,
+    intervaloConteo: null,
     frecuencia: 30000,
     iniciar() {
-        if (!USER_CONFIG.userId) return;
+        setTimeout(() => this.obtenerUsuariosActivos(), 500);
+        this.intervaloConteo = setInterval(() => this.obtenerUsuariosActivos(), 15000);
+        
+        if (!USER_CONFIG.isLogged) return;
+        
         this.enviarSenal();
         this.intervalo = setInterval(() => this.enviarSenal(), this.frecuencia);
     },
     detener() {
         if (this.intervalo) clearInterval(this.intervalo);
+        if (this.intervaloConteo) clearInterval(this.intervaloConteo);
     },
     async enviarSenal() {
         try {
@@ -24,189 +28,213 @@ const monitorConexion = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.warn("Señal de presencia no enviada");
+        }
+    },
+    async obtenerUsuariosActivos() {
+        try {
+            const res = await fetch("/usuarios_activos_conteo");
+            const indicador = document.getElementById("statusCounter");
+            
+            if (!indicador) return;
+
+            if (res.ok) {
+                const data = await res.json();
+                const total = (data && typeof data.total !== 'undefined') ? data.total : 0;
+                indicador.innerHTML = `<i class="bi bi-people-fill me-1"></i> ${total} Usuarios Activos`;
+            } else {
+                indicador.innerHTML = `<i class="bi bi-people-fill me-1"></i> 0 Usuarios Activos`;
+            }
+        } catch (e) {
+            const indicador = document.getElementById("statusCounter");
+            if (indicador) {
+                indicador.innerHTML = `<i class="bi bi-people-fill me-1"></i> 0 Usuarios Activos`;
+            }
+            console.error("Error en la solicitud de conteo:", e);
+        }
     }
 };
 
+function showConfirmCustom(titulo, mensaje, callback) {
+    const modalId = 'customConfirmModal';
+    let modalEl = document.getElementById(modalId);
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = modalId;
+        modalEl.className = 'modal fade';
+        modalEl.setAttribute('tabindex', '-1');
+        modalEl.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                    <div class="modal-body p-4 text-center">
+                        <i class="bi bi-exclamation-circle text-danger mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="fw-bold mb-2">${titulo}</h5>
+                        <p class="text-muted mb-4">${mensaje}</p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" id="confirmActionBtn" class="btn btn-danger px-4 rounded-pill">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        document.body.appendChild(modalEl);
+    }
+    const confirmBtn = modalEl.querySelector('#confirmActionBtn');
+    const bootstrapModal = new bootstrap.Modal(modalEl);
+    confirmBtn.onclick = () => {
+        bootstrapModal.hide();
+        callback();
+    };
+    bootstrapModal.show();
+}
+
+function insertEmoji(emoji) {
+    const start = mensajeInput.selectionStart;
+    const end = mensajeInput.selectionEnd;
+    mensajeInput.value = mensajeInput.value.substring(0, start) + emoji + mensajeInput.value.substring(end);
+    mensajeInput.focus();
+    ajustarAlturaInput();
+}
+
+function insertFormat(startTag, endTag) {
+    const start = mensajeInput.selectionStart;
+    const end = mensajeInput.selectionEnd;
+    const text = mensajeInput.value;
+    const selectedText = text.substring(start, end);
+    let replacement = startTag + selectedText + endTag;
+    
+    if (startTag === "\n- ") {
+        replacement = selectedText.length > 0 
+            ? selectedText.split('\n').map(line => line.trim() ? `\n- ${line}` : line).join('')
+            : "\n- ";
+    }
+    
+    mensajeInput.value = text.substring(0, start) + replacement + text.substring(end);
+    const newCursorPos = start + replacement.length;
+    mensajeInput.setSelectionRange(newCursorPos, newCursorPos);
+    mensajeInput.focus();
+    ajustarAlturaInput();
+}
+
 function ajustarAlturaInput() {
     mensajeInput.style.height = 'auto';
-    mensajeInput.style.height = (mensajeInput.scrollHeight) + 'px';
+    mensajeInput.style.height = Math.min(mensajeInput.scrollHeight, 150) + 'px';
 }
 
 mensajeInput.addEventListener("input", ajustarAlturaInput);
 
-function getUserColor(userId) {
-    const colors = ['#f8f9ff', '#fffcf0', '#f0fff4', '#fff5f5', '#f5faff', '#f9f0ff', '#fffaf0', '#f0f0f0'];
+function getUserPastelColor(userId) {
+    const gradients = [
+        'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+        'linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%)',
+        'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
+        'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
+        'linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)',
+        'linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%)',
+        'linear-gradient(135deg, #fffde7 0%, #fff9c4 100%)',
+        'linear-gradient(135deg, #efebe9 0%, #d7ccc8 100%)'
+    ];
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
         hash = userId.charCodeAt(i) + ((hash << 5) - hash);
     }
-    return colors[Math.abs(hash) % colors.length];
+    return gradients[Math.abs(hash) % gradients.length];
 }
 
 function showMessage(msg, isError = false) {
-    toastSound.play().catch(e => console.log("Interacción requerida para audio"));
-    
-    let container = document.getElementById('toastContainer');
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toastContainer";
-        container.style.cssText = "position: fixed; top: 25px; right: 25px; z-index: 10000; display: flex; flex-direction: column; gap: 12px;";
-        document.body.appendChild(container);
-    }
-
     const toast = document.createElement('div');
-    const colorPrimario = isError ? "#ff4757" : "#ff9800";
-    
-    toast.style.cssText = `
-        background: #121212; 
-        color: #ffffff; 
-        padding: 16px 24px; 
-        border-radius: 12px; 
-        box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        min-width: 350px; 
-        max-width: 450px;
-        border-left: 6px solid ${colorPrimario}; 
-        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform: translateX(120%);
-        opacity: 0;
-    `;
-
-    toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <div style="background: ${colorPrimario}; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; flex-shrink: 0;">
-                <i class="bi ${isError ? 'bi-exclamation-circle-fill' : 'bi-chat-dots-fill'} text-white fs-5"></i>
-            </div>
-            <div>
-                <strong style="display: block; font-size: 0.75rem; text-transform: uppercase; color: ${colorPrimario}; opacity: 0.9; letter-spacing: 0.5px;">Sistema de Chat</strong>
-                <span style="font-size: 0.95rem; font-weight: 500;">${msg}</span>
-            </div>
-        </div>
-        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 1rem; color: #57606f;"></i>
-    `;
-
-    container.appendChild(toast);
-
-    requestAnimationFrame(() => {
-        toast.style.transform = "translateX(0)";
-        toast.style.opacity = "1";
-    });
-
-    const eliminar = () => {
-        toast.style.transform = "translateX(120%)";
+    toast.className = "custom-toast";
+    if(isError) toast.style.borderLeftColor = "#e74c3c";
+    toast.innerHTML = `<span>${msg}</span>`;
+    toastContainer.appendChild(toast);
+    setTimeout(() => {
         toast.style.opacity = "0";
         setTimeout(() => toast.remove(), 500);
-    };
+    }, 3000);
+}
 
-    toast.querySelector('.btn-close-toast').onclick = eliminar;
-    setTimeout(eliminar, 4000);
+async function toggleLike(id) {
+    if (!USER_CONFIG.isLogged) return showMessage("Inicia sesión para dar like", true);
+    const container = document.querySelector(`#msg-${id}`);
+    if(!container) return;
+    const icon = container.querySelector('.btn-like-mini i');
+    const span = container.querySelector('.btn-like-mini small');
+    let currentCount = parseInt(span.innerText);
+    
+    if (icon.classList.contains('bi-heart')) {
+        icon.classList.replace('bi-heart', 'bi-heart-fill');
+        icon.classList.add('text-danger');
+        span.innerText = currentCount + 1;
+    } else {
+        icon.classList.replace('bi-heart-fill', 'bi-heart');
+        icon.classList.remove('text-danger');
+        span.innerText = Math.max(0, currentCount - 1);
+    }
+
+    try {
+        const res = await fetch(`/comentarios/${id}/like`, { method: "POST" });
+        if (!res.ok) await cargarComentarios(); 
+    } catch (e) { 
+        await cargarComentarios(); 
+    }
 }
 
 function renderComentario(c) {
-    const div = document.createElement("div");
-    const bgColor = getUserColor(c.id_usuario);
-    div.className = "message position-relative shadow-sm border rounded-4 p-3 mb-3";
-    div.style.backgroundColor = bgColor;
-    div.id = `msg-${c.id}`;
-    div.setAttribute("data-user-id", c.id_usuario);
-    
+    const esMio = String(c.id_usuario) === String(USER_CONFIG.userId);
+    const bgGradient = getUserPastelColor(String(c.id_usuario));
     const info = c.usuario_info || {};
     const foto = info.foto_perfil || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
     const nombre = info.nombre ? `${info.nombre} ${info.apellido || ''}` : 'Usuario';
-    const fecha = new Date(c.created_at).toLocaleString('es-CO', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const fecha = new Date(c.updated_at || c.created_at).toLocaleString('es-CO', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const haDadoLike = (c.likes_usuarios || []).includes(USER_CONFIG.userId);
+    const wrapper = document.createElement("div");
+    wrapper.className = `d-flex mb-4 ${esMio ? 'flex-row-reverse' : 'flex-row'} align-items-end gap-2`;
+    wrapper.id = `msg-${c.id}`;
+    const estadoClase = info.conectado ? 'estado-conectado' : 'estado-desconectado';
     
-    const esMio = String(c.id_usuario) === String(USER_CONFIG.userId);
-    
-    const ultimaConexion = info.ultima_conexion ? new Date(info.ultima_conexion) : null;
-    const esFechaLogout = ultimaConexion && ultimaConexion.getFullYear() === 2000;
-    const estaConectadoRealmente = info.conectado && !esFechaLogout;
-    
-    const estadoClase = estaConectadoRealmente ? 'estado-conectado' : 'estado-desconectado';
-    
-    const likes = Array.isArray(c.likes_usuarios) ? c.likes_usuarios : [];
-    const yaDiLike = likes.includes(USER_CONFIG.userId);
-
-    div.innerHTML = `
-        <div class="d-flex align-items-start">
-            <div class="contenedor-foto-estado me-2 me-md-3">
-                <img src="${foto}" class="rounded-circle border" width="42" height="42" style="object-fit:cover;">
-                <span class="punto-estado ${estadoClase}"></span>
-            </div>
-            <div class="flex-grow-1 overflow-hidden">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="fw-bold text-primary text-truncate small">${nombre}</span>
-                    <div class="d-flex align-items-center flex-shrink-0">
-                        <span class="text-muted" style="font-size:0.7rem;">${fecha}</span>
-                        ${esMio ? `<i class="bi bi-three-dots-vertical btn-options text-muted ms-2" style="cursor:pointer;"></i>` : ''}
-                    </div>
+    wrapper.innerHTML = `
+        <div class="contenedor-foto-estado">
+            <img src="${foto}" class="rounded-circle border shadow-sm" width="38" height="38" style="object-fit: cover;">
+            <span class="punto-estado ${estadoClase}"></span>
+        </div>
+        <div class="message ${esMio ? 'rounded-start-4 rounded-top-4' : 'rounded-end-4 rounded-top-4'} shadow-sm" 
+             style="background: ${bgGradient}; max-width: 75%; position: relative;">
+            <div class="d-flex justify-content-between align-items-center mb-1 gap-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold" style="font-size: 0.8rem; color: #2c3e50;">${esMio ? 'Tú' : nombre}</span>
+                    <span class="text-muted" style="font-size: 0.65rem; opacity: 0.8;">• ${fecha}</span>
                 </div>
-                <div class="mensaje-texto text-dark mb-2" style="white-space: pre-wrap; word-wrap: break-word;">${c.mensaje}</div>
-                <div class="d-flex align-items-center">
-                    <div class="btn-like" onclick="toggleLike('${c.id}')" style="cursor:pointer;">
-                        <i class="bi ${yaDiLike ? 'bi-heart-fill text-danger' : 'bi-heart text-muted'} me-1"></i>
-                        <span class="small fw-bold text-muted" style="font-size: 0.8rem;">${likes.length}</span>
-                    </div>
+                ${esMio ? `<i class="bi bi-three-dots-vertical btn-options text-muted" style="cursor:pointer; font-size: 0.8rem;"></i>` : ''}
+            </div>
+            <div class="mensaje-texto">${c.mensaje}</div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="text-muted" style="font-size: 0.6rem;">${c.updated_at ? '(editado)' : ''}</span>
+                <div class="btn-like-mini d-flex align-items-center gap-1" onclick="toggleLike('${c.id}')" style="cursor:pointer; background: rgba(255,255,255,0.4); padding: 2px 8px; border-radius: 10px;">
+                    <i class="bi ${haDadoLike ? 'bi-heart-fill text-danger' : 'bi-heart text-muted'}" style="font-size: 0.9rem;"></i>
+                    <small class="fw-bold text-muted" style="font-size: 0.75rem;">${(c.likes_usuarios || []).length}</small>
                 </div>
             </div>
         </div>
     `;
 
     if(esMio) {
-        const btnOpt = div.querySelector(".btn-options");
+        const btnOpt = wrapper.querySelector(".btn-options");
         btnOpt.onclick = (e) => {
             e.stopPropagation();
             document.querySelectorAll(".comentario-dropdown").forEach(d => d.remove());
-            const dd = document.createElement("ul");
-            dd.className = "list-group position-absolute shadow-lg comentario-dropdown";
-            dd.style.zIndex = "1050";
+            const dd = document.createElement("div");
+            dd.className = "dropdown-menu show shadow border-0 comentario-dropdown p-1";
+            dd.style.cssText = `position: fixed; top: ${e.clientY}px; left: ${e.clientX - 100}px; z-index: 2000; min-width: 120px; border-radius: 12px;`;
             dd.innerHTML = `
-                <li class="list-group-item list-group-item-action border-0 py-2 px-3" style="cursor:pointer; font-size: 0.85rem;">
-                    <i class="bi bi-pencil me-2 text-primary"></i>Editar
-                </li>
-                <li class="list-group-item list-group-item-action border-0 py-2 px-3 text-danger" style="cursor:pointer; font-size: 0.85rem;">
-                    <i class="bi bi-trash me-2"></i>Eliminar
-                </li>
+                <button class="dropdown-item rounded-2 py-1" onclick="iniciarEdicion('${c.id}', \`${c.mensaje}\`)"><i class="bi bi-pencil me-2"></i>Editar</button>
+                <button class="dropdown-item rounded-2 py-1 text-danger" onclick="abrirConfirmacion('${c.id}')"><i class="bi bi-trash me-2"></i>Eliminar</button>
             `;
-            const rect = e.target.getBoundingClientRect();
-            dd.style.position = "fixed";
-            dd.style.top = `${rect.bottom + 5}px`;
-            dd.style.left = `${rect.left - 110}px`;
-            dd.querySelectorAll("li")[0].onclick = () => iniciarEdicion(c.id, c.mensaje);
-            dd.querySelectorAll("li")[1].onclick = () => ejecutarEliminacionDirecta(c.id);
             document.body.appendChild(dd);
             setTimeout(() => document.addEventListener("click", () => dd.remove(), {once:true}), 50);
         };
     }
-    return div;
-}
-
-async function toggleLike(id) {
-    if (!USER_CONFIG.isLogged) {
-        showMessage("Debes iniciar sesión para dar like", true);
-        return;
-    }
-    const btn = document.querySelector(`#msg-${id} .btn-like`);
-    if (!btn) return;
-    const icon = btn.querySelector('i');
-    const countSpan = btn.querySelector('span');
-    let count = parseInt(countSpan.innerText);
-    if (icon.classList.contains('bi-heart')) {
-        icon.classList.replace('bi-heart', 'bi-heart-fill');
-        icon.classList.replace('text-muted', 'text-danger');
-        count++;
-    } else {
-        icon.classList.replace('bi-heart-fill', 'bi-heart');
-        icon.classList.replace('text-danger', 'text-muted');
-        count--;
-    }
-    countSpan.innerText = count;
-    try {
-        const res = await fetch(`/comentarios/${id}/like`, { method: "POST" });
-        if (!res.ok) cargarComentarios(); 
-    } catch (e) { cargarComentarios(); }
+    return wrapper;
 }
 
 async function cargarComentarios() {
@@ -214,30 +242,36 @@ async function cargarComentarios() {
         const res = await fetch("/comentarios");
         if(!res.ok) return;
         const data = await res.json();
-        if (JSON.stringify(data) !== JSON.stringify(comentariosActuales)) {
-            const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
-            comentariosActuales = data;
-            chatBox.innerHTML = "";
-            comentariosActuales.forEach(c => chatBox.appendChild(renderComentario(c)));
-            if(isAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
-        }
+        const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
+        comentariosActuales = data;
+        chatBox.innerHTML = "";
+        comentariosActuales.forEach(c => chatBox.appendChild(renderComentario(c)));
+        if(isAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
     } catch(e) { console.error(e); }
+}
+
+function abrirConfirmacion(id) {
+    showConfirmCustom(
+        "Eliminar Comentario", 
+        "¿Estás seguro de que deseas eliminar este mensaje?", 
+        () => ejecutarEliminacionDirecta(id)
+    );
 }
 
 async function ejecutarEliminacionDirecta(id) {
     try {
         const res = await fetch(`/comentarios/${id}`, {method:"DELETE"});
         if(res.ok) {
-            cargarComentarios();
+            await cargarComentarios();
             showMessage("Comentario eliminado");
         }
-    } catch(e) { showMessage("Error de conexión", true); }
+    } catch(e) { showMessage("Error al eliminar", true); }
 }
 
 function iniciarEdicion(id, msg) {
     mensajeInput.value = msg;
     editandoComentario = id;
-    sendBtn.innerHTML = `<i class="bi bi-check2-all me-2"></i>Guardar`;
+    sendBtn.innerHTML = `<span>Guardar</span><i class="bi bi-check-lg ms-2"></i>`;
     ajustarAlturaInput();
     mensajeInput.focus();
 }
@@ -248,27 +282,21 @@ sendBtn.onclick = async () => {
     sendBtn.disabled = true;
     try {
         let url = "/comentarios", method = "POST";
-        let successMsg = "Comentario publicado";
-        
         if(editandoComentario) {
             url = `/comentarios/${editandoComentario}`;
             method = "PUT";
-            successMsg = "Comentario actualizado";
         }
-        
         const res = await fetch(url, {
             method: method,
             headers: {"Content-Type":"application/json"},
             body: JSON.stringify({mensaje})
         });
-        
         if(res.ok) {
-            showMessage(successMsg);
             mensajeInput.value = "";
             mensajeInput.style.height = 'auto';
             editandoComentario = null;
-            sendBtn.innerHTML = `<i class="bi bi-send me-2"></i>Enviar`;
-            cargarComentarios();
+            sendBtn.innerHTML = `<span>Enviar Sugerencia</span><i class="bi bi-send-fill ms-2"></i>`;
+            await cargarComentarios();
         }
     } catch(e) { showMessage("Error al procesar", true); }
     finally { sendBtn.disabled = false; }
@@ -277,49 +305,14 @@ sendBtn.onclick = async () => {
 window.onload = () => {
     cargarComentarios();
     monitorConexion.iniciar();
-    setInterval(cargarComentarios, 8000);
+    setInterval(cargarComentarios, 15000);
 };
-
-document.addEventListener("DOMContentLoaded", () => {
-    const logoutBtn = document.getElementById("logoutBtn");
-    
-    if (logoutBtn) {
-        logoutBtn.onclick = async (e) => {
-            e.preventDefault();
-            const url = logoutBtn.getAttribute("href");
-            monitorConexion.detener();
-            const misComentarios = document.querySelectorAll(`[data-user-id="${USER_CONFIG.userId}"] .punto-estado`);
-            misComentarios.forEach(punto => {
-                punto.classList.remove('estado-conectado');
-                punto.classList.add('estado-desconectado');
-            });
-            const profileStatus = document.querySelector(".profile-status");
-            if (profileStatus) {
-                profileStatus.innerText = "Desconectado";
-                profileStatus.style.color = "#6c757d";
-            }
-            window.location.href = url;
-        };
-    }
-});
 
 (function() {
     window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() {
-        window.history.pushState(null, "", window.location.href);
-    };
-
-    window.onpageshow = function(event) {
-        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-            window.location.reload();
-        }
-    };
+    window.onpopstate = () => window.history.pushState(null, "", window.location.href);
 })();
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/js/workers/service-worker-comentarios.js')
-        .then(reg => { console.log('SW OK'); })
-        .catch(err => { console.error('SW Error', err); });
-    });
+    window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-comentarios.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }

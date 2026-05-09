@@ -1,273 +1,97 @@
 let carruselIndex = 0, seccionIndex = 0, cintaIndex = 0;
 let procesamientoEnCurso = false;
-let audioCtx = null;
-const productosNotificados = new Set();
 
 async function actualizarAlmacenamiento() {
     try {
-        const timestamp = new Date().getTime();
-        const res = await fetch(`/cloudinary_storage_info?t=${timestamp}`, {
-            method: 'GET',
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
-        });
+        const res = await fetch(`/cloudinary_storage_info?t=${Date.now()}`);
         if (!res.ok) return;
         const data = await res.json();
         const circle = document.getElementById("storageCircle");
         const text = document.getElementById("storageText");
-        if (circle && text) {
-            const used = parseFloat(data.used_gb);
-            const limit = parseFloat(data.limit_gb);
-            let percent = (used / limit) * 100;
-            if (used > 0 && percent < 0.5) percent = 0.5;
-            let usedLabel;
-            if (used < 0.1) {
-                usedLabel = (used * 1024).toFixed(2) + " MB";
-            } else {
-                usedLabel = used.toFixed(2) + " GB";
-            }
-            const circumference = 125.66;
-            const offset = circumference - (percent / 100 * circumference);
-            circle.style.strokeDashoffset = offset;
-            text.textContent = `${usedLabel} / ${limit.toFixed(1)} GB (${percent.toFixed(2)}%)`;
-            circle.style.stroke = percent > 85 ? "#dc3545" : percent > 60 ? "#ffc107" : "#28a745";
+        if (!circle || !text) return;
+        const used = parseFloat(data.used_gb) || 0;
+        const limit = parseFloat(data.limit_gb) || 25;
+        const percent = Math.min((used / limit) * 100, 100);
+        const circumference = 2 * Math.PI * circle.r.baseVal.value;
+        circle.style.strokeDasharray = `${circumference}`;
+        circle.style.strokeDashoffset = circumference - (percent / 100) * circumference;
+        const label = used < 0.1 ? (used * 1024).toFixed(1) + " MB" : used.toFixed(2) + " GB";
+        text.textContent = `${label} / ${limit} GB`;
+        const wrapper = document.getElementById("storageWrapper");
+        if (wrapper) {
+            const tooltipText = `Uso: ${label} / ${limit} GB (${percent.toFixed(1)}%)`;
+            wrapper.setAttribute("title", tooltipText);
+            const tooltip = bootstrap.Tooltip.getInstance(wrapper) || new bootstrap.Tooltip(wrapper);
+            tooltip.setContent({ ".tooltip-inner": tooltipText });
         }
-    } catch (e) {}
-}
-
-function showStorageDetails() {
-    const text = document.getElementById("storageText");
-    if (text) {
-        alert(`Detalles del Almacenamiento:\n${text.textContent}`);
+    } catch (e) {
+        console.error("Error al obtener storage:", e);
     }
 }
 
-function initAudioContext() {
-    if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) audioCtx = new AudioContextClass();
+function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
+    let container = document.getElementById("toastContainer");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "toastContainer";
+        container.style.cssText = "position:fixed;top:25px;right:25px;z-index:10000;display:flex;flex-direction:column;gap:12px;";
+        document.body.appendChild(container);
     }
-    if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-}
-
-function playNotificationSound(type = 'default') {
-    try {
-        initAudioContext();
-        if (!audioCtx) return;
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        if (type === 'error' || type === 'agotado' || type === 'danger' || type === 'warning') {
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(330, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.3);
-            gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.4);
-        } else {
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
-            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.2);
-        }
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-    } catch (e) {}
-}
-
-function mostrarAlerta({
-    mensaje = "",
-    titulo = "",
-    descripcion = "",
-    imagen = "/static/uploads/logo.png",
-    tipo = "info",
-    duracion = 4000,
-    idUnico = null,
-    sonido = true
-} = {}) {
-    if (idUnico && productosNotificados.has(idUnico)) return;
-    if (idUnico) {
-        productosNotificados.add(idUnico);
-        setTimeout(() => productosNotificados.delete(idUnico), duracion + 1000);
-    }
-    let cont = document.getElementById("toastContainer");
-    if (!cont) {
-        cont = document.createElement("div");
-        cont.id = "toastContainer";
-        cont.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px;";
-        document.body.appendChild(cont);
-    }
-    if (sonido) {
-        const soundType = (tipo === 'error' || tipo === 'agotado' || tipo === 'warning' || tipo === 'danger') ? 'error' : 'default';
-        playNotificationSound(soundType);
-    }
-    const esError = tipo === 'error' || tipo === 'agotado' || tipo === 'warning' || tipo === 'danger';
-    const colorPrimario = esError ? "#ff4757" : "#ff9800";
-    const iconClass = esError ? 'bi-exclamation-triangle-fill' :
-        tipo === 'bienvenida' ? 'bi-emoji-smile-fill' :
-        tipo === 'favorito' ? 'bi-heart-fill' :
-        tipo === 'success' ? 'bi-check-circle-fill' : 'bi-stars';
+    const color = esError ? "#ff4757" : "#2ed573";
+    const sombra = esError ? "rgba(255,71,87,0.2)" : "rgba(46,213,115,0.2)";
     const toast = document.createElement("div");
-    toast.style.cssText = `
-        background: #121212;
-        color: #ffffff;
-        padding: 14px 18px;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        min-width: 320px;
-        max-width: 400px;
-        border-left: 5px solid ${colorPrimario};
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform: translateX(120%);
-        opacity: 0;
-        margin-bottom: 8px;
-    `;
-    const textoContenido = descripcion || mensaje;
-    const tituloFinal = titulo || (esError ? "Sistema" : "Notificación");
+    toast.style.cssText = `background:#fff;color:#2f3542;padding:16px 24px;border-radius:12px;box-shadow:0 10px 30px ${sombra};display:flex;justify-content:space-between;align-items:center;min-width:350px;max-width:450px;border-left:6px solid ${color};transition:all 0.5s cubic-bezier(0.175,0.885,0.32,1.275);transform:translateX(100%);opacity:0;`;
     toast.innerHTML = `
-        <div class="d-flex align-items-center w-100">
-            <div style="position: relative; flex-shrink: 0;">
-                <img src="${imagen}" style="width:50px; height:50px; object-fit:cover; border-radius:8px;" onerror="this.src='/static/uploads/logo.png'">
-                <div style="position: absolute; bottom: -4px; right: -4px; background: ${colorPrimario}; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #121212;">
-                    <i class="bi ${iconClass} text-white" style="font-size: 0.65rem;"></i>
-                </div>
+        <div class="d-flex align-items-center">
+            <div style="background:${color};width:35px;height:35px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:15px;">
+                <i class="bi ${esError ? "bi-x-circle-fill" : "bi-check-circle-fill"} text-white fs-5"></i>
             </div>
-            <div class="ms-3 flex-grow-1">
-                <strong style="display: block; font-size: 0.7rem; text-transform: uppercase; color: ${colorPrimario}; letter-spacing: 0.8px;">${tituloFinal}</strong>
-                <div style="font-size: 0.85rem; font-weight: 400; color: #f0f0f0; line-height: 1.2;">${textoContenido}</div>
+            <div>
+                <strong style="display:block;font-size:0.8rem;text-transform:uppercase;color:#747d8c;">Notificación de Sistema</strong>
+                <span style="font-size:0.95rem;font-weight:600;">${mensaje}</span>
             </div>
-            <button class="btn-close-toast ms-2" style="background: none; border: none; color: #888; cursor: pointer; font-size: 1rem;">
-                <i class="bi bi-x-lg"></i>
-            </button>
         </div>
-    `;
-    cont.appendChild(toast);
-    setTimeout(() => {
-        toast.style.transform = "translateX(0)";
-        toast.style.opacity = "1";
-    }, 50);
-    const remove = () => {
+        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer;font-size:1rem;color:#a4b0be;"></i>`;
+    container.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.transform = "translateX(0)"; toast.style.opacity = "1"; });
+    const eliminar = () => {
         toast.style.transform = "translateX(120%)";
         toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 400);
+        setTimeout(() => toast.remove(), 500);
     };
-    toast.querySelector('.btn-close-toast').onclick = remove;
-    setTimeout(remove, duracion);
+    toast.querySelector(".btn-close-toast").onclick = eliminar;
+    setTimeout(eliminar, duracionMs);
 }
 
 function toast(msg, tipo = "success") {
-    mostrarAlerta({
-        mensaje: msg,
-        tipo: tipo,
-        titulo: tipo === "success" ? "Éxito" : "Atención",
-        duracion: 3500
-    });
+    mostrarAlerta(msg, tipo === "danger");
 }
 
 function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
-    const existing = document.getElementById('appModalConfirm');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'appModalConfirm';
-    overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8); display: flex; align-items: center;
-        justify-content: center; z-index: 20000; backdrop-filter: blur(5px);
-        transition: opacity 0.3s ease;
-    `;
-
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        background: #ffffff; width: 95%; max-width: 420px; padding: 35px;
-        border-radius: 25px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.4);
-        transform: scale(0.7); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    `;
-
+    document.getElementById("appModalConfirm")?.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "appModalConfirm";
+    overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:20000;backdrop-filter:blur(5px);transition:opacity 0.3s ease;";
+    const modal = document.createElement("div");
+    modal.style.cssText = "background:#fff;width:95%;max-width:420px;padding:35px;border-radius:25px;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,0.4);transform:scale(0.7);transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);";
     modal.innerHTML = `
-        <div style="color: #ff4757; font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-        </div>
-        <h2 style="margin-bottom: 12px; font-weight: 800; color: #1e272e; letter-spacing: -0.5px;">${titulo}</h2>
-        <p style="color: #485460; margin-bottom: 30px; line-height: 1.6; font-size: 1.05rem;">${mensaje}</p>
-        <div style="display: flex; gap: 12px; justify-content: center;">
-            <button id="btnCancelModal" class="btn btn-light" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; border: 2px solid #f1f2f6;">CANCELAR</button>
-            <button id="btnConfirmModal" class="btn btn-danger" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; background: #ff4757; border: none; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);">CONFIRMAR</button>
-        </div>
-    `;
-
+        <div style="color:#ff4757;font-size:4rem;margin-bottom:20px;animation:pulse 1.5s infinite;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <h2 style="margin-bottom:12px;font-weight:800;color:#1e272e;letter-spacing:-0.5px;">${titulo}</h2>
+        <p style="color:#485460;margin-bottom:30px;line-height:1.6;font-size:1.05rem;">${mensaje}</p>
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <button id="btnCancelModal" class="btn btn-light" style="padding:12px 30px;border-radius:15px;font-weight:700;border:2px solid #f1f2f6;">CANCELAR</button>
+            <button id="btnConfirmModal" class="btn btn-danger" style="padding:12px 30px;border-radius:15px;font-weight:700;background:#ff4757;border:none;box-shadow:0 5px 15px rgba(255,71,87,0.3);">CONFIRMAR</button>
+        </div>`;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-
-    setTimeout(() => {
-        modal.style.transform = 'scale(1)';
-    }, 10);
-
+    setTimeout(() => { modal.style.transform = "scale(1)"; }, 10);
     const cerrar = () => {
-        modal.style.transform = 'scale(0.7)';
-        overlay.style.opacity = '0';
+        modal.style.transform = "scale(0.7)";
+        overlay.style.opacity = "0";
         setTimeout(() => overlay.remove(), 300);
     };
-
-    document.getElementById('btnCancelModal').onclick = cerrar;
-    document.getElementById('btnConfirmModal').onclick = () => {
-        onConfirm();
-        cerrar();
-    };
-}
-
-async function verificarAccesoAdmin() {
-    try {
-        const res = await fetch("/facturacion_page", {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        if (res.status === 401 || res.status === 403) {
-            document.body.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #fff; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
-                    <div style="text-align: center; border: 1px solid #222; padding: 3rem; border-radius: 24px; background: #080808; box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 450px; width: 90%;">
-                        <i class="bi bi-shield-lock-fill" style="font-size: 5rem; color: #ff4757; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
-                        <h2 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">ACCESO RESTRINGIDO</h2>
-                        <p style="color: #666; font-size: 1rem; margin-bottom: 2rem;">Este módulo requiere privilegios de administrador.</p>
-                        <div class="spinner-border text-danger mb-4" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                        <br>
-                        <i><small style="color: #555;">Redirigiendo...</small></i>
-                        <br><br>
-                        <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 12px;">VOLVER AL PANEL</button>
-                    </div>
-                </div>
-                <style>
-                    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-                </style>`;
-            setTimeout(() => { window.location.href = "/inicio"; }, 3500);
-            return false;
-        }
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-
-function validarArchivo(file) {
-    if (!file) return false;
-    const extensionesPermitidas = /(\.jpg|\.jpeg|\.png|\.webp|\.gif|\.avif)$/i;
-    if (!extensionesPermitidas.exec(file.name)) {
-        toast("Formato no soportado (JPG, PNG, WEBP, GIF, AVIF)", "danger");
-        return false;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-        toast("Imagen demasiado pesada (Máx 50MB)", "danger");
-        return false;
-    }
-    return true;
+    document.getElementById("btnCancelModal").onclick = cerrar;
+    document.getElementById("btnConfirmModal").onclick = () => { onConfirm(); cerrar(); };
 }
 
 async function comprimirImagen(file) {
@@ -279,10 +103,8 @@ async function comprimirImagen(file) {
             img.src = event.target.result;
             img.onload = () => {
                 const canvas = document.createElement("canvas");
-                const MAX_WIDTH = 1920;
-                const MAX_HEIGHT = 1080;
-                let width = img.width;
-                let height = img.height;
+                const MAX_WIDTH = 1920, MAX_HEIGHT = 1080;
+                let width = img.width, height = img.height;
                 if (width > height) {
                     if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                 } else {
@@ -290,12 +112,11 @@ async function comprimirImagen(file) {
                 }
                 canvas.width = width;
                 canvas.height = height;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0, width, height);
-                const quality = file.size > 5 * 1024 * 1024 ? 0.75 : file.size > 1 * 1024 * 1024 ? 0.80 : 0.85;
+                canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+                const quality = file.size > 5 * 1024 * 1024 ? 0.75 : file.size > 1024 * 1024 ? 0.80 : 0.85;
                 canvas.toBlob((blob) => {
-                    resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp', lastModified: Date.now() }));
-                }, 'image/webp', quality);
+                    resolve(new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp", lastModified: Date.now() }));
+                }, "image/webp", quality);
             };
         };
     });
@@ -314,35 +135,30 @@ function actualizarPreview() {
             const des = div.querySelector(".t-des")?.value || "";
             item.innerHTML = `
                 <div class="d-block w-100 position-relative overflow-hidden" style="height:450px;">
-                    <div class="position-absolute w-100 h-100" style="background: url('${img}') center/cover; filter: blur(20px); transform: scale(1.1); z-index: 1;"></div>
-                    <img src="${img}" class="position-relative d-block h-100 mx-auto shadow-lg" style="object-fit: contain; z-index: 2;">
+                    <div class="position-absolute w-100 h-100" style="background:url('${img}') center/cover;filter:blur(20px);transform:scale(1.1);z-index:1;"></div>
+                    <img src="${img}" class="position-relative d-block h-100 mx-auto shadow-lg" style="object-fit:contain;z-index:2;">
                 </div>
-                <div class="carousel-caption rounded-4 p-3 mb-3 mx-auto" style="max-width: 80%; z-index:3;">
-                    <h5 class="mb-1 fw-bold text-uppercase" style="text-shadow: 2px 2px 10px rgba(0,0,0,0.8);">${tit}</h5>
-                    <p class="small mb-0" style="text-shadow: 1px 1px 8px rgba(0,0,0,0.8);">${des}</p>
+                <div class="carousel-caption rounded-4 p-3 mb-3 mx-auto" style="max-width:80%;z-index:3;">
+                    <h5 class="mb-1 fw-bold text-uppercase" style="text-shadow:2px 2px 10px rgba(0,0,0,0.8);">${tit}</h5>
+                    <p class="small mb-0" style="text-shadow:1px 1px 8px rgba(0,0,0,0.8);">${des}</p>
                 </div>`;
             pCar.appendChild(item);
         });
-        const carElem = document.querySelector("#previewCarrusel");
-        if (itemsCar.length > 0 && carElem) {
-            const bsCarousel = bootstrap.Carousel.getOrCreateInstance(carElem);
-            bsCarousel.to(0);
+        if (itemsCar.length > 0) {
+            bootstrap.Carousel.getOrCreateInstance(document.querySelector("#previewCarrusel")).to(0);
         }
     }
 
     const pCinta = document.getElementById("previewCintaMarquee");
     if (pCinta) {
         pCinta.innerHTML = "";
-        const items = document.querySelectorAll("#cintaContainer .section-preview");
         let trackContent = "";
-        items.forEach(div => {
+        document.querySelectorAll("#cintaContainer .section-preview").forEach(div => {
             const img = div.querySelector("img").src;
             const tit = div.querySelector(".t-tit").value;
             trackContent += `
                 <div class="promo-item">
-                    <div class="promo-item-image">
-                        <img src="${img}" alt="${tit}">
-                    </div>
+                    <div class="promo-item-image"><img src="${img}" alt="${tit}"></div>
                     <span class="promo-item-text">${tit}</span>
                     <div class="promo-item-separator"></div>
                 </div>`;
@@ -362,7 +178,7 @@ function actualizarPreview() {
             const img = div.querySelector("img").src;
             const tit = div.querySelector(".t-tit").value;
             d.innerHTML = `
-                <div style="width:65px; height:65px; margin: 0 auto; background:#f8f9fa;" class="rounded-circle overflow-hidden shadow-sm mb-2 border">
+                <div style="width:65px;height:65px;margin:0 auto;background:#f8f9fa;" class="rounded-circle overflow-hidden shadow-sm mb-2 border">
                     <img src="${img}" class="w-100 h-100" style="object-fit:contain;">
                 </div>
                 <div class="small fw-bold text-dark text-truncate px-1">${tit}</div>`;
@@ -377,30 +193,24 @@ async function crearNotificacion() {
     const d = document.getElementById("descNotificacion");
     const a = document.getElementById("archivoNotificacion");
     const previewImg = document.getElementById("previewNotificacionImg");
-    if (!t.value.trim() || !d.value.trim()) {
-        toast("Título y mensaje son obligatorios", "warning");
-        return;
-    }
+    if (!t.value.trim() || !d.value.trim()) { toast("¡Título y mensaje son obligatorios!", true); return; }
     procesamientoEnCurso = true;
     const formData = new FormData();
     formData.append("titulo", t.value);
     formData.append("descripcion", d.value);
-    if (a.files[0]) {
-        const fileComprimido = await comprimirImagen(a.files[0]);
-        formData.append("archivo", fileComprimido);
-    }
+    if (a.files[0]) formData.append("archivo", await comprimirImagen(a.files[0]));
     try {
         const res = await fetch("/api/admin/notificaciones", { method: "POST", body: formData });
         const data = await res.json();
         if (data.ok) {
-            toast("Notificación publicada");
+            toast("¡Notificación publicada con éxito!");
             t.value = ""; d.value = ""; a.value = "";
             if (previewImg) previewImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1OacDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJBSURBVHgB7d0xbhNREIDh90YpSClpSInS06ByAnp6SByBk9ByAnp6ChonSInS06ByApSClpSClpSChv9vYScbe9be9Xp3Z76Pst6stZun8f72zZunMREp6vUf97ZOfn64fP9scfH+mYgG9fbt+6f7n8/vXrz6eC6isfrz5p8mIkW9e/dhIu6IKOp8+SyiqPP7DyIa9PHe2XfTjMREpKgzmYh9Ihp0/vEisS+isfrtHxEfXkU06uXFpyciGrW9efZ0Ihp0t3k6EQ26ubqbiCtiIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIynL17/wEunS4O3C+hNwAAAABJRU5ErkJggg==";
             cargarAlertasActivas();
         } else {
             toast(data.error || "Error al procesar", "danger");
         }
-    } catch (e) {
+    } catch {
         toast("Error de conexión", "danger");
     } finally {
         procesamientoEnCurso = false;
@@ -412,16 +222,13 @@ async function toggleEstadoAlerta(id, estado) {
     try {
         const res = await fetch(`/api/admin/notificaciones/estado/${id}`, {
             method: "POST",
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado: estado })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ estado })
         });
         const data = await res.json();
-        if (data.ok) toast(estado ? "Alerta activada" : "Alerta desactivada", "info");
-        else {
-            toast("Error en servidor", "danger");
-            cargarAlertasActivas();
-        }
-    } catch (e) {
+    if (data.ok) toast(estado ? "¡Alerta activada!" : "¡Alerta desactivada!", "info");
+        else { toast("Error en servidor", "danger"); cargarAlertasActivas(); }
+    } catch {
         toast("Error de red", "danger");
         cargarAlertasActivas();
     }
@@ -437,10 +244,9 @@ async function cargarAlertasActivas() {
         alertas.forEach(alerta => {
             const div = document.createElement("div");
             div.className = "alert-admin-lista mb-2 d-flex align-items-center justify-content-between p-2 border rounded";
-            const isChecked = alerta.estado ? 'checked' : '';
             div.innerHTML = `
                 <div class="d-flex align-items-center gap-2 overflow-hidden">
-                    ${alerta.imagen_url ? `<img src="${alerta.imagen_url}" class="img-notificacion-lista" style="width:35px;height:35px;border-radius:4px;object-fit:cover;">` : '<i class="bi bi-bell p-2"></i>'}
+                    ${alerta.imagen_url ? `<img src="${alerta.imagen_url}" style="width:35px;height:35px;border-radius:4px;object-fit:cover;">` : '<i class="bi bi-bell p-2"></i>'}
                     <div class="text-truncate">
                         <div class="small text-truncate fw-bold">${alerta.titulo}</div>
                         <div class="extra-small text-muted text-truncate">${alerta.descripcion}</div>
@@ -448,7 +254,7 @@ async function cargarAlertasActivas() {
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" ${isChecked} onchange="toggleEstadoAlerta('${alerta.id_publicidad}', this.checked)">
+                        <input class="form-check-input" type="checkbox" role="switch" ${alerta.estado ? "checked" : ""} onchange="toggleEstadoAlerta('${alerta.id_publicidad}', this.checked)">
                     </div>
                     <button class="btn btn-sm text-danger border-0" onclick="eliminarAlerta('${alerta.id_publicidad}')">
                         <i class="bi bi-trash3-fill"></i>
@@ -456,22 +262,18 @@ async function cargarAlertasActivas() {
                 </div>`;
             cont.appendChild(div);
         });
-    } catch (e) {}
+    } catch {}
 }
 
 async function eliminarAlerta(id) {
     if (!id || id === "undefined") return toast("ID no válido", "danger");
-    mostrarConfirmacionApp("Eliminar Alerta", "¿Estás seguro de que deseas eliminar esta alerta?", async () => {
+    mostrarConfirmacionApp("Eliminar Alerta", "¿Seguro que quieres eliminar esta alerta?", async () => {
         try {
             const res = await fetch(`/api/admin/notificaciones/${id}`, { method: "DELETE" });
             const data = await res.json();
-            if (data.ok) {
-                toast("Eliminada", "success");
-                cargarAlertasActivas();
-            } else {
-                toast("Error al eliminar", "danger");
-            }
-        } catch (e) {
+            if (data.ok) { toast("¡Alerta eliminada con éxito!", true); cargarAlertasActivas(); }
+            else toast("Error al eliminar", "danger");
+        } catch {
             toast("Error de conexión", "danger");
         }
     });
@@ -489,18 +291,16 @@ function agregarCarrusel(url = "", titulo = "", desc = "", id = "") {
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
         <div class="section-content row g-3 m-0 w-100 align-items-center">
             <div class="col-md-3">
-                <div class="preview-img-box mb-2 border rounded overflow-hidden shadow-sm d-flex align-items-center justify-content-center" style="height: 120px; background: #f1f3f5; position: relative;">
-                    <img src="${url || ''}"
-                        class="w-100 h-100 ${!url ? 'd-none' : ''}"
-                        style="object-fit: cover;"
-                        onload="this.classList.remove('d-none'); this.nextElementSibling.classList.add('d-none')"
-                        onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none')">
-                    <div class="placeholder-icon text-center text-muted ${url ? 'd-none' : ''}">
-                        <i class="bi bi-image-fill" style="font-size: 2.5rem; opacity: 0.4;"></i>
-                        <div style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-top: -5px;">Sin Imagen</div>
+                <div class="preview-img-box mb-2 border rounded overflow-hidden shadow-sm d-flex align-items-center justify-content-center" style="height:120px;background:#f1f3f5;position:relative;">
+                    <img src="${url}" class="w-100 h-100 ${!url ? "d-none" : ""}" style="object-fit:cover;"
+                        onload="this.classList.remove('d-none');this.nextElementSibling.classList.add('d-none')"
+                        onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none')">
+                    <div class="placeholder-icon text-center text-muted ${url ? "d-none" : ""}">
+                        <i class="bi bi-image-fill" style="font-size:2.5rem;opacity:0.4;"></i>
+                        <div style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;margin-top:-5px;">Sin Imagen</div>
                     </div>
                 </div>
-                <input type="file" class="form-control form-control-sm mt-2 shadow-none" accept=".jpg,.jpeg,.png,.webp,.gif,.avif" onchange="cambioImg(this)">
+                <input type="file" class="form-control form-control-sm mt-2 shadow-none" accept="image/*" onchange="cambioImg(this)">
             </div>
             <div class="col-md-9">
                 <div class="pe-3">
@@ -529,19 +329,17 @@ function agregarSeccion(url = "", titulo = "", id = "") {
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
         <div class="section-content d-flex align-items-center gap-4 w-100 p-2">
-            <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:90px; height:90px; border-radius: 50%; min-width: 90px; overflow: hidden; background: #f1f3f5; position: relative;">
-                <img src="${url || ''}"
-                    class="w-100 h-100 ${!url ? 'd-none' : ''}"
-                    style="object-fit: cover;"
-                    onload="this.classList.remove('d-none'); this.nextElementSibling.classList.add('d-none')"
-                    onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none')">
-                <div class="placeholder-icon text-center text-muted ${url ? 'd-none' : ''}">
-                    <i class="bi bi-image" style="font-size: 1.8rem; opacity: 0.4;"></i>
+            <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:90px;height:90px;border-radius:50%;min-width:90px;overflow:hidden;background:#f1f3f5;position:relative;">
+                <img src="${url}" class="w-100 h-100 ${!url ? "d-none" : ""}" style="object-fit:cover;"
+                    onload="this.classList.remove('d-none');this.nextElementSibling.classList.add('d-none')"
+                    onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none')">
+                <div class="placeholder-icon text-center text-muted ${url ? "d-none" : ""}">
+                    <i class="bi bi-image" style="font-size:1.8rem;opacity:0.4;"></i>
                 </div>
             </div>
             <div class="flex-grow-1">
                 <div class="row g-2 align-items-end">
-                    <div class="col-md-5"><label class="extra-small fw-bold text-muted text-uppercase">Imagen</label><input type="file" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp,.gif,.avif" onchange="cambioImg(this)"></div>
+                    <div class="col-md-5"><label class="extra-small fw-bold text-muted text-uppercase">Imagen</label><input type="file" class="form-control form-control-sm" accept="image/*" onchange="cambioImg(this)"></div>
                     <div class="col-md-7"><label class="extra-small fw-bold text-muted text-uppercase">Nombre</label><input type="text" class="form-control t-tit fw-bold" placeholder="Nombre..." value="${titulo}" oninput="actualizarPreview()"></div>
                 </div>
             </div>
@@ -562,19 +360,17 @@ function agregarCinta(url = "", titulo = "", id = "") {
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-4"></i></div>
         <div class="section-content d-flex align-items-center gap-3 w-100 py-2 px-3 border rounded">
-            <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:50px; height:50px; border-radius: 50%; min-width: 50px; overflow: hidden; background: #f1f3f5; position: relative;">
-                <img src="${url || ''}"
-                    class="w-100 h-100 ${!url ? 'd-none' : ''}"
-                    style="object-fit: cover;"
-                    onload="this.classList.remove('d-none'); if(this.nextElementSibling) this.nextElementSibling.classList.add('d-none');"
-                    onerror="this.classList.add('d-none'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('d-none');">
-                <div class="placeholder-icon text-muted ${url ? 'd-none' : ''}">
-                    <i class="bi bi-card-image" style="font-size: 1.2rem; opacity: 0.5;"></i>
+            <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:50px;height:50px;border-radius:50%;min-width:50px;overflow:hidden;background:#f1f3f5;position:relative;">
+                <img src="${url}" class="w-100 h-100 ${!url ? "d-none" : ""}" style="object-fit:cover;"
+                    onload="this.classList.remove('d-none');if(this.nextElementSibling)this.nextElementSibling.classList.add('d-none');"
+                    onerror="this.classList.add('d-none');if(this.nextElementSibling)this.nextElementSibling.classList.remove('d-none');">
+                <div class="placeholder-icon text-muted ${url ? "d-none" : ""}">
+                    <i class="bi bi-card-image" style="font-size:1.2rem;opacity:0.5;"></i>
                 </div>
             </div>
             <div class="flex-grow-1">
                 <div class="row g-2 align-items-center">
-                    <div class="col-md-5"><input type="file" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp,.gif,.avif" onchange="cambioImg(this)"></div>
+                    <div class="col-md-5"><input type="file" class="form-control form-control-sm" accept="image/*" onchange="cambioImg(this)"></div>
                     <div class="col-md-7"><input type="text" class="form-control form-control-sm t-tit fw-bold" placeholder="Texto..." value="${titulo}" oninput="actualizarPreview()"></div>
                 </div>
             </div>
@@ -598,14 +394,14 @@ async function guardarMarketing() {
     progressBar.style.width = "0%";
     progressText.textContent = "Preparando archivos...";
     const formData = new FormData();
-    let totalFiles = 0;
-    let uploadedFiles = 0;
+    let totalFiles = 0, uploadedFiles = 0;
+
     const extraerSeccion = async (containerId, metaKey, filePrefix) => {
         const metadata = [];
         const items = document.querySelectorAll(`#${containerId} .section-preview`);
         for (let index = 0; index < items.length; index++) {
             const div = items[index];
-            const fileInput = div.querySelector('input[type="file"]');
+            const fileInput = div.querySelector("input[type='file']");
             if (fileInput.files[0]) {
                 totalFiles++;
                 formData.append(`${filePrefix}_${index}`, await comprimirImagen(fileInput.files[0]));
@@ -624,6 +420,7 @@ async function guardarMarketing() {
         }
         formData.append(metaKey, JSON.stringify(metadata));
     };
+
     await extraerSeccion("carruselContainer", "metadata_carrusel", "file_carrusel");
     await extraerSeccion("seccionesContainer", "metadata_secciones", "file_secciones");
     await extraerSeccion("cintaContainer", "metadata_cinta", "file_cinta");
@@ -635,12 +432,13 @@ async function guardarMarketing() {
         progressBar.style.width = "100%";
         progressText.textContent = "Completado";
         if (data.ok) {
-            toast("Publicidad actualizada", "success");
+            toast("¡Publicidad actualizada con éxito!");
+            actualizarAlmacenamiento();
             setTimeout(() => location.reload(), 1000);
         } else {
             toast(data.error || "Error al guardar", "danger");
         }
-    } catch (e) {
+    } catch {
         toast("Error de conexión", "danger");
     } finally {
         procesamientoEnCurso = false;
@@ -653,32 +451,29 @@ async function guardarMarketing() {
 function initDrag(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    container.addEventListener('dragstart', e => {
-        if (e.target.classList.contains('section-preview')) e.target.classList.add('dragging');
+    container.addEventListener("dragstart", e => {
+        if (e.target.classList.contains("section-preview")) e.target.classList.add("dragging");
     });
-    container.addEventListener('dragend', e => {
-        if (e.target.classList.contains('section-preview')) {
-            e.target.classList.remove('dragging');
+    container.addEventListener("dragend", e => {
+        if (e.target.classList.contains("section-preview")) {
+            e.target.classList.remove("dragging");
             actualizarPreview();
         }
     });
-    container.addEventListener('dragover', e => {
+    container.addEventListener("dragover", e => {
         e.preventDefault();
-        const dragging = container.querySelector('.dragging');
-        const afterElement = [...container.querySelectorAll('.section-preview:not(.dragging)')].reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = e.clientY - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
-            return closest;
+        const dragging = container.querySelector(".dragging");
+        const afterElement = [...container.querySelectorAll(".section-preview:not(.dragging)")].reduce((closest, child) => {
+            const offset = e.clientY - child.getBoundingClientRect().top - child.getBoundingClientRect().height / 2;
+            return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
         }, { offset: Number.NEGATIVE_INFINITY }).element;
-        if (dragging && afterElement == null) container.appendChild(dragging);
-        else if (dragging) container.insertBefore(dragging, afterElement);
+        if (dragging) afterElement ? container.insertBefore(dragging, afterElement) : container.appendChild(dragging);
     });
 }
 
 async function cambioImg(input) {
     const file = input.files[0];
-    if (!validarArchivo(file)) { input.value = ""; return; }
+    if (!file) return;
     const container = input.closest(".section-preview");
     const imgElement = container.querySelector("img");
     try {
@@ -690,7 +485,7 @@ async function cambioImg(input) {
             actualizarPreview();
         };
         r.readAsDataURL(comprimido);
-    } catch (e) {
+    } catch {
         toast("Error al comprimir imagen", "danger");
         input.value = "";
     }
@@ -704,18 +499,13 @@ async function borrarSec(btn) {
         actualizarPreview();
         return;
     }
-    mostrarConfirmacionApp("Eliminar Elemento", "¿Eliminar este elemento permanentemente?", async () => {
+    mostrarConfirmacionApp("Eliminar Elemento", "¿Eliminar este elemento de la sección?", async () => {
         try {
             const r = await fetch(`/api/admin/publicidad/delete/${dbId}`, { method: "DELETE" });
             const res = await r.json();
-            if (res.ok) {
-                container.remove();
-                actualizarPreview();
-                toast("Eliminado", "info");
-            } else {
-                toast("Error al eliminar", "danger");
-            }
-        } catch (e) {
+            if (res.ok) { container.remove(); actualizarPreview(); toast("¡Publicidad eliminada con éxito!", true); }
+            else toast("Error al eliminar", "danger");
+        } catch {
             toast("Error al eliminar", "danger");
         }
     });
@@ -725,27 +515,24 @@ function cargarPublicidadActiva() {
     fetch("/api/publicidad/activa").then(r => r.json()).then(data => {
         if (!Array.isArray(data)) return;
         data.forEach(item => {
-            if (item.tipo === 'carrusel') agregarCarrusel(item.imagen_url, item.titulo, item.descripcion, item.id_publicidad);
-            else if (item.tipo === 'seccion') agregarSeccion(item.imagen_url, item.titulo, item.id_publicidad);
-            else if (item.tipo === 'cinta') agregarCinta(item.imagen_url, item.titulo, item.id_publicidad);
+            if (item.tipo === "carrusel") agregarCarrusel(item.imagen_url, item.titulo, item.descripcion, item.id_publicidad);
+            else if (item.tipo === "seccion") agregarSeccion(item.imagen_url, item.titulo, item.id_publicidad);
+            else if (item.tipo === "cinta") agregarCinta(item.imagen_url, item.titulo, item.id_publicidad);
         });
         actualizarPreview();
     }).catch(e => console.error("Error cargando publicidad:", e));
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const tieneAcceso = await verificarAccesoAdmin();
-    if (!tieneAcceso) return;
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+    [].slice.call(document.querySelectorAll("[data-bs-toggle='tooltip']")).forEach(el => new bootstrap.Tooltip(el));
     await actualizarAlmacenamiento();
     const inputArchivo = document.getElementById("archivoNotificacion");
     if (inputArchivo) {
         inputArchivo.addEventListener("change", function () {
             const previewImg = document.getElementById("previewNotificacionImg");
-            if (this.files && this.files[0] && previewImg) {
+            if (this.files?.[0] && previewImg) {
                 const reader = new FileReader();
-                reader.onload = (e) => previewImg.src = e.target.result;
+                reader.onload = e => previewImg.src = e.target.result;
                 reader.readAsDataURL(this.files[0]);
             }
         });
@@ -757,24 +544,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         initDrag("seccionesContainer");
         initDrag("cintaContainer");
         document.getElementById("btnGuardarMarketing")?.addEventListener("click", guardarMarketing);
-        document.addEventListener("click", () => initAudioContext(), { once: true });
     }
 });
 
 (function () {
     window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function () { window.history.pushState(null, "", window.location.href); };
-    window.onpageshow = function (event) {
-        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-            window.location.reload();
-        }
+    window.onpopstate = () => window.history.pushState(null, "", window.location.href);
+    window.onpageshow = (event) => {
+        if (event.persisted || window.performance?.navigation.type === 2) window.location.reload();
     };
 })();
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/js/workers/service-worker-publicidad.js')
-            .then(() => console.log('SW OK'))
-            .catch(err => console.error('SW Error', err));
-    });
+    window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-publicidad.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }

@@ -13,11 +13,9 @@
     {% include 'global_modules/navbar.html' %}
     <div class="main-content">
         <div class="container-central">
-            <div class="card-title-marketing text-center">
-                <h3 class="display-6 fw-bold m-0">
-                    <i class="bi bi-megaphone me-2"></i>Panel de Publicidad
-                </h3>
-                <p class="text-white-50 mb-0 mt-1 fw-500">Gestiona todas tus publicidades desde aquí</p>
+            <div class="card-title-marketing mb-5 text-center">
+                <h3 class="display-6 fw-bold m-0"><i class="bi bi-megaphone me-2"></i> Panel de Publicidad</h3>
+                <p class="text-white-50 mb-0 mt-1 fw-500">Gestiona y filtra todo el contenido de tu marketing digital.</p>
             </div>
             <div class="card section-notificaciones mb-4">
                 <div class="card-body">
@@ -125,16 +123,18 @@
             </div>
         </div>
     </div>
-    <div class="storage-fixed-wrapper">
-        <div class="storage-container shadow-lg" onclick="showStorageDetails()" data-bs-toggle="tooltip" data-bs-placement="left" title="Detalles Cloud">
+    <div class="storage-fixed-wrapper" id="storageWrapper" onclick="showStorageDetails()" style="cursor: pointer;">
+        <div class="storage-container">
             <div class="storage-visual-wrapper">
-                <i class="bi bi-cloud-fill storage-cloud-inner"></i>
-                <svg class="storage-ring-svg" width="56" height="56" viewBox="0 0 56 56">
-                    <circle class="storage-ring-bg" cx="28" cy="28" r="24"></circle>
-                    <circle id="storageCircle" class="storage-ring-progress" cx="28" cy="28" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
+                <svg class="storage-ring-svg" width="60" height="60">
+                    <circle class="storage-ring-bg" cx="30" cy="30" r="26"></circle>
+                    <circle id="storageCircle" class="storage-ring-progress" cx="30" cy="30" r="26"></circle>
                 </svg>
+                <div class="storage-cloud-inner">
+                    <i class="bi bi-cloud-fill"></i>
+                </div>
             </div>
-            <small id="storageText" class="d-none"></small>
+            <span id="storageText" class="d-none">Cargando...</span>
         </div>
     </div>
     {% include 'global_modules/footer.html' %}

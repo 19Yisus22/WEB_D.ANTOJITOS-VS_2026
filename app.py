@@ -1,19 +1,18 @@
-import requests
+import re
 from waitress import serve
 from functools import wraps
 from flask_cors import CORS
 from dotenv import load_dotenv
-import re
+from google.oauth2 import id_token
 from supabase import create_client, ClientOptions
 from datetime import datetime, timezone, timedelta
-from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import os, uuid, socket, secrets, logging, hashlib, cloudinary, cloudinary.uploader, json
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for, make_response
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "static")
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+STATIC_DIR = os.path.join(BASE_DIR, "static")
 UPLOAD_DIR = os.path.join(STATIC_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True) 
 env_path = os.path.join(BASE_DIR, ".env")
@@ -27,14 +26,8 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_
 if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
     raise ValueError("Err .env - Faltan las credenciales de Supabase")
 
-opts = ClientOptions(
-    postgrest_client_timeout=120,
-    storage_client_timeout=120,
-    schema="public"
-)
-
+opts = ClientOptions(postgrest_client_timeout=120, storage_client_timeout=120, schema="public")
 supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY, options=opts)
-
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
@@ -43,12 +36,7 @@ CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 if not CLOUDINARY_CLOUD_NAME or not CLOUDINARY_API_KEY or not CLOUDINARY_API_SECRET:
     raise ValueError("Err .env - Faltan las credenciales de Cloudinary")
 
-cloudinary.config(
-    cloud_name=CLOUDINARY_CLOUD_NAME, 
-    api_key=CLOUDINARY_API_KEY, 
-    api_secret=CLOUDINARY_API_SECRET
-)
-
+cloudinary.config(cloud_name=CLOUDINARY_CLOUD_NAME, api_key=CLOUDINARY_API_KEY, api_secret=CLOUDINARY_API_SECRET)
 FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(24)
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
 app.permanent_session_lifetime = timedelta(days=1)
@@ -61,8 +49,26 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'ico'}
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
-
 # ¡WARNING! -- | MÓDULO DE ENDPOINTS GLOBALES (NO MODIFICAR)
+
+def is_valid_name(value):
+    if not value or not isinstance(value, str):
+        return False
+    return bool(re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+", value.strip()))
+
+def is_valid_numeric(value, min_length=1):
+    if not value or not isinstance(value, str):
+        return False
+    return bool(re.fullmatch(r"\d+", value.strip())) and len(value.strip()) >= min_length
+
+def is_valid_email(value):
+    if not value or not isinstance(value, str):
+        return False
+    value = value.strip()
+    return bool(re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+", value))
+
+
+# FUNCIONES DE AUTH, VALIDACIÓN Y CACHEO
 
 def sin_cache(f):
     @wraps(f)
@@ -73,6 +79,47 @@ def sin_cache(f):
         response.headers['Expires'] = '0'
         return response
     return decorated_function
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("user_id") or session.get("rol") != "admin":
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.path.startswith('/api/') or request.method == "POST":
+                return jsonify({"error": "No autorizado", "status": "blocked"}), 401
+            
+            return render_template("global_modules/blocked.html", metodos=[])
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
+def hash_password(contrasena, salt=None):
+    if not salt:
+        salt = os.urandom(16).hex()
+    hashed = hashlib.sha256((salt + contrasena).encode()).hexdigest()
+    return f"{salt}${hashed}"
+
+def verify_password(contrasena, hashed):
+    try:
+        salt, hash_val = hashed.split("$")
+        return hashlib.sha256((salt + contrasena).encode()).hexdigest() == hash_val
+    except:
+        return False
+
+@app.after_request
+def agregar_cabeceras(response):
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
+    response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
+@app.route("/obtener-cliente-id", methods=["GET"])
+def obtener_cliente_id():
+    cliente_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    return jsonify({"client_id": cliente_id})
+
+
+# FUNCIONES DE CLOUDINARY
 
 def allowed_file(filename):
     ext = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
@@ -92,60 +139,6 @@ def delete_image_from_cloudinary(public_url):
         return True
     except:
         return False
-
-def hash_password(contrasena, salt=None):
-    if not salt:
-        salt = os.urandom(16).hex()
-    hashed = hashlib.sha256((salt + contrasena).encode()).hexdigest()
-    return f"{salt}${hashed}"
-
-def verify_password(contrasena, hashed):
-    try:
-        salt, hash_val = hashed.split("$")
-        return hashlib.sha256((salt + contrasena).encode()).hexdigest() == hash_val
-    except:
-        return False
-
-def is_valid_name(value):
-    if not value or not isinstance(value, str):
-        return False
-    return bool(re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+", value.strip()))
-
-def is_valid_numeric(value, min_length=1):
-    if not value or not isinstance(value, str):
-        return False
-    return bool(re.fullmatch(r"\d+", value.strip())) and len(value.strip()) >= min_length
-
-def is_valid_email(value):
-    if not value or not isinstance(value, str):
-        return False
-    value = value.strip()
-    return bool(re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+", value))
-
-def verificar_token_google(token):
-    try:
-        idinfo = id_token.verify_oauth2_token(
-            token, 
-            google_requests.Request(), 
-            CLIENT_ID,
-            clock_skew_in_seconds=60
-        )
-        return idinfo
-    except ValueError as e:
-        print(f"Error validando token: {e}")
-        return None
-
-@app.after_request
-def agregar_cabeceras(response):
-    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
-    response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    return response
-
-@app.route("/obtener-cliente-id", methods=["GET"])
-def obtener_cliente_id():
-    cliente_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
-    return jsonify({"client_id": cliente_id})
 
 @app.route("/cloudinary_storage_info")
 def cloudinary_storage_info():
@@ -259,7 +252,6 @@ def registro_google():
         return jsonify({"ok": False, "error": str(e)}), 401
 
 @app.route("/login", methods=["GET", "POST"])
-
 def login():
     if request.method == "GET":
         if "user_id" in session:
@@ -399,6 +391,7 @@ def logout():
 
 @app.route("/mi_perfil", methods=["GET", "POST"])
 @sin_cache
+@admin_required
 def mi_perfil():
     user_id = session.get("user_id")
     if not user_id:
@@ -419,15 +412,15 @@ def mi_perfil():
                 updates[campo] = valor.strip().lower() if campo == "correo" else valor.strip()
 
         if "nombre" in updates and not is_valid_name(updates["nombre"]):
-            return render_template("general_modules/mi_perfil.html", user=usuario, error="Nombre debe contener solo letras.")
+            return render_template("general_modules/perfil.html", user=usuario, error="Nombre debe contener solo letras.")
         if "apellido" in updates and not is_valid_name(updates["apellido"]):
-            return render_template("general_modules/mi_perfil.html", user=usuario, error="Apellido debe contener solo letras.")
+            return render_template("general_modules/perfil.html", user=usuario, error="Apellido debe contener solo letras.")
         if "cedula" in updates and not is_valid_numeric(updates["cedula"], 6):
-            return render_template("general_modules/mi_perfil.html", user=usuario, error="La cédula debe contener solo números y al menos 6 dígitos.")
+            return render_template("general_modules/perfil.html", user=usuario, error="La cédula debe contener solo números y al menos 6 dígitos.")
         if "telefono" in updates and not is_valid_numeric(updates["telefono"], 10):
-            return render_template("general_modules/mi_perfil.html", user=usuario, error="El teléfono debe contener solo números y al menos 10 dígitos.")
+            return render_template("general_modules/perfil.html", user=usuario, error="El teléfono debe contener solo números y al menos 10 dígitos.")
         if "correo" in updates and not is_valid_email(updates["correo"]):
-            return render_template("general_modules/mi_perfil.html", user=usuario, error="El correo electrónico no es válido.")
+            return render_template("general_modules/perfil.html", user=usuario, error="El correo electrónico no es válido.")
 
         imagen_file = request.files.get("imagen_url")
         eliminar_foto = request.form.get("eliminar_foto") == "1"
@@ -447,7 +440,7 @@ def mi_perfil():
             supabase.table("usuarios").update(updates).eq("id_cliente", user_id).execute()
             return redirect(url_for("mi_perfil"))
 
-    return render_template("general_modules/mi_perfil.html", user=usuario)
+    return render_template("general_modules/perfil.html", user=usuario)
 
 @app.route("/actualizar_perfil/<id_cliente>", methods=["PUT", "POST"])
 def actualizar_perfil(id_cliente):
@@ -593,6 +586,7 @@ def eliminar_usuario_admin():
 
 @app.route("/gestionar_productos_page", methods=["GET"])
 @sin_cache
+@admin_required
 def productos_page():
     return render_template("admin_modules/gestion_productos.html")
 
@@ -780,6 +774,7 @@ def guardar_catalogo():
 
 @app.route("/carrito_page")
 @sin_cache
+@admin_required
 def carrito_page():
     user_id = session.get("user_id")
     userLogged = bool(user_id)
@@ -973,12 +968,10 @@ def finalizar_compra():
 
 
 # MÓDULO DE HISTORIAL DE FACTURAS
-
 @app.route("/gestionar_facturas_page")
 @sin_cache
+@admin_required
 def gestionar_facturas_page():
-    if not session.get("user_id"):
-        return redirect(url_for("login"))
     return render_template("general_modules/facturas.html")
 
 @app.route("/buscar_facturas_page", methods=["GET"])
@@ -1146,7 +1139,7 @@ def anular_factura_page(numero_factura):
                     .eq("id_producto", id_prod) \
                     .execute()
             
-        return jsonify({"message": "Factura anulada correctamente"}), 200
+        return jsonify({"message": "¡Factura anulada con éxito!"}), 200
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
@@ -1210,7 +1203,7 @@ def actualizar_estado_factura_page(numero_factura):
                         .update({"stock": nuevo_stock}) \
                         .eq("id_producto", id_prod) \
                         .execute()
-        return jsonify({"message": "Estado actualizado correctamente"}), 200
+        return jsonify({"message": "¡Estado actualizado con éxito!"}), 200
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
@@ -1227,12 +1220,13 @@ def obtener_metodos_pago():
 
 @app.route("/pedidos_page", methods=["GET"])
 @sin_cache
+@admin_required
 def pedidos_page():
     user_id = session.get("user_id")
     if not user_id:
-        return redirect("/login")
+        return redirect("/incio")
     return render_template("admin_modules/pedidos.html")
-
+    
 @app.route("/obtener_pedidos", methods=["GET"])
 def obtener_pedidos():
     try:
@@ -1466,6 +1460,21 @@ def obtener_comentarios():
         print(f"Error en GET /comentarios: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route("/usuarios_activos_conteo")
+def usuarios_activos_conteo():
+    try:
+        hace_poco = (datetime.now(timezone.utc) - timedelta(minutes=2)).isoformat() 
+        res = supabase.table("usuarios")\
+            .select("id_cliente", count="exact")\
+            .gte("ultima_conexion", hace_poco)\
+            .execute()
+        conteo = res.count if res.count is not None else 0
+        return jsonify({"total": conteo}), 200
+    
+    except Exception as e:
+        print(f"Error en conteo: {e}")
+        return jsonify({"total": 0}), 500
+
 @app.route("/actualizar_estado_comentarios", methods=["POST"])
 def actualizar_estado_comentarios():
     try:
@@ -1478,34 +1487,7 @@ def actualizar_estado_comentarios():
 
         return jsonify({"status": "ok"}), 200
     except Exception as e:
-        print(f"Error en actualizar_estado: {e}")
         return jsonify({"error": "server_error"}), 500
-
-@app.route("/comentarios/<id>/like", methods=["POST"])
-def toggle_like(id):
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "No auth"}), 401
-
-    try:
-        res = supabase.table("comentarios").select("likes_usuarios").eq("id", id).single().execute()
-        if not res.data:
-            return jsonify({"error": "No encontrado"}), 404
-            
-        likes = res.data.get("likes_usuarios")
-        if not isinstance(likes, list):
-            likes = []
-        
-        if user_id in likes:
-            likes.remove(user_id)
-        else:
-            likes.append(user_id)
-
-        supabase.table("comentarios").update({"likes_usuarios": likes}).eq("id", id).execute()
-        return jsonify({"status": "ok", "likes": likes})
-    except Exception as e:
-        print(f"Error en Like: {e}")
-        return jsonify({"error": str(e)}), 500
 
 @app.route("/comentarios", methods=["POST"])
 def crear_comentario():
@@ -1551,6 +1533,32 @@ def editar_comentario(id):
     actualizado = supabase.table("comentarios").update({"mensaje": mensaje}).eq("id", id).execute()
     return jsonify(actualizado.data[0])
 
+@app.route("/comentarios/<id>/like", methods=["POST"])
+def toggle_like(id):
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "No auth"}), 401
+
+    try:
+        res = supabase.table("comentarios").select("likes_usuarios").eq("id", id).single().execute()
+        if not res.data:
+            return jsonify({"error": "No encontrado"}), 404
+            
+        likes = res.data.get("likes_usuarios")
+        if not isinstance(likes, list):
+            likes = []
+        
+        if user_id in likes:
+            likes.remove(user_id)
+        else:
+            likes.append(user_id)
+
+        supabase.table("comentarios").update({"likes_usuarios": likes}).eq("id", id).execute()
+        return jsonify({"status": "ok", "likes": likes})
+    except Exception as e:
+        print(f"Error en Like: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/comentarios/<id>", methods=["DELETE"])
 def eliminar_comentario(id):
 
@@ -1572,12 +1580,9 @@ def eliminar_comentario(id):
 
 @app.route("/publicidad_page", methods=["GET", "POST"])
 @sin_cache
+@admin_required
 def publicidad_page():
-    if not session.get("user_id") or session.get("rol") != "admin":
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.method == "POST":
-            return jsonify({"error": "No autorizado"}), 401
-        return render_template("admin_modules/publicidad.html")
-
+    
     if request.method == "POST":
         try:
             tipos_a_gestionar = ["carrusel", "seccion", "cinta"]
@@ -1740,12 +1745,12 @@ def obtener_publicidad_activa():
 
 @app.route("/facturacion_page", methods=["GET", "POST"])
 @sin_cache
-def zona_pagos():
-    if not session.get("user_id") or session.get("rol") != "admin":
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.method == "POST":
-            return jsonify({"error": "No autorizado"}), 401
-        return render_template("admin_modules/facturacion.html", metodos=[])
-        
+@admin_required
+def zona_pagos():  
+    user_id = session.get("user_id")
+    if not user_id:
+        return render_template("admin_modules/facturacion.html")
+
     if request.method == "POST":
         try:
             res_actual = supabase.table("metodos_pago").select("id_pago, qr_url").execute()
@@ -1874,12 +1879,11 @@ def condiciones_page():
 
 @app.route("/manual_page", methods=["GET"])
 @sin_cache
+@admin_required
 def manual_page():
     user_id = session.get("user_id")
-    rol = session.get("rol")
-
-    if not user_id or rol != 'admin':
-        return render_template("admin_modules/manual_usuario.html")
+    if not user_id:
+        return redirect("/manual_page")
     return render_template("admin_modules/manual_usuario.html")
 
 
@@ -1906,7 +1910,8 @@ if __name__ == "__main__":
     port = 8000
     local_ip = get_local_ip()
 
-    debug_mode = True
+    debug_mode = False
+
     if debug_mode:
         print("⚡ Ejecutando en modo DEBUG con servidor de desarrollo de Flask")
         print(f"- Acceso local: http://localhost:{port}")

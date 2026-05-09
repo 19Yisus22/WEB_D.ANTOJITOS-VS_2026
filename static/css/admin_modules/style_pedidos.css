@@ -9,10 +9,14 @@
     --danger: #dc3545;
     --white: #ffffff;
     --bg-gradient: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%);
+    --text-dark: #2d3436;
     --card-shadow: 0 8px 28px rgba(0, 0, 0, 0.07);
     --transition-smooth: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
     --transition-spring: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --radius: 20px;
+    --radius-md: 15px;
+    --shadow-hover: 0 18px 40px rgba(211, 84, 0, 0.13);
+    --cloudinary-blue: #007bff;
 }
 
 html,
@@ -21,7 +25,7 @@ body {
     margin: 0;
     font-family: 'DM Sans', sans-serif;
     background: var(--bg-gradient);
-    color: #2d3436;
+    color: var(--text-dark);
     scroll-behavior: smooth;
     overflow-x: hidden;
     display: flex;
@@ -156,12 +160,14 @@ main {
     text-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
     font-family: 'DM Sans', sans-serif;
     color: white;
+    text-align: center;
 }
 
 .card-title-marketing p {
     font-family: 'DM Sans', sans-serif;
     font-weight: 500;
     letter-spacing: 0.4px;
+    text-align: center;
 }
 
 .card {
@@ -477,14 +483,76 @@ main {
     border-left: 5px solid var(--primary-color);
     font-family: 'DM Sans', sans-serif;
     font-weight: 500;
+    transition: var(--transition-smooth);
     animation: slideInRight 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.custom-toast {
+.custom-toast,
+.custom-toast-alert {
+    position: relative;
+}
+
+.storage-fixed-wrapper {
     position: fixed;
-    bottom: 28px;
-    left: 28px;
-    animation: toastEntrance 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    bottom: 30px;
+    right: 30px;
+    z-index: 1050;
+    animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.storage-container {
+    background: var(--white);
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    border: 1px solid #edf2f7;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.storage-container:hover {
+    transform: scale(1.1);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.storage-visual-wrapper {
+    width: 60px;
+    height: 60px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.storage-ring-svg {
+    transform: rotate(-90deg);
+}
+
+.storage-ring-bg {
+    fill: none;
+    stroke: #f1f5f9;
+    stroke-width: 5;
+}
+
+.storage-ring-progress {
+    fill: none;
+    stroke: var(--cloudinary-blue);
+    stroke-width: 5;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease-in-out;
+}
+
+.storage-cloud-inner {
+    position: absolute;
+    color: var(--cloudinary-blue);
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 @media (max-width: 1200px) {
@@ -505,6 +573,16 @@ main {
 
     .card-title-marketing h3 {
         font-size: 1.3rem;
+    }
+
+    .storage-fixed-wrapper {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .storage-container {
+        width: 66px;
+        height: 66px;
     }
 
     .chat-container {
