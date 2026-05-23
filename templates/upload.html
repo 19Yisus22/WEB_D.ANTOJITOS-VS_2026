@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block title %}Escanear · DermaIAInsight {% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
+{% endblock %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-0">
+    <h1 class="display-6 fw-bold mb-4 text-gradient">Escanear imágenes</h1>
+
+    <div id="upload-overlay" style="display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.6); backdrop-filter:blur(4px); z-index:1050; align-items:center; justify-content:center;">
+        <div class="overlay-content">
+            <h4>Procesando imágenes</h4>
+            <p id="upload-overlay-text">Subiendo y analizando — por favor espere...</p>
+            <div class="progress">
+                <div id="upload-overlay-bar" class="progress-bar" role="progressbar" style="width:0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-5 escaneo-card">
+        <div class="card-body p-4">
+            <form id="form-escaneo" method="post" enctype="multipart/form-data">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label custom-label">Cédula del paciente</label>
+                        <input class="form-control custom-input" type="text" name="cedula" id="input-cedula" placeholder="Número de cédula registrado" required autocomplete="off">
+                        <div id="cedula-feedback" class="form-text mt-1" style="font-size:0.82rem;"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label custom-label">Correo electrónico <span class="text-muted fw-normal" style="font-size:0.8rem;">(se llena automáticamente)</span></label>
+                        <input class="form-control custom-input" type="email" name="correo" id="input-correo" placeholder="Se completa al ingresar la cédula" readonly>
+                    </div>
+                </div>
+                <div class="my-4">
+                    <label class="form-label custom-label">Seleccionar imágenes médicas</label>
+                    <input class="form-control custom-input file-input" type="file" name="archivos[]" id="input-archivos" accept="image/*,.dcm,.tiff,.tif,.bmp,.gif" multiple required>
+                    <div class="form-text file-note mt-2">Admite DICOM, PNG, JPG, JPEG, TIFF, BMP, GIF y termografías. El sistema identifica el tipo automáticamente.</div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label custom-label">Notas clínicas</label>
+                    <textarea class="form-control custom-input" name="notas_clinicas" id="input-notas" rows="4" placeholder="Ingrese observaciones clínicas, antecedentes o síntomas relevantes del paciente">{{ request.form.notas_clinicas or '' }}</textarea>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" id="btn-escanear" class="btn btn-primary btn-lg action-btn" disabled>
+                        <i class="fas fa-microscope me-2"></i> Iniciar escaneo
+                    </button>
+                    <span id="cedula-hint" class="ms-3 text-muted" style="font-size:0.87rem;">Verifique la cédula para habilitar el escaneo.</span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if scan_preview %}
+    <div class="card shadow-sm mb-5 preview-card border-success-subtle">
+        <div class="card-body p-4">
+            <h3 class="h4 fw-bold mb-4 text-success-emphasis"><i class="fas fa-clipboard-check me-2"></i> Escaneo listo para guardar</h3>
+            <p class="mb-4">Se han analizado <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-6">{{ scan_preview.analisis | length }}</span> imágenes para la cédula <strong class="text-dark">{{ scan_preview.patient.cedula }}</strong>.</p>
+
+            <div class="row g-4 mb-4 user-summary-grid">
+                <div class="col-md-4 col-sm-6">
+                    <div class="summary-item">
+                        <span class="summary-label">Nombre completo</span>
+                        <span class="summary-value">{{ scan_preview.patient.nombre_completo }}</span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="summary-item">
+                        <span class="summary-label">Correo electrónico</span>
+                        <span class="summary-value text-truncate">{{ scan_preview.patient.correo }}</span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="summary-item">
+                        <span class="summary-label">Sexo</span>
+                        <span class="summary-value">{{ scan_preview.patient.sexo }}</span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="summary-item">
+                        <span class="summary-label">Total estudios</span>
+                        <span class="summary-value">{{ scan_preview.summary.total_estudios }}</span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="summary-item">
+                        <span class="summary-label">Riesgo promedio</span>
+                        <span class="summary-value text-danger-emphasis fw-bold">{{ scan_preview.summary.riesgo_promedio }}%</span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="summary-item">
+                        <span class="summary-label">Alta probabilidad</span>
+                        <span class="summary-value text-warning-emphasis fw-bold">{{ scan_preview.summary.detecciones_alta_probabilidad }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4 nota-clinica-wrapper{% if not scan_preview.notas_clinicas %} d-none{% endif %}" id="nota-clinica-bloque">
+                <div class="nota-label"><i class="fas fa-notes-medical me-1"></i> Notas clínicas ingresadas</div>
+                <div id="nota-clinica-resultado" data-nota-clinica-resultado>{{ scan_preview.notas_clinicas or '' }}</div>
+            </div>
+
+            <div class="table-responsive rounded-3 border mb-4 shadow-sm">
+                <table class="table custom-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 60px;">#</th>
+                            <th scope="col">Nombre archivo</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col">Nivel riesgo</th>
+                            <th scope="col" class="text-end">Score de riesgo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in scan_preview.analisis %}
+                        <tr>
+                            <td class="font-monospace text-muted">{{ loop.index }}</td>
+                            <td class="fw-medium text-dark">{{ scan_preview.temp_images[loop.index0].filename }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ scan_preview.temp_images[loop.index0].tipo_imagen }}</span></td>
+                            <td>
+                                <span class="badge {% if item.score_riesgo >= 50 %}bg-danger{% elif item.score_riesgo >= 20 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                    {{ item.nivel_riesgo }}
+                                </span>
+                            </td>
+                            <td class="text-end font-monospace fw-bold text-primary">{{ item.score_riesgo }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <form method="post" action="{{ url_for('guardar_scan') }}" class="d-flex flex-wrap gap-3">
+                <button type="submit" class="btn btn-success btn-lg action-btn"><i class="fas fa-save me-2"></i> Guardar en base de datos</button>
+                <a href="{{ url_for('cancelar_upload') }}" class="btn btn-secondary btn-lg action-btn"><i class="fas fa-times me-2"></i> Cancelar</a>
+            </form>
+        </div>
+    </div>
+    {% elif last_result %}
+    <div class="card shadow-sm mb-5 result-available-card">
+        <div class="card-body p-4">
+            <h3 class="h4 fw-bold mb-3 text-primary-emphasis"><i class="fas fa-check-circle text-success me-2"></i> Resultado disponible</h3>
+            <p class="mb-4 text-secondary">Resultados guardados correctamente para la cédula <strong class="text-dark">{{ last_result.patient.cedula }}</strong>.</p>
+            <div class="d-flex flex-wrap gap-3">
+                <a href="{{ url_for('download_pdf') }}" class="btn btn-primary action-btn"><i class="fas fa-file-pdf me-2"></i> Descargar PDF</a>
+                <a href="{{ url_for('download_json') }}" class="btn btn-warning action-btn"><i class="fas fa-file-code me-2"></i> Descargar JSON entrenamiento</a>
+                <a href="{{ url_for('download_excel') }}" class="btn btn-success action-btn"><i class="fas fa-file-excel me-2"></i> Descargar Excel</a>
+                <a href="{{ url_for('resultados') }}" class="btn btn-outline-primary action-btn"><i class="fas fa-chart-line me-2"></i> Ver resultados</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="info-card p-4 rounded-4 shadow-sm h-100">
+                <h3 class="h5 fw-bold mb-3 text-primary"><i class="fas fa-info-circle me-2"></i> Cómo funciona el escaneo</h3>
+                <ul class="custom-bullet-list">
+                    <li>La cédula debe estar registrada previamente en el sistema. El correo se completa automáticamente.</li>
+                    <li>El sistema aplica filtrado adaptativo, reducción de ruido y segmentación de regiones de interés.</li>
+                    <li>Se generan métricas de predicción con arquitecturas CNN, ResNet-50, K-means e IsolationForest.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="info-card p-4 rounded-4 shadow-sm h-100 border-primary-subtle">
+                <h3 class="h5 fw-bold mb-3 text-secondary-emphasis"><i class="fas fa-exchange-alt me-2"></i> Exportación y entrenamiento</h3>
+                <p class="text-muted leading-relaxed">Después de guardar, descargue el JSON de entrenamiento para subir al módulo de Entrenamiento y mejorar la precisión del modelo con los valores generados por CNN, ResNet, KMeans e IsolationForest.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

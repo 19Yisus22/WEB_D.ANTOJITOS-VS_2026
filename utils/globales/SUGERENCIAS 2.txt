@@ -1,0 +1,141 @@
+RECIENTES:
+
+ARREGLOS MODULO ESCANEADO DE IMAGENES O UPLOADS:
+
+AJUSTAR EN EL MODULO DE UPLOADS, MOSTRAR EL PORCENTAJE DE CADA IMAGEN, RIESGOS, PROBABILIDAD MALIGNA O BENIGNA, Y QUE AGENTES ESCANEARON DICHA IMAGEN.
+
+ARREGLOS DEL SISTEMA GENERAL:
+
+ELIMINE DE TODO ARCHIVO EL RASTRO DEL BACKEND YA QUE NO SE ESTA USANDO Y AJSUTE LAS RUTAS QUE SE USEN LOS ARCHIVOS QUE EXISTEN.
+AJUSTE LOS Reportes guardados localmente QUE SE GUARDAN AUTOMATICAMENTE, NO SE ESTAN GUARDADNDO ARREGLELO.
+
+ARREGLOS MODULO REGISTRO:
+
+AJUSTAR EL BOTON DE ELIMINAR USUARIO Y UBIQUELO EN LA COLUMNA DE ACCIONES, EL "TU CUENTA" AJUSTELO MEJOR Y FUERA DE LA TABLA.
+
+ARREGLOS MODULO RESULTADOS:
+
+DEJE UN SOLO BOTON PARA DESCARGAR EL PDF Y DEJE EL QUE ESTA EN LA PARTE SUPERIOR DERECHA AL LADO DEL BOTON DE CORREO, AJUSTE LA FUNCION DEL BOTN DE CORREO PARA QUE ME REDIRIGA A GMAIL CON LAS IAMGENES Y RESULTADO ADJUNTADOS PARA ENVIARLO AL CORREO QUE SE TOMA DEL CAMPO CORREO
+CORREO TEMPORAL A USAR: unisimonestudiante@gmail.com
+
+
+
+SIENDO ESTE EL QUERY ORIGINAL AJUSTE CADA MODULO PARA QUE TENGA LOS CAMPOS A LLENAR NECESARIOS, LSO DEMAS SE LLENA POR SISTEMA AUTOMATICAMENTE SEA POR EL ESCANEO O POR DEMAS 
+DROP TABLE IF EXISTS importaciones_excel CASCADE;
+DROP TABLE IF EXISTS reportes_medicos CASCADE;
+DROP TABLE IF EXISTS predicciones_ia CASCADE;
+DROP TABLE IF EXISTS lineas_analisis CASCADE;
+DROP TABLE IF EXISTS imagenes_medicas CASCADE;
+DROP TABLE IF EXISTS estudios CASCADE;
+DROP TABLE IF EXISTS pacientes CASCADE;
+DROP TABLE IF EXISTS usuarios CASCADE;
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE usuarios (
+cedula VARCHAR(50) PRIMARY KEY,
+correo VARCHAR(255) UNIQUE NOT NULL,
+contrasena_hash VARCHAR(255) NOT NULL,
+nombre_completo VARCHAR(200) NOT NULL,
+edad INT,
+telefono VARCHAR(50),
+direccion TEXT,
+rol VARCHAR(20) DEFAULT 'MEDICO' CHECK (rol IN ('ADMINISTRADOR', 'MEDICO', 'RADIOLOGO', 'PACIENTE')),
+esta_activo BOOLEAN DEFAULT TRUE,
+creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE pacientes (
+cedula VARCHAR(50) PRIMARY KEY REFERENCES usuarios(cedula) ON DELETE CASCADE,
+fecha_nacimiento DATE,
+sexo VARCHAR(2) DEFAULT 'F' CHECK (sexo IN ('O', 'F', 'M')),
+creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE estudios (
+cedula_paciente VARCHAR(50) PRIMARY KEY REFERENCES pacientes(cedula) ON DELETE CASCADE,
+uid_instancia_estudio VARCHAR(255) UNIQUE,
+fecha_estudio DATE,
+descripcion TEXT,
+creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE imagenes_medicas (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+cedula_paciente VARCHAR(50) NOT NULL REFERENCES estudios(cedula_paciente) ON DELETE CASCADE,
+tipo_imagen VARCHAR(30) NOT NULL CHECK (tipo_imagen IN ('DICOM', 'TERMOGRAFIA', 'OTRO')),
+ruta_almacenamiento TEXT NOT NULL,
+uid_instancia_sop VARCHAR(255) UNIQUE,
+metadatos JSONB DEFAULT '{}'::jsonb,
+subido_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE lineas_analisis (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+cedula_paciente VARCHAR(50) NOT NULL REFERENCES estudios(cedula_paciente) ON DELETE CASCADE,
+imagen_id UUID NOT NULL REFERENCES imagenes_medicas(id) ON DELETE CASCADE,
+estado VARCHAR(20) DEFAULT 'PENDIENTE' CHECK (estado IN ('PENDIENTE', 'PROCESANDO', 'COMPLETADO', 'FALLIDO')),
+parametros_filtros_reduccion_ruido JSONB DEFAULT '{}'::jsonb,
+registros_preprocesamiento TEXT,
+tiempo_ejecucion_segundos NUMERIC(6,2),
+creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE predicciones_ia (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+cedula_paciente VARCHAR(50) NOT NULL REFERENCES estudios(cedula_paciente) ON DELETE CASCADE,
+linea_analisis_id UUID NOT NULL REFERENCES lineas_analisis(id) ON DELETE CASCADE,
+modelo_nombre VARCHAR(100) NOT NULL,
+probabilidad_malignidad NUMERIC(5,4) CHECK (probabilidad_malignidad >= 0 AND probabilidad_malignidad <= 1),
+patologia_predicha VARCHAR(20) NOT NULL CHECK (patologia_predicha IN ('NORMAL', 'BENIGNA', 'MALIGNA')),
+cajas_delimitadoras_cnn JSONB DEFAULT '[]'::jsonb,
+centroides_kmeans JSONB DEFAULT '[]'::jsonb,
+ruta_mapa_calor_resnet TEXT,
+creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE reportes_medicos (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+cedula_paciente VARCHAR(50) NOT NULL REFERENCES estudios(cedula_paciente) ON DELETE CASCADE,
+prediccion_id UUID REFERENCES predicciones_ia(id) ON DELETE SET NULL,
+ruta_pdf_almacenamiento TEXT,
+notas_clinicas TEXT,
+esta_verificado BOOLEAN DEFAULT FALSE,
+creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE importaciones_excel (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+usuario_cedula VARCHAR(50) REFERENCES usuarios(cedula) ON DELETE SET NULL,
+nombre_archivo VARCHAR(255) NOT NULL,
+ruta_almacenamiento_xlsx TEXT NOT NULL,
+total_registros_entrenamiento INT DEFAULT 0,
+metadatos_importacion JSONB DEFAULT '{}'::jsonb,
+importado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_usuarios_correo ON usuarios(correo);
+CREATE INDEX idx_usuarios_nombre ON usuarios(nombre_completo);
+
+CREATE INDEX idx_imagenes_medicas_cedula ON imagenes_medicas(cedula_paciente);
+CREATE INDEX idx_imagenes_medicas_uid_sop ON imagenes_medicas(uid_instancia_sop);
+
+CREATE INDEX idx_lineas_analisis_cedula ON lineas_analisis(cedula_paciente);
+CREATE INDEX idx_lineas_analisis_imagen_id ON lineas_analisis(imagen_id);
+CREATE INDEX idx_lineas_analisis_estado ON lineas_analisis(estado);
+
+CREATE INDEX idx_predicciones_ia_cedula ON predicciones_ia(cedula_paciente);
+CREATE INDEX idx_predicciones_ia_linea_analisis_id ON predicciones_ia(linea_analisis_id);
+
+CREATE INDEX idx_reportes_medicos_cedula ON reportes_medicos(cedula_paciente);
+CREATE INDEX idx_reportes_medicos_prediccion_id ON reportes_medicos(prediccion_id);
+
+CREATE INDEX idx_importaciones_excel_cedula ON importaciones_excel(usuario_cedula);
+
+PARA LOS MODULOS TENGA EN CUENTA EL ESQUEMA COMPLETO DE LA BASE DE DATOS O EL SCRIPT PARA QUE SE HAGA USO DE CADA UNO DE LOS
+CAMPOS CORRECTAMENTE:
+

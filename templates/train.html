@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Entrenamiento · DermaIAInsight{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/train.css') }}">
+{% endblock %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/train.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-0">
+    <h1 class="display-6 fw-bold mb-4 text-gradient">Módulo de Entrenamiento</h1>
+
+    <div class="card shadow-sm mb-5 train-card">
+        <div class="card-body p-4">
+            <h4 class="train-section-title mb-3"><i class="fas fa-upload me-2"></i>Subir JSON para entrenamiento</h4>
+            <form id="form-entrenamiento-json" method="post" action="{{ url_for('train_model') }}" enctype="multipart/form-data">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <label class="form-label train-label">Archivo JSON de entrenamiento</label>
+                        <input class="form-control train-file-input" type="file" name="json_file" id="input-json-file" accept="application/json,.json" required>
+                        <div class="form-text train-hint mt-1">Estructura esperada: JSON v2.0 con <code>training_data</code> y valores por agente (CNN, ResNet, KMeans, IsolationForest).</div>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-success btn-lg w-100 train-btn-submit">
+                            <i class="fas fa-robot me-2"></i>Subir y entrenar
+                        </button>
+                    </div>
+                </div>
+                <div id="train-progress-wrapper" class="d-none mt-4">
+                    <div class="progress train-progress-bar">
+                        <div id="train-overlay-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:0%"></div>
+                    </div>
+                    <p id="train-overlay-text" class="text-muted mt-2 mb-0" style="font-size:.87rem;">Preparando carga...</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-5 border-0 train-card">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h4 class="train-section-title mb-0"><i class="fas fa-database me-2"></i>JSONs subidos para entrenamiento</h4>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-refrescar-json">
+                    <i class="fas fa-sync-alt me-1"></i>Refrescar
+                </button>
+            </div>
+            <div id="listado-json-train"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

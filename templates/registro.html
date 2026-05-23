@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% block title %}Registro · DermaIAInsight{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/results.css') }}">
+{% endblock %}
+{% block extra_js %}
+<script>
+    var USER_ROL    = "{{ current_user.rol if current_user else '' }}";
+    var USER_CEDULA = "{{ current_user.cedula if current_user else '' }}";
+</script>
+<script src="{{ url_for('static', filename='js/registro.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-0">
+
+    <h1 class="mb-1 perfil-title"><i class="fas fa-user-plus me-2"></i>
+        {% if current_user and current_user.rol == 'MEDICO' %}Gestión de Usuarios{% else %}Crear Cuenta{% endif %}
+    </h1>
+    <p class="text-secondary mb-4" style="font-size:.95rem;">
+        <i class="fas fa-info-circle me-1 text-primary"></i>
+        {% if current_user %}
+            Actualice sus datos personales o registre un nuevo usuario.
+        {% else %}
+            Regístrese para escanearse y recibir sus resultados en su correo.
+        {% endif %}
+    </p>
+
+    <div class="card shadow-sm perfil-card-full mb-5">
+        <div class="card-body p-4 p-md-5">
+            <h3 class="mb-4 form-section-title"><i class="fas fa-id-card me-2"></i>Información del registro</h3>
+            <form id="form-registro" method="post" action="{{ url_for('registro') }}">
+                <div class="row gx-4 gy-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo"
+                               placeholder="Nombre y apellidos"
+                               value="{{ usuario_data.get('nombre_completo', '') }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Cédula <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="cedula" name="cedula"
+                               placeholder="Número de cédula"
+                               value="{{ usuario_data.get('cedula', '') }}"
+                               {% if usuario_data %}readonly{% endif %} required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="correo" name="correo"
+                               placeholder="correo@ejemplo.com"
+                               value="{{ usuario_data.get('correo', '') }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Edad</label>
+                        <input type="number" class="form-control" id="edad" name="edad"
+                               min="1" max="120" placeholder="Años"
+                               value="{{ usuario_data.get('edad', '') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="telefono" name="telefono"
+                               placeholder="Número de contacto"
+                               value="{{ usuario_data.get('telefono', '') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Sexo</label>
+                        <select class="form-select" id="sexo" name="sexo">
+                            <option value="F" {% if paciente_data.get('sexo','') == 'F' %}selected{% endif %}>Femenino</option>
+                            <option value="M" {% if paciente_data.get('sexo','') == 'M' %}selected{% endif %}>Masculino</option>
+                            <option value="O" {% if paciente_data.get('sexo','') == 'O' %}selected{% endif %}>Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Rol</label>
+                        {% if current_user and current_user.rol == 'MEDICO' %}
+                        <select class="form-select" id="rol" name="rol">
+                            <option value="PACIENTE" {% if usuario_data.get('rol','PACIENTE') == 'PACIENTE' %}selected{% endif %}>Paciente</option>
+                            <option value="MEDICO"   {% if usuario_data.get('rol','') == 'MEDICO' %}selected{% endif %}>Médico</option>
+                        </select>
+                        {% else %}
+                        <input type="hidden" name="rol" value="PACIENTE">
+                        <input type="text" class="form-control" value="Paciente" readonly
+                               style="background:#f8fafc;color:#64748b;cursor:default;">
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Fecha de nacimiento</label>
+                        <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento"
+                               value="{{ paciente_data.get('fecha_nacimiento', '') }}">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Dirección</label>
+                        <input type="text" class="form-control" id="direccion" name="direccion"
+                               placeholder="Dirección de residencia"
+                               value="{{ usuario_data.get('direccion', '') }}">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Contraseña
+                            {% if usuario_data %}<small class="text-muted fw-normal">(dejar vacío para no cambiar)</small>{% else %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        <input type="password" class="form-control" id="contrasena" name="contrasena"
+                               placeholder="{% if usuario_data %}Nueva contraseña{% else %}Contraseña de acceso{% endif %}">
+                    </div>
+                    <div class="col-md-12 pt-2">
+                        <button type="submit" class="btn btn-primary btn-lg btn-guardar-perfil px-5" id="btn-registrar">
+                            <i class="fas fa-user-check me-2"></i>
+                            {% if usuario_data %}Actualizar datos{% else %}Registrarse{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if current_user and current_user.rol == 'MEDICO' %}
+    <div class="card shadow-sm border-0 main-results-card mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                <h4 class="detail-section-title mb-0">
+                    <i class="fas fa-users me-2 text-secondary"></i>Usuarios registrados
+                </h4>
+                <button class="btn btn-outline-secondary btn-sm" id="btn-refrescar-usuarios">
+                    <i class="fas fa-sync-alt me-1"></i>Actualizar
+                </button>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-md-5 col-lg-4">
+                    <div class="search-input-wrapper">
+                        <input type="text" class="form-control search-control" id="input-filtro-cedula"
+                               placeholder="Buscar por cédula..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-primary btn-sm px-3" id="btn-buscar-usuario">
+                        <i class="fas fa-search me-1"></i>Buscar
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm ms-1" id="btn-limpiar-filtro">
+                        <i class="fas fa-times me-1"></i>Limpiar
+                    </button>
+                </div>
+                <div class="col-auto ms-auto d-flex align-items-center">
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace" id="badge-total-usuarios">0 usuarios</span>
+                </div>
+            </div>
+
+            <div id="listado-usuarios"></div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<div class="modal fade" id="modal-cambiar-rol" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold"><i class="fas fa-user-tag me-2"></i>Cambiar rol</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <p class="text-muted mb-3" style="font-size:.88rem;">Usuario: <strong id="modal-cedula-display"></strong></p>
+                <label class="form-label fw-semibold" style="font-size:.85rem;">Nuevo rol</label>
+                <select class="form-select" id="modal-select-rol">
+                    <option value="PACIENTE">Paciente</option>
+                    <option value="MEDICO">Médico</option>
+                </select>
+                <input type="hidden" id="modal-cedula-target">
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-confirmar-cambio-rol">
+                    <i class="fas fa-check me-1"></i>Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

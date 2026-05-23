@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Resultados · DermaIAInsight{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/results.css') }}">
+{% endblock %}
+{% block extra_js %}
+<script>
+    var USER_ROL    = "{{ current_user.rol if current_user else '' }}";
+    var USER_CEDULA = "{{ current_user.cedula if current_user else '' }}";
+</script>
+<script src="{{ url_for('static', filename='js/results.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-0">
+    <h1 class="page-title mb-4">
+        {% if current_user and current_user.rol == 'PACIENTE' %}Mis Resultados{% else %}Resultados{% endif %}
+    </h1>
+
+    {% if not current_user or current_user.rol == 'MEDICO' %}
+    <div class="card shadow-sm mb-5 border-0 main-results-card" id="panel-busqueda-cedula">
+        <div class="card-body p-4">
+            <form class="row g-3 align-items-end" id="form-busqueda-cedula">
+                <div class="col-md-7 col-lg-6">
+                    <label class="form-label fw-semibold text-secondary" style="font-size:.85rem;">Buscar resultados por cédula del paciente</label>
+                    <div class="search-input-wrapper">
+                        <input class="form-control form-control-lg search-control" type="text" name="cedula_busqueda" id="input-busqueda-cedula" placeholder="Ingrese número de cédula" autocomplete="off">
+                    </div>
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <button class="btn btn-primary btn-lg w-100 search-btn" type="submit">
+                        <i class="fas fa-search me-2"></i>Buscar
+                    </button>
+                </div>
+                <div class="col-md-2 col-lg-2">
+                    <button type="button" class="btn btn-outline-secondary btn-lg w-100" id="btn-limpiar-busqueda">
+                        <i class="fas fa-times me-1"></i>Limpiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <div id="listado-resultados-db" class="mb-5"></div>
+
+    <div id="contenedor-metricas" class="d-none">
+        <div id="panel-detalle-resultado" class="mb-5"></div>
+    </div>
+
+    {% if not current_user or current_user.rol == 'MEDICO' %}
+    <div class="card shadow-sm mb-5 border-0 main-results-card">
+        <div class="card-body p-4">
+            <h4 class="detail-section-title mb-3"><i class="fas fa-folder-open me-2 text-secondary"></i>Reportes guardados localmente</h4>
+            <p class="text-muted mb-3" style="font-size:.87rem;">Archivos PDF almacenados en <code>uploads/reports</code>. Elimine los que ya no necesite.</p>
+            <div id="panel-lista-local"></div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-5 border-0 main-results-card">
+        <div class="card-body p-4">
+            <h4 class="detail-section-title mb-3"><i class="fas fa-brain me-2 text-secondary"></i>Historial de entrenamiento por agente</h4>
+            <p class="text-muted mb-3" style="font-size:.87rem;">Métricas registradas por cada agente en las corridas de entrenamiento guardadas en la base de datos.</p>
+            <div id="panel-historial-entrenamiento"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm p-5 text-center border-0 rounded-4 empty-state-card" id="panel-estado-vacio">
+        <div class="empty-state-icon mb-4"><i class="fas fa-chart-bar text-muted"></i></div>
+        {% if current_user and current_user.rol == 'PACIENTE' %}
+        <p class="lead text-secondary mb-0">Cargando su historial de escaneos...</p>
+        {% else %}
+        <p class="lead text-secondary mb-2">No se encontraron resultados.</p>
+        <p class="text-muted" style="font-size:.9rem;">Ingrese una cédula en el buscador para consultar resultados guardados en la base de datos.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

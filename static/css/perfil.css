@@ -1,0 +1,191 @@
+.perfil-title {
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+}
+
+.perfil-card {
+    border-radius: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.perfil-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(15, 82, 186, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.02) !important;
+}
+
+.form-section-title {
+    color: #0f52ba;
+    font-weight: 600;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-section-title i {
+    color: #2575fc;
+}
+
+.perfil-card .form-label {
+    font-weight: 500;
+    color: #334155;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.perfil-card .form-control,
+.perfil-card .form-select {
+    border-radius: 0.5rem;
+    border: 1px solid #cbd5e1;
+    padding: 0.625rem 0.875rem;
+    color: #0f172a;
+    font-size: 0.95rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.perfil-card .form-control:focus,
+.perfil-card .form-select:focus {
+    border-color: #2575fc;
+    box-shadow: 0 0 0 4px rgba(37, 117, 252, 0.1);
+    outline: 0;
+}
+
+.perfil-card .form-control::placeholder {
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.perfil-card .input-group .btn {
+    border-top-right-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-left: none;
+    color: #475569;
+    font-weight: 500;
+    background-color: #f8fafc;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.perfil-card .input-group .btn:hover {
+    background-color: #f1f5f9;
+    color: #0f52ba;
+    border-color: #cbd5e1;
+}
+
+.perfil-card .input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.form-switch-custom {
+    display: flex;
+    align-items: center;
+}
+
+.form-switch-custom .form-check-input {
+    width: 2.5rem;
+    height: 1.25rem;
+    margin-top: 0;
+    cursor: pointer;
+}
+
+.form-switch-custom .form-check-input:checked {
+    background-color: #10b981;
+    border-color: #10b981;
+}
+
+.form-switch-custom .form-check-label {
+    font-weight: 500;
+    color: #334155;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.btn-guardar-perfil {
+    background-color: #0f52ba !important;
+    border-color: #0f52ba !important;
+    color: #ffffff !important;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-guardar-perfil:hover {
+    background-color: #0d47a1 !important;
+    border-color: #0d47a1 !important;
+    transform: translateY(-1px);
+}
+
+.perfil-card .btn-secondary {
+    background-color: #64748b !important;
+    border-color: #64748b !important;
+    color: #ffffff !important;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.perfil-card .btn-secondary:hover {
+    background-color: #475569 !important;
+    border-color: #475569 !important;
+}
+
+.perfil-meta dt {
+    width: 40%;
+}
+
+.perfil-meta dd {
+    margin-left: 0;
+}
+
+@media (max-width: 768px) {
+    .perfil-card {
+        padding: 1rem;
+    }
+    
+    .form-switch-custom {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+}
+.perfil-card-full {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+.perfil-card-full .form-label {
+    font-weight: 500;
+    color: #334155;
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+}
+
+.perfil-card-full .form-control,
+.perfil-card-full .form-select {
+    border-radius: 0.5rem;
+    border: 1px solid #cbd5e1;
+    padding: 0.625rem 0.875rem;
+    color: #0f172a;
+    font-size: 0.95rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.perfil-card-full .form-control:focus,
+.perfil-card-full .form-select:focus {
+    border-color: #2575fc;
+    box-shadow: 0 0 0 4px rgba(37, 117, 252, 0.1);
+    outline: 0;
+}
+
+.perfil-title {
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+}
