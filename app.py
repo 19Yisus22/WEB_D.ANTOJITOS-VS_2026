@@ -1,8 +1,10 @@
+import sys
+sys.dont_write_bytecode = True  # Evita crear carpetas __pycache__
+
 import os
 import socket
 import secrets
 import logging
-
 import cloudinary
 from dotenv import load_dotenv
 from waitress import serve
@@ -19,12 +21,7 @@ _CLD_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 
 if not _CLD_NAME or not _CLD_KEY or not _CLD_SECRET:
     raise ValueError("Faltan credenciales de Cloudinary en .env")
-
-cloudinary.config(
-    cloud_name=_CLD_NAME,
-    api_key=_CLD_KEY,
-    api_secret=_CLD_SECRET,
-)
+cloudinary.config(cloud_name=_CLD_NAME, api_key=_CLD_KEY, api_secret=_CLD_SECRET,)
 
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR    = os.path.join(BASE_DIR, "static")
@@ -35,7 +32,6 @@ app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
 app.secret_key                   = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(24)
 app.permanent_session_lifetime   = timedelta(days=1)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
-
 CORS(app, supports_credentials=True)
 logging.getLogger("waitress").setLevel(logging.ERROR)
 
@@ -67,7 +63,6 @@ app.register_blueprint(facturacion_bp)
 app.register_blueprint(comentarios_bp)
 app.register_blueprint(paginas_estaticas_bp)
 
-
 @app.after_request
 def agregar_cabeceras(response):
     response.headers["Cross-Origin-Opener-Policy"]  = "same-origin-allow-popups"
@@ -75,12 +70,10 @@ def agregar_cabeceras(response):
     response.headers["Access-Control-Allow-Origin"]  = "*"
     return response
 
-
 @app.before_request
 def redirect_root():
     if request.path == "/":
         return redirect("/inicio")
-
 
 def _get_local_ip() -> str:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -91,7 +84,6 @@ def _get_local_ip() -> str:
         return "127.0.0.1"
     finally:
         s.close()
-
 
 if __name__ == "__main__":
     host      = "0.0.0.0"

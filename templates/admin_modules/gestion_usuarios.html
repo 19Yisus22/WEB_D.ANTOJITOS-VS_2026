@@ -57,6 +57,250 @@
         .table thead th { background: #1a1a1a; color:#fff; border:none; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.6px; }
         .table-striped > tbody > tr:nth-of-type(odd) > * { background-color: rgba(211,84,0,0.02); }
         .badge-online { width:8px;height:8px;border-radius:50%;background:#27ae60;display:inline-block; }
+        @media (max-width:768px) {
+            .table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .table-card .table { min-width: 700px; }
+            .action-btn { padding:4px 8px; font-size:0.72rem; }
+            .search-bar { max-width:100%; }
+        }
+
+        /* ── User Detail Modal ── */
+        .udet-content {
+            border-radius: 24px !important;
+            overflow: hidden;
+            border: none !important;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.2) !important;
+        }
+
+        .udet-hero {
+            position: relative;
+            background: linear-gradient(135deg, #1a0800 0%, #d35400 45%, #f39c12 100%);
+            padding: 32px 28px 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .udet-hero-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.12) 0%, transparent 60%),
+                        radial-gradient(ellipse at 10% 80%, rgba(0,0,0,0.2) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .udet-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 10;
+            filter: brightness(2);
+            opacity: 0.8;
+        }
+        .udet-close:hover { opacity: 1; }
+
+        .udet-avatar-wrap {
+            position: relative;
+            z-index: 2;
+            margin-bottom: 16px;
+        }
+
+        .udet-avatar-ring {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            padding: 4px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.4));
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 0 0 4px rgba(255,255,255,0.2);
+        }
+
+        .udet-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .udet-auth-badge {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            border: 2px solid rgba(255,255,255,0.8);
+        }
+
+        .udet-hero-info {
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        .udet-name {
+            color: #fff;
+            font-size: 1.45rem;
+            font-weight: 900;
+            letter-spacing: -0.3px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            margin: 0 0 4px;
+        }
+
+        .udet-username {
+            color: rgba(255,255,255,0.75);
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.3px;
+        }
+
+        .udet-badges {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .udet-rol-badge {
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .udet-method-badge {
+            display: flex;
+            align-items: center;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.18);
+            color: #fff;
+            font-size: 0.76rem;
+            font-weight: 700;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+
+        .udet-body {
+            padding: 0 24px 20px;
+            margin-top: -48px;
+            position: relative;
+            z-index: 3;
+        }
+
+        .udet-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #d35400;
+            padding: 14px 0 8px;
+            border-bottom: 2px solid rgba(211,84,0,0.12);
+            margin-bottom: 10px;
+        }
+        .udet-section-title i { font-size: 0.85rem; }
+
+        .udet-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .udet-info-card {
+            background: #f8f9fa;
+            border-radius: 14px;
+            padding: 12px 14px;
+            border: 1px solid #eef1f5;
+            transition: box-shadow 0.2s, transform 0.15s;
+        }
+        .udet-info-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.07); transform: translateY(-1px); }
+        .udet-warm { background: linear-gradient(135deg, #fff8f0, #fff3e0) !important; border-color: rgba(255,152,0,0.15) !important; }
+        .udet-green { background: linear-gradient(135deg, #f0fff4, #e8f5e9) !important; border-color: rgba(39,174,96,0.15) !important; }
+
+        .udet-info-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        .udet-info-label i { color: #d35400; font-size: 0.75rem; }
+
+        .udet-info-value {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+
+        .udet-footer {
+            display: flex;
+            gap: 8px;
+            padding: 16px 24px 22px;
+            background: #f8f9fa;
+            border-top: 1px solid #eef1f5;
+            flex-wrap: wrap;
+        }
+
+        .udet-btn {
+            flex: 1;
+            min-width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .udet-btn-ghost   { background: #fff; color: #d35400; border: 1.5px solid rgba(211,84,0,0.3); }
+        .udet-btn-ghost:hover { background: rgba(211,84,0,0.06); transform: translateY(-1px); }
+        .udet-btn-warning { background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff; }
+        .udet-btn-warning:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(230,126,34,0.35); }
+        .udet-btn-danger  { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; }
+        .udet-btn-danger:hover  { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(231,76,60,0.3); }
+        .udet-btn-close   { background: #1a1a1a; color: #fff; }
+        .udet-btn-close:hover   { background: #333; transform: translateY(-1px); }
+
+        @media (max-width: 576px) {
+            .udet-grid { grid-template-columns: 1fr; }
+            .udet-btn { min-width: 80px; font-size: 0.72rem; padding: 9px 10px; }
+            .udet-name { font-size: 1.2rem; }
+        }
+
+        [data-theme="dark"] .udet-content { box-shadow: 0 32px 80px rgba(0,0,0,0.6) !important; }
+        [data-theme="dark"] .udet-hero { background: linear-gradient(135deg, #0d0d0d 0%, #8a2200 45%, #b45309 100%) !important; }
+        [data-theme="dark"] .udet-body { background: transparent; }
+        [data-theme="dark"] .udet-info-card { background: #1e1e1e !important; border-color: #2a2a2a !important; }
+        [data-theme="dark"] .udet-info-value { color: #e8e8e8 !important; }
+        [data-theme="dark"] .udet-info-label { color: #666 !important; }
+        [data-theme="dark"] .udet-warm { background: linear-gradient(135deg, #1a1200, #201500) !important; border-color: rgba(255,152,0,0.15) !important; }
+        [data-theme="dark"] .udet-green { background: linear-gradient(135deg, #0a1f10, #0d2714) !important; border-color: rgba(39,174,96,0.15) !important; }
+        [data-theme="dark"] .udet-section-title { color: #f0883e !important; border-color: rgba(240,136,62,0.2) !important; }
+        [data-theme="dark"] .udet-footer { background: #141414 !important; border-color: #2a2a2a !important; }
+        [data-theme="dark"] .udet-btn-ghost { background: #1e1e1e !important; color: #f0883e !important; border-color: rgba(240,136,62,0.3) !important; }
+        [data-theme="dark"] .udet-btn-close { background: #2a2a2a !important; color: #e8e8e8 !important; }
     </style>
 </head>
 <body>
@@ -178,6 +422,8 @@
     let _cedula_modal = null;
     let _sortCol = '';
     let _sortAsc = true;
+    let _paginaUsuarios = 1;
+    const _ITEMS_PAG = 10;
     const _modal_rol = new bootstrap.Modal(document.getElementById('modalRol'));
 
     const ROLES_CLASS = { admin:'role-admin', vendedor:'role-vendedor', cliente:'role-cliente', visitante:'role-cliente' };
@@ -217,9 +463,14 @@
             return okQ && okRol && okAuth;
         });
 
+        _paginaUsuarios = 1;
         _renderTabla(filtrados);
+        const inicio = Math.min((_paginaUsuarios - 1) * _ITEMS_PAG + 1, filtrados.length);
+        const fin    = Math.min(_paginaUsuarios * _ITEMS_PAG, filtrados.length);
         document.getElementById('conteoResultados').textContent =
-            `Mostrando ${filtrados.length} de ${_usuarios.length} usuarios`;
+            filtrados.length > 0
+            ? `Mostrando ${inicio}–${fin} de ${filtrados.length} usuarios`
+            : `0 resultados de ${_usuarios.length} usuarios`;
     }
 
     function sortTabla(col) {
@@ -245,10 +496,31 @@
         return `<div class="user-avatar-broken"><i class="bi bi-person-fill"></i></div>`;
     }
 
+    function _renderPaginacion(total, pagina) {
+        let nav = document.getElementById('paginacionUsuarios');
+        if (!nav) {
+            nav = document.createElement('nav');
+            nav.id = 'paginacionUsuarios';
+            nav.className = 'mt-3';
+            document.getElementById('conteoResultados').after(nav);
+        }
+        const maxPag = Math.ceil(total / _ITEMS_PAG);
+        if (maxPag <= 1) { nav.innerHTML = ''; return; }
+        let html = '<ul class="pagination pagination-sm justify-content-center mb-0">';
+        for (let i = 1; i <= maxPag; i++) {
+            html += `<li class="page-item ${i === pagina ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="event.preventDefault();_paginaUsuarios=${i};filtrarUsuarios();">${i}</a>
+                     </li>`;
+        }
+        html += '</ul>';
+        nav.innerHTML = html;
+    }
+
     function _renderTabla(lista) {
         const tbody = document.getElementById('tablaUsuarios');
         if (!lista.length) {
             tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bi bi-search display-6 d-block mb-2"></i>Sin resultados</td></tr>';
+            _renderPaginacion(0, 1);
             return;
         }
         let ordenada = [...lista];
@@ -259,8 +531,11 @@
                 return _sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
             });
         }
+        _renderPaginacion(ordenada.length, _paginaUsuarios);
+        const inicio = (_paginaUsuarios - 1) * _ITEMS_PAG;
+        const paginada = ordenada.slice(inicio, inicio + _ITEMS_PAG);
         tbody.innerHTML = '';
-        ordenada.forEach(u => {
+        paginada.forEach(u => {
             const tr = document.createElement('tr');
             tr.className = 'user-row';
             tr.innerHTML = `
@@ -360,11 +635,29 @@
     }
 
     function mostrarDetalleUsuario(u) {
-        const esGoogle = u.auth_method === 'google';
-        const rol = u.rol || 'cliente';
-        const rolClass = ROLES_CLASS[rol] || 'role-cliente';
-        const fechaCreacion = u.fecha_creacion ? new Date(u.fecha_creacion).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
-        const fechaConexion = u.ultima_conexion ? new Date(u.ultima_conexion).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
+        const esGoogle     = u.auth_method === 'google';
+        const rol          = u.rol || 'cliente';
+        const rolClass     = ROLES_CLASS[rol] || 'role-cliente';
+        const fmtDate = iso => iso
+            ? new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
+            : '—';
+        const fechaCreacion = fmtDate(u.fecha_creacion);
+        const fechaConexion = fmtDate(u.ultima_conexion);
+
+        const ROL_ICONS = { admin:'bi-shield-fill-check', vendedor:'bi-shop', cliente:'bi-person-fill', visitante:'bi-eye' };
+        const ROL_COLORS = { admin:'#856404', vendedor:'#084298', cliente:'#0a3622' };
+        const ROL_BKGS   = { admin:'#fff3cd', vendedor:'#cfe2ff', cliente:'#d1e7dd' };
+
+        const metodo = esGoogle
+            ? `<img src="/static/uploads/googlogo.ico" style="width:14px;height:14px;margin-right:4px;">Google`
+            : `<i class="bi bi-envelope-fill" style="margin-right:4px;color:#0277bd;"></i>Correo D'Antojitos`;
+
+        const infoRow = (icon, label, value, accent='') => `
+            <div class="udet-info-card${accent ? ' udet-'+accent : ''}">
+                <div class="udet-info-label"><i class="bi ${icon}"></i>${label}</div>
+                <div class="udet-info-value">${value || '<span style="opacity:.45">—</span>'}</div>
+            </div>`;
+
         const existing = document.getElementById('modalDetalleUsuario');
         if (existing) existing.remove();
         const modal = document.createElement('div');
@@ -373,99 +666,83 @@
         modal.setAttribute('tabindex', '-1');
         modal.innerHTML = `
             <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content border-0 shadow-lg" style="border-radius:24px;overflow:hidden;">
-                    <div class="modal-header border-0 p-0" style="background:linear-gradient(135deg,#d35400,#e67e22);min-height:120px;position:relative;">
-                        <div style="position:absolute;bottom:-50px;left:50%;transform:translateX(-50%);z-index:10;">
-                            <div style="position:relative;display:inline-block;">
+                <div class="modal-content udet-content">
+
+                    <div class="udet-hero">
+                        <div class="udet-hero-bg"></div>
+                        <button type="button" class="btn-close btn-close-white udet-close" data-bs-dismiss="modal"></button>
+
+                        <div class="udet-avatar-wrap">
+                            <div class="udet-avatar-ring">
                                 <img src="${u.imagen_url || '/static/uploads/default_icon_profile.png'}"
                                      onerror="this.src='/static/uploads/default_icon_profile.png'"
-                                     class="rounded-circle border border-4 border-white shadow-lg"
-                                     style="width:100px;height:100px;object-fit:cover;">
-                                <span class="position-absolute bottom-0 end-0 rounded-circle bg-white d-flex align-items-center justify-content-center shadow" style="width:32px;height:32px;">
-                                    ${esGoogle
-                                        ? '<img src="/static/uploads/googlogo.ico" style="width:18px;height:18px;">'
-                                        : '<i class="bi bi-envelope-fill text-primary"></i>'}
+                                     class="udet-avatar">
+                            </div>
+                            <div class="udet-auth-badge">
+                                ${esGoogle
+                                    ? '<img src="/static/uploads/googlogo.ico" style="width:16px;height:16px;">'
+                                    : '<i class="bi bi-envelope-fill" style="color:#d35400;font-size:.85rem;"></i>'}
+                            </div>
+                        </div>
+
+                        <div class="udet-hero-info">
+                            <h3 class="udet-name">${u.nombre_completo || '—'}</h3>
+                            ${u.username ? `<div class="udet-username">@${u.username}</div>` : ''}
+                            <div class="udet-badges">
+                                <span class="udet-rol-badge" style="background:${ROL_BKGS[rol]||'#eee'};color:${ROL_COLORS[rol]||'#555'};">
+                                    <i class="bi ${ROL_ICONS[rol]||'bi-person'} me-1"></i>${rol.charAt(0).toUpperCase()+rol.slice(1)}
                                 </span>
-                            </div>
-                        </div>
-                        <button type="button" class="btn-close btn-close-white m-3 ms-auto" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body px-4 pt-5 pb-3 text-center" style="margin-top:50px;">
-                        <h4 class="fw-bold mb-0">${u.nombre_completo || '-'}</h4>
-                        ${u.username ? `<p class="text-muted small mb-1">@${u.username}</p>` : ''}
-                        <div class="d-flex justify-content-center gap-2 mt-2 mb-4">
-                            <span class="role-badge ${rolClass}">${rol}</span>
-                            <span class="role-badge ${esGoogle ? 'method-google' : 'method-email'}">
-                                <i class="bi bi-${esGoogle ? 'google' : 'envelope-fill'} me-1"></i>
-                                ${esGoogle ? 'Google' : 'Correo'}
-                            </span>
-                        </div>
-                        <div class="row g-3 text-start">
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3" style="background:#f8f9fa;">
-                                    <div class="small text-muted fw-bold text-uppercase mb-1" style="letter-spacing:.5px;">Cédula / ID</div>
-                                    <div class="fw-semibold d-flex align-items-center gap-2">
-                                        <i class="bi bi-card-text text-secondary"></i>
-                                        ${u.cedula || 'No registrada'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3" style="background:#f8f9fa;">
-                                    <div class="small text-muted fw-bold text-uppercase mb-1" style="letter-spacing:.5px;">Correo</div>
-                                    <div class="fw-semibold d-flex align-items-center gap-2">
-                                        <i class="bi bi-envelope text-secondary"></i>
-                                        <span style="word-break:break-all;font-size:.9rem;">${u.correo || '-'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3" style="background:#f8f9fa;">
-                                    <div class="small text-muted fw-bold text-uppercase mb-1" style="letter-spacing:.5px;">Teléfono</div>
-                                    <div class="fw-semibold d-flex align-items-center gap-2">
-                                        <i class="bi bi-telephone text-secondary"></i>
-                                        ${u.telefono || 'No registrado'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3" style="background:#f8f9fa;">
-                                    <div class="small text-muted fw-bold text-uppercase mb-1" style="letter-spacing:.5px;">Dirección</div>
-                                    <div class="fw-semibold d-flex align-items-center gap-2">
-                                        <i class="bi bi-geo-alt text-secondary"></i>
-                                        <span style="font-size:.9rem;">${u.direccion || 'No registrada'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3" style="background:#fff3e0;">
-                                    <div class="small text-muted fw-bold text-uppercase mb-1" style="letter-spacing:.5px;">Registro</div>
-                                    <div class="d-flex align-items-center gap-2 small">
-                                        <i class="bi bi-calendar-check text-warning"></i>${fechaCreacion}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3" style="background:#e8f5e9;">
-                                    <div class="small text-muted fw-bold text-uppercase mb-1" style="letter-spacing:.5px;">Última Conexión</div>
-                                    <div class="d-flex align-items-center gap-2 small">
-                                        <i class="bi bi-clock-history text-success"></i>${fechaConexion}
-                                    </div>
-                                </div>
+                                <span class="udet-method-badge">${metodo}</span>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer border-0 px-4 pb-4 pt-2 d-flex gap-2">
-                        <button class="btn btn-outline-primary flex-fill fw-bold"
+
+                    <div class="udet-body">
+                        <div class="udet-section-title">
+                            <i class="bi bi-person-lines-fill"></i>Información Personal
+                        </div>
+                        <div class="udet-grid">
+                            ${infoRow('bi-card-text', 'Cédula / ID', `<strong class="font-monospace">${u.cedula||'—'}</strong>`)}
+                            ${infoRow('bi-telephone-fill', 'Teléfono', u.telefono)}
+                            ${infoRow('bi-envelope-fill', 'Correo', `<span style="word-break:break-all;font-size:.88rem;">${u.correo||'—'}</span>`)}
+                            ${infoRow('bi-geo-alt-fill', 'Dirección', `<span style="font-size:.88rem;">${u.direccion||'—'}</span>`)}
+                        </div>
+
+                        <div class="udet-section-title mt-3">
+                            <i class="bi bi-activity"></i>Actividad de Cuenta
+                        </div>
+                        <div class="udet-grid">
+                            ${infoRow('bi-calendar-plus-fill', 'Registro', `<span style="font-size:.85rem;">${fechaCreacion}</span>`, 'warm')}
+                            ${infoRow('bi-clock-history', 'Última Conexión', `<span style="font-size:.85rem;">${fechaConexion}</span>`, 'green')}
+                        </div>
+
+                        <div class="udet-section-title mt-3">
+                            <i class="bi bi-gear-fill"></i>Preferencias
+                        </div>
+                        <div class="udet-grid">
+                            ${infoRow('bi-wallet2', 'Método de Pago', u.metodo_pago)}
+                            ${infoRow('bi-shield-lock-fill', 'Autenticación', metodo)}
+                        </div>
+                    </div>
+
+                    <div class="udet-footer">
+                        <button class="udet-btn udet-btn-ghost"
                                 onclick="navigator.clipboard.writeText('${u.correo||''}').then(()=>mostrarAlerta('Correo copiado'))">
-                            <i class="bi bi-clipboard me-1"></i>Copiar Correo
+                            <i class="bi bi-clipboard-fill"></i>Copiar Correo
                         </button>
-                        <button class="btn btn-outline-warning flex-fill fw-bold"
+                        <button class="udet-btn udet-btn-warning"
                                 onclick="abrirModalRol('${u.cedula}','${u.nombre_completo}','${u.rol}');bootstrap.Modal.getInstance(document.getElementById('modalDetalleUsuario'))?.hide()">
-                            <i class="bi bi-shield-lock me-1"></i>Cambiar Rol
+                            <i class="bi bi-shield-shaded"></i>Cambiar Rol
                         </button>
-                        <button type="button" class="btn btn-dark flex-fill fw-bold" data-bs-dismiss="modal">Cerrar</button>
+                        <button class="udet-btn udet-btn-danger"
+                                onclick="eliminarUsuario('${u.correo}','${u.nombre_completo}');bootstrap.Modal.getInstance(document.getElementById('modalDetalleUsuario'))?.hide()">
+                            <i class="bi bi-trash3-fill"></i>Eliminar
+                        </button>
+                        <button type="button" class="udet-btn udet-btn-close" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i>Cerrar
+                        </button>
                     </div>
+
                 </div>
             </div>`;
         document.body.appendChild(modal);

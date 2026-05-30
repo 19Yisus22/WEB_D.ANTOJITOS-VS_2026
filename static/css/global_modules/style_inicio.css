@@ -1,4 +1,4 @@
-@import url('[https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap)');
+﻿@import url('[https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap)');
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -1122,23 +1122,24 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
    ===================================================================== */
 .notif-admin-panel {
     position: fixed;
-    bottom: 76px;
-    left: 20px;
-    width: 310px;
+    top: 64px;
+    right: 20px;
+    width: 320px;
     background: #fff;
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
     z-index: 1400;
     overflow: hidden;
     border: 1px solid rgba(211,84,0,0.12);
-    transform: translateY(calc(100% + 24px));
+    transform: translateY(-16px) scale(0.97);
     opacity: 0;
-    transition: transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275),
-                opacity 0.3s ease;
+    transition: transform 0.32s cubic-bezier(0.175,0.885,0.32,1.275),
+                opacity 0.25s ease;
     pointer-events: none;
+    transform-origin: top right;
 }
 .notif-admin-panel.is-open {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     opacity: 1;
     pointer-events: auto;
 }
@@ -1208,7 +1209,6 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     .notif-admin-panel { left: 10px; right: 10px; width: auto; bottom: 10px; }
 }
 
-/* ── CINTA DE INICIO (mismo estilo que bancos footer) ── */
 .cinta-img-aura {
     position: relative;
     width: 34px;
@@ -1304,7 +1304,6 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     .cinta-inicio-item { min-width: 130px; font-size: 0.75rem; }
 }
 
-/* ── Campana inicio — integra con panel al abrir ── */
 #btnCampanaNotif {
     position: fixed;
     bottom: 84px; left: 20px;
@@ -1329,3 +1328,4 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     border-color: #2a2a2a !important;
     box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
 }
+

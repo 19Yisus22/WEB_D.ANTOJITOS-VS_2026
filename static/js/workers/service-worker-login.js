@@ -1,23 +1,24 @@
-const CACHE_NAME = 'dantojitos-login-v3';
+const CACHE_NAME = 'dantojitos-login-v5';
 const STATIC_ASSETS = [
-    '/login',
     '/static/css/global_modules/style_login.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_utils.css',
-    '/static/js/global_js/login_registro.js',
-    '/static/js/general_js/login_registro.js',
+    '/static/js/global_js/utils.js',
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
+    '/static/uploads/googlogo.ico',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
 ];
 
+// Siempre desde la red — autenticación
 const NETWORK_FIRST_ROUTES = [
     '/login',
     '/registro-google',
     '/obtener-cliente-id',
-    '/enviar_codigo_verificacion'
+    '/enviar_codigo_verificacion',
+    '/resend_page'
 ];
 
 self.addEventListener('install', event => {

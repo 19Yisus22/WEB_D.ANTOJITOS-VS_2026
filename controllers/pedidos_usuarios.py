@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session, redirect, render_template
 
-import models as db
+import helpers.models as db
 from helpers.auth import sin_cache, login_required, vendedor_required
 from helpers.validators import ESTADOS_PEDIDO, ESTADOS_FACTURA
 

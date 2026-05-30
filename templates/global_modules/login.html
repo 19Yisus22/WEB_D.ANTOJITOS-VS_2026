@@ -17,9 +17,22 @@
 
 <div id="toastContainer"></div>
 
-<button class="login-theme-btn" id="loginThemeBtn" onclick="toggleTheme()" title="Cambiar tema">
-    <i class="bi bi-moon-fill" id="loginThemeIcon"></i>
-</button>
+<div class="login-top-actions">
+    <a href="/inicio" class="login-home-btn" title="Volver al inicio">
+        <i class="bi bi-house-door-fill"></i>
+        <span data-i18n="nav.home">Inicio</span>
+    </a>
+    <button class="login-theme-btn" id="loginThemeBtn" onclick="toggleTheme()" title="Cambiar tema">
+        <i class="bi bi-moon-fill" id="loginThemeIcon"></i>
+        <span id="loginThemeLabel" data-i18n="nav.theme">Oscuro</span>
+    </button>
+    <button class="login-theme-btn" id="loginLangBtn"
+            onclick="setLang(document.documentElement.lang==='es'?'en':'es')"
+            title="Cambiar idioma">
+        <i class="bi bi-translate"></i>
+        <span id="loginLangLabel">EN</span>
+    </button>
+</div>
 
 <div class="login-wrapper">
 
@@ -78,55 +91,58 @@
         <div class="login-card">
 
             <div class="login-header">
-                <h2>Bienvenido de nuevo</h2>
-                <p>Ingresa con tu correo, usuario o cédula</p>
+                <h2 data-i18n="login.title">Bienvenido de nuevo</h2>
+                <p data-i18n="login.subtitle">Ingresa con tu correo, usuario o cédula</p>
             </div>
 
             <div id="buttonDiv" class="google-btn-area">
                 <div id="googleLoading" class="google-loading">
-                    <i class="bi bi-google me-2"></i>Cargando botón de Google...
+                    <i class="bi bi-google me-2"></i><span data-i18n="status.loading">Cargando...</span>
                 </div>
             </div>
 
-            <div class="login-divider"><span>o continúa con tu cuenta</span></div>
+            <div class="login-divider"><span data-i18n="login.or">o continúa con tu cuenta</span></div>
 
             <form id="loginForm" novalidate autocomplete="off">
 
                 <div class="login-field">
-                    <label>Correo, usuario o cédula <span class="req">*</span></label>
-                    <div class="field-wrap">
-                        <i class="bi bi-person-circle"></i>
-                        <input type="text" id="identifier" name="identifier" maxlength="25"
-                               placeholder="Ej: maria@gmail.com o maria#99" required>
+                    <label data-i18n="login.identifier">Correo, usuario o cédula <span class="req">*</span></label>
+                    <div class="field-wrap" id="identifierWrap">
+                        <i class="bi bi-person-circle" id="identifierIcon"></i>
+                        <input type="text" id="identifier" name="identifier"
+                               maxlength="150" autocomplete="username"
+                               data-i18n-placeholder="ph.search_user"
+                               placeholder="correo@gmail.com · usuario · 123456789" required>
                     </div>
                 </div>
 
                 <div class="login-field">
-                    <label>Contraseña <span class="req">*</span></label>
+                    <label data-i18n="login.password">Contraseña <span class="req">*</span></label>
                     <div class="field-wrap" id="pwWrap">
                         <i class="bi bi-lock-fill"></i>
                         <input type="password" id="contrasena" name="contrasena" maxlength="50"
+                               data-i18n-placeholder="ph.pass"
                                placeholder="Tu contraseña" required>
                         <i class="bi bi-eye toggle-pw-login" id="togglePwLogin"></i>
                     </div>
                     <div class="caps-warn" id="capsWarn" style="display:none">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>Bloq Mayús activado
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i><span data-i18n="login.capslock">Bloq Mayús activado</span>
                     </div>
                 </div>
 
                 <button type="submit" class="btn-login" id="btnLogin">
-                    <span id="btnLoginText"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar</span>
-                    <span id="btnLoginLoader" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>
+                    <span id="btnLoginText"><i class="bi bi-box-arrow-in-right me-2"></i><span data-i18n="login.btn">Entrar</span></span>
+                    <span id="btnLoginLoader" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span><span data-i18n="status.loading">Verificando...</span></span>
                 </button>
 
             </form>
 
             <div class="login-footer">
-                <p>¿No tienes cuenta? <a href="/registro" class="link-hl">Regístrate aquí</a></p>
+                <p><span data-i18n="login.no_account">¿No tienes cuenta?</span> <a href="/registro" class="link-hl" data-i18n="login.register_link">Regístrate aquí</a></p>
                 <div class="legal-links">
-                    <a href="/politicas_page">Políticas de Privacidad</a>
+                    <a href="/politicas_page" data-i18n="legal.privacy">Políticas de Privacidad</a>
                     <span>·</span>
-                    <a href="/condiciones_page">Términos y Condiciones</a>
+                    <a href="/condiciones_page" data-i18n="legal.terms">Términos y Condiciones</a>
                 </div>
             </div>
 
@@ -138,6 +154,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/global_js/i18n.js') }}"></script>
 <script src="{{ url_for('static', filename='js/global_js/login_registro.js') }}"></script>
 <script>
 new Swiper('.loginSwiper', {
@@ -198,16 +215,30 @@ new Swiper('.loginSwiper', {
     animate();
 })();
 
-// ── Theme icon sync ──
+// ── Theme icon + label sync ──
 (function() {
-    const icon = document.getElementById('loginThemeIcon');
-    if (!icon) return;
-    const t = localStorage.getItem('dantojitos_theme') || 'light';
-    icon.className = t === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-    document.addEventListener('themeChanged', () => {
-        const cur = document.documentElement.getAttribute('data-theme') || 'light';
-        icon.className = cur === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-    });
+    function syncThemeBtn() {
+        const icon  = document.getElementById('loginThemeIcon');
+        const label = document.getElementById('loginThemeLabel');
+        const cur   = document.documentElement.getAttribute('data-theme') || 'light';
+        if (icon)  icon.className  = cur === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+        if (label) label.textContent = cur === 'dark' ? 'Claro' : 'Oscuro';
+    }
+    syncThemeBtn();
+    new MutationObserver(syncThemeBtn).observe(
+        document.documentElement,
+        { attributes: true, attributeFilter: ['data-theme'] }
+    );
+})();
+
+(function() {
+    function syncLangLabel() {
+        const lbl = document.getElementById('loginLangLabel');
+        const cur = document.documentElement.getAttribute('lang') || 'es';
+        if (lbl) lbl.textContent = cur === 'es' ? 'EN' : 'ES';
+    }
+    syncLangLabel();
+    document.addEventListener('langChanged', syncLangLabel);
 })();
 </script>
 </body>

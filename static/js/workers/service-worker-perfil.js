@@ -1,11 +1,10 @@
-const CACHE_NAME = 'dantojitos-perfil-v3';
+const CACHE_NAME = 'dantojitos-perfil-v5';
 const STATIC_ASSETS = [
-    '/mi_perfil',
-    '/static/css/general_modules/style_mi_perfil.css',
     '/static/css/general_modules/style_perfil.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_utils.css',
     '/static/js/general_js/perfil.js',
+    '/static/js/global_js/utils.js',
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
     '/static/uploads/default_icon_profile.png',
@@ -14,6 +13,7 @@ const STATIC_ASSETS = [
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
 ];
 
+// Siempre desde la red — perfil y datos de usuario
 const NETWORK_FIRST_ROUTES = [
     '/mi_perfil',
     '/actualizar_perfil/',

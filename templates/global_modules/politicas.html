@@ -12,6 +12,23 @@
 </head>
 <body>
     <div id="scrollProgressBar"></div>
+
+    <div class="legal-top-actions">
+        <a href="/login" class="login-home-btn">
+            <i class="bi bi-arrow-left-circle-fill me-1"></i>
+            <span data-i18n="legal.back_login">Volver al inicio de sesión</span>
+        </a>
+        <button class="login-theme-btn" onclick="toggleTheme()">
+            <i class="bi bi-moon-fill" id="legalThemeIcon"></i>
+            <span id="legalThemeLabel" data-i18n="nav.theme">Oscuro</span>
+        </button>
+        <button class="login-theme-btn"
+                onclick="setLang(document.documentElement.lang==='es'?'en':'es')">
+            <i class="bi bi-translate"></i>
+            <span id="legalLangLabel">EN</span>
+        </button>
+    </div>
+
     <div class="container page-wrapper">
         <div class="row justify-content-center">
             <div class="col-lg-9">
@@ -19,8 +36,8 @@
                     <img src="{{ url_for('static', filename='uploads/logo.png') }}" class="logo-legal" alt="Logo D'Antojitos">
 
                     <header class="text-center mb-5">
-                        <h1 class="display-5">Política de Privacidad</h1>
-                        <p class="last-updated">Última actualización: 1 de enero de 2025</p>
+                        <h1 class="display-5" data-i18n="legal.title_privacy">Política de Privacidad</h1>
+                        <p class="last-updated" data-i18n="legal.updated">Última actualización: 1 de enero de 2025</p>
                     </header>
 
                     <div class="alert-legal">
@@ -72,7 +89,7 @@
 
                     <div class="mt-5 pt-4 text-center border-top">
                         <button onclick="acceptPrivacy()" class="btn btn-accept px-5">
-                            <i class="bi bi-check-circle-fill me-2"></i>CONTINUAR
+                            <i class="bi bi-check-circle-fill me-2"></i><span data-i18n="legal.accept">CONTINUAR</span>
                         </button>
                     </div>
                 </div>
@@ -85,6 +102,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/global_js/i18n.js') }}" defer></script>
     <script>
         function acceptPrivacy() {
             const btn = document.querySelector('.btn-accept');
@@ -93,6 +111,21 @@
             btn.disabled = true;
             setTimeout(() => { window.location.href = "/login"; }, 1200);
         }
+        (function() {
+            function syncLegal() {
+                const theme = document.documentElement.getAttribute('data-theme') || 'light';
+                const icon  = document.getElementById('legalThemeIcon');
+                const lbl   = document.getElementById('legalThemeLabel');
+                const llbl  = document.getElementById('legalLangLabel');
+                const lang  = document.documentElement.getAttribute('lang') || 'es';
+                if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+                if (lbl)  lbl.textContent = theme === 'dark' ? 'Claro' : 'Oscuro';
+                if (llbl) llbl.textContent = lang === 'es' ? 'EN' : 'ES';
+            }
+            syncLegal();
+            new MutationObserver(syncLegal).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme','lang'] });
+            document.addEventListener('langChanged', syncLegal);
+        })();
     </script>
 </body>
 </html>

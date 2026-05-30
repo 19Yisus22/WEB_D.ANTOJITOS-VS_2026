@@ -100,14 +100,45 @@ async function handleCredentialResponse(response) {
     }
 }
 
+let _googleClientId = null;
+
+function _getGoogleTheme() {
+    return (document.documentElement.getAttribute('data-theme') || 'light') === 'dark'
+        ? 'filled_black' : 'outline';
+}
+
+function _getGoogleLocale() {
+    return (localStorage.getItem('dantojitos_lang') || 'es') === 'en' ? 'en' : 'es_419';
+}
+
 function renderGoogleButton(clientId) {
-    if (!window.google || !document.getElementById('buttonDiv')) return;
-    google.accounts.id.initialize({ client_id: clientId, callback: handleCredentialResponse, auto_select: false });
+    const container = document.getElementById('buttonDiv');
+    if (!window.google || !container) return;
+    _googleClientId = clientId;
+
+    google.accounts.id.initialize({
+        client_id:   clientId,
+        callback:    handleCredentialResponse,
+        auto_select: false,
+    });
+
+    container.innerHTML = '';
     const loading = document.getElementById('googleLoading');
     if (loading) loading.style.display = 'none';
-    google.accounts.id.renderButton(document.getElementById('buttonDiv'), {
-        theme: 'outline', size: 'large', width: 320, locale: 'es'
+
+    google.accounts.id.renderButton(container, {
+        theme:          _getGoogleTheme(),
+        size:           'large',
+        width:          320,
+        locale:         _getGoogleLocale(),
+        shape:          'rectangular',
+        logo_alignment: 'left',
+        text:           'continue_with',
     });
+}
+
+function _refreshGoogleButton() {
+    if (_googleClientId && window.google) renderGoogleButton(_googleClientId);
 }
 
 async function loadGoogleButton() {
@@ -119,6 +150,12 @@ async function loadGoogleButton() {
             else window.addEventListener('load', () => renderGoogleButton(d.client_id));
         }
     } catch {}
+
+    new MutationObserver(_refreshGoogleButton).observe(
+        document.documentElement,
+        { attributes: true, attributeFilter: ['data-theme'] }
+    );
+    document.addEventListener('langChanged', _refreshGoogleButton);
 }
 
 function initLoginForm() {
@@ -127,6 +164,24 @@ function initLoginForm() {
 
     initTogglePw('togglePwLogin', 'contrasena');
     initCapsLock('contrasena', 'capsWarn');
+
+    // Detección visual del tipo de identificador
+    const identInput = document.getElementById('identifier');
+    const identIcon  = document.getElementById('identifierIcon');
+    if (identInput && identIcon) {
+        identInput.addEventListener('input', () => {
+            const v = identInput.value.trim();
+            if (!v) {
+                identIcon.className = 'bi bi-person-circle';
+            } else if (v.includes('@')) {
+                identIcon.className = 'bi bi-envelope-fill';
+            } else if (/^\d+$/.test(v)) {
+                identIcon.className = 'bi bi-card-text';
+            } else {
+                identIcon.className = 'bi bi-at';
+            }
+        });
+    }
 
     form.addEventListener('submit', async e => {
         e.preventDefault();

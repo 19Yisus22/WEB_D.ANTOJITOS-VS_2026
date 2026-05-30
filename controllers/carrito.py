@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, request, jsonify, session, render_template
 
-import models as db
+import helpers.models as db
 from helpers.auth import sin_cache, login_required
 from helpers.validators import METODOS_PAGO_VALIDOS
 

@@ -93,29 +93,15 @@
             </div>
 
             <div class="mb-5 pb-4">
-                <div class="text-center mb-4">
-                    <span class="badge bg-secondary text-uppercase px-3 py-2">Vista Previa Factura</span>
+                <div class="d-flex align-items-center gap-2 justify-content-center mb-4">
+                    <i class="bi bi-eye-fill fs-4 text-muted"></i>
+                    <h5 class="m-0 fw-bold text-uppercase">Vista Previa — Factura para el Cliente</h5>
                 </div>
-                <div id="facturaLayout" class="factura-mockup p-4 bg-white border rounded shadow-sm mx-auto" style="max-width: 500px;">
-                    <div id="previewContenedorFinal" class="row g-3"></div>
+                <div id="facturaLayout" class="factura-invoice-preview mx-auto">
+                    <div id="previewContenedorFinal"></div>
                 </div>
             </div>
 
-        </div>
-    </div>
-
-    <div class="storage-fixed-wrapper" id="storageWrapper" onclick="showStorageDetails()" style="cursor: pointer;">
-        <div class="storage-container">
-            <div class="storage-visual-wrapper">
-                <svg class="storage-ring-svg" width="60" height="60">
-                    <circle class="storage-ring-bg" cx="30" cy="30" r="26"></circle>
-                    <circle id="storageCircle" class="storage-ring-progress" cx="30" cy="30" r="26"></circle>
-                </svg>
-                <div class="storage-cloud-inner">
-                    <i class="bi bi-cloud-fill"></i>
-                </div>
-            </div>
-            <span id="storageText" class="d-none">Cargando...</span>
         </div>
     </div>
 

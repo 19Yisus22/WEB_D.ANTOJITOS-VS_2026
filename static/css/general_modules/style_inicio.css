@@ -1,4 +1,4 @@
-@import url('[https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap)');
+﻿@import url('[https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap)');
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -944,7 +944,6 @@ main { flex-grow: 1; width: 100%; }
     .features-grid { grid-template-columns: 1fr; }
 }
 
-/* ═══════════ ADMIN SIDEBAR BUTTONS ═══════════ */
 .quick-link-manual .link-icon {
     background: linear-gradient(135deg, #e8f0fe, #c7d9fd);
 }
@@ -980,7 +979,6 @@ main { flex-grow: 1; width: 100%; }
 .quick-link-editar.active .link-info small { color: white; }
 .quick-link-editar:hover .link-icon i { color: white; }
 
-/* ═══════════ CINTA INFERIOR DEL INICIO ═══════════ */
 .inicio-ribbon-bottom {
     width: 100%;
     background: #050505;
@@ -1110,3 +1108,4 @@ main { flex-grow: 1; width: 100%; }
     font-family: 'Lucida Handwriting', 'DM Sans', cursive;
     font-style: italic;
 }
+

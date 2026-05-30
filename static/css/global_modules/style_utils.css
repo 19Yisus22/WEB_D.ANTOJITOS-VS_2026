@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --theme-bg:          #ffffff;
     --theme-bg2:         #f6f8fa;
     --theme-text:        #24292f;
@@ -328,7 +328,6 @@ body {
     pointer-events: auto;
 }
 
-/* ── Flecha scroll-to-top — círculo naranja sólido, aura permanente ── */
 #scrollToTopBtn {
     position: fixed;
     bottom: 30px;
@@ -395,12 +394,7 @@ body {
     #toastContainer { top: 10px; right: 10px; left: 10px; width: auto; max-width: none; }
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   TEMA OSCURO — Diccionario universal de widgets y componentes
-   Aplicable a TODOS los módulos (admin, general, global)
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* ── Variables globales tema oscuro ── */
+/* Variables tema oscuro */
 [data-theme="dark"] {
     --dk-bg:          #0d0d0d;
     --dk-bg2:         #141414;
@@ -418,7 +412,6 @@ body {
     --dk-blue:        #3498db;
 }
 
-/* ── Body y layout ── */
 [data-theme="dark"] body,
 [data-theme="dark"] .body-fondo-logo {
     background: var(--dk-bg) !important;
@@ -432,13 +425,11 @@ body {
     background: transparent !important;
 }
 
-/* ── Gradientes de fondo de módulos admin ── */
 [data-theme="dark"] html,
 [data-theme="dark"] body {
     background: var(--dk-bg) !important;
 }
 
-/* ── Header/banner de módulo (card-title-marketing) ── */
 [data-theme="dark"] .card-title-marketing {
     background: linear-gradient(135deg, #1a0800 0%, #2d1200 100%) !important;
     border: 1px solid #3d1a00 !important;
@@ -447,7 +438,6 @@ body {
 [data-theme="dark"] .card-title-marketing h3,
 [data-theme="dark"] .card-title-marketing p { color: #e8e8e8 !important; }
 
-/* ── Tarjetas generales ── */
 [data-theme="dark"] .card,
 [data-theme="dark"] .stats-venta-card,
 [data-theme="dark"] .sidebar-custom,
@@ -464,7 +454,6 @@ body {
 [data-theme="dark"] .card-header { background: var(--dk-card2) !important; border-color: var(--dk-border) !important; }
 [data-theme="dark"] .card-footer { background: var(--dk-card2) !important; border-color: var(--dk-border) !important; }
 
-/* ── Stats cards ── */
 [data-theme="dark"] .stats-venta-card {
     background: var(--dk-card) !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
@@ -475,7 +464,6 @@ body {
 [data-theme="dark"] .stat-box .num { color: var(--dk-accent2) !important; }
 [data-theme="dark"] .stat-box .lbl { color: var(--dk-text-muted) !important; }
 
-/* ── Tablas ── */
 [data-theme="dark"] .table,
 [data-theme="dark"] .custom-table-carrito {
     background: var(--dk-card) !important;
@@ -506,7 +494,6 @@ body {
 [data-theme="dark"] .table tfoot { background: #111 !important; }
 [data-theme="dark"] .table tfoot td { color: var(--dk-text) !important; }
 
-/* ── Filas del carrito en modo oscuro (deben ser negras) ── */
 [data-theme="dark"] .cart-item-row {
     background: #111 !important;
     color: var(--dk-text) !important;
@@ -514,7 +501,6 @@ body {
 [data-theme="dark"] .cart-item-row td { color: var(--dk-text) !important; border-color: #222 !important; }
 [data-theme="dark"] .table-responsive { background: var(--dk-card) !important; }
 
-/* ── Formularios e inputs ── */
 [data-theme="dark"] .input-group-text {
     background: var(--dk-card2) !important;
     border-color: var(--dk-border) !important;
@@ -532,7 +518,6 @@ body {
 [data-theme="dark"] .form-control:focus,
 [data-theme="dark"] .form-select:focus { border-color: var(--dk-accent) !important; box-shadow: 0 0 0 3px rgba(211,84,0,0.2) !important; }
 
-/* ── Módulo comentarios — chat container ── */
 [data-theme="dark"] .chat-container {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
@@ -559,7 +544,6 @@ body {
 [data-theme="dark"] .mensaje-texto { color: var(--dk-text) !important; }
 [data-theme="dark"] .btn-like-mini { background: rgba(255,255,255,0.06) !important; }
 
-/* ── Toast admin (fondo blanco → negro en dark mode) ── */
 [data-theme="dark"] .custom-toast-alert {
     background: var(--dk-card) !important;
     color: var(--dk-text) !important;
@@ -569,7 +553,6 @@ body {
 [data-theme="dark"] .custom-toast-alert span { color: var(--dk-text) !important; }
 [data-theme="dark"] .custom-toast-alert .btn-close-toast { color: var(--dk-text-muted) !important; }
 
-/* ── Pedidos — cards de pedido ── */
 [data-theme="dark"] .pedido-card {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
@@ -585,7 +568,6 @@ body {
 [data-theme="dark"] .text-dark { color: var(--dk-text) !important; }
 [data-theme="dark"] .text-muted { color: var(--dk-text-muted) !important; }
 
-/* ── Navbar ── */
 [data-theme="dark"] #main-navbar-container .navbar {
     background: #0a0a0a !important;
     border-bottom-color: #1a1a1a !important;
@@ -596,87 +578,69 @@ body {
 [data-theme="dark"] .dropdown-item:hover { background: #222 !important; color: var(--dk-accent2) !important; }
 [data-theme="dark"] .dropdown-divider { border-color: #222 !important; }
 
-/* ── Footer ── */
 [data-theme="dark"] #main-footer-container footer {
     background: #080808 !important;
     border-top: 1px solid #1a1a1a !important;
 }
 
-/* ── Botones ── */
 [data-theme="dark"] .btn-light { background: var(--dk-card2) !important; color: var(--dk-text) !important; border-color: var(--dk-border) !important; }
 [data-theme="dark"] .btn-outline-secondary { border-color: var(--dk-border) !important; color: var(--dk-text-muted) !important; }
 [data-theme="dark"] .btn-outline-primary { border-color: var(--dk-accent) !important; color: var(--dk-accent) !important; }
 [data-theme="dark"] .btn-outline-danger { border-color: var(--dk-danger) !important; color: var(--dk-danger) !important; }
 [data-theme="dark"] .btn-close { filter: invert(1); }
 
-/* ── Modales ── */
 [data-theme="dark"] .modal-content { background: var(--dk-card) !important; border-color: var(--dk-border) !important; }
 [data-theme="dark"] .modal-header { background: var(--dk-card2) !important; border-color: var(--dk-border) !important; color: var(--dk-text) !important; }
 [data-theme="dark"] .modal-body { background: var(--dk-card) !important; color: var(--dk-text) !important; }
 [data-theme="dark"] .modal-footer { background: var(--dk-card2) !important; border-color: var(--dk-border) !important; }
 [data-theme="dark"] .modal-title { color: var(--dk-text) !important; }
 
-/* ── Accordion ── */
 [data-theme="dark"] .accordion-item { background: var(--dk-card) !important; border-color: var(--dk-border) !important; }
 [data-theme="dark"] .accordion-button { background: var(--dk-card2) !important; color: var(--dk-text) !important; }
 [data-theme="dark"] .accordion-button:not(.collapsed) { background: var(--dk-card2) !important; color: var(--dk-accent) !important; }
 [data-theme="dark"] .accordion-body { background: var(--dk-card) !important; color: var(--dk-text) !important; }
 
-/* ── Badges y pills ── */
 [data-theme="dark"] .badge.bg-light { background: var(--dk-card2) !important; color: var(--dk-text) !important; }
 [data-theme="dark"] .badge.bg-white { background: var(--dk-card2) !important; color: var(--dk-text) !important; }
 [data-theme="dark"] .badge.bg-secondary { background: #333 !important; color: #aaa !important; }
 
-/* ── Paginación ── */
 [data-theme="dark"] .page-link { background: var(--dk-card) !important; border-color: var(--dk-border) !important; color: var(--dk-text) !important; }
 [data-theme="dark"] .page-item.active .page-link { background: var(--dk-accent) !important; border-color: var(--dk-accent) !important; }
 
-/* ── Inicio — widgets ── */
 [data-theme="dark"] .widget-bloque { background: transparent !important; }
 [data-theme="dark"] .widget-controls { background: rgba(20,20,20,0.9) !important; border-color: #333 !important; }
 [data-theme="dark"] .story-section { background: var(--dk-card) !important; border-color: var(--dk-border) !important; }
 [data-theme="dark"] .story-title { color: var(--dk-text) !important; }
 
-/* ── Perfil ── */
 [data-theme="dark"] .profile-img-container { border-color: var(--dk-border) !important; }
 [data-theme="dark"] .bg-light-soft { background: var(--dk-card2) !important; }
 [data-theme="dark"] .custom-input { background: var(--dk-input-bg) !important; color: var(--dk-text) !important; border-color: var(--dk-border) !important; }
 
-/* ── Gestión de productos ── */
 [data-theme="dark"] .postre-img { filter: brightness(0.9); }
 [data-theme="dark"] .gris { filter: grayscale(100%) brightness(0.6) !important; }
 
-/* ── Catálogo ── */
 [data-theme="dark"] .product-card { background: var(--dk-card) !important; border-color: var(--dk-border) !important; }
 [data-theme="dark"] .search-group { background: var(--dk-card) !important; border-color: var(--dk-border) !important; }
 [data-theme="dark"] .search-group .form-control { background: var(--dk-input-bg) !important; }
 
-/* ── Cinta publicitaria ── */
 [data-theme="dark"] .promo-banner { background: #080808 !important; }
 
-/* ── Scroll progress bar ── */
 [data-theme="dark"] #scrollProgressBar { background: linear-gradient(90deg, #f0883e, #d35400); }
 
-/* ── Imágenes en modo oscuro ── */
 [data-theme="dark"] .img-not-available { background: var(--dk-card2) !important; }
 [data-theme="dark"] .img-placeholder { background: var(--dk-card2) !important; }
 
-/* ── Promo publicidad ── */
 [data-theme="dark"] .promo-img-container::before { opacity: 0.25; }
 
-/* ── Spinner ── */
 [data-theme="dark"] .spinner-border { border-color: var(--dk-text-muted); border-right-color: transparent; }
 
-/* ── Alert / info boxes ── */
 [data-theme="dark"] .alert { background: var(--dk-card2) !important; border-color: var(--dk-border) !important; color: var(--dk-text) !important; }
 [data-theme="dark"] .alert-info { background: rgba(52,152,219,0.12) !important; border-color: rgba(52,152,219,0.3) !important; }
 
-/* ── Gestion usuarios ── */
 [data-theme="dark"] .user-row { color: var(--dk-text) !important; }
 [data-theme="dark"] .user-row:hover { background: rgba(211,84,0,0.08) !important; }
 [data-theme="dark"] .table-card { background: var(--dk-card) !important; }
 
-/* ── Carrito — filas negras ── */
 [data-theme="dark"] #carritoContainer { background: var(--dk-card) !important; }
 [data-theme="dark"] .cart-item-row { background: #0a0a0a !important; }
 [data-theme="dark"] .cart-item-row:nth-of-type(odd) { background: #111 !important; }
@@ -686,16 +650,10 @@ body {
 [data-theme="dark"] .table tfoot.table-light { background: #111 !important; }
 [data-theme="dark"] .table tfoot.table-light td { color: var(--dk-text) !important; }
 
-/* ── Blocked.html ── */
 [data-theme="dark"] .blocked-screen { background: #080808 !important; }
 [data-theme="dark"] .blocked-card { background: var(--dk-card) !important; border-color: var(--dk-border) !important; }
 [data-theme="dark"] .blocked-title { color: var(--dk-text) !important; }
 [data-theme="dark"] .blocked-text { color: var(--dk-text-muted) !important; }
-
-/* ═══════════════════════════════════════════════════════════════════
-   AURA / LUZ EN BOTONES — Siempre visible (relleno + brillo suave)
-   El destello radial se mantiene permanentemente y se intensifica en hover
-   ═══════════════════════════════════════════════════════════════════ */
 
 /* Destello radial interno SIEMPRE visible — capa de luz fija */
 .btn {
@@ -797,7 +755,6 @@ body {
     box-shadow: 0 4px 16px rgba(39,174,96,0.3) !important;
 }
 
-/* ── MODO OSCURO — Aura más pronunciada por el fondo negro ── */
 [data-theme="dark"] .btn-primary {
     background: linear-gradient(135deg, #d35400, #e67e22) !important;
     border-color: transparent !important;
@@ -950,7 +907,6 @@ body {
 }
 }
 
-/* ── Tema oscuro completo extra — áreas faltantes ── */
 [data-theme="dark"] .page-wrapper { background: var(--dk-bg) !important; }
 [data-theme="dark"] main { background: transparent !important; }
 
@@ -991,11 +947,42 @@ body {
     background: linear-gradient(135deg,#0a0000,#8a2200) !important;
 }
 
+.sortable-ghost {
+    opacity: 0.38 !important;
+    background: rgba(211,84,0,0.06) !important;
+    border: 2px dashed rgba(211,84,0,0.35) !important;
+    border-radius: 16px !important;
+    transform: scale(0.97) !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+    pointer-events: none;
+}
+.sortable-chosen {
+    cursor: grabbing !important;
+    border-radius: 16px !important;
+    outline: 2px solid rgba(211,84,0,0.5) !important;
+    outline-offset: 2px;
+}
+.sortable-drag {
+    opacity: 1 !important;
+    cursor: grabbing !important;
+    border-radius: 16px !important;
+    box-shadow: 0 28px 70px rgba(0,0,0,0.22),
+                0 10px 30px rgba(211,84,0,0.18),
+                inset 0 1px 0 rgba(255,255,255,0.12) !important;
+    transform: scale(1.03) rotate(0.5deg) !important;
+    z-index: 9999 !important;
+    transition: box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.2,1,0.3,1) !important;
+}
+
 /* Sortable ghost/drag en dark */
 [data-theme="dark"] .sortable-ghost {
     opacity: 0.25 !important;
-    background: rgba(211,84,0,0.08) !important;
+    background: rgba(211,84,0,0.1) !important;
+    border-color: rgba(211,84,0,0.45) !important;
 }
 [data-theme="dark"] .sortable-drag {
-    box-shadow: 0 20px 50px rgba(211,84,0,0.25) !important;
+    box-shadow: 0 28px 70px rgba(0,0,0,0.55),
+                0 10px 30px rgba(211,84,0,0.3) !important;
 }
+

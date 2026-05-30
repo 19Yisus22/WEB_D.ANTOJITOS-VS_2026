@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template
-import models as db
+import helpers.models as db
 from helpers.auth import sin_cache, login_required, admin_required, hash_password
 from helpers.validators import is_valid_name, is_valid_numeric, is_valid_email
 from helpers.cloudinary import upload_image, delete_image
@@ -106,13 +106,17 @@ def actualizar_perfil(cedula):
     try:
         db.usuario_update(cedula, campos)
         usuario_final = db.usuario_get(cedula)
+
+        if usuario_final is None:
+            return jsonify({"ok": False, "error": "No se pudo recuperar el usuario actualizado"}), 500
+
         img = usuario_final.get("imagen_url") or "/static/uploads/default_icon_profile.png"
         if isinstance(img, str) and img.startswith("static/"):
             img = "/" + img
         usuario_final["imagen_url"] = img
 
         if str(user_id) == str(cedula):
-            s = session.get("user", {})
+            s = session.get("user") or {}
             s.update({k: usuario_final.get(k) for k in ["nombre", "apellido", "telefono", "correo", "direccion", "metodo_pago", "imagen_url"]})
             session["user"] = s
             session.modified = True
@@ -130,8 +134,11 @@ def cambiar_contrasena():
     nueva   = (data.get("nueva") or "").strip()
     if not nueva:
         return jsonify({"ok": False, "error": "Contraseña requerida"}), 400
-    db.usuario_update(user_id, {"contrasena": hash_password(nueva)})
-    return jsonify({"ok": True})
+    try:
+        db.usuario_update(user_id, {"contrasena": hash_password(nueva)})
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 @perfil_bp.route("/cloudinary_storage_info")

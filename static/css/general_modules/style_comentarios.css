@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --primary: #d35400;
     --primary-light: #e67e22;
     --white: #ffffff;
@@ -198,7 +198,6 @@ html, body {
     }
 }
 
-/* ── Panel de emojis colapsable ── */
 .emoji-panel-container {
     position: absolute;
     bottom: calc(100% + 8px);

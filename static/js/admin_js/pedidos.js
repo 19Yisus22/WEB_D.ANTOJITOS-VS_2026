@@ -1,5 +1,5 @@
 const toastContainer = document.getElementById('toastContainer');
-const itemsPorPagina = 5;
+const itemsPorPagina = 10;
 let pedidosGlobal = [];
 let pedidosDatosRaw = [];
 let pedidosFiltrados = [];

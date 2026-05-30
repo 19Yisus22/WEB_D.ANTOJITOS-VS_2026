@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session, render_template
 
-import models as db
+import helpers.models as db
 from helpers.auth import sin_cache
 
 catalogo_productos_bp = Blueprint("catalogo_productos", __name__)

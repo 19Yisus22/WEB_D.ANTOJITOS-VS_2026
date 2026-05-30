@@ -1,24 +1,26 @@
-const CACHE_NAME = 'dantojitos-catalogo-v3';
+const CACHE_NAME = 'dantojitos-catalogo-v5';
 const STATIC_ASSETS = [
-    '/catalogo_page',
     '/static/css/general_modules/style_catalogo.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_footer.css',
     '/static/css/global_modules/style_utils.css',
     '/static/js/general_js/catalogo.js',
+    '/static/js/global_js/utils.js',
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
+    '/static/uploads/default.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
 ];
 
-// Rutas que siempre van a la red (datos en tiempo real)
+// Siempre desde la red — inventario en tiempo real
 const NETWORK_ONLY_ROUTES = [
     '/obtener_catalogo',
     '/agregar_al_carrito',
     '/guardar_catalogo',
-    '/obtener_carrito'
+    '/obtener_carrito',
+    '/api/publicidad/activa'
 ];
 
 self.addEventListener('install', event => {
@@ -50,9 +52,10 @@ self.addEventListener('fetch', event => {
     if (NETWORK_ONLY_ROUTES.some(r => url.pathname.startsWith(r))) {
         event.respondWith(
             fetch(event.request).catch(() =>
-                new Response(JSON.stringify({ error: true, productos: [], message: 'Sin conexión al servidor.' }), {
-                    headers: { 'Content-Type': 'application/json' }
-                })
+                new Response(
+                    JSON.stringify({ error: true, productos: [], message: 'Sin conexión al servidor.' }),
+                    { headers: { 'Content-Type': 'application/json' } }
+                )
             )
         );
         return;

@@ -37,14 +37,20 @@
                 </button>
             </header>
 
-            <section class="search-panel shadow-sm bg-white border">
+            <section class="search-panel shadow-sm border">
                 <div class="row gy-3 gx-3 align-items-center">
+                    <div class="col-12">
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Busca por <strong>nombre completo</strong>, <strong>usuario (@)</strong> o <strong>cédula</strong> para ver las facturas asociadas.
+                        </p>
+                    </div>
                     <div class="col-md-7">
                         <div class="input-group">
                             <span class="input-group-text border-end-0">
                                 <i class="bi bi-search text-muted"></i>
                             </span>
-                            <input type="text" id="buscarFactura" class="form-control border-start-0 shadow-none" placeholder="Nombre completo, usuario o cédula...">
+                            <input type="text" id="buscarFactura" class="form-control border-start-0 shadow-none" placeholder="Juan García, @usuario o 1234567890...">
                         </div>
                     </div>
                     <div class="col-md-5 d-flex gap-2">

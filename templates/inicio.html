@@ -43,12 +43,20 @@
         </div>
         <header class="catalog-header text-center mb-5 fade-in">
             <h1 class="display-4 fw-bold">
-                Bienvenid@ a D'Antojitos{% if session.get('user') %} - {{ session.user.nombre }}{% endif %}
+                {% if session.get('user') %}
+                    ¡Hola de nuevo, {{ session.user.nombre }}!
+                {% else %}
+                    Bienvenid@ a D'Antojitos©
+                {% endif %}
             </h1>
             <div class="divider" style="width:120px;height:3px;margin:5px auto 0;background:#d6336c;"></div>
             <p class="text-muted mt-3"
                id="mensajeBienvenidaDinamico"
-               data-config-key="bienvenida_mensaje">Endulza tu día con deliciosos postres caseros!</p>
+               data-config-key="bienvenida_mensaje">
+                Somos una dulcería artesanal hecha con amor desde casa — postres frescos, tortas, galletas y delicias
+                preparadas con ingredientes de calidad para cada antojo especial.
+                🧁 Todo hecho a mano, con el sabor que solo el hogar puede dar.
+            </p>
         </header>
     </div>
 
@@ -258,20 +266,7 @@
 
 <div id="toastContainer"></div>
 
-{% if is_admin %}
-<button id="btnCampanaNotif" title="Notificaciones admin"
-        onclick="toggleNotifPanel()"
-        style="position:fixed;bottom:84px;left:20px;width:46px;height:46px;border-radius:50%;
-               background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;border:none;
-               font-size:1.2rem;display:flex;align-items:center;justify-content:center;
-               box-shadow:0 4px 16px rgba(211,84,0,0.35);z-index:1300;cursor:pointer;
-               transition:transform 0.2s;">
-    <i class="bi bi-bell-fill"></i>
-    <span id="campanaBadge" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;
-          border-radius:50%;background:#e74c3c;color:#fff;font-size:0.6rem;font-weight:700;
-          display:none;align-items:center;justify-content:center;">0</span>
-</button>
-{% endif %}
+{# Botón campana flotante eliminado — ahora está en la navbar #}
 
 {% include 'global_modules/footer.html' %}
 <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>

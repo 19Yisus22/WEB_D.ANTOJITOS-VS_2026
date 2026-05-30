@@ -1,8 +1,7 @@
-// ================================================================
+﻿
 //  D'Antojitos — Sistema Global de Widgets Reordenables
 //  Aplica a TODOS los módulos con un botón de modo edición.
 //  Usa SortableJS para drag-and-drop con scroll simultáneo.
-// ================================================================
 
 (function() {
     const MODULE_ID = (() => {
@@ -165,14 +164,18 @@
                 display:flex;align-items:center;justify-content:space-between;
                 padding:5px 10px 5px 8px;
                 cursor:grab;user-select:none;
-                background:linear-gradient(90deg,rgba(211,84,0,0.08),rgba(211,84,0,0.04));
-                border-bottom:2px solid rgba(211,84,0,0.18);
+                background:linear-gradient(90deg,rgba(211,84,0,0.1),rgba(211,84,0,0.05));
+                border-bottom:2px solid rgba(211,84,0,0.2);
                 font-size:0.68rem;font-weight:800;
                 text-transform:uppercase;letter-spacing:1px;
-                color:rgba(211,84,0,0.85);
+                color:rgba(211,84,0,0.9);
                 border-radius:${topBr} ${topBrR} 0 0;
                 margin:-1px -1px 0 -1px;
                 transition:background 0.15s;
+                position:sticky;top:0;z-index:10;
+                backdrop-filter:blur(8px);
+                -webkit-backdrop-filter:blur(8px);
+                box-shadow:0 1px 6px rgba(211,84,0,0.08);
             `;
             handleBar.innerHTML = `
                 <div style="display:flex;align-items:center;gap:6px;">
@@ -214,15 +217,27 @@
         if (typeof Sortable !== 'undefined') {
             const widgetContainer = getWidgetContainer();
             _sortable = Sortable.create(widgetContainer, {
-                animation: 180,
+                animation: 280,
+                easing: 'cubic-bezier(0.2, 1, 0.3, 1)',
                 handle: '.widget-handle-bar',
                 ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
                 dragClass: 'sortable-drag',
                 scroll: true,
-                scrollSensitivity: 80,
-                scrollSpeed: 12,
+                scrollSensitivity: 60,
+                scrollSpeed: 18,
+                bubbleScroll: true,
                 forceFallback: false,
-                onEnd: saveOrder
+                fallbackTolerance: 5,
+                onStart() {
+                    document.body.style.userSelect = 'none';
+                    document.body.style.cursor = 'grabbing';
+                },
+                onEnd(evt) {
+                    document.body.style.userSelect = '';
+                    document.body.style.cursor = '';
+                    saveOrder(evt);
+                }
             });
         }
 
@@ -267,9 +282,20 @@
     }
 
     function createEditButton() {
+        if (!shouldRun()) return;
+
+        // Preferir el botón de la navbar; si no existe, crear uno flotante como respaldo
+        const navBtn = document.getElementById('navWidgetEditBtn');
+        if (navBtn) {
+            navBtn.style.display = '';
+            navBtn.onclick = () => _editMode ? exitEditMode() : enterEditMode();
+            // registrar en DOM con el id que usa el resto del sistema
+            navBtn.id = 'widgetEditModeBtn';
+            return;
+        }
+
         const existing = document.getElementById('widgetEditModeBtn');
         if (existing) return;
-        if (!shouldRun()) return;
 
         const btn = document.createElement('button');
         btn.id = 'widgetEditModeBtn';
@@ -299,3 +325,4 @@
 
     window._widgetSystem = { enterEditMode, exitEditMode, saveOrder };
 })();
+

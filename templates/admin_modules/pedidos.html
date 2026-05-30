@@ -371,37 +371,7 @@
         </div>
     </div>
 
-    <!-- Botón editar widgets (lápiz, al lado del scroll-to-top) -->
-    <button id="pedidosEditBtn" title="Organizar widgets" onclick="togglePedidosEdit()">
-        <i class="bi bi-pencil-fill"></i>
-    </button>
-
-    <!-- Botón campana (bottom-left, integra con panel) -->
-    <button id="btnToggleNotifPedidos" title="Notificaciones" onclick="toggleNotifPedidosPanel()">
-        <i class="bi bi-bell-fill"></i>
-        <span class="notif-badge-pedidos" id="notifPedidosBadge" style="display:none;">0</span>
-    </button>
-
-    <!-- Panel de notificaciones — auto-integra desde el botón campana -->
-    <div class="notif-admin-pedidos" id="notifPedidosPanel">
-        <div class="notif-pedidos-header" onclick="toggleNotifPedidosPanel()">
-            <span><i class="bi bi-bell-fill me-2"></i>Notificaciones</span>
-            <div class="d-flex align-items-center gap-2">
-                <span class="notif-badge-pedidos" id="notifPedidosBadge2" style="position:static;display:none;">0</span>
-                <i class="bi bi-chevron-down text-white" id="notifPedidosChevron"></i>
-            </div>
-        </div>
-        <div class="notif-pedidos-body" id="notifPedidosBody">
-            <div class="text-center text-muted py-3 small">
-                <i class="bi bi-inbox d-block mb-1"></i>Sin notificaciones recientes
-            </div>
-        </div>
-        <div class="notif-pedidos-footer">
-            <button class="btn btn-sm btn-outline-secondary" onclick="limpiarNotifPedidos()">
-                <i class="bi bi-trash3 me-1"></i>Limpiar todo
-            </button>
-        </div>
-    </div>
+    {# Botones flotantes movidos a la navbar (lápiz + campana del sistema) #}
 
     </div><!-- /page-wrapper -->
     {% include 'global_modules/footer.html' %}
@@ -486,102 +456,101 @@
         localStorage.setItem(WIDGET_HIDDEN_KEY, JSON.stringify(hiddenWidgets));
     }
 
-    // ── Panel de notificaciones — auto-integra ──
-    let _notifPedidosOpen = false;
+    // ── Notificaciones de pedidos → panel #sistemPanel de la navbar ──
     let _notifLog = JSON.parse(localStorage.getItem('pedidos_notif_log') || '[]');
 
-    function toggleNotifPedidosPanel() {
-        _notifPedidosOpen = !_notifPedidosOpen;
-        const panel  = document.getElementById('notifPedidosPanel');
-        const bellBtn = document.getElementById('btnToggleNotifPedidos');
-        const chevron = document.getElementById('notifPedidosChevron');
-
-        if (_notifPedidosOpen) {
-            panel.classList.add('is-open');
-            if (bellBtn) bellBtn.classList.add('panel-open');
-            if (chevron) chevron.className = 'bi bi-chevron-down text-white';
-            renderNotifPedidos();
-        } else {
-            panel.classList.remove('is-open');
-            if (bellBtn) bellBtn.classList.remove('panel-open');
-            if (chevron) chevron.className = 'bi bi-chevron-up text-white';
-        }
-    }
+    const PEDIDOS_ICONS = {
+        nuevo:     'bi-cart-plus text-success',
+        cancelado: 'bi-x-circle text-danger',
+        estado:    'bi-arrow-repeat text-primary',
+        pago:      'bi-cash-coin text-warning',
+        info:      'bi-info-circle text-muted'
+    };
 
     function addNotifLog(tipo, mensaje, datos = {}) {
         const entry = {
-            id: Date.now(),
+            id:     Date.now(),
             tipo, mensaje, datos,
-            hora: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+            hora:   new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
             activa: true
         };
         _notifLog.unshift(entry);
         if (_notifLog.length > 30) _notifLog.pop();
         localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
-        actualizarBadgeNotif();
-        if (_notifPedidosOpen) renderNotifPedidos();
+        _syncNavBell();
+        _renderNavSistemPanel();
     }
 
-    function actualizarBadgeNotif() {
+    function _syncNavBell() {
         const activas = _notifLog.filter(n => n.activa).length;
         const cnt = activas > 9 ? '9+' : activas;
-        ['notifPedidosBadge','notifPedidosBadge2'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) { el.textContent = cnt; el.style.display = activas > 0 ? 'flex' : 'none'; }
-        });
+        const badge = document.getElementById('navBellBadge');
+        const count = document.getElementById('sistemCount');
+        if (badge) { badge.textContent = cnt; badge.style.display = activas > 0 ? 'flex' : 'none'; }
+        if (count) count.textContent = activas;
     }
 
-    function renderNotifPedidos() {
-        const body = document.getElementById('notifPedidosBody');
+    function _renderNavSistemPanel() {
+        const body  = document.getElementById('sistemBody');
+        const empty = document.getElementById('sistemEmpty');
         if (!body) return;
         if (_notifLog.length === 0) {
-            body.innerHTML = '<div class="text-center text-muted py-3 small"><i class="bi bi-inbox d-block mb-1"></i>Sin notificaciones recientes</div>';
+            if (empty) empty.style.display = 'flex';
             return;
         }
-        const ICONS = { nuevo: 'bi-cart-plus text-success', cancelado: 'bi-x-circle text-danger', estado: 'bi-arrow-repeat text-primary', pago: 'bi-cash-coin text-warning', info: 'bi-info-circle text-muted' };
-        body.innerHTML = _notifLog.map(n => `
-            <div class="notif-item-row ${n.activa ? '' : 'inactiva'}" id="notifrow-${n.id}">
-                <div class="d-flex align-items-start gap-2 flex-grow-1">
-                    <i class="bi ${ICONS[n.tipo] || ICONS.info} mt-1"></i>
-                    <div>
-                        <div style="font-weight:600;font-size:0.8rem;">${n.mensaje}</div>
-                        <div style="font-size:0.7rem;color:#888;">${n.hora}</div>
+        if (empty) empty.style.display = 'none';
+        const list = document.getElementById('sistemList');
+        if (!list) return;
+        list.innerHTML = _notifLog.map(n => `
+            <li class="notif-item" style="opacity:${n.activa ? 1 : 0.45};cursor:pointer;"
+                onclick="_pedidosNotifNav(event, '${n.datos?.id_pedido || ''}')">
+                <div class="notif-item-img">
+                    <i class="bi ${PEDIDOS_ICONS[n.tipo] || PEDIDOS_ICONS.info}" style="font-size:1.2rem;"></i>
+                </div>
+                <div class="notif-item-info flex-grow-1">
+                    <strong style="font-size:0.8rem;">${n.mensaje}</strong>
+                    <small class="d-block text-muted">${n.hora}</small>
+                    <small class="text-primary" style="font-size:0.65rem;">Ver en Pedidos →</small>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    <div class="form-check form-switch mb-0" title="${n.activa ? 'Activa' : 'Inactiva'}">
+                        <input class="form-check-input" type="checkbox" ${n.activa ? 'checked' : ''}
+                               onchange="_pedidosToggleNotif(${n.id}, this.checked)"
+                               style="cursor:pointer;width:2em;height:1.1em;">
                     </div>
-                </div>
-                <div class="d-flex gap-1 ms-2 flex-shrink-0">
-                    <button class="widget-action-btn" onclick="toggleNotifItem(${n.id})" title="${n.activa ? 'Desactivar' : 'Activar'}">
-                        <i class="bi bi-toggle-${n.activa ? 'on text-success' : 'off text-muted'}"></i>
-                    </button>
-                    <button class="widget-action-btn text-danger" onclick="deleteNotifItem(${n.id})" title="Eliminar">
-                        <i class="bi bi-trash3"></i>
+                    <button class="btn-notif-del" onclick="_pedidosDeleteNotif(${n.id})" title="Eliminar">
+                        <i class="bi bi-trash3" style="font-size:0.75rem;"></i>
                     </button>
                 </div>
-            </div>`).join('');
+            </li>`).join('');
     }
 
-    function toggleNotifItem(id) {
-        const n = _notifLog.find(x => x.id === id);
-        if (n) { n.activa = !n.activa; localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog)); actualizarBadgeNotif(); renderNotifPedidos(); }
-    }
+    window._pedidosNotifNav = function(e, idPedido) {
+        if (e.target.closest('.btn-notif-del,.form-check')) return;
+        window.location.href = '/pedidos_page';
+    };
 
-    function deleteNotifItem(id) {
+    window._pedidosDeleteNotif = function(id) {
         _notifLog = _notifLog.filter(x => x.id !== id);
         localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
-        actualizarBadgeNotif(); renderNotifPedidos();
-    }
+        _syncNavBell(); _renderNavSistemPanel();
+    };
 
-    function limpiarNotifPedidos() {
-        _notifLog = [];
-        localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
-        actualizarBadgeNotif(); renderNotifPedidos();
-    }
+    window._pedidosToggleNotif = function(id, estado) {
+        const n = _notifLog.find(x => x.id === id);
+        if (n) { n.activa = estado; localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog)); _syncNavBell(); _renderNavSistemPanel(); }
+    };
 
-    // Exponer para pedidos.js
     window.addNotifLog = addNotifLog;
 
     document.addEventListener('DOMContentLoaded', () => {
         initWidgetSystem();
-        actualizarBadgeNotif();
+        _syncNavBell();
+        _renderNavSistemPanel();
+        const cargarNotifFn = window.cargarNotificacionesSistema;
+        window.cargarNotificacionesSistema = function() {
+            _renderNavSistemPanel();
+        };
     });
     </script>
     <script src="{{ url_for('static', filename='js/admin_js/pedidos.js') }}"></script>

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session, render_template
 
-import models as db
+import helpers.models as db
 from helpers.auth import sin_cache, admin_required, login_required
 from helpers.cloudinary import delete_image
 
@@ -17,15 +17,18 @@ def gestion_usuarios_page():
 @perfil_usuarios_bp.route("/listar_usuarios")
 @login_required
 def listar_usuarios():
-    usuarios = db.usuario_get_all()
-    resultado = []
-    for u in usuarios:
-        u["nombre_completo"] = f"{u.get('nombre','')} {u.get('apellido','')}".strip()
-        u["rol"]             = u.get("roles", {}).get("nombre_role") if u.get("roles") else None
-        contrasena           = u.pop("contrasena", "")
-        u["auth_method"]     = "google" if str(contrasena).upper() == "GOOGLE_AUTH_EXTERNAL" else "email"
-        resultado.append(u)
-    return jsonify(resultado)
+    try:
+        usuarios = db.usuario_get_all()
+        resultado = []
+        for u in usuarios:
+            u["nombre_completo"] = f"{u.get('nombre','')} {u.get('apellido','')}".strip()
+            u["rol"]             = u.get("roles", {}).get("nombre_role") if u.get("roles") else None
+            contrasena           = u.pop("contrasena", "")
+            u["auth_method"]     = "google" if str(contrasena).upper() == "GOOGLE_AUTH_EXTERNAL" else "email"
+            resultado.append(u)
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @perfil_usuarios_bp.route("/actualizar_rol_usuario", methods=["PUT"])

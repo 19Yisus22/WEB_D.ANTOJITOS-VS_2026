@@ -1,6 +1,5 @@
-// =====================================================================
+﻿
 //  D'Antojitos — Inicio (publicidad + monitor catálogo + editor admin)
-// =====================================================================
 
 let productosMemoria       = [];
 let notificacionesDisponibles = [];
@@ -8,7 +7,6 @@ let isFirstLoad            = true;
 let audioCtx               = null;
 let swiperInstance         = null;
 
-// ——— Estado del editor ———
 let _editMode      = false;
 let _configOriginal = {};   // snapshot antes de editar para poder cancelar
 let _configActual   = {};   // config cargada del servidor
@@ -16,9 +14,8 @@ let _sortableMain   = null;
 let _sortableSidebar = null;
 let _targetConfigKey = null; // para el modal de texto
 
-// =====================================================================
 //  AUDIO
-// =====================================================================
+
 function initAudioContext() {
     if (!audioCtx) {
         const Cls = window.AudioContext || window.webkitAudioContext;
@@ -53,9 +50,8 @@ function playNotificationSound(type = 'default') {
     } catch {}
 }
 
-// =====================================================================
 //  TOAST
-// =====================================================================
+
 function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
     mostrarAlertaPublica({ imagen, titulo, mensaje: descripcion, tipo: isError ? 'error' : 'info', duracion: 6000 });
 }
@@ -64,9 +60,8 @@ function mostrarToastActualizacion(imagen, titulo, descripcion, idUnico, isError
     mostrarAlertaPublica({ imagen, titulo, mensaje: descripcion, tipo: isError ? 'error' : 'info', idUnico, duracion: 6000 });
 }
 
-// =====================================================================
 //  MONITOR CATÁLOGO
-// =====================================================================
+
 async function monitorearCambiosCatalogo() {
     try {
         const res  = await fetch("/obtener_catalogo");
@@ -87,9 +82,8 @@ async function monitorearCambiosCatalogo() {
     } catch {}
 }
 
-// =====================================================================
 //  MARKETING / PUBLICIDAD
-// =====================================================================
+
 async function cargarMarketing() {
     try {
         const res = await fetch("/api/publicidad/activa", { cache: "no-store" });
@@ -111,22 +105,25 @@ async function cargarMarketing() {
         // Prioridad: inicio_cinta → cinta; si no hay nada configurado, se oculta
         const cintaInicioEl = document.getElementById('cintaInicio');
         if (cintaInicioEl) {
-            let cintaItems = arr.filter(i => i.tipo === 'inicio_cinta');
-            if (!cintaItems.length) cintaItems = arr.filter(i => i.tipo === 'cinta');
+            let cintaItems = arr.filter(i => i.tipo === 'inicio_cinta' && i.estado !== false);
+            if (!cintaItems.length) cintaItems = arr.filter(i => i.tipo === 'cinta' && i.estado !== false);
 
             if (cintaItems.length > 0) {
-                const buildItem = (imgUrl, label) => `
-                    <div class="cinta-inicio-item">
-                        ${(imgUrl && imgUrl.startsWith('http'))
+                const buildItem = (imgUrl, label) => {
+                    const validImg = imgUrl && imgUrl.startsWith('http');
+                    return `<div class="cinta-inicio-item">
+                        ${validImg
                             ? `<div class="cinta-img-aura"><img src="${imgUrl}" alt="${label}" loading="lazy"
                                    onerror="this.parentElement.style.display='none'"></div>`
                             : ''}
-                        <span>${label}</span>
+                        <span>${label || ''}</span>
                     </div>`;
-
-                const doubled = [...cintaItems, ...cintaItems];
-                const itemsHtml = doubled.map(i => buildItem(i.imagen_url || '', i.titulo || '')).join('');
-                cintaInicioEl.innerHTML = `<div class="cinta-inicio-track">${itemsHtml}</div>`;
+                };
+                // Triplicar para animación fluida
+                const tripled = [...cintaItems, ...cintaItems, ...cintaItems];
+                cintaInicioEl.innerHTML = `<div class="cinta-inicio-track">${
+                    tripled.map(i => buildItem(i.imagen_url || '', i.titulo || '')).join('')
+                }</div>`;
                 cintaInicioEl.style.display = 'block';
             } else {
                 cintaInicioEl.style.display = 'none';
@@ -134,10 +131,13 @@ async function cargarMarketing() {
         }
 
         // Secciones
-        arr.filter(i => i.tipo === 'seccion').forEach((item, idx) => {
+        arr.filter(i => i.tipo === 'seccion' && i.estado !== false).forEach((item, idx) => {
+            const imgSrc = (item.imagen_url && item.imagen_url.startsWith('http'))
+                ? item.imagen_url : '/static/uploads/logo.png';
             const card = `
                 <div class="seccion-card shadow-sm h-100 w-100">
-                    <img src="${item.imagen_url || '/static/uploads/logo.png'}" class="postre-imagen-seccion w-100" onerror="this.src='/static/uploads/logo.png'">
+                    <img src="${imgSrc}" class="postre-imagen-seccion w-100"
+                         loading="lazy" onerror="this.src='/static/uploads/logo.png'">
                     <div class="p-3 d-flex flex-column flex-grow-1">
                         <h6 class="fw-bold mb-1" style="color:#d6336c;font-size:1.1rem;">${item.titulo || ''}</h6>
                         <p class="text-muted mb-0 small">${item.descripcion || ''}</p>
@@ -156,46 +156,59 @@ async function cargarMarketing() {
             }
         });
 
-        // Carrusel
-        const carrusel = arr.filter(i => i.tipo === 'carrusel');
-        if (swiperWrap) swiperWrap.style.display = carrusel.length ? 'block' : 'none';
-        carrusel.forEach(item => {
-            if (!carouselInner) return;
-            const div = document.createElement('div');
-            div.className = 'swiper-slide';
-            div.innerHTML = `
-                <div class="carousel-item active">
-                    <div class="carousel-img-wrapper">
-                        <img src="${item.imagen_url}" class="carousel-background-blur">
-                        <img src="${item.imagen_url}" class="d-block carousel-img-render">
-                        <div class="carousel-overlay"></div>
-                    </div>
-                    <div class="carousel-caption-custom">
-                        <h6 class="carousel-title-animate">${item.titulo || ''}</h6>
-                        <div class="carousel-divider"></div>
-                        <p class="carousel-desc-animate">${item.descripcion || ''}</p>
-                    </div>
-                </div>`;
-            carouselInner.appendChild(div);
-        });
+        // Carrusel — solo items con imagen válida
+        const carrusel = arr.filter(i =>
+            i.tipo === 'carrusel' &&
+            i.estado !== false &&
+            i.imagen_url && i.imagen_url.startsWith('http')
+        );
 
-        if (swiperInstance) swiperInstance.destroy(true, true);
-        if (carrusel.length) {
-            swiperInstance = new Swiper('.swiperPromo', {
-                loop: carrusel.length > 1,
-                effect: 'fade',
-                fadeEffect: { crossFade: true },
-                autoplay: { delay: 5000, disableOnInteraction: false },
-                pagination: { el: '.swiper-pagination', clickable: true },
-                navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }
+        if (swiperInstance) {
+            try { swiperInstance.destroy(true, true); } catch {}
+            swiperInstance = null;
+        }
+
+        if (swiperWrap) swiperWrap.style.display = carrusel.length ? '' : 'none';
+
+        if (carrusel.length && carouselInner) {
+            carrusel.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'swiper-slide';
+                div.innerHTML = `
+                    <div class="carousel-item active">
+                        <div class="carousel-img-wrapper">
+                            <img src="${item.imagen_url}" class="carousel-background-blur"
+                                 loading="lazy" onerror="this.style.display='none'">
+                            <img src="${item.imagen_url}" class="d-block carousel-img-render"
+                                 loading="lazy" onerror="this.style.opacity='0'">
+                            <div class="carousel-overlay"></div>
+                        </div>
+                        <div class="carousel-caption-custom">
+                            <h6 class="carousel-title-animate">${item.titulo || ''}</h6>
+                            <div class="carousel-divider"></div>
+                            <p class="carousel-desc-animate">${item.descripcion || ''}</p>
+                        </div>
+                    </div>`;
+                carouselInner.appendChild(div);
+            });
+
+            // Pequeño delay para que el DOM se pinte antes de iniciar Swiper
+            requestAnimationFrame(() => {
+                swiperInstance = new Swiper('.swiperPromo', {
+                    loop:         carrusel.length > 1,
+                    effect:       'fade',
+                    fadeEffect:   { crossFade: true },
+                    autoplay:     { delay: 5000, disableOnInteraction: false },
+                    pagination:   { el: '.swiper-pagination', clickable: true },
+                    navigation:   { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }
+                });
             });
         }
     } catch (e) { console.error("Error publicidad:", e); }
 }
 
-// =====================================================================
 //  CONFIG — cargar y aplicar textos
-// =====================================================================
+
 async function cargarConfigInicio() {
     try {
         const res  = await fetch("/api/inicio/config", { cache: "no-store" });
@@ -255,9 +268,8 @@ function aplicarVisibilidadWidget(bloque, visible) {
     }
 }
 
-// =====================================================================
 //  MENSAJE BIENVENIDA (botón admin en template)
-// =====================================================================
+
 function actualizarMensajeBienvenida() {
     const inp = document.getElementById('inputMensajeAdmin');
     const el  = document.getElementById('mensajeBienvenidaDinamico');
@@ -276,9 +288,8 @@ function actualizarMensajeBienvenida() {
     }).catch(() => mostrarAlerta('Error de conexión', true));
 }
 
-// =====================================================================
 //  EDITOR DE WIDGETS
-// =====================================================================
+
 function toggleModoEdicion() {
     if (_editMode) {
         cancelarEdicion();
@@ -366,7 +377,6 @@ async function guardarEdicion() {
     }
 }
 
-// ——— SortableJS ———
 function iniciarSortable() {
     if (typeof Sortable === 'undefined') return;
 
@@ -391,7 +401,6 @@ function destruirSortable() {
     if (_sortableSidebar) { _sortableSidebar.destroy(); _sortableSidebar = null; }
 }
 
-// ——— Botones toggle visibilidad ———
 function vincularBotonesWidget() {
     document.querySelectorAll('.widget-toggle').forEach(btn => {
         btn.onclick = function () {
@@ -404,7 +413,6 @@ function vincularBotonesWidget() {
     });
 }
 
-// ——— Modal texto ———
 function abrirModalEditor(configKey, etiqueta, valorActual) {
     _targetConfigKey = configKey;
     const modal    = document.getElementById('modalEditorTexto');
@@ -465,9 +473,8 @@ function vincularEdicionTexto() {
     }
 }
 
-// =====================================================================
 //  MINI-PANEL NOTIFICACIONES ADMIN
-// =====================================================================
+
 let _notifPanelOpen = false;
 
 function toggleNotifPanel() {
@@ -515,12 +522,13 @@ async function cargarNotificacionesAdmin() {
         if (count) count.textContent = total;
         if (empty) empty.style.display = total ? 'none' : 'flex';
 
-        // Actualizar badge del botón campana
-        const campanaBadge = document.getElementById('campanaBadge');
-        if (campanaBadge) {
-            campanaBadge.textContent = total > 9 ? '9+' : total;
-            campanaBadge.style.display = total > 0 ? 'flex' : 'none';
-        }
+        // Actualizar badge del botón campana (flotante e inicio Y navbar)
+        ['campanaBadge', 'navBellBadge'].forEach(id => {
+            const badge = document.getElementById(id);
+            if (!badge) return;
+            badge.textContent = total > 9 ? '9+' : total;
+            badge.style.display = total > 0 ? 'flex' : 'none';
+        });
         // El panel usa clases CSS (no display:none) para animar
         // No lo abrimos automáticamente — el usuario lo abre con el botón campana
 
@@ -575,9 +583,8 @@ async function eliminarNotif(id) {
     });
 }
 
-// =====================================================================
 //  INIT
-// =====================================================================
+
 document.addEventListener('DOMContentLoaded', () => {
     cargarMarketing();
     cargarConfigInicio();
@@ -616,3 +623,4 @@ if ('serviceWorker' in navigator) {
             .catch(() => {});
     });
 }
+

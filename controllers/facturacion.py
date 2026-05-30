@@ -1,7 +1,7 @@
 import json
 from flask import Blueprint, request, jsonify, session, render_template
 
-import models as db
+import helpers.models as db
 from helpers.auth import sin_cache, admin_required
 from helpers.cloudinary import upload_image, delete_image
 from helpers.validators import ENTIDADES_PAGO, TIPOS_CUENTA

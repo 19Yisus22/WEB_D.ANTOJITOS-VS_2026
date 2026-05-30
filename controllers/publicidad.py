@@ -1,9 +1,9 @@
 import json
 from flask import Blueprint, request, jsonify, session, render_template
 
-import models as db
+import helpers.models as db
 from helpers.auth import sin_cache, admin_required
-from helpers.cloudinary import upload_image, upload_base64, delete_image, list_all_folders_images
+from helpers.cloudinary import upload_image, upload_base64, delete_image, list_all_folders_images, delete_image_by_public_id
 from helpers.validators import TIPOS_PUBLICIDAD
 
 publicidad_bp = Blueprint("publicidad", __name__)
@@ -103,7 +103,12 @@ def admin_notificaciones():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    return jsonify(db.publicidad_get_notificaciones())
+    try:
+        return jsonify(db.publicidad_get_notificaciones())
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error("publicidad_get_notificaciones error: %s", e)
+        return jsonify([]), 200
 
 
 @publicidad_bp.route("/api/admin/notificaciones/estado/<id_publicidad>", methods=["POST"])
@@ -179,11 +184,61 @@ def gestor_imagenes():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+@publicidad_bp.route("/api/admin/notificaciones_sistema")
+@admin_required
+def notificaciones_sistema():
+    """Retorna los últimos pedidos como notificaciones de sistema."""
+    try:
+        pedidos   = db.pedido_get_all()[:30]
+        resultado = []
+        for p in pedidos:
+            u       = p.get("usuarios") or {}
+            nombre  = f"{u.get('nombre', '')} {u.get('apellido', '')}".strip() or str(p.get("cedula", "?"))
+            estado  = p.get("estado", "Pendiente")
+            pagado  = p.get("pagado", False)
+            estado_str = "Pagado ✓" if pagado else estado
+            detalles   = p.get("pedido_detalle") or []
+            total      = sum(float(d.get("subtotal") or 0) for d in detalles)
+            num_items  = sum(int(d.get("cantidad") or 0) for d in detalles)
+            resultado.append({
+                "id":           str(p.get("id_pedido", "")),
+                "tipo":         "pedido",
+                "estado":       estado_str,
+                "pagado":       pagado,
+                "titulo":       f"Pedido — {nombre}",
+                "descripcion":  f"{num_items} ítem(s) · ${total:,.0f} COP",
+                "telefono":     u.get("telefono", ""),
+                "direccion":    u.get("direccion", ""),
+                "metodo_pago":  u.get("metodo_pago", ""),
+                "fecha":        str(p.get("fecha_pedido", ""))[:10],
+                "cedula":       str(p.get("cedula", "")),
+                "id_pedido":    str(p.get("id_pedido", "")),
+            })
+        return jsonify(resultado), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @publicidad_bp.route("/api/cloudinary/gestor")
 @admin_required
 def cloudinary_gestor():
     """Lista todas las imágenes de Cloudinary organizadas por carpeta."""
     try:
         return jsonify({"ok": True, "carpetas": list_all_folders_images()})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@publicidad_bp.route("/api/cloudinary/gestor/delete", methods=["DELETE"])
+@admin_required
+def cloudinary_gestor_delete():
+    """Elimina una imagen de Cloudinary por su public_id."""
+    data      = request.get_json(silent=True) or {}
+    public_id = (data.get("public_id") or "").strip()
+    if not public_id:
+        return jsonify({"ok": False, "error": "public_id requerido"}), 400
+    try:
+        delete_image_by_public_id(public_id)
+        return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500

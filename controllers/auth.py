@@ -9,7 +9,7 @@ from flask import (Blueprint, request, jsonify, session,
 from google.oauth2               import id_token
 from google.auth.transport       import requests as google_requests
 
-import models as db
+import helpers.models as db
 from helpers.auth       import sin_cache, hash_password, verify_password
 from helpers.validators import is_valid_name, is_valid_numeric, is_valid_email, is_valid_password, is_valid_username
 
@@ -48,10 +48,17 @@ def login():
 
     session.clear()
     data       = request.get_json() or {}
-    identifier = (data.get("identifier") or data.get("correo") or "").strip().lower()
+    identifier = (data.get("identifier") or data.get("correo") or "").strip()
     contrasena = data.get("contrasena", "")
 
-    user = db.usuario_get_by_identifier(identifier)
+    if not identifier:
+        return jsonify({"ok": False, "error": "Ingresa tu correo, usuario o cédula"}), 400
+
+    try:
+        user = db.usuario_get_by_identifier(identifier)
+    except Exception as e:
+        return jsonify({"ok": False, "error": "Error de conexión con la base de datos"}), 500
+
     if not user:
         return jsonify({"ok": False, "error": "Usuario no encontrado"}), 401
 

@@ -207,9 +207,9 @@ function renderizarLista() {
             : `<div style="height:80px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:6px;color:#adb5bd;"><i class="bi bi-image-slash fs-4"></i></div>`;
 
         listaHTML += `
-            <div class="col-12 col-md-6 mb-3">
-                <div class="metodo-card p-3 d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center gap-3">
+            <div class="col-12 mb-2">
+                <div class="metodo-card p-3 d-flex align-items-center w-100">
+                    <div class="d-flex align-items-center gap-3 flex-grow-1">
                         ${imgTag}
                         <div>
                             <span class="bank-badge ${badge} mb-1">${m.entidad}</span>
@@ -217,25 +217,91 @@ function renderizarLista() {
                             <small class="text-muted">${m.numero}</small>
                         </div>
                     </div>
-                    <div class="d-flex gap-1">
-                        <button class="btn btn-light btn-sm" onclick="editarMetodo(${index})"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-light btn-sm text-danger" onclick="eliminarFila(${index})"><i class="bi bi-trash"></i></button>
+                    <div class="d-flex gap-2 ms-auto flex-shrink-0">
+                        <button class="btn btn-outline-secondary btn-sm px-3" onclick="editarMetodo(${index})"><i class="bi bi-pencil me-1"></i>Editar</button>
+                        <button class="btn btn-outline-danger btn-sm px-3" onclick="eliminarFila(${index})"><i class="bi bi-trash me-1"></i>Eliminar</button>
                     </div>
                 </div>
             </div>`;
 
         previewHTML += `
-            <div class="col-6 text-center mb-3">
-                <div class="p-2 border rounded bg-light">
-                    ${previewTag}
-                    <p class="small fw-bold m-0" style="font-size:10px;">${m.entidad}</p>
-                    <p class="text-muted m-0" style="font-size:9px;">${m.numero}</p>
+            <div class="invoice-metodo-card">
+                <div class="invoice-metodo-header">${m.entidad}</div>
+                <div class="invoice-metodo-body">
+                    <div class="invoice-qr-wrap">
+                        ${imgSrc
+                            ? `<img src="${imgSrc}" alt="QR" onerror="this.style.display='none'">`
+                            : `<div class="invoice-qr-placeholder"><i class="bi bi-qr-code-scan"></i></div>`}
+                    </div>
+                    <div class="invoice-metodo-info">
+                        <p class="invoice-tipo">${m.tipo_cuenta || 'Cuenta'}</p>
+                        <p class="invoice-titular">${m.titular}</p>
+                        <div class="invoice-numero-row">
+                            <span class="invoice-numero">${m.numero}</span>
+                            <button class="invoice-copy-btn" onclick="navigator.clipboard.writeText('${m.numero}').then(()=>mostrarAlerta('Número copiado'))">
+                                <i class="bi bi-copy"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>`;
     });
 
     lista.innerHTML = listaHTML;
-    preview.innerHTML = previewHTML;
+
+    const now  = new Date();
+    const fecha = now.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+    const num   = 'FAC-' + String(now.getFullYear()).slice(-2) + '-' + String(now.getMonth()+1).padStart(2,'0') + '-XXXX';
+
+    preview.innerHTML = `
+        <div class="invoice-preview-card">
+            <div class="invoice-preview-header">
+                <div class="invoice-preview-logo">
+                    <img src="/static/uploads/logo.ico" alt="Logo" onerror="this.style.display='none'">
+                    <span>D'Antojitos©</span>
+                </div>
+                <div class="invoice-preview-meta">
+                    <div class="invoice-preview-num">${num}</div>
+                    <div class="invoice-preview-date">${fecha}</div>
+                    <span class="invoice-status-badge">EMITIDA</span>
+                </div>
+            </div>
+
+            <div class="invoice-preview-products">
+                <div class="invoice-product-row">
+                    <div>
+                        <strong>Producto de muestra</strong>
+                        <small>Cant: 2</small>
+                    </div>
+                    <strong>$25.000</strong>
+                </div>
+                <div class="invoice-product-row">
+                    <div>
+                        <strong>Otro producto</strong>
+                        <small>Cant: 1</small>
+                    </div>
+                    <strong>$15.000</strong>
+                </div>
+            </div>
+
+            <div class="invoice-preview-total">
+                <span>TOTAL</span>
+                <strong>$65.000</strong>
+            </div>
+
+            <div class="invoice-preview-pay-title">
+                <i class="bi bi-qr-code-scan me-2"></i>Medios de Pago
+            </div>
+
+            <div class="invoice-metodos-grid">
+                ${previewHTML || '<p class="text-center text-muted small py-3">Sin canales de pago configurados</p>'}
+            </div>
+
+            <div class="invoice-preview-footer">
+                <i class="bi bi-info-circle-fill me-1 text-warning"></i>
+                Envía el comprobante por WhatsApp o correo tras realizar la transferencia.
+            </div>
+        </div>`;
 }
 
 function editarMetodo(index) {

@@ -1,13 +1,12 @@
-// ============================================================
+﻿
 //  D'Antojitos — Sistema i18n ES / EN
 //  Diccionario extendido — filtro superficial universal
 //  Traduce ABSOLUTAMENTE TODO: textos, placeholders, titles,
 //  valores dinámicos, estados DB, toasts, footer, navbar.
-// ============================================================
 
 const LANG_DATA = {
   es: {
-    // ── Navbar ──────────────────────────────────────────────
+
     'nav.home':          'Home',
     'nav.catalog':       'Catálogo',
     'nav.cart':          'Carrito',
@@ -31,7 +30,6 @@ const LANG_DATA = {
     'nav.online':        'Online',
     'nav.inactive':      'Inactivo',
 
-    // ── Botones comunes ──────────────────────────────────────
     'btn.cancel':        'Cancelar',
     'btn.confirm':       'Confirmar',
     'btn.save':          'Guardar',
@@ -67,7 +65,6 @@ const LANG_DATA = {
     'btn.publish':       'Publicar',
     'btn.preview':       'Vista Previa',
 
-    // ── Confirmaciones ───────────────────────────────────────
     'confirm.title':     '¿Estás seguro?',
     'confirm.delete':    '¿Deseas eliminar este elemento? Esta acción no se puede deshacer.',
     'confirm.cancel':    '¿Deseas cancelar esta operación?',
@@ -76,7 +73,6 @@ const LANG_DATA = {
     'confirm.yes':       'Sí, proceder',
     'confirm.no':        'No, volver',
 
-    // ── Estados del sistema ──────────────────────────────────
     'status.online':     'Online',
     'status.offline':    'Inactivo',
     'status.loading':    'Cargando...',
@@ -94,7 +90,6 @@ const LANG_DATA = {
     'status.active':     'Activo',
     'status.inactive':   'Inactivo',
 
-    // ── Estados de pedidos y facturas ────────────────────────
     'state.Pendiente':   'Pendiente',
     'state.Enviado':     'Enviado',
     'state.Entregado':   'Entregado',
@@ -110,7 +105,6 @@ const LANG_DATA = {
     'state.google':      'Google',
     'state.email':       'Correo',
 
-    // ── Notificaciones / Toasts ──────────────────────────────
     'notif.title':       'Notificación de Sistema',
     'notif.success':     'Operación exitosa',
     'notif.error':       'Ha ocurrido un error',
@@ -141,7 +135,6 @@ const LANG_DATA = {
     'notif.welcome':     '¡Bienvenid@!',
     'notif.goodbye':     'Sesión cerrada correctamente',
 
-    // ── Inicio ───────────────────────────────────────────────
     'home.welcome':      'Bienvenid@ a D\'Antojitos',
     'home.subtitle':     'Endulza tu día con deliciosos postres caseros',
     'home.history':      'Nuestra historia y pasión',
@@ -161,25 +154,42 @@ const LANG_DATA = {
     'home.best_sellers': 'Los más vendidos',
     'home.our_promise':  'Nuestra promesa',
 
-    // ── Login / Registro ─────────────────────────────────────
     'login.title':       'Bienvenido de nuevo',
     'login.subtitle':    'Ingresa con tu correo, usuario o cédula',
     'login.identifier':  'Correo, usuario o cédula',
     'login.password':    'Contraseña',
     'login.btn':         'Entrar',
     'login.register':    '¿No tienes cuenta? Regístrate aquí',
+    'login.register_link': 'Regístrate aquí',
+    'login.no_account':  '¿No tienes cuenta?',
+    'login.or':          'o continúa con tu cuenta',
+    'login.capslock':    'Bloq Mayús activado',
     'login.google':      'Continuar con Google',
     'login.forgot':      '¿Olvidaste tu contraseña?',
     'login.error':       'Credenciales incorrectas',
+
+    'legal.title_privacy':   'Política de Privacidad',
+    'legal.title_terms':     'Términos y Condiciones',
+    'legal.updated':         'Última actualización: 1 de enero de 2025',
+    'legal.accept':          'CONTINUAR',
+    'legal.accept_terms':    'Entendido y Aceptar',
+    'legal.back_login':      'Volver al inicio de sesión',
     'reg.title':         'Crear cuenta',
-    'reg.subtitle':      'Completa tus datos para registrarte',
+    'reg.subtitle':      'Completa tus datos para comenzar',
+    'reg.personal_data': 'Datos personales',
+    'reg.access_data':   'Datos de acceso',
     'reg.name':          'Nombre',
     'reg.lastname':      'Apellido',
     'reg.cedula':        'Cédula',
     'reg.phone':         'Teléfono',
     'reg.email':         'Correo Electrónico',
-    'reg.username':      'Nombre de Usuario',
+    'reg.username':      'Usuario',
     'reg.password':      'Contraseña',
+    'reg.optional':      '(opcional)',
+    'reg.digits_hint':   '7–15 dígitos',
+    'reg.pass_hint':     'Mín. 5 caracteres',
+    'reg.create_btn':    'Crear Cuenta',
+    'reg.creating':      'Creando cuenta...',
     'reg.send_code':     'Enviar Código de Verificación',
     'reg.verify':        'Verificar correo',
     'reg.code_sent':     'Ingresa el código de 6 dígitos enviado a',
@@ -187,9 +197,9 @@ const LANG_DATA = {
     'reg.resend':        '¿No llegó? Reenviar código',
     'reg.back':          'Volver al formulario',
     'reg.login':         '¿Ya tienes cuenta? Inicia sesión',
+    'login.no_account2': '¿Ya tienes cuenta?',
     'reg.success':       '¡Cuenta creada! Ahora puedes iniciar sesión.',
 
-    // ── Catálogo ─────────────────────────────────────────────
     'cat.title':         'Catálogo de Productos',
     'cat.section':       'Nuestros Postres',
     'cat.subtitle':      'Explora los mejores sabores que tenemos preparados para ti',
@@ -212,7 +222,6 @@ const LANG_DATA = {
     'cat.filter':        'Filtrar',
     'cat.your_favs':     'TUS FAVORITOS',
 
-    // ── Carrito ──────────────────────────────────────────────
     'cart.title':        'Mi Carrito',
     'cart.subtitle':     'Aquí visualizará todos los productos que seleccionó.',
     'cart.empty':        'El carrito está vacío',
@@ -226,7 +235,6 @@ const LANG_DATA = {
     'cart.confirm':      '¿Confirmar pedido?',
     'cart.login_req':    'Inicia sesión para comprar',
 
-    // ── Pedidos ──────────────────────────────────────────────
     'ord.title':         'Panel de Pedidos',
     'ord.subtitle':      'Administra todos los pedidos de tus clientes.',
     'ord.status':        'Estado',
@@ -268,7 +276,6 @@ const LANG_DATA = {
     'ord.success_rate':  'Tasa de Éxito',
     'ord.waiting':       'Cargando Pedidos — Por favor espere...',
 
-    // ── Productos ────────────────────────────────────────────
     'prod.title':        'Módulo Gestión de Productos',
     'prod.subtitle':     'Administra el catálogo de postres disponibles.',
     'prod.name':         'Nombre del postre',
@@ -295,7 +302,6 @@ const LANG_DATA = {
     'prod.edit_title':   'Editar Producto',
     'prod.storage':      'Almacenamiento Cloudinary',
 
-    // ── Perfil ───────────────────────────────────────────────
     'prof.title':        'Mi Perfil',
     'prof.subtitle':     'Administra tus datos y preferencias de cuenta.',
     'prof.name':         'Nombre',
@@ -322,7 +328,6 @@ const LANG_DATA = {
     'prof.users_mgmt':   'Gestión de Usuarios',
     'prof.users_btn':    'Ir a Gestión de Usuarios',
 
-    // ── Facturas ─────────────────────────────────────────────
     'inv.title':         'Historial de Facturas',
     'inv.subtitle':      'Visualiza el historial de tus compras.',
     'inv.number':        'Número de Factura',
@@ -340,7 +345,6 @@ const LANG_DATA = {
     'inv.method':        'Método de Pago',
     'inv.ref':           'Referencia',
 
-    // ── Publicidad ───────────────────────────────────────────
     'pub.title':         'Panel de Publicidad',
     'pub.subtitle':      'Gestiona y filtra todo el contenido de tu marketing digital.',
     'pub.carousel':      'Carruseles',
@@ -364,7 +368,6 @@ const LANG_DATA = {
     'pub.img_manager':   'Gestor de Imágenes',
     'pub.save_changes':  'GUARDAR TODO EN SERVIDOR',
 
-    // ── Facturación (módulo admin) ───────────────────────────
     'bill.title':        'Panel de Facturación',
     'bill.subtitle':     'Configura todos los canales de pago de tus bancos más usados.',
     'bill.method':       'Método de Pago',
@@ -387,7 +390,6 @@ const LANG_DATA = {
     'bill.tipos.ahorros':         'Ahorros',
     'bill.tipos.corriente':       'Corriente',
 
-    // ── Comentarios ──────────────────────────────────────────
     'chat.title':        'Muro de Sugerencias',
     'chat.send':         'Enviar Sugerencia',
     'chat.saving':       'Guardando...',
@@ -404,7 +406,6 @@ const LANG_DATA = {
     'chat.list':         'Lista',
     'chat.hint':         'Déjanos saber lo que piensas, ayúdanos con tu sugerencia.',
 
-    // ── Gestion usuarios ─────────────────────────────────────
     'usr.title':         'Panel de Usuarios',
     'usr.subtitle':      'Administra todos los usuarios registrados en D\'Antojitos.',
     'usr.total':         'Total',
@@ -438,7 +439,6 @@ const LANG_DATA = {
     'usr.of':            'de',
     'usr.users':         'usuarios',
 
-    // ── Footer ───────────────────────────────────────────────
     'footer.contact':    'Contáctame:',
     'footer.follow':     'Síguenos',
     'footer.schedule':   'Sáb - Dom & Festivos | 9:00 AM - 6:00 PM',
@@ -447,12 +447,10 @@ const LANG_DATA = {
     'footer.rights':     'Todos los derechos reservados',
     'footer.credit':     'Creado por: 2022 Yisus™',
 
-    // ── Legal ────────────────────────────────────────────────
     'legal.privacy':     'Políticas de Privacidad',
     'legal.terms':       'Términos y Condiciones',
     'legal.manual':      'Manual de Usuario',
 
-    // ── Blocked / Acceso ─────────────────────────────────────
     'blocked.denied':    'Acceso Denegado',
     'blocked.denied_sub':'Tu cuenta no tiene los permisos necesarios.',
     'blocked.login_req': 'Acceso Restringido',
@@ -462,7 +460,6 @@ const LANG_DATA = {
     'blocked.btn_login': 'Iniciar Sesión',
     'blocked.btn_inicio':'Ir al Inicio',
 
-    // ── Placeholders de inputs ───────────────────────────────
     'ph.search':         '¿Qué se te antoja hoy?',
     'ph.name':           'Nombre completo',
     'ph.email':          'correo@ejemplo.com',
@@ -488,7 +485,7 @@ const LANG_DATA = {
   },
 
   en: {
-    // ── Navbar ──────────────────────────────────────────────
+
     'nav.home':          'Home',
     'nav.catalog':       'Catalog',
     'nav.cart':          'Cart',
@@ -512,7 +509,6 @@ const LANG_DATA = {
     'nav.online':        'Online',
     'nav.inactive':      'Inactive',
 
-    // ── Botones comunes ──────────────────────────────────────
     'btn.cancel':        'Cancel',
     'btn.confirm':       'Confirm',
     'btn.save':          'Save',
@@ -548,7 +544,6 @@ const LANG_DATA = {
     'btn.publish':       'Publish',
     'btn.preview':       'Preview',
 
-    // ── Confirmaciones ───────────────────────────────────────
     'confirm.title':     'Are you sure?',
     'confirm.delete':    'Do you want to delete this item? This action cannot be undone.',
     'confirm.cancel':    'Do you want to cancel this operation?',
@@ -557,7 +552,6 @@ const LANG_DATA = {
     'confirm.yes':       'Yes, proceed',
     'confirm.no':        'No, go back',
 
-    // ── Estados del sistema ──────────────────────────────────
     'status.online':     'Online',
     'status.offline':    'Inactive',
     'status.loading':    'Loading...',
@@ -575,7 +569,6 @@ const LANG_DATA = {
     'status.active':     'Active',
     'status.inactive':   'Inactive',
 
-    // ── Estados de pedidos y facturas ────────────────────────
     'state.Pendiente':   'Pending',
     'state.Enviado':     'Shipped',
     'state.Entregado':   'Delivered',
@@ -591,7 +584,6 @@ const LANG_DATA = {
     'state.google':      'Google',
     'state.email':       'Email',
 
-    // ── Notificaciones / Toasts ──────────────────────────────
     'notif.title':       'System Notification',
     'notif.success':     'Operation successful',
     'notif.error':       'An error occurred',
@@ -622,7 +614,6 @@ const LANG_DATA = {
     'notif.welcome':     'Welcome!',
     'notif.goodbye':     'Signed out successfully',
 
-    // ── Inicio ───────────────────────────────────────────────
     'home.welcome':      'Welcome to D\'Antojitos',
     'home.subtitle':     'Sweeten your day with delicious homemade desserts',
     'home.history':      'Our story and passion',
@@ -642,18 +633,30 @@ const LANG_DATA = {
     'home.best_sellers': 'Best Sellers',
     'home.our_promise':  'Our promise',
 
-    // ── Login / Registro ─────────────────────────────────────
     'login.title':       'Welcome back',
     'login.subtitle':    'Sign in with your email, username or ID',
     'login.identifier':  'Email, username or ID',
     'login.password':    'Password',
     'login.btn':         'Sign In',
     'login.register':    'Don\'t have an account? Sign up',
+    'login.register_link': 'Sign up here',
+    'login.no_account':  'Don\'t have an account?',
+    'login.or':          'or continue with your account',
+    'login.capslock':    'Caps Lock is on',
     'login.google':      'Continue with Google',
     'login.forgot':      'Forgot your password?',
     'login.error':       'Incorrect credentials',
+
+    'legal.title_privacy':   'Privacy Policy',
+    'legal.title_terms':     'Terms and Conditions',
+    'legal.updated':         'Last updated: January 1, 2025',
+    'legal.accept':          'CONTINUE',
+    'legal.accept_terms':    'Understood & Accept',
+    'legal.back_login':      'Back to login',
     'reg.title':         'Create account',
-    'reg.subtitle':      'Fill in your details to register',
+    'reg.subtitle':      'Complete your details to get started',
+    'reg.personal_data': 'Personal information',
+    'reg.access_data':   'Account access',
     'reg.name':          'First Name',
     'reg.lastname':      'Last Name',
     'reg.cedula':        'ID Number',
@@ -661,6 +664,12 @@ const LANG_DATA = {
     'reg.email':         'Email Address',
     'reg.username':      'Username',
     'reg.password':      'Password',
+    'reg.optional':      '(optional)',
+    'reg.digits_hint':   '7–15 digits',
+    'reg.pass_hint':     'Min. 5 characters',
+    'reg.create_btn':    'Create Account',
+    'reg.creating':      'Creating account...',
+    'login.no_account2': 'Already have an account?',
     'reg.send_code':     'Send Verification Code',
     'reg.verify':        'Verify email',
     'reg.code_sent':     '6-digit code sent to',
@@ -670,7 +679,6 @@ const LANG_DATA = {
     'reg.login':         'Already have an account? Sign in',
     'reg.success':       'Account created! You can now sign in.',
 
-    // ── Catálogo ─────────────────────────────────────────────
     'cat.title':         'Product Catalog',
     'cat.section':       'Our Desserts',
     'cat.subtitle':      'Explore the finest flavors we\'ve prepared for you',
@@ -693,7 +701,6 @@ const LANG_DATA = {
     'cat.filter':        'Filter',
     'cat.your_favs':     'YOUR FAVORITES',
 
-    // ── Carrito ──────────────────────────────────────────────
     'cart.title':        'My Cart',
     'cart.subtitle':     'Here you can see all the products you selected.',
     'cart.empty':        'Your cart is empty',
@@ -707,7 +714,6 @@ const LANG_DATA = {
     'cart.confirm':      'Confirm order?',
     'cart.login_req':    'Sign in to shop',
 
-    // ── Pedidos ──────────────────────────────────────────────
     'ord.title':         'Orders Panel',
     'ord.subtitle':      'Manage all your customers\' orders.',
     'ord.status':        'Status',
@@ -749,7 +755,6 @@ const LANG_DATA = {
     'ord.success_rate':  'Success Rate',
     'ord.waiting':       'Loading Orders — Please wait...',
 
-    // ── Productos ────────────────────────────────────────────
     'prod.title':        'Product Management',
     'prod.subtitle':     'Manage the available dessert catalog.',
     'prod.name':         'Dessert name',
@@ -776,7 +781,6 @@ const LANG_DATA = {
     'prod.edit_title':   'Edit Product',
     'prod.storage':      'Cloudinary Storage',
 
-    // ── Perfil ───────────────────────────────────────────────
     'prof.title':        'My Profile',
     'prof.subtitle':     'Manage your account data and preferences.',
     'prof.name':         'First Name',
@@ -803,7 +807,6 @@ const LANG_DATA = {
     'prof.users_mgmt':   'User Management',
     'prof.users_btn':    'Go to User Management',
 
-    // ── Facturas ─────────────────────────────────────────────
     'inv.title':         'Invoice History',
     'inv.subtitle':      'View the history of your purchases.',
     'inv.number':        'Invoice Number',
@@ -821,7 +824,6 @@ const LANG_DATA = {
     'inv.method':        'Payment Method',
     'inv.ref':           'Reference',
 
-    // ── Publicidad ───────────────────────────────────────────
     'pub.title':         'Advertising Panel',
     'pub.subtitle':      'Manage all your digital marketing content.',
     'pub.carousel':      'Carousels',
@@ -845,7 +847,6 @@ const LANG_DATA = {
     'pub.img_manager':   'Image Manager',
     'pub.save_changes':  'SAVE ALL TO SERVER',
 
-    // ── Facturación (módulo admin) ───────────────────────────
     'bill.title':        'Billing Panel',
     'bill.subtitle':     'Configure all your payment channels.',
     'bill.method':       'Payment Method',
@@ -868,7 +869,6 @@ const LANG_DATA = {
     'bill.tipos.ahorros':         'Savings',
     'bill.tipos.corriente':       'Checking',
 
-    // ── Comentarios ──────────────────────────────────────────
     'chat.title':        'Suggestions Wall',
     'chat.send':         'Send Suggestion',
     'chat.saving':       'Saving...',
@@ -885,7 +885,6 @@ const LANG_DATA = {
     'chat.list':         'List',
     'chat.hint':         'Let us know what you think, help us with your suggestion.',
 
-    // ── Gestion usuarios ─────────────────────────────────────
     'usr.title':         'Users Panel',
     'usr.subtitle':      'Manage all registered users in D\'Antojitos.',
     'usr.total':         'Total',
@@ -919,7 +918,6 @@ const LANG_DATA = {
     'usr.of':            'of',
     'usr.users':         'users',
 
-    // ── Footer ───────────────────────────────────────────────
     'footer.contact':    'Contact me:',
     'footer.follow':     'Follow us',
     'footer.schedule':   'Sat - Sun & Holidays | 9:00 AM - 6:00 PM',
@@ -928,12 +926,10 @@ const LANG_DATA = {
     'footer.rights':     'All rights reserved',
     'footer.credit':     'Created by: 2022 Yisus™',
 
-    // ── Legal ────────────────────────────────────────────────
     'legal.privacy':     'Privacy Policies',
     'legal.terms':       'Terms & Conditions',
     'legal.manual':      'User Manual',
 
-    // ── Blocked / Acceso ─────────────────────────────────────
     'blocked.denied':    'Access Denied',
     'blocked.denied_sub':'Your account does not have the necessary permissions.',
     'blocked.login_req': 'Restricted Access',
@@ -943,7 +939,6 @@ const LANG_DATA = {
     'blocked.btn_login': 'Sign In',
     'blocked.btn_inicio':'Go to Home',
 
-    // ── Placeholders de inputs ───────────────────────────────
     'ph.search':         'What are you craving today?',
     'ph.name':           'Full name',
     'ph.email':          'email@example.com',
@@ -969,7 +964,6 @@ const LANG_DATA = {
   }
 };
 
-// ── Mapa de valores dinámicos de la DB ──────────────────────
 // Traduce valores que vienen de la base de datos directamente
 const DB_VALUE_MAP = {
   es: {
@@ -1020,47 +1014,39 @@ function setLang(lang) {
 
   const dict = LANG_DATA[lang];
 
-  // ── Traducir data-i18n (texto interno) ──
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
     if (dict[key] !== undefined) el.textContent = dict[key];
   });
 
-  // ── Traducir data-i18n-html (permite HTML) ──
   document.querySelectorAll('[data-i18n-html]').forEach(el => {
     const key = el.dataset.i18nHtml;
     if (dict[key] !== undefined) el.innerHTML = dict[key];
   });
 
-  // ── Traducir data-i18n-placeholder ──
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.dataset.i18nPlaceholder;
     if (dict[key] !== undefined) el.placeholder = dict[key];
   });
 
-  // ── Traducir data-i18n-title (tooltips) ──
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     const key = el.dataset.i18nTitle;
     if (dict[key] !== undefined) el.title = dict[key];
   });
 
-  // ── Traducir data-i18n-value (inputs) ──
   document.querySelectorAll('[data-i18n-value]').forEach(el => {
     const key = el.dataset.i18nValue;
     if (dict[key] !== undefined) el.value = dict[key];
   });
 
-  // ── Traducir data-i18n-aria (accesibilidad) ──
   document.querySelectorAll('[data-i18n-aria]').forEach(el => {
     const key = el.dataset.i18nAria;
     if (dict[key] !== undefined) el.setAttribute('aria-label', dict[key]);
   });
 
-  // ── Actualizar badge de idioma ──
   const badge = document.getElementById('langBadge');
   if (badge) badge.textContent = lang === 'es' ? 'EN' : 'ES';
 
-  // ── Actualizar label del botón de tema ──
   const themeBtn = document.getElementById('themeToggleBtn');
   if (themeBtn) {
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
@@ -1072,7 +1058,6 @@ function setLang(lang) {
     }
   }
 
-  // ── Emitir evento para que módulos reaccionen ──
   document.dispatchEvent(new CustomEvent('langChanged', { detail: { lang } }));
 }
 
@@ -1086,6 +1071,226 @@ function t(key) {
   return (LANG_DATA[lang] && LANG_DATA[lang][key]) || key;
 }
 
+//  MAPA UNIVERSAL — pares ES→EN para nodos de texto sin data-i18n
+//  Orden: más largo primero para evitar reemplazos parciales
+
+const UNIVERSAL_ES_EN = [
+  // Frases / botones completos
+  ['Guardar Cambios en Servidor','Save Changes to Server'],
+  ['Agregar a Lista','Add to List'],
+  ['Vista Previa Factura','Invoice Preview'],
+  ['Canales Listos','Ready Channels'],
+  ['Nuevo Canal de Pago','New Payment Channel'],
+  ['Panel de Facturación','Billing Panel'],
+  ['Panel de Pedidos','Orders Panel'],
+  ['Panel de Usuarios','Users Panel'],
+  ['Panel de Publicidad','Advertising Panel'],
+  ['Módulo Gestión de Productos','Product Management'],
+  ['Historial de Facturas','Invoice History'],
+  ['Cambiar Tema','Toggle Theme'],
+  ['Cambiar Idioma','Change Language'],
+  ['Cerrar Sesión','Sign Out'],
+  ['Iniciar sesión','Sign In'],
+  ['Crear cuenta','Create Account'],
+  ['Crear Cuenta','Create Account'],
+  ['¿Ya tienes cuenta?','Already have an account?'],
+  ['Iniciar Sesión','Sign In'],
+  ['Datos personales','Personal Data'],
+  ['Datos de acceso','Access Data'],
+  ['Correo Electrónico','Email Address'],
+  ['Nombre completo','Full Name'],
+  ['Dirección de Entrega','Delivery Address'],
+  ['Método de Pago Preferido','Preferred Payment Method'],
+  ['Tipo de Usuario','User Type'],
+  ['Seguridad de la Cuenta','Account Security'],
+  ['Zona de Peligro','Danger Zone'],
+  ['Eliminar Cuenta','Delete Account'],
+  ['Gestión de Usuarios','User Management'],
+  ['Ir a Gestión de Usuarios','Go to User Management'],
+  ['Actualizar Ahora','Update Now'],
+  ['Editar Perfil','Edit Profile'],
+  ['RESETEAR CONTRASEÑA','RESET PASSWORD'],
+  ['Nueva Contraseña','New Password'],
+  ['Confirmar Contraseña','Confirm Password'],
+  ['Mín. 5 caracteres','Min. 5 characters'],
+  ['Mín. 8 caracteres','Min. 8 characters'],
+  ['Bienvenido de nuevo','Welcome back'],
+  ['Todos los estados','All statuses'],
+  ['Sin resultados','No results'],
+  ['Mostrando archivadas','Show archived'],
+  ['Ocultar archivadas','Hide archived'],
+  ['Mostrar archivadas','Show archived'],
+  ['Archivado','Archived'],
+  ['Archivar','Archive'],
+  ['ANULAR PEDIDO','VOID ORDER'],
+  ['PROCEDER AL PAGO','PROCEED TO PAYMENT'],
+  ['Descargar Factura','Download Invoice'],
+  ['COMPLETADO','COMPLETED'],
+  ['ANULADO','VOIDED'],
+  ['Cargando...','Loading...'],
+  ['Sin notificaciones','No notifications'],
+  ['Notificaciones','Notifications'],
+  ['Refrescar','Refresh'],
+  ['Actualizar','Update'],
+  ['Eliminar','Delete'],
+  ['Editar','Edit'],
+  ['Agregar','Add'],
+  ['Cancelar','Cancel'],
+  ['Confirmar','Confirm'],
+  ['Guardar','Save'],
+  ['Buscar','Search'],
+  ['Filtrar','Filter'],
+  ['Descargar','Download'],
+  ['Subir','Upload'],
+  ['Volver','Back'],
+  ['Enviar','Send'],
+  ['Aceptar','Accept'],
+  ['Siguiente','Next'],
+  ['Anterior','Previous'],
+  ['Finalizar','Finish'],
+  ['Publicar','Publish'],
+  ['Ver más','View more'],
+  ['Ver menos','View less'],
+  ['Copiar URL','Copy URL'],
+  ['Copiar','Copy'],
+  ['Imprimir','Print'],
+  ['Exportar','Export'],
+  ['Importar','Import'],
+  ['Aplicar','Apply'],
+  ['Restablecer','Reset'],
+  ['Restablecer diseño','Reset Layout'],
+  ['Listo','Done'],
+  ['Salir','Exit'],
+  ['Modo Edición','Edit Mode'],
+  ['Organizar widgets','Arrange Widgets'],
+  ['Foto de perfil','Profile photo'],
+  ['Foto del postre','Dessert photo'],
+  ['Imagen (Opcional)','Image (Optional)'],
+  ['Descripción','Description'],
+  ['Categoría','Category'],
+  ['Nombre','Name'],
+  ['Apellido','Last Name'],
+  ['Contraseña','Password'],
+  ['Teléfono','Phone'],
+  ['Cédula','ID Number'],
+  ['Correo','Email'],
+  ['Usuario','User'],
+  ['Dirección','Address'],
+  ['Efectivo','Cash'],
+  ['Transferencia','Bank Transfer'],
+  ['Administrador','Administrator'],
+  ['Vendedor','Vendor'],
+  ['Cliente','Client'],
+  ['Pendiente','Pending'],
+  ['Enviado','Shipped'],
+  ['Entregado','Delivered'],
+  ['Cancelado','Cancelled'],
+  ['Emitida','Issued'],
+  ['Pagada','Paid'],
+  ['Anulada','Voided'],
+  ['Disponible','Available'],
+  ['Agotado','Sold Out'],
+  ['Activo','Active'],
+  ['Inactivo','Inactive'],
+  ['Online','Online'],
+  ['Inactive','Inactive'],
+  ['Rol','Role'],
+  ['Método','Method'],
+  ['Registro','Registered'],
+  ['Acciones','Actions'],
+  ['Total','Total'],
+  ['Fecha','Date'],
+  ['Estado','Status'],
+  ['Número','Number'],
+  ['Titular','Holder'],
+  ['Entidad','Entity'],
+  ['Tipo','Type'],
+  ['Precio','Price'],
+  ['Stock','Stock'],
+  ['Cantidad','Quantity'],
+  ['Subtotal','Subtotal'],
+  ['Producto','Product'],
+  ['Productos','Products'],
+  ['Pedido','Order'],
+  ['Pedidos','Orders'],
+  ['Factura','Invoice'],
+  ['Facturas','Invoices'],
+  ['Carrito','Cart'],
+  ['Inicio','Home'],
+  ['Catálogo','Catalog'],
+  ['Sugerencias','Suggestions'],
+  ['Perfil','Profile'],
+  ['Publicidad','Advertising'],
+  ['Notificaciones admin','Admin Notifications'],
+  ['Arrastra los widgets para reorganizar','Drag widgets to rearrange'],
+  ['MODO EDICIÓN','EDIT MODE'],
+  ['de','of'],
+  ['usuarios','users'],
+  ['Mostrando','Showing'],
+];
+
+/**
+ * Walker universal bidireccional ES↔EN.
+ * Guarda los textos originales la primera vez (ES→EN) para poder
+ * restaurarlos exactamente al volver al español.
+ */
+const _origCache = new Map();   // nodo de texto → texto original en ES
+
+function _getTextNodes() {
+  const nodes = [];
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node) {
+        const p = node.parentElement;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        const tag = p.tagName;
+        if (['SCRIPT','STYLE','NOSCRIPT','TEXTAREA','INPUT'].includes(tag))
+          return NodeFilter.FILTER_REJECT;
+        if (p.closest('[data-i18n],[data-i18n-html],[data-i18n-placeholder]'))
+          return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }
+  );
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  return nodes;
+}
+
+function _applyUniversalTranslation(toLang) {
+  if (toLang === 'es') {
+    _origCache.forEach((originalText, node) => {
+      if (node.parentNode) node.nodeValue = originalText;
+    });
+    _origCache.clear();
+    return;
+  }
+
+  const nodes = _getTextNodes();
+  nodes.forEach(node => {
+    const original = node.nodeValue;
+    if (!original.trim()) return;
+
+    if (!_origCache.has(node)) {
+      _origCache.set(node, original);
+    }
+
+    let text = _origCache.get(node);
+    UNIVERSAL_ES_EN.forEach(([es, en]) => {
+      if (text.includes(es)) text = text.split(es).join(en);
+    });
+    if (text !== node.nodeValue) node.nodeValue = text;
+  });
+}
+
+const _origSetLang = setLang;
+window.setLang = function(lang) {
+  _origSetLang(lang);
+  _applyUniversalTranslation(lang);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-  setLang(getLang());
+  window.setLang(getLang());
 });
+

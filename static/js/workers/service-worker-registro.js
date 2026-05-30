@@ -1,11 +1,9 @@
-const CACHE_NAME = 'dantojitos-registro-v2';
+const CACHE_NAME = 'dantojitos-registro-v4';
 const STATIC_ASSETS = [
-    '/registro',
-    '/static/css/global_modules/style_registro.css',
+    '/static/css/global_modules/style_login.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_utils.css',
-    '/static/js/global_js/login_registro.js',
-    '/static/js/general_js/login_registro.js',
+    '/static/js/global_js/utils.js',
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',

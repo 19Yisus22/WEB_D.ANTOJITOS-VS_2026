@@ -1,4 +1,4 @@
-const toastContainer = document.getElementById("toastContainer");
+﻿const toastContainer = document.getElementById("toastContainer");
 const btnAgregarPostre = document.getElementById("btnAgregarPostre");
 const btnCancelar = document.getElementById("btnCancelar");
 const formAgregarPostre = document.getElementById("formAgregarPostre");
@@ -13,6 +13,11 @@ const searchInput = document.getElementById("searchProductos");
 
 let postres = [];
 let indexActual = null;
+const PRODUCTOS_POR_PAG = 10;
+let _paginaDisp = 1;
+let _paginaAgot = 1;
+let _listaDisp  = [];
+let _listaAgot  = [];
 let isUpdating = false;
 let audioCtx = null;
 
@@ -49,8 +54,6 @@ function playNotificationSound(type = 'default') {
         oscillator.stop(audioCtx.currentTime + 0.4);
     } catch (e) {}
 }
-
-
 
 async function actualizarAlmacenamiento() {
     try {
@@ -107,6 +110,51 @@ function actualizarEstadisticas(listaAMostrar) {
     document.getElementById("statAgotNum").textContent = agotados;
 }
 
+function _crearCardProducto(p) {
+    const indexOriginal = postres.findIndex(pr => pr.id_producto === p.id_producto);
+    const card = document.createElement("div");
+    card.className = "col";
+    const stockActual = parseInt(p.stock) || 0;
+    const isAgotado = stockActual <= 0;
+    card.innerHTML = `
+    <div class="card h-100 shadow-sm ${isAgotado ? 'gris' : ''}" data-id="${p.id_producto}">
+        <img src="${p.imagen_url || '/static/uploads/default.png'}" class="postre-img card-img-top" alt="${p.nombre}" loading="lazy"
+             onerror="this.src='/static/uploads/default.png'">
+        <div class="card-body p-3">
+            <h6 class="card-title text-truncate mb-1">${p.nombre}</h6>
+            <p class="card-text text-primary fw-bold mb-2">${Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="badge ${stockActual <= 5 ? 'bg-danger' : 'bg-success'}">Stock: ${stockActual}</span>
+                <i class="bi bi-eye text-muted"></i>
+            </div>
+        </div>
+    </div>`;
+    card.querySelector(".card").onclick = () => abrirModalPostre(indexOriginal);
+    return card;
+}
+
+function _renderPaginacionProductos(containerId, lista, paginaActual, onCambio) {
+    let nav = document.getElementById(containerId);
+    if (!nav) {
+        nav = document.createElement('nav');
+        nav.id = containerId;
+        nav.className = 'mt-3 mb-2';
+        const parent = containerId.includes('Disp')
+            ? listaPostresDisponibles.parentElement
+            : listaPostresAgotados.parentElement;
+        if (parent) parent.appendChild(nav);
+    }
+    const maxPag = Math.ceil(lista.length / PRODUCTOS_POR_PAG);
+    if (maxPag <= 1) { nav.innerHTML = ''; return; }
+    let html = '<ul class="pagination pagination-sm justify-content-center">';
+    for (let i = 1; i <= maxPag; i++) {
+        html += `<li class="page-item ${i === paginaActual ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="event.preventDefault();(${onCambio})(${i});">${i}</a>
+                 </li>`;
+    }
+    nav.innerHTML = html + '</ul>';
+}
+
 function renderPostres(filtro = "") {
     if (!listaPostresDisponibles || !listaPostresAgotados) return;
     listaPostresDisponibles.innerHTML = "";
@@ -117,46 +165,38 @@ function renderPostres(filtro = "") {
     );
 
     actualizarEstadisticas(productosFiltrados);
+    _paginaDisp = 1;
+    _paginaAgot = 1;
+    _listaDisp  = productosFiltrados.filter(p => (parseInt(p.stock) || 0) > 0);
+    _listaAgot  = productosFiltrados.filter(p => (parseInt(p.stock) || 0) <= 0);
 
-    let countDisp = 0;
-    let countAgot = 0;
-
-    productosFiltrados.forEach((p) => {
-        const indexOriginal = postres.findIndex(pr => pr.id_producto === p.id_producto);
-        const card = document.createElement("div");
-        card.className = "col";
-        const stockActual = parseInt(p.stock) || 0;
-        const isAgotado = stockActual <= 0;
-
-        card.innerHTML = `
-        <div class="card h-100 shadow-sm ${isAgotado ? 'gris' : ''}" data-id="${p.id_producto}">
-            <img src="${p.imagen_url || '/static/uploads/default.png'}" class="postre-img card-img-top" alt="${p.nombre}" loading="lazy"
-                 onerror="this.src='/static/uploads/default.png'">
-            <div class="card-body p-3">
-                <h6 class="card-title text-truncate mb-1">${p.nombre}</h6>
-                <p class="card-text text-primary fw-bold mb-2">${Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="badge ${stockActual <= 5 ? 'bg-danger' : 'bg-success'}">Stock: ${stockActual}</span>
-                    <i class="bi bi-eye text-muted"></i>
-                </div>
-            </div>
-        </div>`;
-
-        card.querySelector(".card").onclick = () => abrirModalPostre(indexOriginal);
-
-        if (!isAgotado) {
-            listaPostresDisponibles.appendChild(card);
-            countDisp++;
-        } else {
-            listaPostresAgotados.appendChild(card);
-            countAgot++;
-        }
-    });
-
-    document.getElementById("emptyDisponibles").classList.toggle("d-none", countDisp > 0);
-    document.getElementById("emptyAgotados").classList.toggle("d-none", countAgot > 0);
-    if (avisoAgotados) avisoAgotados.classList.toggle("d-none", countAgot === 0);
+    _renderSeccionProductos();
 }
+
+function _renderSeccionProductos() {
+    listaPostresDisponibles.innerHTML = "";
+    listaPostresAgotados.innerHTML = "";
+
+    const inicioDisp = (_paginaDisp - 1) * PRODUCTOS_POR_PAG;
+    _listaDisp.slice(inicioDisp, inicioDisp + PRODUCTOS_POR_PAG).forEach(p =>
+        listaPostresDisponibles.appendChild(_crearCardProducto(p))
+    );
+
+    const inicioAgot = (_paginaAgot - 1) * PRODUCTOS_POR_PAG;
+    _listaAgot.slice(inicioAgot, inicioAgot + PRODUCTOS_POR_PAG).forEach(p =>
+        listaPostresAgotados.appendChild(_crearCardProducto(p))
+    );
+
+    document.getElementById("emptyDisponibles").classList.toggle("d-none", _listaDisp.length > 0);
+    document.getElementById("emptyAgotados").classList.toggle("d-none", _listaAgot.length > 0);
+    if (avisoAgotados) avisoAgotados.classList.toggle("d-none", _listaAgot.length === 0);
+
+    _renderPaginacionProductos('pagDisponibles', _listaDisp, _paginaDisp, 'window._cambiarPagDisp');
+    _renderPaginacionProductos('pagAgotados',    _listaAgot, _paginaAgot, 'window._cambiarPagAgot');
+}
+
+window._cambiarPagDisp = (p) => { _paginaDisp = p; _renderSeccionProductos(); window.scrollTo({top:0,behavior:'smooth'}); };
+window._cambiarPagAgot = (p) => { _paginaAgot = p; _renderSeccionProductos(); };
 
 function abrirModalPostre(index) {
     indexActual = index;

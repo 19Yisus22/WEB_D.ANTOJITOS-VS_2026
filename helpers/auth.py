@@ -3,7 +3,6 @@ import hashlib
 from functools import wraps
 from flask import session, request, jsonify, redirect, url_for, render_template, make_response
 
-
 def sin_cache(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -14,14 +13,12 @@ def sin_cache(f):
         return response
     return decorated
 
-
 def _is_ajax_or_api():
     return (
         request.headers.get("X-Requested-With") == "XMLHttpRequest"
         or request.path.startswith("/api/")
         or request.method in ("POST", "PUT", "DELETE", "PATCH")
     )
-
 
 def login_required(f):
     @wraps(f)
@@ -33,7 +30,6 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
-
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -43,7 +39,6 @@ def admin_required(f):
             return render_template("global_modules/blocked.html", metodos=[])
         return f(*args, **kwargs)
     return decorated
-
 
 def vendedor_required(f):
     @wraps(f)
@@ -55,13 +50,11 @@ def vendedor_required(f):
         return f(*args, **kwargs)
     return decorated
 
-
 def hash_password(password: str, salt: str | None = None) -> str:
     if not salt:
         salt = os.urandom(16).hex()
     hashed = hashlib.sha256((salt + password).encode()).hexdigest()
     return f"{salt}${hashed}"
-
 
 def verify_password(plain: str, hashed: str) -> bool:
     try:

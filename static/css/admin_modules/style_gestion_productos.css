@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,700&display=swap');
 
 :root {
     --primary: #d35400;
@@ -347,7 +347,6 @@ main {
     position: relative;
 }
 
-/* ── Product card image ── */
 .postre-img {
     height: 175px;
     width: 100%;

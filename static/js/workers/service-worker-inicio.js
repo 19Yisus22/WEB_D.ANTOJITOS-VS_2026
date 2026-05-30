@@ -1,23 +1,28 @@
-const CACHE_NAME = 'dantojitos-inicio-v4';
+const CACHE_NAME = 'dantojitos-inicio-v6';
 const STATIC_ASSETS = [
-    '/inicio',
-    '/static/css/general_modules/style_inicio.css',
     '/static/css/global_modules/style_inicio.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_footer.css',
     '/static/css/global_modules/style_utils.css',
-    '/static/js/general_js/inicio.js',
     '/static/js/global_js/inicio.js',
+    '/static/js/global_js/utils.js',
+    '/static/js/global_js/widget_system.js',
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+    'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css',
+    'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js',
+    'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'
 ];
 
+// Siempre desde la red — datos en tiempo real
 const NETWORK_FIRST_ROUTES = [
+    '/inicio',
     '/api/publicidad/activa',
     '/api/admin/notificaciones',
+    '/api/inicio/config',
     '/obtener_catalogo',
     '/obtener-cliente-id'
 ];
@@ -63,9 +68,10 @@ async function networkFirst(request) {
         if (res.ok) cache.put(request, res.clone());
         return res;
     } catch {
-        return await cache.match(request) || new Response(JSON.stringify({ error: true, message: 'Sin conexión' }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return await cache.match(request) || new Response(
+            JSON.stringify({ error: true, message: 'Sin conexión' }),
+            { headers: { 'Content-Type': 'application/json' } }
+        );
     }
 }
 

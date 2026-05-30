@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, render_template
 
-import models as db
+import helpers.models as db
 from helpers.auth import admin_required
 
 inicio_bp = Blueprint("inicio", __name__)

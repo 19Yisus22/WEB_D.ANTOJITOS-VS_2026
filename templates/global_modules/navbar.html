@@ -40,7 +40,31 @@
                 </ul>
             </div>
 
-            <div class="ms-auto">
+            <div class="ms-auto d-flex align-items-center gap-2">
+
+                <!-- Botón editar widgets (mostrado por widget_system.js en páginas con widgets) -->
+                <button id="navWidgetEditBtn" title="Organizar widgets"
+                        style="display:none;"
+                        class="navbar-action-btn">
+                    <i class="bi bi-pencil-fill"></i>
+                </button>
+
+                {% if session.get('rol') in ['admin', 'vendedor'] %}
+                <button id="navBellBtn" title="Notificaciones del sistema"
+                        onclick="toggleSistemPanel()"
+                        class="navbar-action-btn position-relative">
+                    <i class="bi bi-bell-fill"></i>
+                    <span id="navBellBadge" class="nav-bell-badge" style="display:none;">0</span>
+                </button>
+                <button id="navPubBtn" title="Alertas de publicidad"
+                        onclick="toggleNotifPanel()"
+                        class="navbar-action-btn position-relative"
+                        style="display:none;">
+                    <i class="bi bi-megaphone-fill"></i>
+                    <span id="navPubBadge" class="nav-bell-badge" style="background:#6f42c1;display:none;">0</span>
+                </button>
+                {% endif %}
+
                 <div class="nav-item dropdown">
                     {% if session.get('user') %}
                     <a class="nav-link dropdown-toggle d-flex align-items-center profile-trigger" href="#" id="perfilDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -106,14 +130,13 @@
                     <div class="d-flex align-items-center gap-2">
                         <button id="themeToggleBtn" onclick="toggleTheme()"
                                 title="Cambiar tema"
-                                class="btn btn-sm rounded-circle"
-                                style="width:34px;height:34px;border:1px solid rgba(0,0,0,0.1);background:transparent;font-size:1rem;display:flex;align-items:center;justify-content:center;">
-                            <i class="bi bi-moon-fill"></i>
+                                class="navbar-pill-btn">
+                            <i class="bi bi-moon-fill" id="navThemeIcon"></i>
+                            <span id="navThemeLabel" data-i18n="nav.theme">Oscuro</span>
                         </button>
                         <button id="langToggleBtn" onclick="setLang(document.documentElement.lang==='es'?'en':'es')"
                                 title="Cambiar idioma"
-                                class="btn btn-sm rounded-pill d-flex align-items-center gap-1"
-                                style="font-size:0.72rem;padding:4px 10px;border:1px solid rgba(0,0,0,0.1);background:transparent;">
+                                class="navbar-pill-btn">
                             <i class="bi bi-translate"></i>
                             <span id="langBadge">EN</span>
                         </button>
@@ -129,6 +152,59 @@
         </div>
     </nav>
 </header>
+{% if session.get('rol') in ['admin', 'vendedor'] %}
+<div id="sistemPanel" class="notif-admin-panel" style="right:60px;">
+    <div class="notif-admin-header" onclick="toggleSistemPanel()">
+        <span class="notif-header-title"><i class="bi bi-bell-fill"></i> Pedidos</span>
+        <div class="notif-header-actions" onclick="event.stopPropagation()">
+            <span class="notif-count-badge" id="sistemCount" style="display:none;">0</span>
+            <button class="notif-read-all-btn" id="sistemReadAllBtn" title="Marcar todo leído"
+                    onclick="_pedidosMarcarTodo()">
+                <i class="bi bi-check2-all"></i>
+                <span class="notif-read-label">Leído</span>
+            </button>
+        </div>
+        <i class="bi bi-chevron-down notif-chevron" id="sistemChevron"></i>
+    </div>
+    <div class="notif-admin-body" id="sistemBody">
+        <div class="notif-empty" id="sistemEmpty">
+            <i class="bi bi-inbox"></i>
+            <p>Sin pedidos recientes</p>
+        </div>
+        <ul class="notif-list" id="sistemList"></ul>
+    </div>
+    <div class="notif-admin-footer">
+        <a href="/pedidos_page" class="notif-footer-link">
+            <i class="bi bi-box-arrow-up-right"></i>Abrir Módulo Pedidos
+        </a>
+    </div>
+</div>
+
+<div id="notifAdminPanel" class="notif-admin-panel">
+    <div class="notif-admin-header" onclick="toggleNotifPanel()">
+        <span class="notif-header-title"><i class="bi bi-megaphone-fill"></i> Publicidad</span>
+        <div class="notif-header-actions" onclick="event.stopPropagation()">
+            <span class="notif-count-badge" id="notifCount" style="display:none;">0</span>
+            <button class="notif-read-all-btn" id="notifReadAllBtn" title="Marcar todo leído"
+                    onclick="_publicidadMarcarTodo()">
+                <i class="bi bi-check2-all"></i>
+                <span class="notif-read-label">Leído</span>
+            </button>
+        </div>
+        <i class="bi bi-chevron-down notif-chevron" id="notifChevron"></i>
+    </div>
+    <div class="notif-admin-body" id="notifAdminBody">
+        <div class="notif-empty" id="notifEmpty">
+            <i class="bi bi-bell-slash"></i>
+            <p>Sin alertas</p>
+        </div>
+        <ul class="notif-list" id="notifList"></ul>
+        <div class="notif-admin-footer">
+            <small class="text-muted">Las activas se muestran al público cada 12s</small>
+        </div>
+    </div>
+</div>
+{% endif %}
 <script src="{{ url_for('static', filename='js/global_js/i18n.js') }}" defer></script>
 
 <script>

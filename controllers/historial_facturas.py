@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session, render_template
 
-import models as db
+import helpers.models as db
 from helpers.auth import sin_cache, login_required, vendedor_required
 from helpers.validators import ESTADOS_FACTURA
 
@@ -79,8 +79,16 @@ def buscar_facturas_page():
         if not usuario:
             return jsonify([]), 200
 
-        facturas = db.factura_get_by_user(usuario["cedula"])
-        return jsonify([_enriquecer_factura(f) for f in facturas]), 200
+        facturas           = db.factura_get_by_user(usuario["cedula"])
+        nombre_completo    = f"{usuario.get('nombre', '')} {usuario.get('apellido', '')}".strip()
+        username_cliente   = str(usuario.get("username") or "")
+        resultado          = []
+        for f in facturas:
+            enriquecida = _enriquecer_factura(f)
+            enriquecida["cliente_nombre"]   = nombre_completo
+            enriquecida["username_cliente"] = username_cliente
+            resultado.append(enriquecida)
+        return jsonify(resultado), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

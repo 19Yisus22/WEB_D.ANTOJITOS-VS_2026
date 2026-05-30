@@ -1,21 +1,27 @@
-const CACHE_NAME = 'dantojitos-productos-v3';
+const CACHE_NAME = 'dantojitos-productos-v5';
 const STATIC_ASSETS = [
-    '/gestionar_productos_page',
     '/static/css/admin_modules/style_gestion_productos.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_utils.css',
     '/static/js/admin_js/gestion_productos.js',
+    '/static/js/global_js/utils.js',
+    '/static/js/global_js/widget_system.js',
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
+    '/static/uploads/default.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+    'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'
 ];
 
+// Siempre desde la red — datos y operaciones en tiempo real
 const NETWORK_FIRST_ROUTES = [
+    '/gestionar_productos_page',
     '/gestionar_productos',
     '/actualizar_producto/',
-    '/eliminar_producto/'
+    '/eliminar_producto/',
+    '/cloudinary_storage_info'
 ];
 
 self.addEventListener('install', event => {
@@ -59,9 +65,10 @@ async function networkFirst(request) {
         if (res.ok) cache.put(request, res.clone());
         return res;
     } catch {
-        return await cache.match(request) || new Response(JSON.stringify({ error: 'Sin conexión' }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return await cache.match(request) || new Response(
+            JSON.stringify({ error: 'Sin conexión' }),
+            { headers: { 'Content-Type': 'application/json' } }
+        );
     }
 }
 
@@ -71,9 +78,6 @@ async function staleWhileRevalidate(request) {
     const fetchPromise = fetch(request).then(res => {
         if (res && res.status === 200) cache.put(request, res.clone());
         return res;
-    }).catch(() => {
-        if (request.mode === 'navigate') return cached || caches.match('/gestionar_productos_page');
-        return cached;
-    });
+    }).catch(() => cached);
     return cached || fetchPromise;
 }

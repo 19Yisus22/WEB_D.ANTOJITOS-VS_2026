@@ -1,23 +1,28 @@
-const CACHE_NAME = 'dantojitos-publicidad-v4';
+const CACHE_NAME = 'dantojitos-publicidad-v6';
 const STATIC_ASSETS = [
-    '/publicidad_page',
     '/static/css/admin_modules/style_publicidad.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_utils.css',
     '/static/js/admin_js/publicidad.js',
+    '/static/js/global_js/utils.js',
+    '/static/js/global_js/widget_system.js',
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+    'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'
 ];
 
+// Siempre desde la red — datos y uploads de publicidad
 const NETWORK_FIRST_ROUTES = [
     '/publicidad_page',
     '/api/publicidad/activa',
     '/api/admin/publicidad/',
     '/api/admin/notificaciones',
-    '/api/admin/notificaciones/'
+    '/api/admin/notificaciones/',
+    '/api/cloudinary/gestor',
+    '/cloudinary_storage_info'
 ];
 
 self.addEventListener('install', event => {
@@ -45,14 +50,15 @@ self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
 
     const url = new URL(event.request.url);
-    const isCloudinary = url.hostname.includes('cloudinary.com') || url.hostname.includes('res.cloudinary.com');
+    const isCloudinary = url.hostname.includes('cloudinary.com');
 
     if (NETWORK_FIRST_ROUTES.some(r => url.pathname.startsWith(r))) {
         event.respondWith(networkFirst(event.request));
         return;
     }
 
-    if (isCloudinary || event.request.destination === 'image') {
+    // Imágenes de Cloudinary: stale-while-revalidate para carga rápida
+    if (isCloudinary) {
         event.respondWith(staleWhileRevalidate(event.request));
         return;
     }
@@ -67,9 +73,10 @@ async function networkFirst(request) {
         if (res.ok) cache.put(request, res.clone());
         return res;
     } catch {
-        return await cache.match(request) || new Response(JSON.stringify({ error: 'Sin conexión' }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return await cache.match(request) || new Response(
+            JSON.stringify({ error: 'Sin conexión' }),
+            { headers: { 'Content-Type': 'application/json' } }
+        );
     }
 }
 

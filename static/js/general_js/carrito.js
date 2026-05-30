@@ -64,86 +64,88 @@ async function cargarCarrito() {
         }
 
         let totalGeneral = 0;
-        const tabla = document.createElement("table");
-        tabla.className = "custom-table-carrito align-middle mb-0";
-        tabla.innerHTML = `
-            <thead>
-                <tr>
-                    <th class="col-img ps-3"></th>
-                    <th class="col-prod">Producto</th>
-                    <th class="col-cant">Cant.</th>
-                    <th class="col-sub">Subtotal</th>
-                    <th class="col-del text-center"></th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot class="table-light">
-                <tr>
-                    <td colspan="3" class="text-end fw-bold py-3">Total:</td>
-                    <td colspan="2" class="ps-3 py-3 fw-bold fs-5 text-primary" id="totalCarritoFinal"></td>
-                </tr>
-            </tfoot>`;
+        const fmt = n => n.toLocaleString('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});
 
-        container.appendChild(tabla);
-        const tbody = tabla.querySelector("tbody");
+        const wrap = document.createElement('div');
+        wrap.className = 'cart-list-wrap';
+
+        const header = document.createElement('div');
+        header.className = 'cart-list-header';
+        header.innerHTML = `
+            <span class="cart-h-product">Producto</span>
+            <span class="cart-h-qty">Cant.</span>
+            <span class="cart-h-price">Subtotal</span>
+            <span class="cart-h-del"></span>`;
+        wrap.appendChild(header);
+
+        const list = document.createElement('div');
+        list.className = 'cart-items-list';
 
         productos.forEach(item => {
-            const sub = Number(item.precio_unitario) * Number(item.cantidad);
+            const sub  = Number(item.precio_unitario) * Number(item.cantidad);
             totalGeneral += sub;
-            const tr = document.createElement("tr");
-            tr.className = "cart-item-row";
             const imgPath = item.imagen || item.imagen_url;
             const validImg = imgPath && imgPath.startsWith('http');
-            const fotoHtml = validImg
-                ? `<img src="${imgPath}" class="img-preview" loading="lazy"
-                       style="display:block;"
-                       onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')">
-                   <div class="img-placeholder" style="display:none;"><i class="bi bi-box"></i></div>`
-                : `<div class="img-placeholder"><i class="bi bi-box"></i></div>`;
 
-            tr.innerHTML = `
-                <td class="ps-3 py-3 col-img">${fotoHtml}</td>
-                <td class="col-prod"><strong>${item.nombre_producto}</strong></td>
-                <td class="col-cant"><span class="badge-qty">${item.cantidad}</span></td>
-                <td class="col-sub">${sub.toLocaleString('es-CO',{style:'currency',currency:'COP', maximumFractionDigits: 0})}</td>
-                <td class="col-del text-center">
-                    <button class="btn btn-sm btn-outline-danger btn-quitar border-0"><i class="bi bi-trash"></i></button>
-                </td>`;
+            const row = document.createElement('div');
+            row.className = 'cart-item';
 
-            tr.querySelector(".btn-quitar").onclick = async (e) => {
+            row.innerHTML = `
+                <div class="cart-item-img">
+                    ${validImg
+                        ? `<img src="${imgPath}" alt="${item.nombre_producto}" loading="lazy"
+                                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                           <div class="cart-img-ph" style="display:none;"><i class="bi bi-box-seam"></i></div>`
+                        : `<div class="cart-img-ph"><i class="bi bi-box-seam"></i></div>`}
+                </div>
+                <div class="cart-item-info">
+                    <div class="cart-item-name">${item.nombre_producto}</div>
+                    <div class="cart-item-unit">${fmt(Number(item.precio_unitario))} / unidad</div>
+                </div>
+                <div class="cart-item-qty">
+                    <span class="cart-qty-badge">${item.cantidad}</span>
+                </div>
+                <div class="cart-item-sub">${fmt(sub)}</div>
+                <div class="cart-item-del">
+                    <button class="cart-del-btn" title="Eliminar">
+                        <i class="bi bi-trash3-fill"></i>
+                    </button>
+                </div>`;
+
+            row.querySelector('.cart-del-btn').onclick = () => {
                 if (isRequesting) return;
-                
-                showConfirmToast(`¿Deseas eliminar "${item.nombre_producto}" del carrito?`, async () => {
+                showConfirmToast(`¿Eliminar "${item.nombre_producto}" del carrito?`, async () => {
                     isRequesting = true;
-                    const idProd = item.id_producto;
-                    const cantRetornar = item.cantidad;
-
-                    tr.style.opacity = '0.5';
-                    tr.style.pointerEvents = 'none';
-
+                    row.style.opacity = '0.4';
+                    row.style.pointerEvents = 'none';
                     try {
-                        const r = await fetch(`/carrito_quitar/${item.id_carrito}`, { method: "DELETE" });
+                        const r = await fetch(`/carrito_quitar/${item.id_carrito}`, { method: 'DELETE' });
                         if (r.ok) {
-                            const event = new CustomEvent('stockActualizado', {
-                                detail: { id_producto: idProd, cambio: cantRetornar }
-                            });
-                            window.dispatchEvent(event);
+                            window.dispatchEvent(new CustomEvent('stockActualizado', {
+                                detail: { id_producto: item.id_producto, cambio: item.cantidad }
+                            }));
                             await cargarCarrito();
-                            showMessage(`🗑️ "${item.nombre_producto}" eliminado del carrito`);
+                            showMessage(`"${item.nombre_producto}" eliminado del carrito`);
                         }
-                    } catch (err) {
-                        showMessage("Error al eliminar el producto", true);
-                        tr.style.opacity = '1';
-                        tr.style.pointerEvents = 'auto';
-                    } finally {
-                        isRequesting = false;
-                    }
+                    } catch { showMessage('Error al eliminar', true); row.style.opacity='1'; row.style.pointerEvents='auto'; }
+                    finally { isRequesting = false; }
                 });
             };
-            tbody.appendChild(tr);
+            list.appendChild(row);
         });
 
-        document.getElementById("totalCarritoFinal").textContent = totalGeneral.toLocaleString('es-CO',{style:'currency',currency:'COP', maximumFractionDigits: 0});
+        wrap.appendChild(list);
+
+        const footer = document.createElement('div');
+        footer.className = 'cart-list-footer';
+        footer.innerHTML = `
+            <div class="cart-footer-items">${productos.length} producto(s)</div>
+            <div class="cart-footer-total">
+                <span>Total</span>
+                <strong id="totalCarritoFinal">${fmt(totalGeneral)}</strong>
+            </div>`;
+        wrap.appendChild(footer);
+        container.appendChild(wrap);
     } catch(e) {}
 }
 

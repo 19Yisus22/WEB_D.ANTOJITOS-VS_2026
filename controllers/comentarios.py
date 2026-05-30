@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template
 
-import models as db
+import helpers.models as db
 from helpers.auth import sin_cache, login_required
 
 comentarios_bp = Blueprint("comentarios", __name__)
@@ -15,29 +15,32 @@ def _now() -> str:
 @sin_cache
 @login_required
 def comentarios_page():
-    user_id  = session.get("user_id")
-    usuario  = db.usuario_get(user_id)
-    if not usuario:
-        return redirect(url_for("auth.login"))
+    try:
+        user_id  = session.get("user_id")
+        usuario  = db.usuario_get(user_id)
+        if not usuario:
+            return redirect(url_for("auth.login"))
 
-    comentarios = db.comentario_get_all()
-    usuarios_res = db.usuario_get_all()
-    usuarios_dict = {
-        u["cedula"]: {
-            "nombre_usuario": f"{u.get('nombre','')} {u.get('apellido','')}".strip(),
-            "foto_perfil":    u.get("imagen_url"),
+        comentarios  = db.comentario_get_all()
+        usuarios_res = db.usuario_get_all()
+        usuarios_dict = {
+            u["cedula"]: {
+                "nombre_usuario": f"{u.get('nombre','')} {u.get('apellido','')}".strip(),
+                "foto_perfil":    u.get("imagen_url"),
+            }
+            for u in usuarios_res
         }
-        for u in usuarios_res
-    }
+        for c in comentarios:
+            info = usuarios_dict.get(c.get("cedula") or "", {"nombre_usuario": "Usuario", "foto_perfil": None})
+            c["usuario_info"] = info
+            if not c.get("foto_perfil"):
+                c["foto_perfil"] = info["foto_perfil"]
 
-    for c in comentarios:
-        info = usuarios_dict.get(c["cedula"], {"nombre_usuario": "Usuario", "foto_perfil": None})
-        c["usuario_info"] = info
-        if not c.get("foto_perfil"):
-            c["foto_perfil"] = info["foto_perfil"]
-
-    return render_template("general_modules/comentarios.html",
-                           comentarios=comentarios, user_id=user_id)
+        return render_template("general_modules/comentarios.html",
+                               comentarios=comentarios, user_id=user_id)
+    except Exception:
+        return render_template("general_modules/comentarios.html",
+                               comentarios=[], user_id=session.get("user_id"))
 
 
 @comentarios_bp.route("/comentarios", methods=["GET"])
@@ -79,54 +82,63 @@ def obtener_comentarios():
 @comentarios_bp.route("/comentarios", methods=["POST"])
 @login_required
 def crear_comentario():
-    data    = request.get_json() or {}
-    mensaje = (data.get("mensaje") or "").strip()
-    if not mensaje:
-        return jsonify({"error": "Mensaje vacío"}), 400
+    try:
+        data    = request.get_json() or {}
+        mensaje = (data.get("mensaje") or "").strip()
+        if not mensaje:
+            return jsonify({"error": "Mensaje vacío"}), 400
 
-    usuario = db.usuario_get(session["user_id"])
-    if not usuario:
-        return jsonify({"error": "Usuario no encontrado"}), 404
+        usuario = db.usuario_get(session["user_id"])
+        if not usuario:
+            return jsonify({"error": "Usuario no encontrado"}), 404
 
-    result = db.comentario_create({
-        "cedula":         usuario["cedula"],
-        "nombre_usuario": f"{usuario['nombre']} {usuario['apellido']}",
-        "correo_usuario": usuario["correo"],
-        "foto_perfil":    usuario.get("imagen_url"),
-        "mensaje":        mensaje,
-        "likes_usuarios": [],
-    })
-    return jsonify(result[0] if result else {})
+        result = db.comentario_create({
+            "cedula":         usuario["cedula"],
+            "nombre_usuario": f"{usuario.get('nombre','')} {usuario.get('apellido','')}".strip(),
+            "correo_usuario": usuario.get("correo", ""),
+            "foto_perfil":    usuario.get("imagen_url"),
+            "mensaje":        mensaje,
+            "likes_usuarios": [],
+        })
+        return jsonify(result[0] if result else {})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @comentarios_bp.route("/comentarios/<id>", methods=["PUT"])
 @login_required
 def editar_comentario(id):
-    data    = request.get_json() or {}
-    mensaje = (data.get("mensaje") or "").strip()
-    if not mensaje:
-        return jsonify({"error": "Mensaje requerido"}), 400
+    try:
+        data    = request.get_json() or {}
+        mensaje = (data.get("mensaje") or "").strip()
+        if not mensaje:
+            return jsonify({"error": "Mensaje requerido"}), 400
 
-    comentario = db.comentario_get(id)
-    if not comentario:
-        return jsonify({"error": "Comentario no encontrado"}), 404
-    if comentario["cedula"] != session["user_id"]:
-        return jsonify({"error": "Sin permiso"}), 403
+        comentario = db.comentario_get(id)
+        if not comentario:
+            return jsonify({"error": "Comentario no encontrado"}), 404
+        if comentario.get("cedula") != session.get("user_id"):
+            return jsonify({"error": "Sin permiso"}), 403
 
-    result = db.comentario_update(id, {"mensaje": mensaje})
-    return jsonify(result[0] if result else {})
+        result = db.comentario_update(id, {"mensaje": mensaje})
+        return jsonify(result[0] if result else {})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @comentarios_bp.route("/comentarios/<id>", methods=["DELETE"])
 @login_required
 def eliminar_comentario(id):
-    comentario = db.comentario_get(id)
-    if not comentario:
-        return jsonify({"error": "Comentario no encontrado"}), 404
-    if comentario["cedula"] != session["user_id"]:
-        return jsonify({"error": "Sin permiso"}), 403
-    db.comentario_delete(id)
-    return jsonify({"ok": True})
+    try:
+        comentario = db.comentario_get(id)
+        if not comentario:
+            return jsonify({"error": "Comentario no encontrado"}), 404
+        if comentario.get("cedula") != session.get("user_id"):
+            return jsonify({"error": "Sin permiso"}), 403
+        db.comentario_delete(id)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @comentarios_bp.route("/comentarios/<id>/like", methods=["POST"])

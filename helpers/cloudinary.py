@@ -31,10 +31,8 @@ def get_storage_info() -> dict:
         "limit_gb": round(_cache["limit_bytes"] / (1024 ** 3), 2),
     }
 
-
 def _invalidate_cache():
     _cache["last_updated"] = 0.0
-
 
 def upload_image(file, folder: str = "mi_app", public_id: str | None = None) -> str | None:
     if not public_id:
@@ -57,7 +55,6 @@ def upload_image(file, folder: str = "mi_app", public_id: str | None = None) -> 
         logging.getLogger(__name__).warning("upload_image error: %s", e)
         return None
 
-
 def upload_base64(data_uri: str, folder: str = "mi_app") -> str | None:
     try:
         result = cloudinary.uploader.upload(
@@ -75,7 +72,6 @@ def upload_base64(data_uri: str, folder: str = "mi_app") -> str | None:
         logging.getLogger(__name__).warning("upload_base64 error: %s", e)
         return None
 
-
 def delete_image(public_url: str) -> bool:
     if not public_url:
         return False
@@ -88,12 +84,21 @@ def delete_image(public_url: str) -> bool:
     except Exception:
         return False
 
+def delete_image_by_public_id(public_id: str) -> bool:
+    """Elimina una imagen de Cloudinary usando su public_id directamente."""
+    if not public_id:
+        return False
+    try:
+        cloudinary.uploader.destroy(public_id, resource_type="image")
+        _invalidate_cache()
+        return True
+    except Exception:
+        return False
 
 def allowed_extension(filename: str) -> bool:
     allowed = {"png", "jpg", "jpeg", "gif", "ico", "webp"}
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     return ext in allowed
-
 
 def list_images_by_folder(folder: str, max_results: int = 50) -> list:
     """Lista imágenes de una carpeta Cloudinary. Devuelve lista de dicts con url, nombre, tamaño."""
@@ -120,7 +125,6 @@ def list_images_by_folder(folder: str, max_results: int = 50) -> list:
         return images
     except Exception:
         return []
-
 
 def list_all_folders_images() -> dict:
     """Lista imágenes de las carpetas reales en Cloudinary."""

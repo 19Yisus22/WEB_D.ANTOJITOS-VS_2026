@@ -265,143 +265,112 @@ async function cargarMetodosPago() {
     }
 }
 
+function _getBankConfig(entidad) {
+    const MAP = {
+        'Nequi':        { color: '#8e24aa', bg: '#f3e5f5', icon: 'bi-phone-fill' },
+        'Daviplata':     { color: '#e53935', bg: '#ffebee', icon: 'bi-credit-card-2-front-fill' },
+        'Bancolombia':   { color: '#f9a825', bg: '#fff8e1', icon: 'bi-bank2' },
+        'NuBank':        { color: '#6200ea', bg: '#ede7f6', icon: 'bi-wallet2' },
+        'Efecty':        { color: '#ff6f00', bg: '#fff3e0', icon: 'bi-currency-dollar' },
+        'Movii':         { color: '#0d47a1', bg: '#e3f2fd', icon: 'bi-phone' },
+        'PSE':           { color: '#1565c0', bg: '#e8f5e9', icon: 'bi-building' },
+    };
+    return MAP[entidad] || { color: '#d35400', bg: '#fff5e1', icon: 'bi-wallet-fill' };
+}
+
 function abrirModalPago(facturaNum, total) {
-
     const modalElement = document.getElementById('modalPago');
-
-    const modalBody = document.getElementById("modalPagoBody");
-
+    const modalBody    = document.getElementById("modalPagoBody");
     if (!modalElement || !modalBody) return;
 
     if (!metodosPagoCache || metodosPagoCache.length === 0) {
-
         modalBody.innerHTML = `
             <div class="text-center py-5">
-
-                <div class="mb-3">
-                    <i class="bi bi-bank2 fs-1 text-muted opacity-25"></i>
-                </div>
-
-                <h5 class="text-secondary fw-bold">
-                    Canales de pago no disponibles
-                </h5>
-
-                <p class="small text-muted mx-auto" style="max-width: 250px;">
-                    Estamos actualizando nuestras cuentas.
-                </p>
-
-            </div>
-        `;
-
+                <i class="bi bi-bank2 display-4 text-muted opacity-25 d-block mb-3"></i>
+                <h6 class="text-muted fw-bold">Canales de pago no disponibles</h6>
+                <p class="small text-muted">Estamos actualizando nuestras cuentas.</p>
+            </div>`;
     } else {
-
+        const bancoActivo = 0;
         modalBody.innerHTML = `
-            <div class="text-center mb-4 bg-light p-3 rounded-4">
-
-                <span class="badge bg-primary px-3 mb-2 rounded-pill">
-                    Referencia de pago
-                </span>
-
-                <h4 class="fw-bold text-dark mb-1 font-monospace">
-                    ${facturaNum}
-                </h4>
-
-                <div class="fs-2 fw-bold text-primary mt-2">
-                    ${total}
+            <div class="payment-modal-header">
+                <div class="payment-secure-badge">
+                    <i class="bi bi-shield-fill-check me-1"></i>Pago 100% Seguro
                 </div>
-
+                <div class="payment-ref-box">
+                    <div class="payment-ref-label">Referencia de Pago</div>
+                    <div class="payment-ref-num font-monospace">${facturaNum}</div>
+                    <div class="payment-ref-total">${total}</div>
+                </div>
             </div>
 
-            <div class="row g-4 justify-content-center">
-
-                ${metodosPagoCache.map(m => `
-                    <div class="col-12 col-md-6">
-
-                        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-metodo-pago">
-
-                            <div class="card-header bg-dark text-white text-center py-3 border-0">
-                                <span class="fw-bold small text-uppercase letter-spacing-1">
-                                    ${m.entidad}
-                                </span>
-                            </div>
-
-                            <div class="card-body p-4 text-center bg-white">
-
-                                <div class="mb-3 position-relative d-inline-block">
-
-                                    <img
-                                        src="${m.qr_url || '/static/uploads/no-qr.png'}"
-                                        class="img-fluid rounded-4 border p-2 bg-white shadow-sm"
-                                        style="max-height: 180px; width: 100%; object-fit: contain;"
-                                        onerror="this.src='/static/uploads/no-qr.png'"
-                                    >
-
-                                </div>
-
-                                <div class="bg-light rounded-4 p-3 border border-dashed mt-2">
-
-                                    <p class="text-muted small mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">
-                                        ${m.tipo_cuenta || 'Cuenta'}
-                                    </p>
-
-                                    <p class="mb-3 fw-bold text-dark border-bottom pb-2">
-                                        ${m.titular}
-                                    </p>
-
-                                    <div class="d-flex align-items-center justify-content-between bg-white p-2 rounded-3 border mx-auto" style="max-width: 300px;">
-
-                                        <span class="fs-5 fw-bold text-primary font-monospace flex-grow-1 text-center">
-                                            ${m.numero}
-                                        </span>
-
-                                        <button
-                                            class="btn btn-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-2"
-                                            onclick="navigator.clipboard.writeText('${m.numero}').then(() => showMessage('Numero de cuenta copiado al portapapeles'))"
-                                        >
-                                            <i class="bi bi-copy"></i>
-                                        </button>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
+            <div class="payment-bank-tabs" id="paymentBankTabs">
+                ${metodosPagoCache.map((m, i) => {
+                    const cfg = _getBankConfig(m.entidad);
+                    return `
+                    <button class="payment-bank-tab ${i === 0 ? 'active' : ''}"
+                            onclick="_selectBanco(${i})" id="ptab-${i}"
+                            style="--bank-color:${cfg.color};">
+                        <div class="payment-bank-tab-img" style="background:${cfg.bg};">
+                            ${m.qr_url
+                                ? `<img src="${m.qr_url}" alt="${m.entidad}"
+                                        style="border-radius:6px;"
+                                        onerror="this.outerHTML='<i class=\\'bi ${cfg.icon}\\' style=\\'color:${cfg.color};font-size:1.4rem;\\'></i>'">`
+                                : `<i class="bi ${cfg.icon}" style="color:${cfg.color};font-size:1.4rem;"></i>`}
                         </div>
-
-                    </div>
-                `).join('')}
-
+                        <span>${m.entidad}</span>
+                    </button>`;
+                }).join('')}
             </div>
 
-            <div class="mt-4 p-3 bg-warning bg-opacity-10 border border-warning border-dashed rounded-4 text-center">
-
-                <p class="small text-dark mb-0 fw-medium">
-
-                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>
-
-                    Envía el comprobante de pago vía WhatsApp al
-                    <a href="https://wa.me/573115699825" target="_blank" style="color: #007bff; text-decoration: underline;">
-                        +573115699825
-                    </a>
-
-                    o vía correo a
-                    <a href="mailto:terugag@hotmail.com" style="color: #007bff; text-decoration: underline;">
-                        terugag@hotmail.com
-                    </a>
-
-                    después de haber realizado la transferencia.
-
-                </p>
-
+            <div id="paymentBankDetail">
+                ${metodosPagoCache.map((m, i) => `
+                    <div class="payment-bank-panel ${i === 0 ? 'active' : ''}" id="bpanel-${i}">
+                        <div class="payment-qr-container">
+                            <div class="payment-qr-box">
+                                ${m.qr_url
+                                    ? `<img src="${m.qr_url}" alt="QR ${m.entidad}"
+                                            onerror="this.outerHTML='<div class=payment-qr-ph><i class=bi.bi-qr-code-scan></i></div>'">`
+                                    : `<div class="payment-qr-ph"><i class="bi bi-qr-code-scan"></i></div>`}
+                            </div>
+                            <div class="payment-qr-instructions">
+                                <i class="bi bi-phone me-1 text-muted"></i>
+                                Escanea con la app de <strong>${m.entidad}</strong>
+                            </div>
+                        </div>
+                        <div class="payment-account-info">
+                            <div class="payment-account-row">
+                                <span class="payment-account-label">${m.tipo_cuenta || 'Tipo de cuenta'}</span>
+                                <span class="payment-account-val">${m.titular}</span>
+                            </div>
+                            <div class="payment-number-row">
+                                <span class="payment-number font-monospace">${m.numero}</span>
+                                <button class="payment-copy-btn"
+                                        onclick="navigator.clipboard.writeText('${m.numero}').then(()=>showMessage('Número copiado'))">
+                                    <i class="bi bi-copy me-1"></i>Copiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>`).join('')}
             </div>
-        `;
+
+            <div class="payment-notice">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                Envía tu comprobante por
+                <a href="https://wa.me/573115699825" target="_blank">WhatsApp</a>
+                o
+                <a href="mailto:terugag@hotmail.com">correo</a>
+                tras realizar la transferencia.
+            </div>`;
     }
 
-    const bsModal = bootstrap.Modal.getOrCreateInstance(modalElement);
-
-    bsModal.show();
+    bootstrap.Modal.getOrCreateInstance(modalElement).show();
 }
+
+window._selectBanco = function(idx) {
+    document.querySelectorAll('.payment-bank-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+    document.querySelectorAll('.payment-bank-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+};
 
 async function descargarPDF(f) {
 
@@ -638,7 +607,8 @@ async function monitorearCambiosFacturas() {
         const filtradas = facturasServidor.filter(f =>
             f.numero_factura.toLowerCase().includes(term) ||
             (f.cedula && f.cedula.toString().toLowerCase().includes(term)) ||
-            (f.cliente_nombre && f.cliente_nombre.toLowerCase().includes(term))
+            (f.cliente_nombre && f.cliente_nombre.toLowerCase().includes(term)) ||
+            (f.username_cliente && f.username_cliente.toLowerCase().includes(term))
         );
 
         facturasActuales = ordenarFacturas(filtradas);
@@ -650,6 +620,18 @@ async function monitorearCambiosFacturas() {
     } catch (e) {
         console.error(e);
     }
+}
+
+function _configVisual(estadoLower) {
+    if (['anulada','cancelado','cancelada'].includes(estadoLower))
+        return { color: 'danger',  icono: 'bi-x-octagon-fill',      label: 'ANULADA'   };
+    if (['pagada','pagado','finalizado','entregado','completada','completado'].includes(estadoLower))
+        return { color: 'success', icono: 'bi-patch-check-fill',     label: 'PAGADA'    };
+    if (estadoLower.includes('emitid'))
+        return { color: 'info',    icono: 'bi-file-earmark-arrow-up', label: 'EMITIDA'  };
+    if (estadoLower === 'enviado')
+        return { color: 'warning', icono: 'bi-truck-flatbed',         label: 'ENVIADO'  };
+    return { color: 'primary', icono: 'bi-hourglass-split', label: estadoLower.toUpperCase() };
 }
 
 function mostrarFacturasBuscadas() {
@@ -723,300 +705,128 @@ function mostrarFacturasBuscadas() {
         });
     }
 
-    filtradas = ordenarFacturas(filtradas);
+    filtradas = [...filtradas].sort((a, b) =>
+        new Date(b.fecha_emision || b.created_at) - new Date(a.fecha_emision || a.created_at)
+    );
 
     const totalItems = filtradas.length;
 
-    const totalPaginas = Math.ceil(totalItems / itemsPorPagina);
-
-    if (paginaActual > totalPaginas && totalPaginas > 0) {
-        paginaActual = totalPaginas;
-    }
+    if (paginaActual > Math.ceil(totalItems / itemsPorPagina) && Math.ceil(totalItems / itemsPorPagina) > 0)
+        paginaActual = Math.ceil(totalItems / itemsPorPagina);
 
     container.innerHTML = "";
 
-    const inicio = (paginaActual - 1) * itemsPorPagina;
-
-    const paginadas = filtradas.slice(
-        inicio,
-        inicio + itemsPorPagina
-    );
-
-    if (paginadas.length === 0) {
-
-        const mensaje = mostrarArchivadas
-            ? "No hay facturas archivadas."
-            : "No se encontraron facturas.";
-
+    if (filtradas.length === 0) {
         container.innerHTML = `
-            <div class="text-center p-5 bg-white rounded-5 shadow-sm border">
-
-                <div class="display-1 text-muted opacity-10 mb-3">
-                    <i class="bi bi-folder2-open"></i>
-                </div>
-
-                <h5 class="fw-bold text-dark">
-                    No se encontraron registros
-                </h5>
-
-                <p class="text-muted small">
-                    ${mensaje}
-                </p>
-
-            </div>
-        `;
-
+            <div class="text-center p-5 rounded-4 border">
+                <i class="bi bi-folder2-open display-4 text-muted opacity-25 d-block mb-3"></i>
+                <h6 class="fw-bold">No se encontraron registros</h6>
+                <p class="text-muted small">${mostrarArchivadas ? "No hay facturas archivadas." : "No se encontraron facturas."}</p>
+            </div>`;
         paginar(0);
-
         return;
     }
 
-    paginadas.forEach(f => {
+    const inicio   = (paginaActual - 1) * itemsPorPagina;
+    const paginadas = filtradas.slice(inicio, inicio + itemsPorPagina);
 
-        const card = document.createElement("div");
+    const lista = document.createElement('div');
+    lista.className = 'invoice-list';
 
-        const estadoActual = (f.estado || "Emitida").toUpperCase();
-
-        const estadoLower = estadoActual.toLowerCase();
-
-        const esPagada = [
-            "pagada",
-            "pagado",
-            "finalizado",
-            "entregado",
-            "completada",
-            "completado"
-        ].includes(estadoLower);
-
-        const esAnulada = [
-            "anulada",
-            "cancelado",
-            "cancelada"
-        ].includes(estadoLower);
-
-        const esEstadoFinal = esPagada || esAnulada;
+    paginadas.forEach((f, idx) => {
+        const globalIdx = inicio + idx;
+        const estadoLower = (f.estado || 'emitida').toLowerCase();
+        const cv          = _configVisual(estadoLower);
+        const esFinal     = ['danger','success'].includes(cv.color);
+        const fecha       = new Date(f.fecha_emision || f.created_at);
+        const fechaStr    = fecha.toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
 
         let totalSuma = 0;
-
-        let itemsListHtml = (f.productos || []).map(p => {
-
-            const valSub = Number(p.subtotal || 0);
-
-            totalSuma += valSub;
-
-            return `
-                <div class="d-flex justify-content-between align-items-center border-bottom border-light py-2">
-
-                    <div class="me-2">
-
-                        <div class="fw-semibold text-dark small text-truncate" style="max-width: 180px;">
-                            ${p.nombre_producto}
+        const productosHtml = (f.productos || []).map(p => {
+            totalSuma += Number(p.subtotal || 0);
+            return `<div class="inv-product-row">
+                        <div>
+                            <span class="fw-semibold">${p.nombre_producto}</span>
+                            <small class="text-muted ms-2">× ${p.cantidad}</small>
                         </div>
-
-                        <div class="text-muted" style="font-size: 0.7rem;">
-                            Cant: ${p.cantidad}
-                        </div>
-
-                    </div>
-
-                    <div class="fw-bold text-dark">
-                        ${FormateadorCosto.format(valSub)}
-                    </div>
-
-                </div>
-            `;
+                        <span class="fw-bold">${FormateadorCosto.format(Number(p.subtotal || 0))}</span>
+                    </div>`;
         }).join('');
 
-        let configVisual = {
-            color: "primary",
-            icono: "bi-hourglass-split"
-        };
+        const item = document.createElement('div');
+        item.className = `inv-item inv-${cv.color}`;
+        item.id = `inv-item-${globalIdx}`;
 
-        if (esAnulada) {
-            configVisual = {
-                color: "danger",
-                icono: "bi-x-octagon-fill"
-            };
-        }
-
-        else if (esPagada) {
-            configVisual = {
-                color: "success",
-                icono: "bi-patch-check-fill"
-            };
-        }
-
-        else if (estadoLower.includes("emitid")) {
-            configVisual = {
-                color: "info",
-                icono: "bi-file-earmark-arrow-up"
-            };
-        }
-
-        else if (estadoLower === "enviado") {
-            configVisual = {
-                color: "warning",
-                icono: "bi-truck-flatbed"
-            };
-        }
-
-        card.className = `
-            card border-0 shadow-sm rounded-4 mb-4 overflow-hidden
-            ${esEstadoFinal
-                ? 'opacity-90'
-                : 'border-start border-4 border-' + configVisual.color}
-        `;
-
-        card.innerHTML = `
-            <div class="card-header bg-white border-bottom-0 p-4">
-
-                <div class="d-flex justify-content-between align-items-start">
-
-                    <div class="d-flex align-items-center">
-
-                        <div class="rounded-4 bg-dark text-white d-flex align-items-center justify-content-center me-3 shadow" style="width:50px; height:50px;">
-                            <i class="bi bi-receipt-cutoff fs-4"></i>
-                        </div>
-
-                        <div>
-
-                            <h5 class="fw-bold mb-0 text-dark font-monospace">
-                                ${f.numero_factura}
-                            </h5>
-
-                            <span class="badge bg-light text-primary border border-primary-subtle fw-bold mt-1">
-                                TITULAR: ${f.cedula || 'REGISTRADO'}
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                    <div class="text-end">
-
-                        <span class="badge bg-${configVisual.color} bg-opacity-10 text-${configVisual.color} px-3 py-2 rounded-pill fw-bold border border-${configVisual.color}">
-                            <i class="bi ${configVisual.icono} me-1"></i>
-                            ${estadoActual}
-                        </span>
-
-                        <div class="text-muted mt-2 small">
-                            ${new Date(f.fecha_emision || f.created_at).toLocaleDateString()}
-                        </div>
-
-                    </div>
-
+        item.innerHTML = `
+            <div class="inv-header" onclick="toggleInvItem(${globalIdx})">
+                <div class="inv-header-left">
+                    <i class="bi bi-receipt-cutoff inv-icon text-${cv.color}"></i>
+                    <span class="inv-num font-monospace fw-bold">${f.numero_factura}</span>
                 </div>
-
+                <div class="inv-header-center text-muted small">${fechaStr}</div>
+                <div class="inv-header-right">
+                    <span class="badge inv-badge badge-${cv.color}">
+                        <i class="bi ${cv.icono} me-1"></i>${cv.label}
+                    </span>
+                    <i class="bi bi-chevron-down inv-chevron ms-2"></i>
+                </div>
             </div>
 
-            <div class="card-body px-4 py-2">
-
-                <div class="bg-light rounded-4 p-3 mb-3" style="max-height: 180px; overflow-y: auto;">
-                    ${itemsListHtml}
+            <div class="inv-body" id="inv-body-${globalIdx}">
+                <div class="inv-products-box">${productosHtml}</div>
+                <div class="inv-total-row">
+                    <span class="text-muted small fw-bold text-uppercase">Total</span>
+                    <span class="inv-total-amount">${FormateadorCosto.format(totalSuma)}</span>
                 </div>
-
-                <div class="d-flex justify-content-between align-items-end mb-2">
-
-                    <div class="text-muted small fw-bold text-uppercase">
-                        Total
-                    </div>
-
-                    <div class="text-primary fw-bolder fs-3">
-                        ${FormateadorCosto.format(totalSuma)}
-                    </div>
-
+                ${!esFinal ? `
+                    <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold inv-btn-pagar">
+                        <i class="bi bi-qr-code-scan me-2"></i>PROCEDER AL PAGO
+                    </button>` : `
+                    <div class="alert alert-${cv.color === 'danger' ? 'secondary' : 'success'} border-0 rounded-pill py-2 text-center small fw-bold mb-0">
+                        <i class="bi ${cv.color === 'danger' ? 'bi-slash-circle' : 'bi-shield-fill-check'} me-1"></i>
+                        ${cv.color === 'danger' ? 'ANULADO' : 'COMPLETADO'}
+                    </div>`}
+                <div class="inv-actions mt-2">
+                    <button class="btn btn-sm btn-outline-dark inv-btn-pdf flex-fill">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                    </button>
+                    ${!esFinal ? `
+                        <button class="btn btn-sm btn-outline-danger inv-btn-anular flex-fill">
+                            <i class="bi bi-x-circle me-1"></i>Anular
+                        </button>` : `
+                        <button class="btn btn-sm btn-outline-secondary inv-btn-archivar flex-fill">
+                            <i class="bi bi-archive me-1"></i>Archivar
+                        </button>`}
                 </div>
+            </div>`;
 
-                ${(!esEstadoFinal)
+        const bp = item.querySelector('.inv-btn-pagar');
+        if (bp) bp.onclick = () => abrirModalPago(f.numero_factura, FormateadorCosto.format(totalSuma));
 
-                    ? `
-                        <button class="btn btn-primary w-100 fw-bold rounded-pill py-3 btn-pagar-card mt-2 d-flex align-items-center justify-content-center gap-2">
-                            <i class="bi bi-qr-code-scan"></i>
-                            PROCEDER AL PAGO
-                        </button>
-                    `
+        const ba = item.querySelector('.inv-btn-anular');
+        if (ba) ba.onclick = () => procesarAnulacion(f.numero_factura);
 
-                    : `
-                        <div class="alert alert-${esAnulada ? 'secondary' : 'success'} border-0 rounded-pill py-2 px-4 text-center mt-2 small fw-bold">
-                            <i class="bi ${esAnulada ? 'bi-slash-circle' : 'bi-shield-fill-check'}"></i>
-                            ${esAnulada ? 'ANULADO' : 'COMPLETADO'}
-                        </div>
-                    `
-                }
+        const bq = item.querySelector('.inv-btn-archivar');
+        if (bq) bq.onclick = () => { archivarFactura(f.numero_factura); mostrarFacturasBuscadas(); };
 
-            </div>
+        item.querySelector('.inv-btn-pdf').onclick = () => descargarPDF(f);
 
-            <div class="card-footer bg-light border-0 p-3">
-
-                <div class="row g-2">
-
-                    <div class="col-6">
-                        <button class="bi bi-file-earmark-pdf btn btn-sm btn-dark w-100 rounded-3 py-2 btn-descargar-pdf">
-                            <strong> Descargar Factura</strong>
-                        </button>
-                    </div>
-
-                    <div class="col-6">
-
-                        ${(!esEstadoFinal)
-
-                            ? `
-                                <button class="btn btn-sm btn-danger w-100 rounded-3 py-2 btn-anular-factura d-flex align-items-center justify-content-center shadow-sm">
-                                    <i class="bi bi-x-circle-fill me-2"></i>
-                                    <strong>ANULAR PEDIDO</strong>
-                                </button>
-                            `
-
-                            : `
-                                <button class="btn btn-sm btn-secondary w-100 rounded-3 py-2 btn-quitar-vista d-flex align-items-center justify-content-center shadow-sm">
-                                    <i class="bi bi-archive-fill me-2"></i>
-                                    <strong>ARCHIVAR</strong>
-                                </button>
-                            `
-                        }
-
-                    </div>
-
-                </div>
-
-            </div>
-        `;
-
-        const btnP = card.querySelector('.btn-pagar-card');
-
-        if (btnP) {
-            btnP.onclick = () => abrirModalPago(
-                f.numero_factura,
-                FormateadorCosto.format(totalSuma)
-            );
-        }
-
-        const btnA = card.querySelector('.btn-anular-factura');
-
-        if (btnA) {
-            btnA.onclick = () => procesarAnulacion(
-                f.numero_factura
-            );
-        }
-
-        const btnQ = card.querySelector('.btn-quitar-vista');
-
-        if (btnQ) {
-            btnQ.onclick = () => {
-                archivarFactura(f.numero_factura);
-                mostrarFacturasBuscadas();
-            };
-        }
-
-        card.querySelector('.btn-descargar-pdf').onclick = () => {
-            descargarPDF(f);
-        };
-
-        container.appendChild(card);
+        lista.appendChild(item);
     });
 
+    container.appendChild(lista);
     paginar(filtradas.length);
 }
+
+window.toggleInvItem = function(idx) {
+    const body    = document.getElementById(`inv-body-${idx}`);
+    const item    = document.getElementById(`inv-item-${idx}`);
+    const chevron = item?.querySelector('.inv-chevron');
+    if (!body) return;
+    const open = body.classList.toggle('open');
+    if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
+    if (item) item.classList.toggle('expanded', open);
+};
 
 function paginar(totalItems) {
 

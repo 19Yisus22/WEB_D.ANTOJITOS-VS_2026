@@ -1,4 +1,4 @@
-let carruselIndex = 0, seccionIndex = 0, cintaIndex = 0, inicioCintaIndex = 0;
+﻿let carruselIndex = 0, seccionIndex = 0, cintaIndex = 0, inicioCintaIndex = 0;
 let procesamientoEnCurso = false;
 
 async function actualizarAlmacenamiento() {
@@ -519,14 +519,69 @@ document.addEventListener("DOMContentLoaded", async () => {
         initDrag("inicioCintaContainer");
         document.getElementById("btnGuardarMarketing")?.addEventListener("click", guardarMarketing);
         cargarGestorImagenes();
+        _initLivePreviewScroll();
     }
 });
 
-// ══════════════════════════════════════════════════════════
+function recargarPreviewInicio() {
+    const iframe = document.getElementById('iframePreviewInicio');
+    const badge  = document.getElementById('liveStatusBadge');
+    if (!iframe) return;
+    if (badge) { badge.textContent = 'ACTUALIZANDO...'; badge.className = 'badge bg-warning ms-1'; }
+    iframe.src = iframe.src;
+    iframe.onload = () => {
+        if (badge) { badge.textContent = 'EN VIVO'; badge.className = 'badge bg-success ms-1'; }
+    };
+}
+
+function _initLivePreviewScroll() {
+    const wrapper = document.querySelector('.live-preview-wrapper');
+    const overlay = document.querySelector('.live-preview-overlay');
+    const iframe  = document.getElementById('iframePreviewInicio');
+    if (!wrapper || !overlay || !iframe) return;
+
+    const MAX_SCROLL = 2800;
+    let scrollTop = 0;
+
+    function applyScroll() {
+        iframe.style.transform = `translateY(-${scrollTop}px)`;
+    }
+
+    wrapper.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        scrollTop = Math.max(0, Math.min(MAX_SCROLL, scrollTop + e.deltaY));
+        applyScroll();
+    }, { passive: false });
+
+    let touchStartY = 0;
+    overlay.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    overlay.addEventListener('touchmove', (e) => {
+        const dy = touchStartY - e.touches[0].clientY;
+        touchStartY = e.touches[0].clientY;
+        scrollTop = Math.max(0, Math.min(MAX_SCROLL, scrollTop + dy));
+        applyScroll();
+    }, { passive: true });
+
+    let isDragging = false, dragStartY = 0, dragStartScroll = 0;
+    overlay.addEventListener('mousedown', (e) => { isDragging = true; dragStartY = e.clientY; dragStartScroll = scrollTop; });
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dy = dragStartY - e.clientY;
+        scrollTop = Math.max(0, Math.min(MAX_SCROLL, dragStartScroll + dy));
+        applyScroll();
+    });
+    document.addEventListener('mouseup', () => { isDragging = false; });
+}
+
 //  GESTOR DE IMÁGENES CLOUDINARY
-// ══════════════════════════════════════════════════════════
+
 let _gestorData = {};
 let _carpetaActual = 'publicidad';
+const _GESTOR_PAG = 10;
+let _gestorPagina = 1;
 
 async function cargarGestorImagenes() {
     const grid   = document.getElementById('gestorGrid');
@@ -549,10 +604,10 @@ async function cargarGestorImagenes() {
 
 function mostrarCarpeta(carpeta) {
     _carpetaActual = carpeta;
+    _gestorPagina  = 1;
     const grid = document.getElementById('gestorGrid');
     if (!grid) return;
 
-    // Actualizar tabs
     document.querySelectorAll('#gestorTabs .nav-link').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.carpeta === carpeta);
     });
@@ -564,21 +619,72 @@ function mostrarCarpeta(carpeta) {
         return;
     }
 
-    grid.innerHTML = imgs.map(img => `
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="gestor-img-card" onclick="abrirImagenGestor('${img.url}', '${img.name}', '${img.size_kb} KB', '${img.width}x${img.height}')">
-                <div class="gestor-img-wrap">
-                    ${img.url
-                        ? `<img src="${img.url}" alt="${img.name}" loading="lazy"
-                              onerror="this.outerHTML='<div class=gestor-img-broken><i class=bi bi-image-slash></i></div>'">`
-                        : `<div class="gestor-img-broken"><i class="bi bi-image-slash"></i></div>`}
-                </div>
-                <div class="gestor-img-info">
-                    <div class="gestor-img-name" title="${img.name}">${img.name}</div>
-                    <div class="gestor-img-meta">${img.size_kb} KB · ${img.format?.toUpperCase() || '?'}</div>
-                </div>
+    _renderGestorPagina(imgs);
+}
+
+function _renderGestorPagina(imgs) {
+    const grid    = document.getElementById('gestorGrid');
+    if (!grid) return;
+    const maxPag  = Math.ceil(imgs.length / _GESTOR_PAG);
+    const inicio  = (_gestorPagina - 1) * _GESTOR_PAG;
+    const visibles = imgs.slice(inicio, inicio + _GESTOR_PAG);
+
+    const liHtml = visibles.map((img, i) => {
+        const idx = inicio + i;
+        return `
+        <li class="list-group-item d-flex align-items-center gap-3 py-2 px-2">
+            <img src="${img.url || ''}" alt="${img.name}" loading="lazy"
+                 style="width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid #dee2e6;cursor:pointer;"
+                 onerror="this.outerHTML='<div style=\\'width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:6px;color:#adb5bd;\\'><i class=\\'bi bi-image-slash\\'></i></div>'"
+                 onclick="abrirImagenGestor('${img.url}','${img.name}','${img.size_kb} KB','${img.width}x${img.height}')">
+            <div class="flex-grow-1 overflow-hidden" onclick="abrirImagenGestor('${img.url}','${img.name}','${img.size_kb} KB','${img.width}x${img.height}')" style="cursor:pointer;">
+                <div class="fw-semibold small text-truncate" title="${img.name}">${img.name}</div>
+                <div class="text-muted" style="font-size:0.72rem;">${img.size_kb} KB · ${(img.format||'').toUpperCase()} · ${img.width}×${img.height}</div>
             </div>
-        </div>`).join('');
+            <div class="d-flex gap-1 flex-shrink-0">
+                <button class="btn btn-sm btn-outline-secondary px-2" onclick="navigator.clipboard.writeText('${img.url}').then(()=>mostrarAlerta('URL copiada'))">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger px-2" onclick="eliminarImagenGestor('${img.public_id}',${idx})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </li>`;
+    }).join('');
+
+    const pagNav = maxPag > 1 ? `
+        <nav class="mt-3">
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+                ${Array.from({length: maxPag}, (_,i) => `
+                    <li class="page-item ${i+1 === _gestorPagina ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="event.preventDefault();_gestorPagina=${i+1};_renderGestorPagina(window._gestorImgsActuales||[]);">${i+1}</a>
+                    </li>`).join('')}
+            </ul>
+        </nav>` : '';
+
+    window._gestorImgsActuales = imgs;
+    grid.innerHTML = `<div class="col-12"><ul class="list-group list-group-flush">${liHtml}</ul>${pagNav}</div>`;
+}
+
+async function eliminarImagenGestor(publicId, idx) {
+    mostrarConfirmacionApp('Eliminar imagen', '¿Eliminar esta imagen de Cloudinary? Esta acción no se puede deshacer.', async () => {
+        try {
+            const res = await fetch('/api/cloudinary/gestor/delete', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ public_id: publicId })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                mostrarAlerta('Imagen eliminada correctamente');
+                await cargarGestorImagenes();
+            } else {
+                mostrarAlerta(data.error || 'Error al eliminar', true);
+            }
+        } catch {
+            mostrarAlerta('Error de conexión', true);
+        }
+    });
 }
 
 function abrirImagenGestor(url, nombre, size, dims) {
@@ -622,3 +728,8 @@ function abrirImagenGestor(url, nombre, size, dims) {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-publicidad.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const pubBtn = document.getElementById('navPubBtn');
+    if (pubBtn) pubBtn.style.display = '';
+});

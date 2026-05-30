@@ -1,10 +1,10 @@
-const CACHE_NAME = 'dantojitos-comentarios-v2';
+const CACHE_NAME = 'dantojitos-comentarios-v4';
 const STATIC_ASSETS = [
-    '/comentarios_page',
     '/static/css/general_modules/style_comentarios.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_utils.css',
     '/static/js/general_js/comentarios.js',
+    '/static/js/global_js/utils.js',
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
     '/static/uploads/default_icon_profile.png',
@@ -13,7 +13,9 @@ const STATIC_ASSETS = [
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
 ];
 
+// Siempre desde la red — comentarios en tiempo real
 const NETWORK_FIRST_ROUTES = [
+    '/comentarios_page',
     '/comentarios',
     '/usuarios_activos_conteo',
     '/actualizar_estado_comentarios'
@@ -60,9 +62,10 @@ async function networkFirst(request) {
         if (res.ok) cache.put(request, res.clone());
         return res;
     } catch {
-        return await cache.match(request) || new Response(JSON.stringify({ error: 'Sin conexión' }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return await cache.match(request) || new Response(
+            JSON.stringify({ error: 'Sin conexión' }),
+            { headers: { 'Content-Type': 'application/json' } }
+        );
     }
 }
 

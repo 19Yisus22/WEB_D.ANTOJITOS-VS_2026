@@ -1,10 +1,10 @@
-const CACHE_NAME = 'dantojitos-pedidos-v4';
+const CACHE_NAME = 'dantojitos-pedidos-v6';
 const STATIC_ASSETS = [
-    '/pedidos_page',
     '/static/css/admin_modules/style_pedidos.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_utils.css',
     '/static/js/admin_js/pedidos.js',
+    '/static/js/global_js/utils.js',
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
@@ -14,7 +14,9 @@ const STATIC_ASSETS = [
     'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js'
 ];
 
+// Siempre desde la red — pedidos en tiempo real
 const NETWORK_FIRST_ROUTES = [
+    '/pedidos_page',
     '/obtener_pedidos',
     '/actualizar_estado/',
     '/actualizar_pago_item/',
@@ -64,9 +66,10 @@ async function networkFirst(request) {
         if (res.ok) cache.put(request, res.clone());
         return res;
     } catch {
-        return await cache.match(request) || new Response(JSON.stringify({ error: 'Sin conexión' }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return await cache.match(request) || new Response(
+            JSON.stringify({ error: 'Sin conexión' }),
+            { headers: { 'Content-Type': 'application/json' } }
+        );
     }
 }
 

@@ -254,31 +254,8 @@ function renderProductos(filterText = '') {
     } else if (filtros[filtroIndex] === 'Antiguos') {
         baseFiltrada.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     }
-    const listaFavoritos = baseFiltrada.filter(p => favoritos.includes(p.id_producto.toString()));
     const disponibles = baseFiltrada.filter(p => p.stock > 0);
     const agotados = baseFiltrada.filter(p => p.stock <= 0);
-    if (listaFavoritos.length > 0) {
-        const col = document.createElement("div");
-        col.className = "col-12 mb-5";
-        col.innerHTML = `
-            <div class="accordion border-0 shadow-sm" style="border-radius: 15px; overflow: hidden;">
-                <div class="accordion-item border-0">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFavoritosSec" style="background-color: #fff9f0;">
-                            <i class="bi bi-heart-fill text-danger me-2"></i> TUS FAVORITOS (${listaFavoritos.length})
-                        </button>
-                    </h2>
-                    <div id="collapseFavoritosSec" class="accordion-collapse collapse">
-                        <div class="accordion-body px-0" style="background-color: #fffdfa;">
-                            <div class="row g-4 px-3" id="contenedorInternoFavoritos"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        catalogoContainer.appendChild(col);
-        const inner = document.getElementById("contenedorInternoFavoritos");
-        listaFavoritos.forEach(p => inner.appendChild(crearCardProductoHTML(p, "fav")));
-    }
     if (disponibles.length > 0) {
         const headerDisp = document.createElement("div");
         headerDisp.className = "col-12 mt-2 mb-4";
