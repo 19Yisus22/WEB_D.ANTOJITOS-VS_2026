@@ -1,4 +1,4 @@
-let carruselIndex = 0, seccionIndex = 0, cintaIndex = 0;
+let carruselIndex = 0, seccionIndex = 0, cintaIndex = 0, inicioCintaIndex = 0;
 let procesamientoEnCurso = false;
 
 async function actualizarAlmacenamiento() {
@@ -29,69 +29,8 @@ async function actualizarAlmacenamiento() {
     }
 }
 
-function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
-    let container = document.getElementById("toastContainer");
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toastContainer";
-        container.style.cssText = "position:fixed;top:25px;right:25px;z-index:10000;display:flex;flex-direction:column;gap:12px;";
-        document.body.appendChild(container);
-    }
-    const color = esError ? "#ff4757" : "#2ed573";
-    const sombra = esError ? "rgba(255,71,87,0.2)" : "rgba(46,213,115,0.2)";
-    const toast = document.createElement("div");
-    toast.style.cssText = `background:#fff;color:#2f3542;padding:16px 24px;border-radius:12px;box-shadow:0 10px 30px ${sombra};display:flex;justify-content:space-between;align-items:center;min-width:350px;max-width:450px;border-left:6px solid ${color};transition:all 0.5s cubic-bezier(0.175,0.885,0.32,1.275);transform:translateX(100%);opacity:0;`;
-    toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <div style="background:${color};width:35px;height:35px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:15px;">
-                <i class="bi ${esError ? "bi-x-circle-fill" : "bi-check-circle-fill"} text-white fs-5"></i>
-            </div>
-            <div>
-                <strong style="display:block;font-size:0.8rem;text-transform:uppercase;color:#747d8c;">Notificación de Sistema</strong>
-                <span style="font-size:0.95rem;font-weight:600;">${mensaje}</span>
-            </div>
-        </div>
-        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer;font-size:1rem;color:#a4b0be;"></i>`;
-    container.appendChild(toast);
-    requestAnimationFrame(() => { toast.style.transform = "translateX(0)"; toast.style.opacity = "1"; });
-    const eliminar = () => {
-        toast.style.transform = "translateX(120%)";
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 500);
-    };
-    toast.querySelector(".btn-close-toast").onclick = eliminar;
-    setTimeout(eliminar, duracionMs);
-}
-
 function toast(msg, tipo = "success") {
     mostrarAlerta(msg, tipo === "danger");
-}
-
-function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
-    document.getElementById("appModalConfirm")?.remove();
-    const overlay = document.createElement("div");
-    overlay.id = "appModalConfirm";
-    overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:20000;backdrop-filter:blur(5px);transition:opacity 0.3s ease;";
-    const modal = document.createElement("div");
-    modal.style.cssText = "background:#fff;width:95%;max-width:420px;padding:35px;border-radius:25px;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,0.4);transform:scale(0.7);transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);";
-    modal.innerHTML = `
-        <div style="color:#ff4757;font-size:4rem;margin-bottom:20px;animation:pulse 1.5s infinite;"><i class="bi bi-exclamation-triangle-fill"></i></div>
-        <h2 style="margin-bottom:12px;font-weight:800;color:#1e272e;letter-spacing:-0.5px;">${titulo}</h2>
-        <p style="color:#485460;margin-bottom:30px;line-height:1.6;font-size:1.05rem;">${mensaje}</p>
-        <div style="display:flex;gap:12px;justify-content:center;">
-            <button id="btnCancelModal" class="btn btn-light" style="padding:12px 30px;border-radius:15px;font-weight:700;border:2px solid #f1f2f6;">CANCELAR</button>
-            <button id="btnConfirmModal" class="btn btn-danger" style="padding:12px 30px;border-radius:15px;font-weight:700;background:#ff4757;border:none;box-shadow:0 5px 15px rgba(255,71,87,0.3);">CONFIRMAR</button>
-        </div>`;
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-    setTimeout(() => { modal.style.transform = "scale(1)"; }, 10);
-    const cerrar = () => {
-        modal.style.transform = "scale(0.7)";
-        overlay.style.opacity = "0";
-        setTimeout(() => overlay.remove(), 300);
-    };
-    document.getElementById("btnCancelModal").onclick = cerrar;
-    document.getElementById("btnConfirmModal").onclick = () => { onConfirm(); cerrar(); };
 }
 
 async function comprimirImagen(file) {
@@ -380,6 +319,36 @@ function agregarCinta(url = "", titulo = "", id = "") {
     actualizarPreview();
 }
 
+function agregarInicioCinta(url = "", titulo = "", id = "") {
+    const idx = inicioCintaIndex++;
+    const div = document.createElement("div");
+    div.className = "col-12 section-preview mb-2";
+    div.draggable = true;
+    div.dataset.index = idx;
+    div.dataset.dbId = id;
+    div.dataset.cambioImagen = "false";
+    div.innerHTML = `
+        <div class="drag-handle"><i class="bi bi-grip-vertical fs-4"></i></div>
+        <div class="section-content d-flex align-items-center gap-3 w-100 py-2 px-3 border rounded" style="background:#fff8f0;">
+            <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:56px;height:56px;border-radius:50%;min-width:56px;overflow:hidden;background:#fff3e0;position:relative;">
+                <img src="${url}" class="w-100 h-100 ${!url ? "d-none" : ""}" style="object-fit:cover;"
+                    onload="this.classList.remove('d-none');if(this.nextElementSibling)this.nextElementSibling.classList.add('d-none');"
+                    onerror="this.classList.add('d-none');if(this.nextElementSibling)this.nextElementSibling.classList.remove('d-none');">
+                <div class="placeholder-icon text-muted ${url ? "d-none" : ""}">
+                    <i class="bi bi-image" style="font-size:1.4rem;opacity:0.5;color:#d35400;"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-5"><input type="file" class="form-control form-control-sm" accept="image/*" onchange="cambioImg(this)"></div>
+                    <div class="col-md-7"><input type="text" class="form-control form-control-sm t-tit fw-bold" placeholder="Nombre (ej: Nequi)..." value="${titulo}"></div>
+                </div>
+            </div>
+            <button class="btn btn-sm text-danger border-0" onclick="borrarSec(this)"><i class="bi bi-x-circle-fill fs-5"></i></button>
+        </div>`;
+    document.getElementById("inicioCintaContainer").appendChild(div);
+}
+
 async function guardarMarketing() {
     if (procesamientoEnCurso) return;
     const btn = document.getElementById("btnGuardarMarketing");
@@ -402,9 +371,11 @@ async function guardarMarketing() {
         for (let index = 0; index < items.length; index++) {
             const div = items[index];
             const fileInput = div.querySelector("input[type='file']");
+            const imgEl = div.querySelector("img");
+            const urlActual = (imgEl && imgEl.src && !imgEl.src.startsWith('data:')) ? imgEl.src : '';
             if (fileInput.files[0]) {
                 totalFiles++;
-                formData.append(`${filePrefix}_${index}`, await comprimirImagen(fileInput.files[0]));
+                formData.append(filePrefix, await comprimirImagen(fileInput.files[0]));
                 uploadedFiles++;
                 progressBar.style.width = `${(uploadedFiles / totalFiles) * 50}%`;
                 progressText.textContent = `Comprimiendo ${uploadedFiles}/${totalFiles} imágenes...`;
@@ -413,7 +384,7 @@ async function guardarMarketing() {
                 index,
                 titulo: div.querySelector(".t-tit")?.value || "",
                 descripcion: div.querySelector(".t-des")?.value || "",
-                url_actual: div.querySelector("img").src,
+                url_actual: urlActual,
                 cambio_img: div.dataset.cambioImagen === "true",
                 db_id: div.dataset.dbId || null
             });
@@ -421,9 +392,10 @@ async function guardarMarketing() {
         formData.append(metaKey, JSON.stringify(metadata));
     };
 
-    await extraerSeccion("carruselContainer", "metadata_carrusel", "file_carrusel");
-    await extraerSeccion("seccionesContainer", "metadata_secciones", "file_secciones");
-    await extraerSeccion("cintaContainer", "metadata_cinta", "file_cinta");
+    await extraerSeccion("carruselContainer", "metadata_carrusel", "imagenes_carrusel");
+    await extraerSeccion("seccionesContainer", "metadata_secciones", "imagenes_secciones");
+    await extraerSeccion("cintaContainer", "metadata_cinta", "imagenes_cinta");
+    await extraerSeccion("inicioCintaContainer", "metadata_inicio_cinta", "imagenes_inicio_cinta");
     progressBar.style.width = "75%";
     progressText.textContent = "Subiendo al servidor...";
     try {
@@ -432,7 +404,7 @@ async function guardarMarketing() {
         progressBar.style.width = "100%";
         progressText.textContent = "Completado";
         if (data.ok) {
-            toast("¡Publicidad actualizada con éxito!");
+            toast("📢 Publicidad guardada y publicada en el sitio");
             actualizarAlmacenamiento();
             setTimeout(() => location.reload(), 1000);
         } else {
@@ -518,6 +490,7 @@ function cargarPublicidadActiva() {
             if (item.tipo === "carrusel") agregarCarrusel(item.imagen_url, item.titulo, item.descripcion, item.id_publicidad);
             else if (item.tipo === "seccion") agregarSeccion(item.imagen_url, item.titulo, item.id_publicidad);
             else if (item.tipo === "cinta") agregarCinta(item.imagen_url, item.titulo, item.id_publicidad);
+            else if (item.tipo === "inicio_cinta") agregarInicioCinta(item.imagen_url, item.titulo, item.id_publicidad);
         });
         actualizarPreview();
     }).catch(e => console.error("Error cargando publicidad:", e));
@@ -543,9 +516,100 @@ document.addEventListener("DOMContentLoaded", async () => {
         initDrag("carruselContainer");
         initDrag("seccionesContainer");
         initDrag("cintaContainer");
+        initDrag("inicioCintaContainer");
         document.getElementById("btnGuardarMarketing")?.addEventListener("click", guardarMarketing);
+        cargarGestorImagenes();
     }
 });
+
+// ══════════════════════════════════════════════════════════
+//  GESTOR DE IMÁGENES CLOUDINARY
+// ══════════════════════════════════════════════════════════
+let _gestorData = {};
+let _carpetaActual = 'publicidad';
+
+async function cargarGestorImagenes() {
+    const grid   = document.getElementById('gestorGrid');
+    const badge  = document.getElementById('gestorTotalBadge');
+    if (!grid) return;
+    grid.innerHTML = `<div class="col-12 text-center py-5 text-muted">
+        <div class="spinner-border spinner-border-sm me-2" style="color:#f59e0b;"></div>Cargando...</div>`;
+    try {
+        const res  = await fetch('/api/cloudinary/gestor');
+        const data = await res.json();
+        if (!data.ok) { grid.innerHTML = '<div class="col-12 text-muted text-center py-4">Error al cargar imágenes</div>'; return; }
+        _gestorData = data.carpetas || {};
+        const total = Object.values(_gestorData).reduce((s, arr) => s + arr.length, 0);
+        if (badge) badge.textContent = total;
+        mostrarCarpeta(_carpetaActual);
+    } catch {
+        grid.innerHTML = '<div class="col-12 text-muted text-center py-4">Error de conexión</div>';
+    }
+}
+
+function mostrarCarpeta(carpeta) {
+    _carpetaActual = carpeta;
+    const grid = document.getElementById('gestorGrid');
+    if (!grid) return;
+
+    // Actualizar tabs
+    document.querySelectorAll('#gestorTabs .nav-link').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.carpeta === carpeta);
+    });
+
+    const imgs = _gestorData[carpeta] || [];
+    if (!imgs.length) {
+        grid.innerHTML = `<div class="col-12 text-center py-5 text-muted">
+            <i class="bi bi-folder2-open display-4 d-block mb-2"></i>Carpeta vacía</div>`;
+        return;
+    }
+
+    grid.innerHTML = imgs.map(img => `
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="gestor-img-card" onclick="abrirImagenGestor('${img.url}', '${img.name}', '${img.size_kb} KB', '${img.width}x${img.height}')">
+                <div class="gestor-img-wrap">
+                    ${img.url
+                        ? `<img src="${img.url}" alt="${img.name}" loading="lazy"
+                              onerror="this.outerHTML='<div class=gestor-img-broken><i class=bi bi-image-slash></i></div>'">`
+                        : `<div class="gestor-img-broken"><i class="bi bi-image-slash"></i></div>`}
+                </div>
+                <div class="gestor-img-info">
+                    <div class="gestor-img-name" title="${img.name}">${img.name}</div>
+                    <div class="gestor-img-meta">${img.size_kb} KB · ${img.format?.toUpperCase() || '?'}</div>
+                </div>
+            </div>
+        </div>`).join('');
+}
+
+function abrirImagenGestor(url, nombre, size, dims) {
+    const existing = document.getElementById('gestorModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'gestorModal';
+    modal.innerHTML = `
+        <div class="gestor-modal-overlay" onclick="this.parentElement.remove()">
+            <div class="gestor-modal-box" onclick="event.stopPropagation()">
+                <div class="gestor-modal-header">
+                    <span class="fw-bold text-truncate">${nombre}</span>
+                    <button class="btn btn-sm btn-close" onclick="document.getElementById('gestorModal').remove()"></button>
+                </div>
+                <img src="${url}" class="gestor-modal-img" alt="${nombre}"
+                     onerror="this.outerHTML='<div class=gestor-img-broken><i class=bi bi-image-slash></i></div>'">
+                <div class="gestor-modal-footer">
+                    <span class="text-muted small">${dims} · ${size}</span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="navigator.clipboard.writeText('${url}').then(()=>mostrarAlerta('URL copiada al portapapeles'))">
+                            <i class="bi bi-clipboard me-1"></i>Copiar URL
+                        </button>
+                        <a href="${url}" download="${nombre}" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-download me-1"></i>Descargar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+}
 
 (function () {
     window.history.pushState(null, "", window.location.href);

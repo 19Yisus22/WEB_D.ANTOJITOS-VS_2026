@@ -1,8 +1,13 @@
-const CACHE_NAME = 'dantojitos-inicio-v3';
+const CACHE_NAME = 'dantojitos-inicio-v4';
 const STATIC_ASSETS = [
-    '/',
-    '/static/css/style_inicio.css',
-    '/static/js/inicio.js',
+    '/inicio',
+    '/static/css/general_modules/style_inicio.css',
+    '/static/css/global_modules/style_inicio.css',
+    '/static/css/global_modules/style_navbar.css',
+    '/static/css/global_modules/style_footer.css',
+    '/static/css/global_modules/style_utils.css',
+    '/static/js/general_js/inicio.js',
+    '/static/js/global_js/inicio.js',
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
@@ -10,73 +15,66 @@ const STATIC_ASSETS = [
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
 ];
 
+const NETWORK_FIRST_ROUTES = [
+    '/api/publicidad/activa',
+    '/api/admin/notificaciones',
+    '/obtener_catalogo',
+    '/obtener-cliente-id'
+];
+
 self.addEventListener('install', event => {
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll(STATIC_ASSETS);
-        })
+        caches.open(CACHE_NAME).then(cache =>
+            Promise.allSettled(
+                STATIC_ASSETS.map(url =>
+                    fetch(url).then(res => { if (res.ok) cache.put(url, res); }).catch(() => {})
+                )
+            )
+        )
     );
 });
 
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(keys => {
-            return Promise.all(
-                keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-            );
-        })
+        caches.keys().then(keys =>
+            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+        ).then(() => self.clients.claim())
     );
-    self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
 
     const url = new URL(event.request.url);
-    const isApiCall = url.pathname.startsWith('/api/') || url.pathname.includes('obtener_catalogo');
-    const isStaticAsset = STATIC_ASSETS.some(asset => 
-        url.pathname === asset || event.request.url.includes(asset)
-    );
 
-    if (isApiCall) {
-        event.respondWith(
-            fetch(event.request)
-                .then(networkResponse => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        const responseToCache = networkResponse.clone();
-                        caches.open(CACHE_NAME).then(cache => {
-                            cache.put(event.request, responseToCache);
-                        });
-                    }
-                    return networkResponse;
-                })
-                .catch(() => caches.match(event.request))
-        );
+    if (NETWORK_FIRST_ROUTES.some(r => url.pathname.startsWith(r))) {
+        event.respondWith(networkFirst(event.request));
         return;
     }
 
-    if (isStaticAsset) {
-        event.respondWith(
-            caches.match(event.request).then(cachedResponse => {
-                const fetchPromise = fetch(event.request).then(networkResponse => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        const responseToCache = networkResponse.clone();
-                        caches.open(CACHE_NAME).then(cache => {
-                            cache.put(event.request, responseToCache);
-                        });
-                    }
-                    return networkResponse;
-                });
-                return cachedResponse || fetchPromise;
-            })
-        );
-        return;
-    }
-
-    event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request) || caches.match('/');
-        })
-    );
+    event.respondWith(staleWhileRevalidate(event.request));
 });
+
+async function networkFirst(request) {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+        const res = await fetch(request);
+        if (res.ok) cache.put(request, res.clone());
+        return res;
+    } catch {
+        return await cache.match(request) || new Response(JSON.stringify({ error: true, message: 'Sin conexión' }), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+}
+
+async function staleWhileRevalidate(request) {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(request);
+    const fetchPromise = fetch(request).then(res => {
+        if (res && res.status === 200) cache.put(request, res.clone());
+        return res;
+    }).catch(() => cached);
+    return cached || fetchPromise;
+}

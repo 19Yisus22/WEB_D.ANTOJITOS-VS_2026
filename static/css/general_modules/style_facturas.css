@@ -290,3 +290,40 @@ body {
     margin-top: 0.35rem;
     font-size: 0.95rem;
 }
+
+/* ── Dark theme para módulo facturas ── */
+[data-theme="dark"] body { background: #0d0d0d !important; }
+[data-theme="dark"] .section-header h2,
+[data-theme="dark"] .section-header h3 { color: #e8e8e8 !important; }
+[data-theme="dark"] .section-header p { color: #888 !important; }
+[data-theme="dark"] .search-panel {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+}
+[data-theme="dark"] #facturasContainer .card,
+[data-theme="dark"] .access-overlay .access-panel {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+    color: #e8e8e8 !important;
+}
+[data-theme="dark"] .card-body { background: #1a1a1a !important; color: #e8e8e8 !important; }
+[data-theme="dark"] .divider { background: #d35400 !important; }
+[data-theme="dark"] hr { border-color: #2a2a2a !important; }
+[data-theme="dark"] .modal-body { background: #141414 !important; }
+[data-theme="dark"] .card-metodo-pago { background: #1a1a1a !important; }
+[data-theme="dark"] .bg-light { background: #202020 !important; }
+[data-theme="dark"] .text-dark { color: #e8e8e8 !important; }
+[data-theme="dark"] .text-muted { color: #888 !important; }
+[data-theme="dark"] .custom-pagination .page-link {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+    color: #e8e8e8 !important;
+}
+[data-theme="dark"] #facturaContainer { color: #e8e8e8 !important; }
+[data-theme="dark"] .btn-outline-primary {
+    border-color: #d35400 !important;
+    color: #d35400 !important;
+}
+[data-theme="dark"] .bg-warning.bg-opacity-10 {
+    background: rgba(255,193,7,0.08) !important;
+}

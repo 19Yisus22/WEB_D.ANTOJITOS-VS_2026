@@ -5,52 +5,11 @@ let currentPage = 1;
 const recordsPerPage = 7;
 
 function showMessage(msg, isError = false) {
-    const toastEl = document.createElement('div');
-    toastEl.className = `toast show align-items-center text-white ${isError ? 'bg-danger' : 'bg-dark'} border-0 mb-2 fade-in`;
-    toastEl.style.minWidth = "250px";
-    toastEl.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body"><i class="bi ${isError ? 'bi-exclamation-triangle' : 'bi-check-circle'} me-2"></i>${msg}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>`;
-    toastContainer.appendChild(toastEl);
-    setTimeout(() => toastEl.remove(), 4000);
+    mostrarAlerta(msg, isError);
 }
 
 function showConfirmCustom(titulo, mensaje, callback) {
-    const modalId = 'customConfirmModal';
-    let modalEl = document.getElementById(modalId);
-    if (!modalEl) {
-        modalEl = document.createElement('div');
-        modalEl.id = modalId;
-        modalEl.className = 'modal fade';
-        modalEl.setAttribute('tabindex', '-1');
-        modalEl.innerHTML = `
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-                    <div class="modal-body p-4 text-center">
-                        <i class="bi bi-exclamation-circle text-danger mb-3" style="font-size: 3rem;"></i>
-                        <h5 class="fw-bold mb-2">${titulo}</h5>
-                        <p class="text-muted mb-4">${mensaje}</p>
-                        <div class="d-flex gap-2 justify-content-center">
-                            <button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" id="confirmActionBtn" class="btn btn-danger px-4 rounded-pill">Confirmar</button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        document.body.appendChild(modalEl);
-    }
-    
-    const confirmBtn = modalEl.querySelector('#confirmActionBtn');
-    const bootstrapModal = new bootstrap.Modal(modalEl);
-    
-    confirmBtn.onclick = () => {
-        bootstrapModal.hide();
-        callback();
-    };
-    
-    bootstrapModal.show();
+    mostrarConfirmacionApp(titulo, mensaje, callback);
 }
 
 function setLoading(btn, isLoading, originalText) {
@@ -261,7 +220,7 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
         const idName = (i.id || i.name || '').toLowerCase();
         if ((idName.includes('correo') || idName.includes('cedula')) && i.value) {
             const dup = allUsers.some(u => {
-                if (String(u.id_cliente) === String(USER_ID)) return false;
+                if (String(u.cedula) === String(USER_ID)) return false;
                 if (idName.includes('correo') && u.correo && u.correo.toLowerCase() === i.value.toLowerCase()) return true;
                 if (idName.includes('cedula') && u.cedula && String(u.cedula) === i.value) return true;
                 return false;
@@ -275,6 +234,14 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     const cedulaField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase().includes('cedula'));
     const telefonoField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase().includes('telefono'));
     const correoField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase().includes('correo'));
+
+    // Sanitizar teléfono y cédula antes de validar (eliminar caracteres no numéricos)
+    if (telefonoField && !telefonoField.disabled) {
+        telefonoField.value = telefonoField.value.replace(/[^0-9]/g, '');
+    }
+    if (cedulaField && !cedulaField.disabled) {
+        cedulaField.value = cedulaField.value.replace(/[^0-9]/g, '');
+    }
 
     if (nombreField) {
         const nombreValue = nombreField.value.trim();
@@ -302,7 +269,7 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     }
     if (telefonoField) {
         const telefonoValue = telefonoField.value.trim();
-        if (telefonoValue !== '' && (!onlyDigitsRegex.test(telefonoValue) || telefonoValue.length < 10)) {
+        if (telefonoValue !== '' && (!onlyDigitsRegex.test(telefonoValue) || telefonoValue.length < 7)) {
             showMessage("Teléfono inválido", true);
             setLoading(btn, false, originalText);
             return;
@@ -397,7 +364,7 @@ function mostrarModalDetalles(u) {
                     </div>
                     
                     <h4 class="fw-bold mb-1 text-dark">${u.nombre} ${u.apellido}</h4>
-                    <p class="text-muted mb-4 small"><i class="bi bi-person-badge me-1"></i>ID Usuario: ${u.id_cliente || 'N/A'}</p>
+                    <p class="text-muted mb-4 small"><i class="bi bi-person-badge me-1"></i>ID Usuario: ${u.cedula || 'N/A'}</p>
                     
                     <div class="row g-3 text-start bg-light p-3 rounded-4 mx-1">
                         <div class="col-12">
@@ -498,7 +465,7 @@ function renderUserTable() {
             const div = document.createElement("div");
             div.className = "list-group-item d-flex align-items-center justify-content-between py-3 border-0 border-bottom fade-in";
             const rol = u.roles?.nombre_role || u.rol || 'cliente';
-            const esYo = String(u.id_cliente) === String(USER_ID);
+            const esYo = String(u.cedula) === String(USER_ID);
             const esGoogle = esCuentaGoogle(u);
             const metodoRegistro = esGoogle ? 'Google' : 'Email';
             div.innerHTML = `
@@ -519,19 +486,19 @@ function renderUserTable() {
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-primary shadow-sm" ${esYo ? 'disabled' : ''} id="btnRol-${u.id_cliente}" title="Cambiar rol">
+                        <button class="btn btn-sm btn-outline-primary shadow-sm" ${esYo ? 'disabled' : ''} id="btnRol-${u.cedula}" title="Cambiar rol">
                             <i class="bi bi-shield-lock-fill"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary shadow-sm" id="btnCopiar-${u.id_cliente}" title="Copiar correo">
+                        <button class="btn btn-sm btn-outline-secondary shadow-sm" id="btnCopiar-${u.cedula}" title="Copiar correo">
                             <i class="bi bi-clipboard-fill"></i>
                         </button>
-                        <button class="btn btn-sm btn-light border shadow-sm" id="btnVer-${u.id_cliente}" title="Ver detalles"><i class="bi bi-eye"></i></button>
+                        <button class="btn btn-sm btn-light border shadow-sm" id="btnVer-${u.cedula}" title="Ver detalles"><i class="bi bi-eye"></i></button>
                     </div>
                 </div>`;
             list.appendChild(div);
-            const btnVer = document.getElementById(`btnVer-${u.id_cliente}`);
+            const btnVer = document.getElementById(`btnVer-${u.cedula}`);
             if (btnVer) btnVer.onclick = () => mostrarModalDetalles(u);
-            const btnCopiar = document.getElementById(`btnCopiar-${u.id_cliente}`);
+            const btnCopiar = document.getElementById(`btnCopiar-${u.cedula}`);
             if (btnCopiar) {
                 btnCopiar.onclick = async () => {
                     try {
@@ -542,12 +509,12 @@ function renderUserTable() {
                     }
                 };
             }
-            const btnR = document.getElementById(`btnRol-${u.id_cliente}`);
+            const btnR = document.getElementById(`btnRol-${u.cedula}`);
             if (!esYo && btnR) {
                 btnR.onclick = async () => {
                     const originalText = btnR.innerHTML;
                     setLoading(btnR, true, originalText);
-                    await cambiarRol(u.id_cliente, rol === 'admin' ? 'cliente' : 'admin');
+                    await cambiarRol(u.cedula, rol === 'admin' ? 'cliente' : 'admin');
                     setLoading(btnR, false, originalText);
                 };
             }

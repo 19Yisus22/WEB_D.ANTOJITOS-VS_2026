@@ -495,9 +495,10 @@ main {
 .storage-fixed-wrapper {
     position: fixed;
     bottom: 30px;
-    right: 30px;
+    left: 20px;
+    right: auto;
     z-index: 1050;
-    animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .storage-container {
@@ -577,7 +578,8 @@ main {
 
     .storage-fixed-wrapper {
         bottom: 20px;
-        right: 20px;
+        left: 16px;
+        right: auto;
     }
 
     .storage-container {
@@ -609,4 +611,61 @@ main {
         padding: 8px 12px;
         margin: 0 3px;
     }
+}
+
+/* ═══════════ STATS DE VENTAS ═══════════ */
+.stats-venta-card {
+    background: var(--white);
+    border: 1px solid rgba(211,84,0,0.1);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.stats-venta-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(211,84,0,0.1);
+}
+.stats-venta-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+.stats-venta-num {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1.2;
+}
+.stats-venta-lbl {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-dark);
+    opacity: 0.55;
+    margin-top: 2px;
+}
+.badge-porcentaje-verde {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    font-size: 1rem;
+    font-weight: 800;
+    padding: 4px 14px;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(39,174,96,0.3);
+}
+.badge-porcentaje-bajo {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    box-shadow: 0 4px 12px rgba(231,76,60,0.3);
 }

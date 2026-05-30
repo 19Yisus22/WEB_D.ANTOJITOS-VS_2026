@@ -1,0 +1,14 @@
+{
+  "name": "dantojitos-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild static/ts/*.ts --bundle=false --format=esm --target=es2020 --outdir=static/js/compiled --sourcemap",
+    "watch": "esbuild static/ts/*.ts --bundle=false --format=esm --target=es2020 --outdir=static/js/compiled --sourcemap --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.0",
+    "typescript": "^5.4.0"
+  }
+}

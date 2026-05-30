@@ -50,116 +50,7 @@ function playNotificationSound(type = 'default') {
     } catch (e) {}
 }
 
-function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
-    const existing = document.getElementById('appModalConfirm');
-    if (existing) existing.remove();
 
-    const overlay = document.createElement('div');
-    overlay.id = 'appModalConfirm';
-    overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8); display: flex; align-items: center;
-        justify-content: center; z-index: 20000; backdrop-filter: blur(5px);
-        transition: opacity 0.3s ease;
-    `;
-
-    const modalBox = document.createElement('div');
-    modalBox.style.cssText = `
-        background: #ffffff; width: 95%; max-width: 420px; padding: 35px;
-        border-radius: 25px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.4);
-        transform: scale(0.7); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    `;
-
-    modalBox.innerHTML = `
-        <div style="color: #ff4757; font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-        </div>
-        <h2 style="margin-bottom: 12px; font-weight: 800; color: #1e272e; letter-spacing: -0.5px;">${titulo}</h2>
-        <p style="color: #485460; margin-bottom: 30px; line-height: 1.6; font-size: 1.05rem;">${mensaje}</p>
-        <div style="display: flex; gap: 12px; justify-content: center;">
-            <button id="btnCancelModal" class="btn btn-light" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; border: 2px solid #f1f2f6;">CANCELAR</button>
-            <button id="btnConfirmModal" class="btn btn-danger" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; background: #ff4757; border: none; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);">CONFIRMAR</button>
-        </div>
-    `;
-
-    overlay.appendChild(modalBox);
-    document.body.appendChild(overlay);
-
-    setTimeout(() => modalBox.style.transform = 'scale(1)', 10);
-
-    const cerrar = () => {
-        modalBox.style.transform = 'scale(0.7)';
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.remove(), 300);
-    };
-
-    document.getElementById('btnCancelModal').onclick = cerrar;
-    document.getElementById('btnConfirmModal').onclick = () => {
-        onConfirm();
-        cerrar();
-    };
-}
-
-function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
-    let container = document.getElementById('toastContainer');
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toastContainer";
-        container.style.cssText = "position: fixed; top: 25px; right: 25px; z-index: 10000; display: flex; flex-direction: column; gap: 12px;";
-        document.body.appendChild(container);
-    }
-
-    const toast = document.createElement('div');
-    toast.className = 'custom-toast-alert';
-    const colorPrimario = esError ? "#ff4757" : "#2ed573";
-    const sombraColor = esError ? "rgba(255, 71, 87, 0.2)" : "rgba(46, 213, 115, 0.2)";
-    
-    toast.style.cssText = `
-        background: #ffffff; 
-        color: #2f3542; 
-        padding: 16px 24px; 
-        border-radius: 12px; 
-        box-shadow: 0 10px 30px ${sombraColor}; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        min-width: 350px; 
-        max-width: 450px;
-        border-left: 6px solid ${colorPrimario}; 
-        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform: translateX(100%);
-        opacity: 0;
-    `;
-    
-    toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <div style="background: ${colorPrimario}; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
-                <i class="bi ${esError ? 'bi-x-circle-fill' : 'bi-check-circle-fill'} text-white fs-5"></i>
-            </div>
-            <div>
-                <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #747d8c;">Notificación de Sistema</strong>
-                <span style="font-size: 0.95rem; font-weight: 600;">${mensaje}</span>
-            </div>
-        </div>
-        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 1rem; color: #a4b0be;"></i>
-    `;
-    
-    container.appendChild(toast);
-
-    requestAnimationFrame(() => {
-        toast.style.transform = "translateX(0)";
-        toast.style.opacity = "1";
-    });
-
-    const eliminar = () => {
-        toast.style.transform = "translateX(120%)";
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 500);
-    };
-
-    toast.querySelector('.btn-close-toast').onclick = eliminar;
-    setTimeout(eliminar, duracionMs);
-}
 
 async function actualizarAlmacenamiento() {
     try {
@@ -221,7 +112,7 @@ function renderPostres(filtro = "") {
     listaPostresDisponibles.innerHTML = "";
     listaPostresAgotados.innerHTML = "";
 
-    const productosFiltrados = postres.filter(p => 
+    const productosFiltrados = postres.filter(p =>
         p.nombre.toLowerCase().includes(filtro.toLowerCase())
     );
 
@@ -239,7 +130,8 @@ function renderPostres(filtro = "") {
 
         card.innerHTML = `
         <div class="card h-100 shadow-sm ${isAgotado ? 'gris' : ''}" data-id="${p.id_producto}">
-            <img src="${p.imagen_url || '/static/uploads/default.png'}" class="postre-img card-img-top" alt="${p.nombre}">
+            <img src="${p.imagen_url || '/static/uploads/default.png'}" class="postre-img card-img-top" alt="${p.nombre}" loading="lazy"
+                 onerror="this.src='/static/uploads/default.png'">
             <div class="card-body p-3">
                 <h6 class="card-title text-truncate mb-1">${p.nombre}</h6>
                 <p class="card-text text-primary fw-bold mb-2">${Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
@@ -271,7 +163,28 @@ function abrirModalPostre(index) {
     const p = postres[index];
     document.getElementById("modalNombre").textContent = "Ficha de Producto";
     document.getElementById("modalNombreH3").textContent = p.nombre;
-    document.getElementById("modalFoto").src = p.imagen_url || "/static/uploads/default.png";
+    const modalFoto = document.getElementById("modalFoto");
+    const validUrl = p.imagen_url && p.imagen_url.startsWith('http');
+    if (validUrl) {
+        modalFoto.src = p.imagen_url;
+        modalFoto.style.display = 'block';
+        modalFoto.onerror = () => {
+            modalFoto.style.display = 'none';
+            const placeholder = document.createElement('div');
+            placeholder.className = 'd-flex align-items-center justify-content-center bg-light rounded-4';
+            placeholder.style.cssText = 'height:100%;min-height:200px;';
+            placeholder.innerHTML = '<i class="bi bi-image-slash text-muted fs-1"></i>';
+            modalFoto.parentNode.insertBefore(placeholder, modalFoto.nextSibling);
+        };
+    } else {
+        modalFoto.style.display = 'none';
+        const placeholder = document.createElement('div');
+        placeholder.id = 'modalFotoPlaceholder';
+        placeholder.className = 'd-flex align-items-center justify-content-center bg-light rounded-4';
+        placeholder.style.cssText = 'height:100%;min-height:200px;';
+        placeholder.innerHTML = '<i class="bi bi-image-slash text-muted fs-1"></i>';
+        if (modalFoto.parentNode) modalFoto.parentNode.insertBefore(placeholder, modalFoto.nextSibling);
+    }
     document.getElementById("modalDescripcion").textContent = p.descripcion || "Sin descripción";
     document.getElementById("modalPrecio").textContent = Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP' });
     document.getElementById("modalStock").textContent = `Existencias: ${p.stock}`;
@@ -347,12 +260,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
                 const res = await fetch(`/eliminar_producto/${p.id_producto}`, { method: "DELETE" });
                 if (res.ok) {
-                    mostrarAlerta("¡Producto eliminado con éxito!", true);
+                    mostrarAlerta(`🗑️ "${p.nombre}" eliminado permanentemente`, true);
+                    playNotificationSound('delete');
                     modal.hide();
                     await cargarPostres();
                 } else {
                     const err = await res.json();
-                    mostrarAlerta(err.error || "Error al eliminar", true);
+                    mostrarAlerta(`❌ Error al eliminar: ${err.error || 'intente de nuevo'}`, true);
                 }
             } catch (e) { mostrarAlerta("Error de conexión", true); }
         });
@@ -445,10 +359,15 @@ async function enviarFormulario(formData) {
             resetPrevisualizador();
             indexActual = null;
             await cargarPostres();
-            mostrarAlerta(`¡Producto ${esEdicion ? 'actualizado' : 'creado'} con éxito!`);
-
+            const nombre = formData.get('nombre') || 'Producto';
+            if (esEdicion) {
+                mostrarAlerta(`✏️ "${nombre}" actualizado correctamente en el catálogo`);
+            } else {
+                mostrarAlerta(`🎂 "${nombre}" agregado al catálogo con éxito`);
+                playNotificationSound('default');
+            }
             if (stockNuevo <= 0) {
-                mostrarAlerta("¡PRODUCTO AGOTADO REGISTRADO!", true, 6000);
+                mostrarAlerta(`⚠️ "${nombre}" registrado como AGOTADO`, true, 6000);
                 playNotificationSound('error');
             }
             await actualizarAlmacenamiento();

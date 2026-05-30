@@ -7,8 +7,10 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_modules/style_manual.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
 </head>
 <body>
+    <div id="scrollProgressBar"></div>
 
     {% if session.get('user_id') and session.get('rol') == 'admin' %}
 
@@ -146,30 +148,8 @@
 
     {% endif %}
 
-    <script>
-
-        function showSection(sectionId) {
-            const sections = document.querySelectorAll('.content-section');
-            const navItems = document.querySelectorAll('.nav-item');
-            
-            sections.forEach(section => {
-                section.classList.remove('active');
-            });
-
-            navItems.forEach(item => {
-                item.classList.remove('active');
-                if(item.innerHTML.toLowerCase().includes(sectionId.toLowerCase())) {
-                    item.classList.add('active');
-                }
-            });
-
-            const target = document.getElementById(sectionId);
-            if(target) {
-                target.classList.add('active');
-                document.querySelector('main').scrollTop = 0;
-            }
-        }
-    </script>
-
+    <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
+    <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_js/manual.js') }}"></script>
 </body>
 </html>

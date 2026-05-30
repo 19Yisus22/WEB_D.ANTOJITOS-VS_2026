@@ -943,3 +943,170 @@ main { flex-grow: 1; width: 100%; }
     .hero-cta-group { flex-direction: column; align-items: center; }
     .features-grid { grid-template-columns: 1fr; }
 }
+
+/* ═══════════ ADMIN SIDEBAR BUTTONS ═══════════ */
+.quick-link-manual .link-icon {
+    background: linear-gradient(135deg, #e8f0fe, #c7d9fd);
+}
+.quick-link-manual .link-icon i { color: #1a73e8; }
+.quick-link-manual:hover {
+    background: linear-gradient(135deg, #e8f0fe, #d2e3fc);
+    border-color: rgba(26,115,232,0.2);
+    color: #1a73e8;
+}
+.quick-link-manual:hover > .bi-chevron-right { color: #1a73e8; }
+
+.quick-link-editar {
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 6px;
+}
+.quick-link-editar .link-icon {
+    background: linear-gradient(135deg, #d35400, #e67e22);
+}
+.quick-link-editar .link-icon i { color: white; }
+.quick-link-editar:hover, .quick-link-editar.active {
+    background: linear-gradient(135deg, #d35400, #e67e22);
+    border-color: rgba(211,84,0,0.4);
+    color: white;
+}
+.quick-link-editar.active .link-icon { background: rgba(255,255,255,0.2); }
+.quick-link-editar:hover > .bi-chevron-right,
+.quick-link-editar.active > .bi-chevron-right { color: white; transform: translateX(4px); }
+.quick-link-editar:hover .link-info strong,
+.quick-link-editar.active .link-info strong,
+.quick-link-editar:hover .link-info small,
+.quick-link-editar.active .link-info small { color: white; }
+.quick-link-editar:hover .link-icon i { color: white; }
+
+/* ═══════════ CINTA INFERIOR DEL INICIO ═══════════ */
+.inicio-ribbon-bottom {
+    width: 100%;
+    background: #050505;
+    background-image: linear-gradient(to bottom, #080808 0%, #0d0d0d 100%);
+    overflow: hidden;
+    position: relative;
+}
+
+.ribbon-border-top {
+    height: 5px;
+    background: linear-gradient(to right, #fb923c, #f97316, #f59e0b, #fb923c);
+    background-size: 200% 100%;
+    animation: ribbonBorderFlow 3s linear infinite;
+}
+
+@keyframes ribbonBorderFlow {
+    0%   { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+}
+
+.ribbon-marquee-wrap {
+    width: 100%;
+    overflow: hidden;
+    padding: 10px 0;
+    position: relative;
+}
+
+.ribbon-marquee-wrap::before,
+.ribbon-marquee-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 80px;
+    z-index: 2;
+    pointer-events: none;
+}
+.ribbon-marquee-wrap::before { left: 0; background: linear-gradient(to right, #080808, transparent); }
+.ribbon-marquee-wrap::after  { right: 0; background: linear-gradient(to left, #080808, transparent); }
+
+.ribbon-placeholder {
+    display: flex;
+    white-space: nowrap;
+    color: rgba(255,255,255,0.85);
+    font-weight: 700;
+    font-size: 1rem;
+    animation: ribbonScroll 20s linear infinite;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.ribbon-icon-float {
+    font-size: 1.4rem;
+    filter: drop-shadow(0 0 8px currentColor);
+    color: #fb923c;
+}
+
+@keyframes ribbonScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.ribbon-inner-flex {
+    display: flex;
+    white-space: nowrap;
+    align-items: center;
+    animation: ribbonScroll 25s linear infinite;
+}
+
+.ribbon-promo-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 50px;
+    flex-shrink: 0;
+}
+
+.ribbon-img-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ribbon-img-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    background: rgba(251,146,60,0.35);
+    border-radius: 50%;
+    filter: blur(14px);
+    animation: ribbonGlow 3s ease-in-out infinite;
+}
+
+@keyframes ribbonGlow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50%       { opacity: 0.7; transform: scale(1.15); }
+}
+
+.ribbon-promo-img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.7);
+    box-shadow: 0 0 22px rgba(251,146,60,0.5);
+    position: relative;
+    z-index: 1;
+    animation: ribbonFloat 3s ease-in-out infinite;
+}
+
+@keyframes ribbonFloat {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-6px); }
+}
+
+.ribbon-img-broken {
+    font-size: 2.5rem;
+    color: rgba(255,255,255,0.3);
+}
+
+.ribbon-promo-text {
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: rgba(255,255,255,0.9);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    font-family: 'Lucida Handwriting', 'DM Sans', cursive;
+    font-style: italic;
+}

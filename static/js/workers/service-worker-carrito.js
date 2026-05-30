@@ -1,65 +1,74 @@
-const CACHE_NAME = 'd-antojitos-cache-v2';
+const CACHE_NAME = 'dantojitos-carrito-v3';
 const STATIC_ASSETS = [
-    '/',
-    '/static/css/style_carrito.css',
+    '/carrito_page',
+    '/gestionar_facturas_page',
+    '/static/css/general_modules/style_carrito.css',
+    '/static/css/general_modules/style_facturas.css',
+    '/static/css/global_modules/style_navbar.css',
+    '/static/css/global_modules/style_footer.css',
+    '/static/css/global_modules/style_utils.css',
+    '/static/js/general_js/carrito.js',
+    '/static/js/general_js/facturas.js',
+    '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css'
+    'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
 ];
 
-const DYNAMIC_ROUTES = [
+const NETWORK_FIRST_ROUTES = [
     '/obtener_carrito',
-    '/obtener_catalogo',
-    '/buscar_facturas'
+    '/carrito_quitar/',
+    '/finalizar_compra',
+    '/buscar_facturas_page',
+    '/obtener_facturas_page',
+    '/anular_factura_page/',
+    '/actualizar_estado_factura_page/',
+    '/obtener_metodos_pago'
 ];
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(STATIC_ASSETS);
-        })
+        caches.open(CACHE_NAME).then(cache =>
+            Promise.allSettled(
+                STATIC_ASSETS.map(url =>
+                    fetch(url).then(res => { if (res.ok) cache.put(url, res); }).catch(() => {})
+                )
+            )
+        )
     );
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
+        caches.keys().then(keys =>
+            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+        ).then(() => self.clients.claim())
     );
-    self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
-
+self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
 
-    if (DYNAMIC_ROUTES.some(route => url.pathname.startsWith(route))) {
+    const url = new URL(event.request.url);
+
+    if (NETWORK_FIRST_ROUTES.some(r => url.pathname.startsWith(r))) {
         event.respondWith(networkFirst(event.request));
-    } else {
-        event.respondWith(staleWhileRevalidate(event.request));
+        return;
     }
+
+    event.respondWith(staleWhileRevalidate(event.request));
 });
 
 async function networkFirst(request) {
     const cache = await caches.open(CACHE_NAME);
     try {
-        const networkResponse = await fetch(request);
-        if (networkResponse.ok) {
-            cache.put(request, networkResponse.clone());
-        }
-        return networkResponse;
-    } catch (error) {
-        const cachedResponse = await cache.match(request);
-        return cachedResponse || new Response(JSON.stringify({ error: "Sin conexión" }), {
+        const res = await fetch(request);
+        if (res.ok) cache.put(request, res.clone());
+        return res;
+    } catch {
+        return await cache.match(request) || new Response(JSON.stringify({ ok: false, message: 'Sin conexión' }), {
             headers: { 'Content-Type': 'application/json' }
         });
     }
@@ -67,14 +76,10 @@ async function networkFirst(request) {
 
 async function staleWhileRevalidate(request) {
     const cache = await caches.open(CACHE_NAME);
-    const cachedResponse = await cache.match(request);
-
-    const networkFetch = fetch(request).then((networkResponse) => {
-        if (networkResponse.ok) {
-            cache.put(request, networkResponse.clone());
-        }
-        return networkResponse;
-    });
-
-    return cachedResponse || networkFetch;
+    const cached = await cache.match(request);
+    const fetchPromise = fetch(request).then(res => {
+        if (res && res.status === 200) cache.put(request, res.clone());
+        return res;
+    }).catch(() => cached);
+    return cached || fetchPromise;
 }

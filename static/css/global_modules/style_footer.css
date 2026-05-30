@@ -1,20 +1,23 @@
-.footer-container {
+/* Estilos del footer — scoped bajo #main-footer-container para inmunidad total */
+
+#main-footer-container {
     background-color: #050505;
     background-image: linear-gradient(to bottom, #080808 0%, #0d0d0d 100%);
     border-top: 5px solid #fb923c;
     border-image: linear-gradient(to right, #fb923c, #f97316, #f59e0b) 1;
+    flex-shrink: 0;
 }
 
-.footer {
+#main-footer-container footer {
     color: #f8fafc;
     font-size: 0.9rem;
-    padding-top: 2rem !important;
-    padding-bottom: 1rem !important;
+    padding-top: 2rem;
+    padding-bottom: 1rem;
 }
 
-.footer-section h3, 
-.footer-section h4, 
-.footer-section h5 {
+#main-footer-container .footer-section h3,
+#main-footer-container .footer-section h4,
+#main-footer-container .footer-section h5 {
     color: #ffffff;
     font-weight: 700;
     margin-bottom: 1rem;
@@ -23,7 +26,7 @@
     font-size: 1.1rem;
 }
 
-.info-item {
+#main-footer-container .info-item {
     margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
@@ -32,23 +35,23 @@
     color: rgba(248, 250, 252, 0.85);
 }
 
-.info-item i {
+#main-footer-container .info-item i {
     color: #f1a7b9;
     font-size: 1.1rem;
-    animation: iconFloat 3s ease-in-out infinite;
+    animation: footerIconFloat 3s ease-in-out infinite;
 }
 
-@keyframes iconFloat {
+@keyframes footerIconFloat {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
+    50%       { transform: translateY(-5px); }
 }
 
-.info-item:hover {
+#main-footer-container .info-item:hover {
     transform: translateX(8px);
     color: #fb923c;
 }
 
-.payment-marquee-container {
+#main-footer-container .payment-marquee-container {
     overflow: hidden;
     padding: 12px 0;
     background: rgba(255, 255, 255, 0.05);
@@ -59,18 +62,18 @@
     border: 1px solid rgba(241, 167, 185, 0.1);
 }
 
-.payment-track {
+#main-footer-container .payment-track {
     display: flex;
     width: calc(200px * 8);
-    animation: scrollMarquee 25s linear infinite;
+    animation: footerScrollMarquee 25s linear infinite;
 }
 
-.payment-track:hover {
+#main-footer-container .payment-track:hover {
     animation-play-state: paused;
     cursor: pointer;
 }
 
-.payment-item {
+#main-footer-container .payment-item {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -80,7 +83,7 @@
     font-size: 0.8rem;
 }
 
-.payment-item img {
+#main-footer-container .payment-item img {
     width: 28px;
     height: auto;
     border-radius: 5px;
@@ -90,23 +93,23 @@
     transition: all 0.3s ease;
 }
 
-@keyframes scrollMarquee {
-    0% { transform: translateX(0); }
+@keyframes footerScrollMarquee {
+    0%   { transform: translateX(0); }
     100% { transform: translateX(calc(-200px * 4)); }
 }
 
-.app-badge {
+#main-footer-container .app-badge {
     width: 75px;
     height: auto;
     transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
 }
 
-.app-badge:hover {
+#main-footer-container .app-badge:hover {
     transform: scale(1.1) rotate(-5deg);
 }
 
-.social-icon {
+#main-footer-container .social-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -117,21 +120,21 @@
     font-size: 1.2rem;
     color: #000000 !important;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    animation: socialPulse 4s ease-in-out infinite;
+    animation: footerSocialPulse 4s ease-in-out infinite;
 }
 
-@keyframes socialPulse {
+@keyframes footerSocialPulse {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1) rotate(5deg); }
+    50%       { transform: scale(1.1) rotate(5deg); }
 }
 
-.social-icon:hover {
+#main-footer-container .social-icon:hover {
     background-color: #ffffff;
     transform: translateY(-5px) rotate(-10deg);
     box-shadow: 0 5px 15px rgba(241, 167, 185, 0.4);
 }
 
-.footer-bottom {
+#main-footer-container .footer-bottom {
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     padding-top: 1.5rem;
     margin-top: 2rem;
@@ -139,7 +142,7 @@
     font-size: 0.8rem;
 }
 
-.author-credit {
+#main-footer-container .author-credit {
     font-size: 0.75rem;
     margin-top: 5px;
     color: #f1a7b9;
@@ -147,12 +150,12 @@
 }
 
 @media (max-width: 768px) {
-    .footer-content {
+    #main-footer-container .footer-content {
         flex-direction: column;
         align-items: center;
         text-align: center;
         gap: 2rem;
     }
-    .info-item { justify-content: center; }
-    .footer-section { width: 100%; }
+    #main-footer-container .info-item  { justify-content: center; }
+    #main-footer-container .footer-section { width: 100%; }
 }

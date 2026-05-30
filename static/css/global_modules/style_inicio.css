@@ -943,3 +943,389 @@ main { flex-grow: 1; width: 100%; }
     .hero-cta-group { flex-direction: column; align-items: center; }
     .features-grid { grid-template-columns: 1fr; }
 }
+
+/* =====================================================================
+   WIDGET EDITOR — Admin Edit Mode
+   ===================================================================== */
+
+/* Botón flotante editar */
+.edit-mode-btn {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1200;
+    background: linear-gradient(135deg, #d35400, #e67e22);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(211,84,0,0.4);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.3px;
+}
+.edit-mode-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 22px rgba(211,84,0,0.5); }
+.edit-mode-btn.active { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+
+/* Barra inferior guardar/cancelar */
+.save-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #1e272e;
+    color: #fff;
+    padding: 12px 24px;
+    z-index: 1300;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.35);
+    gap: 16px;
+}
+.save-bar.show { display: flex; }
+.save-bar .save-info { font-size: 0.82rem; color: #a4b0be; }
+.save-bar .save-actions { display: flex; gap: 10px; flex-shrink: 0; }
+.btn-save {
+    background: #2ed573; color: #fff; border: none;
+    padding: 9px 22px; border-radius: 20px;
+    font-weight: 700; cursor: pointer; font-size: 0.82rem;
+    transition: background 0.2s;
+}
+.btn-save:hover { background: #26c265; }
+.btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-cancel-edit {
+    background: transparent; color: #a4b0be;
+    border: 1px solid #a4b0be; padding: 9px 22px;
+    border-radius: 20px; font-weight: 700; cursor: pointer; font-size: 0.82rem;
+    transition: all 0.2s;
+}
+.btn-cancel-edit:hover { color: #fff; border-color: #fff; }
+
+/* Widget bloque base */
+.widget-bloque {
+    position: relative;
+    transition: border 0.3s ease, padding 0.2s ease;
+}
+
+/* Widget bloque en edit mode */
+body.editing .widget-bloque {
+    border: 2px dashed rgba(211,84,0,0.35);
+    border-radius: 14px;
+    padding-top: 40px !important;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+}
+body.editing .widget-bloque:hover {
+    border-color: #d35400;
+}
+body.editing .widget-controls { display: flex !important; }
+
+/* Widget controls bar */
+.widget-controls {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    background: linear-gradient(135deg, #d35400, #e67e22);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 12px 12px 0 0;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    z-index: 10;
+    min-height: 34px;
+}
+.widget-handle {
+    cursor: grab;
+    font-size: 1.05rem;
+    opacity: 0.85;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+.widget-handle:hover  { background: rgba(255,255,255,0.2); }
+.widget-handle:active { cursor: grabbing; }
+.widget-label {
+    font-weight: 700;
+    flex: 1;
+    letter-spacing: 0.3px;
+}
+.widget-actions { display: flex; gap: 5px; margin-left: auto; }
+.btn-widget-action {
+    background: rgba(255,255,255,0.18);
+    border: none;
+    color: #fff;
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem;
+    text-decoration: none;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+.btn-widget-action:hover { background: rgba(255,255,255,0.35); color: #fff; }
+
+/* Texto editable: tooltip hint en edit mode */
+body.editing [data-config-key] {
+    cursor: pointer;
+    position: relative;
+    transition: outline 0.15s;
+}
+body.editing [data-config-key]:hover {
+    outline: 2px dashed rgba(211,84,0,0.5);
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+body.editing [data-config-key]::after {
+    content: '✏️ doble clic para editar';
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e272e;
+    color: #fff;
+    font-size: 0.68rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 100;
+}
+body.editing [data-config-key]:hover::after { opacity: 1; }
+
+/* Widget oculto */
+.widget-oculto > *:not(.widget-controls) {
+    opacity: 0.18;
+    pointer-events: none;
+}
+
+/* Sortable states */
+.sortable-ghost  { opacity: 0.25; border: 2px dashed #d35400 !important; background: rgba(211,84,0,0.06) !important; }
+.sortable-chosen { box-shadow: 0 12px 35px rgba(211,84,0,0.25) !important; }
+.sortable-drag   { opacity: 0.9; transform: rotate(1.5deg); }
+
+@media (max-width: 768px) {
+    .edit-mode-btn { top: 70px; right: 12px; padding: 8px 14px; font-size: 0.78rem; }
+    .save-bar { flex-direction: column; gap: 8px; padding: 10px 16px; }
+    .save-bar .save-info { font-size: 0.76rem; }
+}
+
+/* =====================================================================
+   MINI-PANEL NOTIFICACIONES ADMIN
+   ===================================================================== */
+.notif-admin-panel {
+    position: fixed;
+    bottom: 76px;
+    left: 20px;
+    width: 310px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    z-index: 1400;
+    overflow: hidden;
+    border: 1px solid rgba(211,84,0,0.12);
+    transform: translateY(calc(100% + 24px));
+    opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275),
+                opacity 0.3s ease;
+    pointer-events: none;
+}
+.notif-admin-panel.is-open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+.notif-admin-header {
+    background: linear-gradient(135deg, #d35400, #e67e22);
+    color: #fff;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    user-select: none;
+}
+.notif-admin-header:hover { filter: brightness(1.08); }
+.notif-admin-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.notif-admin-body.open { max-height: 360px; overflow-y: auto; }
+.notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    color: #a4b0be;
+    font-size: 0.82rem;
+    gap: 6px;
+}
+.notif-empty i { font-size: 2rem; }
+.notif-list { list-style: none; padding: 0; margin: 0; }
+.notif-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f2f6;
+    transition: background 0.15s;
+}
+.notif-item:hover { background: #fef9f5; }
+.notif-item-img {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    background: #f1f2f6;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #a4b0be;
+}
+.notif-item-img img { width: 100%; height: 100%; object-fit: cover; }
+.notif-item-info { flex: 1; min-width: 0; }
+.notif-item-info strong { display: block; font-size: 0.78rem; font-weight: 700; color: #1e272e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif-item-info small  { font-size: 0.7rem; color: #747d8c; }
+.notif-item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.btn-notif-del {
+    background: none; border: none;
+    color: #ff4757; cursor: pointer;
+    padding: 4px; border-radius: 6px;
+    font-size: 0.8rem;
+    transition: background 0.15s;
+}
+.btn-notif-del:hover { background: rgba(255,71,87,0.1); }
+.notif-admin-footer { padding: 8px 14px; background: #f8f9fa; text-align: center; }
+@media (max-width: 480px) {
+    .notif-admin-panel { left: 10px; right: 10px; width: auto; bottom: 10px; }
+}
+
+/* ── CINTA DE INICIO (mismo estilo que bancos footer) ── */
+.cinta-img-aura {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.cinta-img-aura img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #fff;
+    padding: 2px;
+    position: relative;
+    z-index: 1;
+}
+.cinta-img-aura::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 70%);
+    animation: cintaAuraPulse 2.5s ease-in-out infinite;
+    z-index: 0;
+}
+@keyframes cintaAuraPulse {
+    0%,100% { opacity: 0.5; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.15); }
+}
+
+.cinta-inicio-marquee {
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a0a02, #2d1505);
+    border-radius: 16px;
+    padding: 10px 0;
+    margin: 24px 0 8px;
+    border: 1px solid rgba(211,84,0,0.2);
+    box-shadow: 0 4px 16px rgba(211,84,0,0.12);
+}
+
+.cinta-inicio-track {
+    display: flex;
+    animation: cintaInicioScroll 22s linear infinite;
+    width: max-content;
+}
+
+.cinta-inicio-track:hover { animation-play-state: paused; }
+
+.cinta-inicio-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+    gap: 10px;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0 20px;
+    white-space: nowrap;
+}
+
+.cinta-inicio-item img {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: white;
+    padding: 2px;
+    flex-shrink: 0;
+}
+
+.cinta-inicio-header {
+    padding: 4px 16px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cinta-inicio-header strong {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+@keyframes cintaInicioScroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+@media (max-width: 768px) {
+    .cinta-inicio-item { min-width: 130px; font-size: 0.75rem; }
+}
+
+/* ── Campana inicio — integra con panel al abrir ── */
+#btnCampanaNotif {
+    position: fixed;
+    bottom: 84px; left: 20px;
+    width: 46px; height: 46px; border-radius: 50%;
+    background: linear-gradient(135deg, #d35400, #e67e22);
+    color: #fff; border: none; font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(211,84,0,0.35);
+    z-index: 1300; cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+#btnCampanaNotif:hover {
+    transform: scale(1.1);
+}
+#btnCampanaNotif.panel-open {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    transform: scale(1);
+}
+
+[data-theme="dark"] .notif-admin-panel {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+}

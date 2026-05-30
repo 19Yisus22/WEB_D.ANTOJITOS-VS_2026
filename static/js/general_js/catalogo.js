@@ -60,113 +60,24 @@ function playNotificationSound(type = 'default') {
     }
 }
 
-function mostrarAlerta({
-    mensaje = "",
-    titulo = "",
-    descripcion = "",
-    imagen = "/static/uploads/logo.png",
-    tipo = "info",
-    duracion = 4000,
-    idUnico = null,
-    sonido = true
-} = {}) {
-    if (idUnico && productosNotificados.has(idUnico)) return;
-    if (idUnico) {
-        productosNotificados.add(idUnico);
-        setTimeout(() => productosNotificados.delete(idUnico), duracion + 1000);
-    }
-
-    let cont = document.getElementById("toastContainer");
-    if (!cont) {
-        cont = document.createElement("div");
-        cont.id = "toastContainer";
-        cont.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px;";
-        document.body.appendChild(cont);
-    }
-
-    if (sonido) {
-        const soundType = (tipo === 'error' || tipo === 'agotado' || tipo === 'warning') ? 'error' : 'default';
-        playNotificationSound(soundType);
-    }
-
-    const esError = tipo === 'error' || tipo === 'agotado' || tipo === 'warning';
-    const colorPrimario = esError ? "#ff4757" : "#ff9800";
-    const iconClass = esError ? 'bi-exclamation-triangle-fill' : 
-                      tipo === 'bienvenida' ? 'bi-emoji-smile-fill' : 
-                      tipo === 'favorito' ? 'bi-heart-fill' : 'bi-stars';
-
-    const toast = document.createElement("div");
-    toast.style.cssText = `
-        background: #121212;
-        color: #ffffff;
-        padding: 14px 18px;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        min-width: 320px;
-        max-width: 400px;
-        border-left: 5px solid ${colorPrimario};
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform: translateX(120%);
-        opacity: 0;
-    `;
-
-    const textoContenido = descripcion || mensaje;
-    const tituloFinal = titulo || (esError ? "Sistema" : "Catálogo");
-
-    toast.innerHTML = `
-        <div class="d-flex align-items-center w-100">
-            <div style="position: relative; flex-shrink: 0;">
-                <img src="${imagen}" style="width:50px; height:50px; object-fit:cover; border-radius:8px;" onerror="this.src='/static/uploads/logo.png'">
-                <div style="position: absolute; bottom: -4px; right: -4px; background: ${colorPrimario}; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #121212;">
-                    <i class="bi ${iconClass} text-white" style="font-size: 0.65rem;"></i>
-                </div>
-            </div>
-            <div class="ms-3 flex-grow-1">
-                <strong style="display: block; font-size: 0.7rem; text-transform: uppercase; color: ${colorPrimario}; letter-spacing: 0.8px;">${tituloFinal}</strong>
-                <div style="font-size: 0.85rem; font-weight: 400; color: #f0f0f0; line-height: 1.2;">${textoContenido}</div>
-            </div>
-            <button class="btn-close-toast ms-2" style="background: none; border: none; color: #888; cursor: pointer; font-size: 1rem;">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-    `;
-
-    cont.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.transform = "translateX(0)";
-        toast.style.opacity = "1";
-    }, 50);
-
-    const remove = () => {
-        toast.style.transform = "translateX(120%)";
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 400);
-    };
-
-    toast.querySelector('.btn-close-toast').onclick = remove;
-    setTimeout(remove, duracion);
+function mostrarAlerta(opciones = {}) {
+    mostrarAlertaPublica(opciones);
 }
 
 function mostrarToastFavorito(mensaje, isAdd) {
-    mostrarAlerta({
-        mensaje: mensaje,
-        titulo: "Favoritos",
-        tipo: isAdd ? "favorito" : "info",
-        imagen: "/static/uploads/logo.png",
-        duracion: 3000
+    playNotificationSound(isAdd ? 'default' : 'agotado');
+    mostrarAlertaPublica({
+        mensaje,
+        titulo: isAdd ? '❤️ Favoritos' : 'Favoritos',
+        tipo: isAdd ? 'favorito' : 'info',
+        duracion: 3000,
+        imagen: '/static/uploads/logo.png',
+        sonido: false
     });
 }
 
 function showMessage(msg, isError = false) {
-    mostrarAlerta({ 
-        mensaje: msg, 
-        tipo: isError ? "error" : "success", 
-        titulo: isError ? "Conexión de Servidor" : "Éxito",
-        duracion: 3000 
-    });
+    mostrarAlertaPublica({ mensaje: msg, tipo: isError ? 'error' : 'success', titulo: isError ? 'Error' : 'Éxito', duracion: 3000 });
 }
 
 function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
@@ -239,7 +150,9 @@ async function cargarCintaPublicitaria() {
                         ${itemsCinta.concat(itemsCinta, itemsCinta).map(item => `
                             <div class="promo-item mx-5 d-flex align-items-center" style="min-width: max-content;">
                                 <div class="promo-img-container">
-                                    <img src="${item.imagen_url || '/static/uploads/logo.png'}" class="promo-img-glow" onerror="this.src='/static/uploads/logo.png'">
+                                    ${item.imagen_url
+                                    ? `<img src="${item.imagen_url}" class="promo-img-glow" onerror="this.outerHTML='<i class=\\'bi bi-image-slash promo-img-broken\\'></i>'">`
+                                    : `<i class="bi bi-image-slash promo-img-broken"></i>`}
                                 </div>
                                 <span class="promo-text">${item.titulo || ''}</span>
                             </div>
@@ -281,6 +194,13 @@ async function cargarProductos() {
         const res = await fetch("/obtener_catalogo");
         const data = await res.json();
         const nuevosProductos = data.productos || [];
+        // Debug: verificar URLs de imágenes
+        if (nuevosProductos.length > 0) {
+            const conImg = nuevosProductos.filter(p => p.imagen_url && p.imagen_url.startsWith('http'));
+            if (conImg.length === 0 && isFirstLoad) {
+                console.warn('[D\'Antojitos] Ningún producto tiene imagen_url válida. Verifica Cloudinary.');
+            }
+        }
         let huboCambios = false;
         if (!isFirstLoad) {
             nuevosProductos.forEach(nuevo => {
@@ -397,15 +317,21 @@ function crearCardProductoHTML(p, prefix = "") {
     col.dataset.id = p.id_producto;
     const isAgotado = p.stock <= 0;
     const esFav = favoritos.includes(p.id_producto.toString());
-    const imgUrl = p.imagen_url || '/static/uploads/default.png';
+    const imgUrl = (p.imagen_url && p.imagen_url.startsWith('http')) ? p.imagen_url : '';
     const uniqueId = `${prefix}-${p.id_producto}`;
+    const imgHTML = imgUrl
+        ? `<img src="${imgUrl}" alt="${p.nombre}" loading="lazy"
+               style="width:100%;height:100%;object-fit:cover;display:block;"
+               onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')">
+           <div class="img-not-available" style="display:none;"><i class="bi bi-image-slash"></i><span>Sin imagen</span></div>`
+        : `<div class="img-not-available"><i class="bi bi-image-slash"></i><span>Sin imagen</span></div>`;
     col.innerHTML = `
         <div class="card h-100 product-card shadow-sm ${isAgotado ? 'producto-gris' : ''}" style="border-radius: 20px; border: 1px solid rgba(0,0,0,0.05);">
             <div class="img-wrapper position-relative overflow-hidden" style="height: 200px; border-radius: 20px 20px 0 0;">
                 <button class="btn-favorito-floating btn-fav-toggle" id="fav-btn-${uniqueId}" data-id="${p.id_producto}">
                     <i class="bi ${esFav ? 'bi-heart-fill text-danger' : 'bi-heart text-muted'}"></i>
                 </button>
-                <img src="${imgUrl}" alt="${p.nombre}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/static/uploads/default.png'">
+                ${imgHTML}
                 ${isAgotado ? '<div class="letrero-agotado">AGOTADO</div>' : ''}
             </div>
             <div class="card-body p-3">
@@ -464,7 +390,11 @@ function agregarEventosProductos() {
                 if (res.ok) {
                     productoArray.stock -= cantidadPedida;
                     actualizarContadorCarrito(cantidadPedida);
-                    mostrarToastPublicidad(productoArray.imagen_url || '/static/uploads/logo.png', "Carrito", `${productoArray.nombre} añadido`);
+                    mostrarToastPublicidad(
+                        productoArray.imagen_url || '/static/uploads/logo.png',
+                        '🛒 Añadido al carrito',
+                        `${cantidadPedida}x ${productoArray.nombre} — $${(productoArray.precio * cantidadPedida).toLocaleString()}`
+                    );
                     renderProductos(searchInput.value);
                 } else {
                     const errorData = await res.json();

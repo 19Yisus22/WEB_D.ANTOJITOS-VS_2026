@@ -90,118 +90,11 @@ function ordenarFacturas(lista) {
 }
 
 function showConfirmToast(msg, callback) {
-    const container = document.getElementById('toastContainer');
-
-    if (!container) return;
-
-    const t = document.createElement('div');
-
-    t.className = 'custom-toast bg-dark text-white p-4 shadow-lg mb-3';
-
-    t.style.cssText = `
-        border-left: 5px solid #ffc107;
-        min-width: 350px;
-        border-radius: 12px;
-        pointer-events: auto !important;
-        opacity: 1;
-        display: block;
-        animation: slideInRight 0.4s ease-out;
-    `;
-
-    t.innerHTML = `
-        <div class="mb-3 d-flex align-items-start">
-            <i class="bi bi-exclamation-triangle-fill text-warning me-3 fs-4"></i>
-
-            <div>
-                <strong class="d-block mb-1">
-                    Confirmar esta acción?
-                </strong>
-
-                <span class="small opacity-75">
-                    ${msg}
-                </span>
-            </div>
-        </div>
-
-        <div class="d-flex gap-2 justify-content-end">
-
-            <button class="btn btn-sm btn-outline-light border-0 px-3 btn-cancelar-confirm">
-                Cancelar
-            </button>
-
-            <button class="btn btn-sm btn-warning fw-bold px-4 rounded-pill btn-aceptar-confirm">
-                Aceptar
-            </button>
-
-        </div>
-    `;
-
-    container.appendChild(t);
-
-    t.querySelector('.btn-cancelar-confirm').onclick = (e) => {
-        e.stopPropagation();
-
-        t.style.opacity = '0';
-        t.style.transform = 'translateX(20px)';
-
-        setTimeout(() => t.remove(), 400);
-    };
-
-    t.querySelector('.btn-aceptar-confirm').onclick = (e) => {
-        e.stopPropagation();
-        callback();
-        t.remove();
-    };
+    mostrarConfirmacionApp('Confirmar acción', msg, callback);
 }
 
 function showMessage(msg, isError = false) {
-    const container = document.getElementById('toastContainer');
-
-    if (!container) return;
-
-    const toast = document.createElement('div');
-
-    toast.className = 'custom-toast bg-dark text-white p-3 shadow-lg mb-2';
-
-    toast.style.cssText = `
-        border-left: 4px solid ${isError ? '#dc3545' : '#198754'};
-        min-width: 300px;
-        border-radius: 8px;
-        pointer-events: auto !important;
-        animation: fadeIn 0.3s ease;
-    `;
-
-    toast.innerHTML = `
-        <div class="d-flex align-items-center justify-content-between">
-
-            <div class="d-flex align-items-center">
-
-                <i class="bi ${isError ? 'bi-x-circle-fill text-danger' : 'bi-check-circle-fill text-success'} me-3 fs-5"></i>
-
-                <span class="small fw-medium">
-                    ${msg}
-                </span>
-
-            </div>
-
-            <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 0.7rem;"></i>
-
-        </div>
-    `;
-
-    container.appendChild(toast);
-
-    const remove = () => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 400);
-    };
-
-    toast.querySelector('.btn-close-toast').onclick = (e) => {
-        e.stopPropagation();
-        remove();
-    };
-
-    setTimeout(remove, 4000);
+    mostrarAlerta(msg, isError);
 }
 
 function playNotificationSound() {
@@ -713,7 +606,7 @@ async function monitorearCambiosFacturas() {
 
     try {
 
-        const res = await fetch(`/buscar_facturas_page?cedula=${encodeURIComponent(criterio)}`);
+        const res = await fetch(`/buscar_facturas_page?q=${encodeURIComponent(criterio)}`);
 
         if (res.status === 401) {
             window.location.reload();
@@ -744,7 +637,8 @@ async function monitorearCambiosFacturas() {
 
         const filtradas = facturasServidor.filter(f =>
             f.numero_factura.toLowerCase().includes(term) ||
-            (f.cedula && f.cedula.toString().includes(term))
+            (f.cedula && f.cedula.toString().toLowerCase().includes(term)) ||
+            (f.cliente_nombre && f.cliente_nombre.toLowerCase().includes(term))
         );
 
         facturasActuales = ordenarFacturas(filtradas);
@@ -1175,10 +1069,6 @@ function paginar(totalItems) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-
-    if ("Notification" in window && Notification.permission !== "granted") {
-        Notification.requestPermission();
-    }
 
     await cargarMetodosPago();
 

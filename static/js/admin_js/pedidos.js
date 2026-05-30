@@ -15,67 +15,6 @@ let debounceTimer;
 const sonidoNuevoPedido = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
 sonidoNuevoPedido.volume = 0.9;
 
-function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
-    let container = document.getElementById('toastContainer');
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toastContainer";
-        container.style.cssText = "position: fixed; top: 25px; right: 25px; z-index: 10000; display: flex; flex-direction: column; gap: 12px;";
-        document.body.appendChild(container);
-    }
-
-    const toast = document.createElement('div');
-    toast.className = 'custom-toast-alert';
-    const colorPrimario = esError ? "#ff4757" : "#2ed573";
-    const sombraColor = esError ? "rgba(255, 71, 87, 0.2)" : "rgba(46, 213, 115, 0.2)";
-    
-    toast.style.cssText = `
-        background: #ffffff; 
-        color: #2f3542; 
-        padding: 16px 24px; 
-        border-radius: 12px; 
-        box-shadow: 0 10px 30px ${sombraColor}; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        min-width: 350px; 
-        max-width: 450px;
-        border-left: 6px solid ${colorPrimario}; 
-        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform: translateX(100%);
-        opacity: 0;
-    `;
-    
-    toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <div style="background: ${colorPrimario}; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
-                <i class="bi ${esError ? 'bi-x-circle-fill' : 'bi-check-circle-fill'} text-white fs-5"></i>
-            </div>
-            <div>
-                <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #747d8c;">Notificación de Sistema</strong>
-                <span style="font-size: 0.95rem; font-weight: 600;">${mensaje}</span>
-            </div>
-        </div>
-        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 1rem; color: #a4b0be;"></i>
-    `;
-    
-    container.appendChild(toast);
-
-    requestAnimationFrame(() => {
-        toast.style.transform = "translateX(0)";
-        toast.style.opacity = "1";
-    });
-
-    const eliminar = () => {
-        toast.style.transform = "translateX(120%)";
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 500);
-    };
-
-    toast.querySelector('.btn-close-toast').onclick = eliminar;
-    setTimeout(eliminar, duracionMs);
-}
-
 function debouncedCargarPedidos(isAutoRefresh = false) {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => cargarPedidos(isAutoRefresh), 800);
@@ -125,64 +64,14 @@ function notificarNuevoPedido(pedidos) {
         const nuevoP = pedidos.find(p => p.id_pedido === maxIdActual);
         if (nuevoP) {
             const nombreFull = `${nuevoP.usuarios?.nombre || 'Nuevo'} ${nuevoP.usuarios?.apellido || 'Usuario'}`;
-            mostrarAlerta(`NUEVO PEDIDO: ${nombreFull.toUpperCase()} (#${maxIdActual})`, false, 8000);
+            mostrarAlerta(`🛒 NUEVO PEDIDO: ${nombreFull.toUpperCase()} (#${maxIdActual})`, false, 8000);
+            if (typeof addNotifLog === 'function')
+                addNotifLog('nuevo', `Nuevo pedido de ${nombreFull} — Ref #${maxIdActual}`);
             sonidoNuevoPedido.play().catch(() => {});
         }
         ultimoIdPedidoNotificado = maxIdActual;
         localStorage.setItem("ultimoIdPedidoNotificado", ultimoIdPedidoNotificado);
     }
-}
-
-function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
-    const existing = document.getElementById('appModalConfirm');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'appModalConfirm';
-    overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8); display: flex; align-items: center;
-        justify-content: center; z-index: 20000; backdrop-filter: blur(5px);
-        transition: opacity 0.3s ease;
-    `;
-
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        background: #ffffff; width: 95%; max-width: 420px; padding: 35px;
-        border-radius: 25px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.4);
-        transform: scale(0.7); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    `;
-
-    modal.innerHTML = `
-        <div style="color: #ff4757; font-size: 4rem; margin-bottom: 20px; animation: pulse 1.5s infinite;">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-        </div>
-        <h2 style="margin-bottom: 12px; font-weight: 800; color: #1e272e; letter-spacing: -0.5px;">${titulo}</h2>
-        <p style="color: #485460; margin-bottom: 30px; line-height: 1.6; font-size: 1.05rem;">${mensaje}</p>
-        <div style="display: flex; gap: 12px; justify-content: center;">
-            <button id="btnCancelModal" class="btn btn-light" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; border: 2px solid #f1f2f6;">CANCELAR</button>
-            <button id="btnConfirmModal" class="btn btn-danger" style="padding: 12px 30px; border-radius: 15px; font-weight: 700; background: #ff4757; border: none; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);">CONFIRMAR</button>
-        </div>
-    `;
-
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-
-    setTimeout(() => {
-        modal.style.transform = 'scale(1)';
-    }, 10);
-
-    const cerrar = () => {
-        modal.style.transform = 'scale(0.7)';
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.remove(), 300);
-    };
-
-    document.getElementById('btnCancelModal').onclick = cerrar;
-    document.getElementById('btnConfirmModal').onclick = () => {
-        onConfirm();
-        cerrar();
-    };
 }
 
 function ajustarBarraBusqueda() {
@@ -268,7 +157,8 @@ async function cargarPedidos(isAutoRefresh = false) {
                 const pBaja = pedidos.find(p => String(p.id_pedido) === nuevosBajas[0]);
                 if (pBaja) {
                     const cli = `${pBaja.usuarios?.nombre || "CLIENTE"} ${pBaja.usuarios?.apellido || ""}`;
-                    mostrarAlerta(`ALERTA: El pedido #${pBaja.id_pedido} de ${cli.toUpperCase()} fue anulado ahora mismo`, true, 9000);
+                    mostrarAlerta(`⚠️ PEDIDO ANULADO: ${cli.toUpperCase()} — Ref #${pBaja.id_pedido}`, true, 9000);
+                    if (typeof addNotifLog === 'function') addNotifLog('cancelado', `Pedido anulado: ${cli} — Ref #${pBaja.id_pedido}`);
                     sonidoNuevoPedido.play().catch(() => {});
                 }
             }
@@ -468,7 +358,10 @@ async function cargarPedidos(isAutoRefresh = false) {
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ indice, pagado: ahoraPagado })
                         });
-                        if (res.ok) mostrarAlerta("Pago actualizado exitosamente");
+                        if (res.ok) {
+                        mostrarAlerta(ahoraPagado ? `✅ Ítem marcado como pagado` : `↩️ Ítem marcado como pendiente de pago`);
+                        if (typeof addNotifLog === 'function') addNotifLog('pago', `Pago ${ahoraPagado ? 'registrado' : 'revertido'} — ítem del pedido #${pedido.id_pedido}`);
+                    }
                         else throw new Error();
                     } catch {
                         sw.checked = !ahoraPagado;
@@ -501,7 +394,8 @@ async function cargarPedidos(isAutoRefresh = false) {
                         body: JSON.stringify({ ids: [idStr] }) 
                     });
                     if (res.ok) {
-                        mostrarAlerta("¡Pedido eliminado del sistema con éxito!", true);
+                        mostrarAlerta("🗑️ Pedido eliminado permanentemente del sistema", true);
+                        if (typeof addNotifLog === 'function') addNotifLog('cancelado', `Pedido eliminado — Ref #${idStr}`);
                         pedidosGlobal = pedidosGlobal.filter(c => c.dataset.id_real !== idStr);
                         pedidosDatosRaw = pedidosDatosRaw.filter(p => String(p.id_pedido) !== idStr);
                         aplicarFiltros();
@@ -518,17 +412,21 @@ async function cargarPedidos(isAutoRefresh = false) {
 
             card.querySelector(".actualizar-btn").onclick = async () => {
                 const nuevoEstado = card.querySelector(".estado-select").value;
-                const res = await fetch(`/actualizar_estado/${pedido.id_pedido}`, { 
-                    method: "PUT", 
-                    headers: { "Content-Type": "application/json" }, 
-                    body: JSON.stringify({ estado: nuevoEstado }) 
+                const ICONOS_ESTADO = { Pendiente: '⏳', Enviado: '🚚', Entregado: '✅', Cancelado: '❌' };
+                const res = await fetch(`/actualizar_estado/${pedido.id_pedido}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ estado: nuevoEstado })
                 });
                 if (res.ok) {
-                    mostrarAlerta(`Estado actualizado a: ${nuevoEstado.toUpperCase()}`);
+                    const icon = ICONOS_ESTADO[nuevoEstado] || '📋';
+                    const cliente = `${pedido.usuarios?.nombre || ''} ${pedido.usuarios?.apellido || ''}`.trim();
+                    mostrarAlerta(`${icon} Pedido de ${cliente} → ${nuevoEstado.toUpperCase()}`);
+                    if (typeof addNotifLog === 'function') addNotifLog('estado', `Estado cambiado a ${nuevoEstado} — ${cliente} Ref #${pedido.id_pedido}`);
                     card.dataset.estado = nuevoEstado;
                     debouncedCargarPedidos(true);
                 } else {
-                    mostrarAlerta("Error al actualizar el estado", true);
+                    mostrarAlerta("❌ Error al actualizar el estado del pedido", true);
                 }
             };
 
@@ -536,9 +434,31 @@ async function cargarPedidos(isAutoRefresh = false) {
         });
 
         aplicarFiltros();
+        actualizarStatsVentas(pedidos);
 
     } catch (e) {
         console.error("Fallo en carga de pedidos:", e);
+    }
+}
+
+function actualizarStatsVentas(pedidos) {
+    if (!Array.isArray(pedidos) || !pedidos.length) return;
+    const total = pedidos.length;
+    const entregados = pedidos.filter(p => p.estado === 'Entregado').length;
+    const ventas = pedidos.filter(p => p.estado === 'Entregado').reduce((s, p) => s + Number(p.total || 0), 0);
+    const porcentaje = total > 0 ? Math.round((entregados / total) * 100) : 0;
+
+    const elTotal = document.getElementById('svTotalPedidos');
+    const elVentas = document.getElementById('svTotalVentas');
+    const elEntregados = document.getElementById('svEntregados');
+    const elPorc = document.getElementById('svPorcentaje');
+
+    if (elTotal)     elTotal.textContent = total;
+    if (elEntregados) elEntregados.textContent = entregados;
+    if (elVentas)    elVentas.textContent = ventas.toLocaleString('es-CO', { style:'currency', currency:'COP', maximumFractionDigits:0 });
+    if (elPorc) {
+        elPorc.textContent = `↑ ${porcentaje}%`;
+        elPorc.className = `badge-porcentaje-verde${porcentaje < 50 ? ' badge-porcentaje-bajo' : ''}`;
     }
 }
 

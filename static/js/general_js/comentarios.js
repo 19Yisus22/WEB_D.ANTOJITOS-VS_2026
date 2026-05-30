@@ -57,37 +57,22 @@ const monitorConexion = {
 };
 
 function showConfirmCustom(titulo, mensaje, callback) {
-    const modalId = 'customConfirmModal';
-    let modalEl = document.getElementById(modalId);
-    if (!modalEl) {
-        modalEl = document.createElement('div');
-        modalEl.id = modalId;
-        modalEl.className = 'modal fade';
-        modalEl.setAttribute('tabindex', '-1');
-        modalEl.innerHTML = `
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-                    <div class="modal-body p-4 text-center">
-                        <i class="bi bi-exclamation-circle text-danger mb-3" style="font-size: 3rem;"></i>
-                        <h5 class="fw-bold mb-2">${titulo}</h5>
-                        <p class="text-muted mb-4">${mensaje}</p>
-                        <div class="d-flex gap-2 justify-content-center">
-                            <button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" id="confirmActionBtn" class="btn btn-danger px-4 rounded-pill">Confirmar</button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        document.body.appendChild(modalEl);
-    }
-    const confirmBtn = modalEl.querySelector('#confirmActionBtn');
-    const bootstrapModal = new bootstrap.Modal(modalEl);
-    confirmBtn.onclick = () => {
-        bootstrapModal.hide();
-        callback();
-    };
-    bootstrapModal.show();
+    mostrarConfirmacionApp(titulo, mensaje, callback);
 }
+
+function toggleEmojiPanel() {
+    const panel = document.getElementById('emojiPanel');
+    if (!panel) return;
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+document.addEventListener('click', (e) => {
+    const panel = document.getElementById('emojiPanel');
+    const btn = document.getElementById('btnToggleEmojis');
+    if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) {
+        panel.style.display = 'none';
+    }
+});
 
 function insertEmoji(emoji) {
     const start = mensajeInput.selectionStart;
@@ -95,6 +80,8 @@ function insertEmoji(emoji) {
     mensajeInput.value = mensajeInput.value.substring(0, start) + emoji + mensajeInput.value.substring(end);
     mensajeInput.focus();
     ajustarAlturaInput();
+    const panel = document.getElementById('emojiPanel');
+    if (panel) panel.style.display = 'none';
 }
 
 function insertFormat(startTag, endTag) {
@@ -143,15 +130,7 @@ function getUserPastelColor(userId) {
 }
 
 function showMessage(msg, isError = false) {
-    const toast = document.createElement('div');
-    toast.className = "custom-toast";
-    if(isError) toast.style.borderLeftColor = "#e74c3c";
-    toast.innerHTML = `<span>${msg}</span>`;
-    toastContainer.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 500);
-    }, 3000);
+    mostrarAlertaPublica({ mensaje: msg, tipo: isError ? 'error' : 'success', titulo: 'Comentarios' });
 }
 
 async function toggleLike(id) {
@@ -181,8 +160,8 @@ async function toggleLike(id) {
 }
 
 function renderComentario(c) {
-    const esMio = String(c.id_usuario) === String(USER_CONFIG.userId);
-    const bgGradient = getUserPastelColor(String(c.id_usuario));
+    const esMio = String(c.cedula) === String(USER_CONFIG.userId);
+    const bgGradient = getUserPastelColor(String(c.cedula));
     const info = c.usuario_info || {};
     const foto = info.foto_perfil || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
     const nombre = info.nombre ? `${info.nombre} ${info.apellido || ''}` : 'Usuario';
@@ -193,27 +172,37 @@ function renderComentario(c) {
     wrapper.id = `msg-${c.id}`;
     const estadoClase = info.conectado ? 'estado-conectado' : 'estado-desconectado';
     
+    const mensajeFormateado = c.mensaje
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/_(.*?)_/g, '<em>$1</em>')
+        .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
+
     wrapper.innerHTML = `
         <div class="contenedor-foto-estado">
-            <img src="${foto}" class="rounded-circle border shadow-sm" width="38" height="38" style="object-fit: cover;">
+            <img src="${foto}" class="rounded-circle border shadow-sm" width="38" height="38"
+                 style="object-fit:cover;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
             <span class="punto-estado ${estadoClase}"></span>
         </div>
-        <div class="message ${esMio ? 'rounded-start-4 rounded-top-4' : 'rounded-end-4 rounded-top-4'} shadow-sm" 
-             style="background: ${bgGradient}; max-width: 75%; position: relative;">
-            <div class="d-flex justify-content-between align-items-center mb-1 gap-4">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="fw-bold" style="font-size: 0.8rem; color: #2c3e50;">${esMio ? 'Tú' : nombre}</span>
-                    <span class="text-muted" style="font-size: 0.65rem; opacity: 0.8;">• ${fecha}</span>
+        <div style="max-width:75%;display:flex;flex-direction:column;${esMio ? 'align-items:flex-end;' : 'align-items:flex-start;'}">
+            <div class="message ${esMio ? 'rounded-start-4 rounded-top-4' : 'rounded-end-4 rounded-top-4'} shadow-sm"
+                 style="background:${bgGradient};position:relative;">
+                <div class="d-flex justify-content-between align-items-center mb-1 gap-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold" style="font-size:0.8rem;color:#2c3e50;">${esMio ? 'Tú' : nombre}</span>
+                        <span class="text-muted" style="font-size:0.65rem;opacity:0.8;">• ${fecha}</span>
+                    </div>
+                    ${esMio ? `<i class="bi bi-three-dots-vertical btn-options text-muted" style="cursor:pointer;font-size:0.8rem;"></i>` : ''}
                 </div>
-                ${esMio ? `<i class="bi bi-three-dots-vertical btn-options text-muted" style="cursor:pointer; font-size: 0.8rem;"></i>` : ''}
+                <div class="mensaje-texto">${mensajeFormateado}</div>
+                ${c.updated_at ? '<span class="text-muted" style="font-size:0.6rem;">(editado)</span>' : ''}
             </div>
-            <div class="mensaje-texto">${c.mensaje}</div>
-            <div class="d-flex justify-content-between align-items-center mt-2">
-                <span class="text-muted" style="font-size: 0.6rem;">${c.updated_at ? '(editado)' : ''}</span>
-                <div class="btn-like-mini d-flex align-items-center gap-1" onclick="toggleLike('${c.id}')" style="cursor:pointer; background: rgba(255,255,255,0.4); padding: 2px 8px; border-radius: 10px;">
-                    <i class="bi ${haDadoLike ? 'bi-heart-fill text-danger' : 'bi-heart text-muted'}" style="font-size: 0.9rem;"></i>
-                    <small class="fw-bold text-muted" style="font-size: 0.75rem;">${(c.likes_usuarios || []).length}</small>
-                </div>
+            <!-- Corazón fuera de la burbuja, estilo Instagram -->
+            <div class="btn-like-mini d-flex align-items-center gap-1 mt-1"
+                 onclick="toggleLike('${c.id}')"
+                 style="cursor:pointer;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.85);
+                        box-shadow:0 1px 6px rgba(0,0,0,0.1);backdrop-filter:blur(4px);width:fit-content;">
+                <i class="bi ${haDadoLike ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="font-size:0.9rem;${haDadoLike ? '' : 'color:#888;'}"></i>
+                <small class="fw-bold" style="font-size:0.72rem;color:#555;">${(c.likes_usuarios || []).length}</small>
             </div>
         </div>
     `;

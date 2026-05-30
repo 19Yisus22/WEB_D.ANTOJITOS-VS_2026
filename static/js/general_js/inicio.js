@@ -42,46 +42,11 @@ function playNotificationSound(type = 'default') {
 }
 
 function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
-    const cont = document.getElementById("toastContainer");
-    if (!cont) return;
-    playNotificationSound(isError ? 'agotado' : 'default');
-    const t = document.createElement("div");
-    t.className = "toast show bg-dark text-white border-light mb-2";
-    t.style.display = "block";
-    t.style.minWidth = "280px";
-    t.style.maxWidth = "350px";
-    t.style.borderRadius = "12px";
-    t.style.transition = "all 0.5s ease";
-    t.style.pointerEvents = "auto";
-    const textColor = isError ? '#ff4d4d' : '#e67e22';
-    const iconClass = isError ? 'bi-exclamation-triangle-fill' : 'bi-stars';
-    t.innerHTML = `
-        <div class="d-flex align-items-center p-3">
-            <img src="${imagen}" style="width:45px;height:45px;object-fit:cover;border-radius:10px;" class="me-3 shadow" onerror="this.src='/static/uploads/logo.png'">
-            <div class="flex-grow-1">
-                <div class="d-flex align-items-center mb-0">
-                    <i class="bi ${iconClass} me-2" style="color: ${textColor};"></i>
-                    <strong style="color: ${textColor}; font-size: 0.9rem;">${titulo}</strong>
-                </div>
-                <div style="font-size: 0.8rem; color: #e0e0e0; line-height: 1.2;">${descripcion}</div>
-            </div>
-            <button class="btn-close btn-close-white ms-2" style="font-size: 0.6rem;"></button>
-        </div>`;
-    cont.appendChild(t);
-    const remove = () => {
-        t.style.opacity = '0';
-        t.style.transform = 'translateX(-20px)';
-        setTimeout(() => t.remove(), 500);
-    };
-    t.querySelector('.btn-close').onclick = remove;
-    setTimeout(remove, 6000);
+    mostrarAlertaPublica({ imagen, titulo, mensaje: descripcion, tipo: isError ? 'error' : 'info', duracion: 6000 });
 }
 
 function mostrarToastActualizacion(imagen, titulo, descripcion, idUnico, isError = false) {
-    if (productosNotificados.has(idUnico)) return;
-    productosNotificados.add(idUnico);
-    mostrarToastPublicidad(imagen, titulo, descripcion, isError);
-    setTimeout(() => { productosNotificados.delete(idUnico); }, 20000);
+    mostrarAlertaPublica({ imagen, titulo, mensaje: descripcion, tipo: isError ? 'error' : 'info', idUnico, duracion: 6000 });
 }
 
 async function monitorearCambiosCatalogo() {
@@ -123,7 +88,9 @@ async function cargarMarketing() {
             const delay = (index * 0.1).toFixed(2);
             const cardHtml = `
                 <div class="seccion-card shadow-sm h-100 w-100" style="animation: fadeInSmooth 0.8s ease forwards; animation-delay: ${delay}s">
-                    <img src="${item.imagen_url || '/static/img/placeholder.png'}" class="postre-imagen-seccion w-100" onerror="this.src='/static/img/placeholder.png'">
+                    ${item.imagen_url
+                        ? `<img src="${item.imagen_url}" class="postre-imagen-seccion w-100" onerror="this.outerHTML='<div class=\\'postre-imagen-seccion w-100 d-flex align-items-center justify-content-center bg-light text-muted\\'><i class=\\'bi bi-image-slash fs-1\\'></i></div>'">`
+                        : `<div class="postre-imagen-seccion w-100 d-flex align-items-center justify-content-center bg-light text-muted"><i class="bi bi-image-slash fs-1"></i></div>`}
                     <div class="p-3 d-flex flex-column flex-grow-1">
                         <h6 class="fw-bold mb-1" style="color: #d6336c; font-size: 1.1rem;">${item.titulo || ''}</h6>
                         <p class="text-muted mb-0 small" style="line-height: 1.5;">${item.descripcion || ''}</p>
@@ -149,8 +116,10 @@ async function cargarMarketing() {
                 div.innerHTML = `
                     <div class="carousel-item active">
                         <div class="carousel-img-wrapper">
-                            <img src="${item.imagen_url}" class="carousel-background-blur">
-                            <img src="${item.imagen_url}" class="d-block carousel-img-render">
+                            <img src="${item.imagen_url || ''}" class="carousel-background-blur"
+                                 onerror="this.style.display='none'">
+                            <img src="${item.imagen_url || ''}" class="d-block carousel-img-render"
+                                 onerror="this.outerHTML='<div class=\\'d-flex align-items-center justify-content-center w-100 h-100 bg-dark text-muted\\'><i class=\\'bi bi-image-slash fs-1\\'></i></div>'">`
                             <div class="carousel-overlay"></div>
                         </div>
                         <div class="carousel-caption-custom">
@@ -185,6 +154,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 12000);
     monitorearCambiosCatalogo();
     setInterval(monitorearCambiosCatalogo, 10000);
+
+    const animarContadores = () => {
+        document.querySelectorAll('.stat-number').forEach(el => {
+            const target = +el.dataset.target;
+            if (!target) return;
+            const step = Math.ceil(target / 60);
+            let current = 0;
+            const timer = setInterval(() => {
+                current += step;
+                if (current >= target) { el.textContent = target; clearInterval(timer); }
+                else el.textContent = current;
+            }, 20);
+        });
+    };
+    const statsSection = document.querySelector('.stats-section');
+    if (statsSection) {
+        new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) { animarContadores(); } });
+        }, { threshold: 0.4 }).observe(statsSection);
+    }
 });
 
 document.addEventListener("click", () => { initAudioContext(); }, { once: true });

@@ -195,23 +195,7 @@ function playNotificationSound(isError = false) {
 }
 
 function showMessage(msg, isError = false) {
-    playNotificationSound(isError);
-    let container = document.getElementById('toastContainer');
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toastContainer";
-        document.body.appendChild(container);
-    }
-    const toast = document.createElement('div');
-    toast.className = 'custom-toast';
-    const color = isError ? "#ff4757" : "#d35400";
-    toast.style.borderLeft = `6px solid ${color}`;
-    toast.innerHTML = `<div class="toast-content"><div class="toast-text"><div class="toast-main-text">${msg}</div></div></div>`;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.add('hide');
-        setTimeout(() => toast.remove(), 500);
-    }, 4000);
+    mostrarAlerta(msg, isError);
 }
 
 function cargarMetodosDesdeHTML() {

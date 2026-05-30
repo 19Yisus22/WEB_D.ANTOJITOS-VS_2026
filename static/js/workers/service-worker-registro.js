@@ -1,59 +1,76 @@
-const cacheName = 'dantojitos-registro-cache-v1';
-const assets = [
-  '/',
-  '/registro',
-  '/static/css/style_registro.css',
-  '/static/uploads/logo.ico',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
+const CACHE_NAME = 'dantojitos-registro-v2';
+const STATIC_ASSETS = [
+    '/registro',
+    '/static/css/global_modules/style_registro.css',
+    '/static/css/global_modules/style_navbar.css',
+    '/static/css/global_modules/style_utils.css',
+    '/static/js/global_js/login_registro.js',
+    '/static/js/general_js/login_registro.js',
+    '/static/uploads/logo.ico',
+    '/static/uploads/logo.png',
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
+    'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
+];
+
+const NETWORK_FIRST_ROUTES = [
+    '/registro',
+    '/enviar_codigo_verificacion',
+    '/obtener-cliente-id',
+    '/registro-google'
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(cacheName).then(cache => {
-      return cache.addAll(assets);
-    })
-  );
+    self.skipWaiting();
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache =>
+            Promise.allSettled(
+                STATIC_ASSETS.map(url =>
+                    fetch(url).then(res => { if (res.ok) cache.put(url, res); }).catch(() => {})
+                )
+            )
+        )
+    );
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.filter(key => key !== cacheName).map(key => caches.delete(key))
-      );
-    })
-  );
+    event.waitUntil(
+        caches.keys().then(keys =>
+            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+        ).then(() => self.clients.claim())
+    );
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+    if (event.request.method !== 'GET') return;
 
-  const isNavigation = event.request.mode === 'navigate' || event.request.url.includes('/registro');
+    const url = new URL(event.request.url);
 
-  if (isNavigation) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          const clonedResponse = response.clone();
-          caches.open(cacheName).then(cache => {
-            cache.put(event.request, clonedResponse);
-          });
-          return response;
-        })
-        .catch(() => caches.match('/registro') || caches.match('/'))
-    );
-  } else {
-    event.respondWith(
-      caches.match(event.request).then(response => {
-        return response || fetch(event.request).then(fetchRes => {
-          return caches.open(cacheName).then(cache => {
-            cache.put(event.request, fetchRes.clone());
-            return fetchRes;
-          });
-        });
-      })
-    );
-  }
+    if (NETWORK_FIRST_ROUTES.some(r => url.pathname.startsWith(r))) {
+        event.respondWith(networkFirst(event.request));
+        return;
+    }
+
+    event.respondWith(staleWhileRevalidate(event.request));
 });
+
+async function networkFirst(request) {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+        const res = await fetch(request);
+        if (res.ok) cache.put(request, res.clone());
+        return res;
+    } catch {
+        return await cache.match(request) || await cache.match('/registro');
+    }
+}
+
+async function staleWhileRevalidate(request) {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(request);
+    const fetchPromise = fetch(request).then(res => {
+        if (res && res.status === 200) cache.put(request, res.clone());
+        return res;
+    }).catch(() => cached);
+    return cached || fetchPromise;
+}

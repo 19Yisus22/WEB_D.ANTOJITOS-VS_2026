@@ -2,7 +2,7 @@ let metodosPagoArray = [];
 let editIndex = -1;
 let audioCtx = null;
 
-const IMG_DEFAULT = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1OacDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJBSURBVHgB7d0xbhNREIDh90YpSClpSInS06ByAnp6SByBk9ByAnp6ChonSInS06ByApSClpSClpSChv9vYScbe9be9Xp3Z76Pst6stZun8f72zZunMREp6vUf97ZOfn64fP9scfH+mYgG9fbt+6f7n8/vXrz6eC6isfrz5p8mIkW9e/dhIu6IKOp8+SyiqPP7DyIa9PHe2XfTjMREpKgzmYh9Ihp0/vEisS+isfrtHxEfXkU06uXFpyciGrW9efZ0Ihp0t3k6EQ26ubqbiCtiIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIynL17/wEunS4O3C+hNwAAAABJRU5ErkJggg==";
+const IMG_PLACEHOLDER_HTML = `<div style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;color:#adb5bd;font-size:1.2rem;"><i class="bi bi-image-slash"></i></div>`;
 
 async function actualizarAlmacenamiento() {
     try {
@@ -130,68 +130,6 @@ function playNotificationSound(isError = false) {
     } catch (e) {}
 }
 
-function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
-    let container = document.getElementById('toastContainer');
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toastContainer";
-        container.style.cssText = "position: fixed; top: 25px; right: 25px; z-index: 10000; display: flex; flex-direction: column; gap: 12px;";
-        document.body.appendChild(container);
-    }
-
-    const toast = document.createElement('div');
-    toast.className = 'custom-toast-alert';
-    
-    const colorPrimario = esError ? "#ff4757" : "#2ed573";
-    const sombraColor = esError ? "rgba(255, 71, 87, 0.2)" : "rgba(46, 213, 115, 0.2)";
-    
-    toast.style.cssText = `
-        background: #ffffff; 
-        color: #2f3542; 
-        padding: 16px 24px; 
-        border-radius: 12px; 
-        box-shadow: 0 10px 30px ${sombraColor}; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        min-width: 350px; 
-        max-width: 450px;
-        border-left: 6px solid ${colorPrimario}; 
-        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform: translateX(100%);
-        opacity: 0;
-    `;
-    
-    toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <div style="background: ${colorPrimario}; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
-                <i class="bi ${esError ? 'bi-x-circle-fill' : 'bi-check-circle-fill'} text-white fs-5"></i>
-            </div>
-            <div>
-                <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #747d8c;">Notificación de Sistema</strong>
-                <span style="font-size: 0.95rem; font-weight: 600;">${mensaje}</span>
-            </div>
-        </div>
-        <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 1rem; color: #a4b0be;"></i>
-    `;
-    
-    container.appendChild(toast);
-
-    requestAnimationFrame(() => {
-        toast.style.transform = "translateX(0)";
-        toast.style.opacity = "1";
-    });
-
-    const eliminar = () => {
-        toast.style.transform = "translateX(120%)";
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 500);
-    };
-
-    toast.querySelector('.btn-close-toast').onclick = eliminar;
-    setTimeout(eliminar, duracionMs);
-}
-
 function cargarMetodosDesdeHTML() {
     const res = document.getElementById('metodos_iniciales_data');
     if (res && res.value && res.value !== 'None' && res.value !== '') {
@@ -217,7 +155,7 @@ function agregarMetodoPago() {
     const fileInput = document.getElementById('archivoQR');
 
     if (!numero || !titular) {
-        mostrarAlerta("Ingrese número y titular", true);
+        mostrarAlerta("⚠️ Ingrese número de cuenta y nombre del titular", true);
         return;
     }
 
@@ -231,10 +169,10 @@ function agregarMetodoPago() {
 
     if (editIndex !== -1) {
         metodosPagoArray[editIndex] = datos;
-        mostrarAlerta("¡Lista actualizada con éxito!");
+        mostrarAlerta(`✏️ Método de pago "${datos.entidad}" actualizado en la lista`);
     } else {
         metodosPagoArray.push(datos);
-        mostrarAlerta("¡Agregado a la lista con éxito!");
+        mostrarAlerta(`➕ "${datos.entidad}" agregado a la lista de métodos de pago`);
     }
     resetearFormulario();
     renderizarLista();
@@ -245,23 +183,34 @@ function renderizarLista() {
     const preview = document.getElementById('previewContenedorFinal');
     if (!lista || !preview) return;
 
-    lista.innerHTML = "";
-    preview.innerHTML = "";
-
     if (metodosPagoArray.length === 0) {
         lista.innerHTML = `<div class="col-12 text-center text-muted py-3"><p class="mt-2 mb-0">No hay métodos de pago</p></div>`;
+        preview.innerHTML = "";
         return;
     }
 
+    let listaHTML = '';
+    let previewHTML = '';
+
     metodosPagoArray.forEach((m, index) => {
-        const imgSrc = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
+        const imgSrc = m.file ? URL.createObjectURL(m.file) : (m.url_actual || '');
         const badge = getBadgeClass(m.entidad);
 
-        lista.innerHTML += `
+        const imgTag = imgSrc
+            ? `<img src="${imgSrc}" style="width:50px;height:50px;object-fit:cover;" class="rounded border"
+                    onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div style=\\'width:50px;height:50px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;color:#adb5bd;\\'><i class=\\'bi bi-image-slash\\'></i></div>')">`
+            : `<div style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;color:#adb5bd;font-size:1.2rem;"><i class="bi bi-image-slash"></i></div>`;
+
+        const previewTag = imgSrc
+            ? `<img src="${imgSrc}" class="img-fluid rounded mb-1" style="max-height:80px;object-fit:contain;"
+                    onerror="this.style.display='none'">`
+            : `<div style="height:80px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:6px;color:#adb5bd;"><i class="bi bi-image-slash fs-4"></i></div>`;
+
+        listaHTML += `
             <div class="col-12 col-md-6 mb-3">
                 <div class="metodo-card p-3 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-3">
-                        <img src="${imgSrc}" style="width:50px; height:50px; object-fit:cover;" class="rounded border">
+                        ${imgTag}
                         <div>
                             <span class="bank-badge ${badge} mb-1">${m.entidad}</span>
                             <h6 class="m-0 fw-bold">${m.titular}</h6>
@@ -275,15 +224,18 @@ function renderizarLista() {
                 </div>
             </div>`;
 
-        preview.innerHTML += `
+        previewHTML += `
             <div class="col-6 text-center mb-3">
                 <div class="p-2 border rounded bg-light">
-                    <img src="${imgSrc}" class="img-fluid rounded mb-1" style="max-height:80px; object-fit:contain;">
+                    ${previewTag}
                     <p class="small fw-bold m-0" style="font-size:10px;">${m.entidad}</p>
                     <p class="text-muted m-0" style="font-size:9px;">${m.numero}</p>
                 </div>
             </div>`;
     });
+
+    lista.innerHTML = listaHTML;
+    preview.innerHTML = previewHTML;
 }
 
 function editarMetodo(index) {
@@ -298,7 +250,7 @@ function editarMetodo(index) {
     const placeholder = document.getElementById('placeholderQR');
     
     if (previewImg) {
-        previewImg.src = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
+        previewImg.src = m.file ? URL.createObjectURL(m.file) : (m.url_actual || '');
         previewImg.classList.remove('d-none');
     }
     if (placeholder) placeholder.classList.add('d-none');
@@ -340,7 +292,7 @@ async function guardarCambiosPagos() {
         const res = await fetch("/facturacion_page", { method: "POST", body: formData });
         const data = await res.json();
         if (data.ok) {
-            mostrarAlerta("¡Configuración guardada!");
+            mostrarAlerta("💳 Métodos de pago guardados y publicados correctamente");
             await actualizarAlmacenamiento();
             setTimeout(() => location.reload(), 1500);
         } else { 

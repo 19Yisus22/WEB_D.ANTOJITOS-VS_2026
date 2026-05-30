@@ -186,14 +186,55 @@ html, body {
 }
 
 @media (max-width: 768px) {
-    .chat-container { 
-        height: 92vh; 
-        border-radius: 0; 
+    .chat-container {
+        height: 92vh;
+        border-radius: 0;
     }
-    .message { 
-        max-width: 85% !important; 
+    .message {
+        max-width: 85% !important;
     }
-    .btn-wide-center { 
-        width: 100%; 
+    .btn-wide-center {
+        width: 100%;
     }
+}
+
+/* ── Panel de emojis colapsable ── */
+.emoji-panel-container {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    padding: 10px;
+    z-index: 100;
+    min-width: 200px;
+    animation: emojiPanelIn 0.2s ease;
+}
+
+@keyframes emojiPanelIn {
+    from { opacity:0; transform: translateY(8px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+
+.emoji-panel-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.emoji-panel-grid .emoji-item {
+    font-size: 1.3rem;
+    cursor: pointer;
+    text-align: center;
+    padding: 6px;
+    border-radius: 8px;
+    transition: background 0.15s;
+    user-select: none;
+}
+
+.emoji-panel-grid .emoji-item:hover {
+    background: #f8f9fa;
+    transform: scale(1.2);
 }

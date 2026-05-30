@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -8,12 +8,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/general_modules/style_comentarios.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
 </head>
-<body class="d-flex flex-column min-vh-100">
-
+<body>
     {% include 'global_modules/navbar.html' %}
-
-    <main class="flex-grow-1 d-flex align-items-center justify-content-center py-2 py-md-4">
+    <main class="page-wrapper d-flex align-items-center justify-content-center py-2 py-md-4">
         <div class="container-fluid px-2 px-md-4">
             <div class="chat-container mx-auto">
                 <header class="chat-header p-3 d-flex align-items-center justify-content-between shadow-sm">
@@ -31,28 +30,46 @@
                 <div id="chatBox" class="p-3 p-md-4"></div>
                 
                 <div class="chat-input-area p-3 border-top bg-white">
-                    <div class="toolbar d-flex align-items-center justify-content-between mb-2">
-                        <div class="d-flex gap-1 overflow-auto emoji-bar pe-2">
-                            <span class="emoji-item" onclick="insertEmoji('😊')">😊</span>
-                            <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
-                            <span class="emoji-item" onclick="insertEmoji('😍')">😍</span>
-                            <span class="emoji-item" onclick="insertEmoji('🙌')">🙌</span>
-                            <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
-                            <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
-                            <span class="emoji-item" onclick="insertEmoji('🍕')">🍕</span>
-                            <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
+                    <div class="toolbar d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <!-- Botón emoji colapsable -->
+                        <div class="position-relative">
+                            <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 py-1" id="btnToggleEmojis" onclick="toggleEmojiPanel()">
+                                🎂 <small class="fw-bold ms-1" style="font-size:0.7rem;">Emojis</small>
+                            </button>
+                            <div id="emojiPanel" class="emoji-panel-container" style="display:none;">
+                                <div class="emoji-panel-grid">
+                                    <span class="emoji-item" onclick="insertEmoji('😊')">😊</span>
+                                    <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
+                                    <span class="emoji-item" onclick="insertEmoji('😍')">😍</span>
+                                    <span class="emoji-item" onclick="insertEmoji('🙌')">🙌</span>
+                                    <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
+                                    <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
+                                    <span class="emoji-item" onclick="insertEmoji('🍰')">🍰</span>
+                                    <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
+                                    <span class="emoji-item" onclick="insertEmoji('🍫')">🍫</span>
+                                    <span class="emoji-item" onclick="insertEmoji('🍭')">🍭</span>
+                                    <span class="emoji-item" onclick="insertEmoji('🧁')">🧁</span>
+                                    <span class="emoji-item" onclick="insertEmoji('🎂')">🎂</span>
+                                    <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
+                                    <span class="emoji-item" onclick="insertEmoji('😋')">😋</span>
+                                    <span class="emoji-item" onclick="insertEmoji('🤤')">🤤</span>
+                                    <span class="emoji-item" onclick="insertEmoji('😎')">😎</span>
+                                </div>
+                            </div>
                         </div>
-                        <button type="button" class="btn btn-sm btn-light border-0 text-muted" onclick="insertFormat('\n- ', '')">
-                            <i class="bi bi-list-ul fs-5"></i>
-                        </button>
+                        <!-- Formato texto -->
+                        <button type="button" class="btn btn-sm btn-light border rounded-pill px-2" title="Negrita" onclick="insertFormat('**','**')"><i class="bi bi-type-bold"></i></button>
+                        <button type="button" class="btn btn-sm btn-light border rounded-pill px-2" title="Cursiva" onclick="insertFormat('_','_')"><i class="bi bi-type-italic"></i></button>
+                        <button type="button" class="btn btn-sm btn-light border rounded-pill px-2" title="Subrayado" onclick="insertFormat('<u>','</u>')"><i class="bi bi-type-underline"></i></button>
+                        <button type="button" class="btn btn-sm btn-light border rounded-pill px-2" title="Lista" onclick="insertFormat('\n• ','')"><i class="bi bi-list-ul"></i></button>
                     </div>
 
                     <div class="input-wrapper d-flex flex-column gap-3">
-                        <textarea id="mensajeInput" 
-                                  class="form-control shadow-none" 
-                                  rows="2" 
+                        <textarea id="mensajeInput"
+                                  class="form-control shadow-none"
+                                  rows="2"
                                   placeholder="Escribe tu sugerencia aquí..."></textarea>
-                        
+
                         <div class="d-flex flex-column align-items-center">
                             <button id="sendBtn" class="btn btn-primary fw-bold px-5 py-2 shadow-sm d-flex align-items-center justify-content-center">
                                 <span>Enviar Sugerencia</span>
@@ -68,14 +85,13 @@
         </div>
     </main>
 
-    <div id="toastContainer" class="toast-container position-fixed bottom-0 start-0 p-3"></div>
-
+    <div id="toastContainer"></div>
     {% include 'global_modules/footer.html' %}
+    <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const USER_CONFIG = {userId: String("{{ user_id or '' }}"), isLogged: {{ 'true' if session.get('user_id') else 'false' }}};
-    </script>
+    <script>const USER_CONFIG = {userId: String("{{ user_id or '' }}"), isLogged: {{ 'true' if session.get('user_id') else 'false' }}};</script>
+    <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/general_js/comentarios.js') }}"></script>
 </body>
 </html>

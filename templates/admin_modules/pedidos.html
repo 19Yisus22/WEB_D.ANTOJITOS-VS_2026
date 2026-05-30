@@ -4,93 +4,314 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Gestión de Pedidos | D'Antojitos©</title>
-    {% if session.get('user_id') and session.get('rol') == 'admin' %}
+    {% if session.get('user_id') and session.get('rol') in ['admin', 'vendedor'] %}
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_modules/style_pedidos.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        /* ── Widget sistema drag ── */
+        .widget-panel {
+            position: relative;
+            margin-bottom: 1.5rem;
+            transition: box-shadow 0.2s;
+        }
+        .widget-panel.sortable-ghost { opacity: 0.4; }
+        .widget-panel.sortable-drag { box-shadow: 0 20px 50px rgba(0,0,0,0.25); z-index: 9999; }
+        .widget-handle-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px 4px;
+            cursor: grab;
+            user-select: none;
+            border-radius: 12px 12px 0 0;
+            background: rgba(211,84,0,0.06);
+            border-bottom: 1px solid rgba(211,84,0,0.1);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #d35400;
+            transition: background 0.2s;
+        }
+        .widget-handle-bar:hover { background: rgba(211,84,0,0.12); cursor: grab; }
+        .widget-handle-bar:active { cursor: grabbing; }
+        .widget-handle-bar .handle-left { display: flex; align-items: center; gap: 8px; }
+        .widget-handle-bar .handle-right { display: flex; gap: 6px; }
+        .widget-action-btn {
+            background: none; border: none; padding: 2px 6px; border-radius: 6px;
+            cursor: pointer; color: #888; font-size: 0.8rem; transition: all 0.15s;
+        }
+        .widget-action-btn:hover { background: rgba(211,84,0,0.1); color: #d35400; }
+        .widget-collapsed .widget-content { display: none !important; }
+
+        [data-theme="dark"] .widget-handle-bar {
+            background: rgba(211,84,0,0.1) !important;
+            border-color: rgba(211,84,0,0.2) !important;
+        }
+        [data-theme="dark"] .widget-action-btn { color: #555 !important; }
+        [data-theme="dark"] .widget-action-btn:hover { color: #d35400 !important; }
+
+        /* ── Botón editar widgets (al lado izquierdo del scroll-to-top) ── */
+        #pedidosEditBtn {
+            position: fixed; bottom: 30px; right: 85px;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg,#d35400,#e67e22);
+            color:#fff; border:none; font-size:0.95rem;
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; z-index:1300; transition:all 0.2s;
+        }
+        #pedidosEditBtn:hover { transform:scale(1.1); }
+        #pedidosEditBtn.active {
+            background:linear-gradient(135deg,#1e8449,#27ae60);
+        }
+
+        /* ── Notif panel — bottom-left, integración suave ── */
+        .notif-admin-pedidos {
+            position: fixed;
+            bottom: 20px; left: 20px;
+            width: 320px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            z-index: 1200;
+            overflow: hidden;
+            border: 1px solid #f0e0d0;
+            transform: translateY(calc(100% + 24px));
+            opacity: 0;
+            transition: transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275),
+                        opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .notif-admin-pedidos.is-open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        [data-theme="dark"] .notif-admin-pedidos {
+            background: #1a1a1a !important;
+            border-color: #2a2a2a !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+        }
+        .notif-pedidos-header {
+            background: linear-gradient(135deg,#d35400,#e67e22);
+            padding: 10px 14px;
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: pointer;
+        }
+        .notif-pedidos-header span { color:#fff; font-weight:700; font-size:0.82rem; }
+        .notif-pedidos-body { max-height: 260px; overflow-y: auto; padding: 6px 0; }
+        .notif-item-row {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:7px 12px; font-size:0.8rem; border-bottom:1px solid #f5f0ea;
+            transition:background 0.15s;
+        }
+        [data-theme="dark"] .notif-item-row { border-color:#222 !important; color:#e8e8e8; }
+        .notif-item-row:hover { background:#fff8f5; }
+        [data-theme="dark"] .notif-item-row:hover { background:#222 !important; }
+        .notif-item-row.inactiva { opacity:0.45; }
+        .notif-pedidos-footer {
+            padding:7px 14px; text-align:center;
+            background:#f9f5f2; border-top:1px solid #f0e0d0;
+        }
+        [data-theme="dark"] .notif-pedidos-footer { background:#111 !important; border-color:#222 !important; }
+
+        /* ── Botón campana bottom-left (encima del panel cuando cerrado) ── */
+        #btnToggleNotifPedidos {
+            position:fixed; bottom:20px; left:20px;
+            width:46px; height:46px; border-radius:50%;
+            background:linear-gradient(135deg,#d35400,#e67e22);
+            color:#fff; border:none; font-size:1.1rem;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow:0 4px 16px rgba(211,84,0,0.4);
+            cursor:pointer; z-index:1201; transition:all 0.3s;
+        }
+        #btnToggleNotifPedidos.panel-open {
+            opacity:0; pointer-events:none; transform:scale(0.8);
+        }
+        #btnToggleNotifPedidos:hover:not(.panel-open) { transform:scale(1.1); }
+        .notif-badge-pedidos {
+            position:absolute; top:-4px; right:-4px;
+            width:18px; height:18px; border-radius:50%;
+            background:#e74c3c; color:#fff;
+            font-size:0.6rem; font-weight:700;
+            display:flex; align-items:center; justify-content:center;
+        }
+    </style>
     {% endif %}
 </head>
 <body>
-    {% if session.get('user_id') and session.get('rol') == 'admin' %}
+    {% if session.get('user_id') and session.get('rol') in ['admin', 'vendedor'] %}
 
     <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
     {% include 'global_modules/navbar.html' %}
-
+    <div class="page-wrapper">
     <main class="mt-4">
-        <div class="card-title-marketing mb-5 text-center">
-            <h3 class="display-6 fw-bold m-0">
-                <i class="bi bi-clipboard-check me-2"></i> Panel de Pedidos</h3>
-            <p class="text-white-50 mb-0 mt-1 fw-500">Administra todos los pedidos de tus clientes en este módulo.</p>
+
+        <!-- Widget: Header -->
+        <div class="widget-panel" data-panel="header">
+            <div class="widget-handle-bar">
+                <div class="handle-left"><i class="bi bi-grip-vertical"></i> Encabezado del módulo</div>
+                <div class="handle-right">
+                    <button class="widget-action-btn" onclick="toggleWidget(this)" title="Mostrar/Ocultar"><i class="bi bi-eye"></i></button>
+                </div>
+            </div>
+            <div class="widget-content card-title-marketing mb-4 text-center">
+                <h3 class="display-6 fw-bold m-0">
+                    <i class="bi bi-clipboard-check me-2"></i> Panel de Pedidos</h3>
+                <p class="text-white-50 mb-0 mt-1 fw-500">Administra todos los pedidos de tus clientes en este módulo.</p>
+            </div>
         </div>
 
-        <div class="card p-0 mb-4">
-            <div class="card-body" style="padding: 1.8rem;">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label">Nombre del Cliente</label>
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-person text-primary"></i>
-                            </span>
-                            <input type="text" id="inputBusquedaNombre" class="form-control" placeholder="Ej: Juan Pérez">
+        <!-- Widget: Stats -->
+        <div class="widget-panel" data-panel="stats">
+            <div class="widget-handle-bar">
+                <div class="handle-left"><i class="bi bi-grip-vertical"></i> Estadísticas de ventas</div>
+                <div class="handle-right">
+                    <button class="widget-action-btn" onclick="toggleWidget(this)" title="Mostrar/Ocultar"><i class="bi bi-eye"></i></button>
+                </div>
+            </div>
+            <div class="widget-content">
+                <div class="row g-3 mb-2" id="statsVentasRow">
+                    <div class="col-6 col-md-3">
+                        <div class="stats-venta-card">
+                            <div class="stats-venta-icon" style="background:rgba(211,84,0,0.12);color:#d35400;">
+                                <i class="bi bi-receipt-cutoff"></i>
+                            </div>
+                            <div>
+                                <div class="stats-venta-num" id="svTotalPedidos">—</div>
+                                <div class="stats-venta-lbl">Total Pedidos</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Cédula</label>
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-card-text text-primary"></i>
-                            </span>
-                            <input type="number" id="inputBusquedaCedula" class="form-control" placeholder="Documento">
+                    <div class="col-6 col-md-3">
+                        <div class="stats-venta-card">
+                            <div class="stats-venta-icon" style="background:rgba(39,174,96,0.12);color:#27ae60;">
+                                <i class="bi bi-cash-coin"></i>
+                            </div>
+                            <div>
+                                <div class="stats-venta-num" id="svTotalVentas">—</div>
+                                <div class="stats-venta-lbl">Ventas Totales</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Factura (Año / Número)</label>
-                        <div class="input-group">
-                            <span class="input-group-text fw-bold">F-</span>
-                            <select id="selectAnio" class="form-select" style="max-width: 95px;"></select>
-                            <span class="input-group-text">-</span>
-                            <input type="number" id="inputNumeroFactura" class="form-control" placeholder="001">
+                    <div class="col-6 col-md-3">
+                        <div class="stats-venta-card">
+                            <div class="stats-venta-icon" style="background:rgba(52,152,219,0.12);color:#2980b9;">
+                                <i class="bi bi-check2-all"></i>
+                            </div>
+                            <div>
+                                <div class="stats-venta-num" id="svEntregados">—</div>
+                                <div class="stats-venta-lbl">Entregados</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Estado</label>
-                        <select id="filtroEstado" class="form-select">
-                            <option value="Todos">Ver Todos</option>
-                            <option value="FiltroPagoPendiente">Activos</option>
-                            <option value="Entregado">Finalizados</option>
-                            <option value="Cancelado">Anulados</option>
-                        </select>
-                    </div>
-                    <div class="col-12 d-flex justify-content-between align-items-center mt-2">
-                        <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalConfigReporte">
-                            <i class="bi bi-file-earmark-pdf"></i> Descargar Reporte PDF
-                        </button>
+                    <div class="col-6 col-md-3">
+                        <div class="stats-venta-card">
+                            <div class="stats-venta-icon" style="background:rgba(39,174,96,0.12);color:#27ae60;">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                            <div>
+                                <div class="stats-venta-num">
+                                    <span id="svPorcentaje" class="badge-porcentaje-verde">—</span>
+                                </div>
+                                <div class="stats-venta-lbl">Tasa de Éxito</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="table-responsive mb-4">
-            <table class="table table-hover table-bordered bg-white align-middle mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th id="tituloTabla" class="text-center py-3">Cargando Pedidos — Por favor espere...</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaPedidos"></tbody>
-            </table>
+        <!-- Widget: Filtros -->
+        <div class="widget-panel" data-panel="filtros">
+            <div class="widget-handle-bar">
+                <div class="handle-left"><i class="bi bi-grip-vertical"></i> Filtros y búsqueda</div>
+                <div class="handle-right">
+                    <button class="widget-action-btn" onclick="toggleWidget(this)" title="Mostrar/Ocultar"><i class="bi bi-eye"></i></button>
+                </div>
+            </div>
+            <div class="widget-content">
+                <div class="card p-0 mb-3">
+                    <div class="card-body" style="padding: 1.5rem;">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label">Nombre del Cliente</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person text-primary"></i></span>
+                                    <input type="text" id="inputBusquedaNombre" class="form-control" placeholder="Ej: Juan Pérez">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Cédula</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-card-text text-primary"></i></span>
+                                    <input type="number" id="inputBusquedaCedula" class="form-control" placeholder="Documento">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Factura (Año / Número)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text fw-bold">F-</span>
+                                    <select id="selectAnio" class="form-select" style="max-width: 95px;"></select>
+                                    <span class="input-group-text">-</span>
+                                    <input type="number" id="inputNumeroFactura" class="form-control" placeholder="001">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Estado</label>
+                                <select id="filtroEstado" class="form-select">
+                                    <option value="Todos">Ver Todos</option>
+                                    <option value="FiltroPagoPendiente">Activos</option>
+                                    <option value="Entregado">Finalizados</option>
+                                    <option value="Cancelado">Anulados</option>
+                                </select>
+                            </div>
+                            <div class="col-12 d-flex justify-content-between align-items-center mt-2">
+                                <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalConfigReporte">
+                                    <i class="bi bi-file-earmark-pdf"></i> Descargar Reporte PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <nav class="mt-3 mb-5">
-            <ul id="pagination" class="pagination justify-content-center"></ul>
-        </nav>
+        <!-- Widget: Tabla de pedidos -->
+        <div class="widget-panel" data-panel="tabla">
+            <div class="widget-handle-bar">
+                <div class="handle-left"><i class="bi bi-grip-vertical"></i> Lista de pedidos</div>
+                <div class="handle-right">
+                    <button class="widget-action-btn" onclick="toggleWidget(this)" title="Mostrar/Ocultar"><i class="bi bi-eye"></i></button>
+                </div>
+            </div>
+            <div class="widget-content">
+                <div class="table-responsive mb-4">
+                    <table class="table table-hover table-bordered bg-white align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th id="tituloTabla" class="text-center py-3">Cargando Pedidos — Por favor espere...</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaPedidos"></tbody>
+                    </table>
+                </div>
+                <nav class="mt-3 mb-5">
+                    <ul id="pagination" class="pagination justify-content-center"></ul>
+                </nav>
+            </div>
+        </div>
+
     </main>
 
+    <!-- Modal PDF -->
     <div class="modal fade" id="modalConfigReporte" tabindex="-1" aria-labelledby="modalReporteTitulo">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -150,9 +371,219 @@
         </div>
     </div>
 
+    <!-- Botón editar widgets (lápiz, al lado del scroll-to-top) -->
+    <button id="pedidosEditBtn" title="Organizar widgets" onclick="togglePedidosEdit()">
+        <i class="bi bi-pencil-fill"></i>
+    </button>
+
+    <!-- Botón campana (bottom-left, integra con panel) -->
+    <button id="btnToggleNotifPedidos" title="Notificaciones" onclick="toggleNotifPedidosPanel()">
+        <i class="bi bi-bell-fill"></i>
+        <span class="notif-badge-pedidos" id="notifPedidosBadge" style="display:none;">0</span>
+    </button>
+
+    <!-- Panel de notificaciones — auto-integra desde el botón campana -->
+    <div class="notif-admin-pedidos" id="notifPedidosPanel">
+        <div class="notif-pedidos-header" onclick="toggleNotifPedidosPanel()">
+            <span><i class="bi bi-bell-fill me-2"></i>Notificaciones</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="notif-badge-pedidos" id="notifPedidosBadge2" style="position:static;display:none;">0</span>
+                <i class="bi bi-chevron-down text-white" id="notifPedidosChevron"></i>
+            </div>
+        </div>
+        <div class="notif-pedidos-body" id="notifPedidosBody">
+            <div class="text-center text-muted py-3 small">
+                <i class="bi bi-inbox d-block mb-1"></i>Sin notificaciones recientes
+            </div>
+        </div>
+        <div class="notif-pedidos-footer">
+            <button class="btn btn-sm btn-outline-secondary" onclick="limpiarNotifPedidos()">
+                <i class="bi bi-trash3 me-1"></i>Limpiar todo
+            </button>
+        </div>
+    </div>
+
+    </div><!-- /page-wrapper -->
     {% include 'global_modules/footer.html' %}
+    <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+    <script>
+    // ── Widget drag-and-drop — DESACTIVADO hasta presionar editar ──
+    const WIDGET_ORDER_KEY  = 'pedidos_widget_order';
+    const WIDGET_HIDDEN_KEY = 'pedidos_widget_hidden';
+    let _pedidosSortable = null;
+    let _pedidosEditMode = false;
+
+    function initWidgetSystem() {
+        const main = document.querySelector('main');
+        if (!main) return;
+
+        const savedOrder = JSON.parse(localStorage.getItem(WIDGET_ORDER_KEY) || '[]');
+        if (savedOrder.length) {
+            savedOrder.forEach(panelId => {
+                const el = main.querySelector(`.widget-panel[data-panel="${panelId}"]`);
+                if (el) main.appendChild(el);
+            });
+        }
+
+        const hiddenWidgets = JSON.parse(localStorage.getItem(WIDGET_HIDDEN_KEY) || '[]');
+        hiddenWidgets.forEach(panelId => {
+            const el = main.querySelector(`.widget-panel[data-panel="${panelId}"]`);
+            if (el) {
+                el.classList.add('widget-collapsed');
+                const btn = el.querySelector('.widget-action-btn i');
+                if (btn) btn.className = 'bi bi-eye-slash';
+            }
+        });
+    }
+
+    function togglePedidosEdit() {
+        const main = document.querySelector('main');
+        const btn  = document.getElementById('pedidosEditBtn');
+        if (!main || !btn) return;
+
+        _pedidosEditMode = !_pedidosEditMode;
+
+        if (_pedidosEditMode) {
+            btn.classList.add('active');
+            btn.title = 'Salir del modo edición';
+            btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+            _pedidosSortable = Sortable.create(main, {
+                animation: 180,
+                handle: '.widget-handle-bar',
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                scroll: true,
+                scrollSensitivity: 60,
+                scrollSpeed: 10,
+                onEnd: () => {
+                    const panels = [...main.querySelectorAll('.widget-panel')].map(el => el.dataset.panel);
+                    localStorage.setItem(WIDGET_ORDER_KEY, JSON.stringify(panels));
+                }
+            });
+            mostrarAlerta('✏️ Modo edición activo — Arrastra los widgets para reorganizar');
+        } else {
+            btn.classList.remove('active');
+            btn.title = 'Organizar widgets';
+            btn.innerHTML = '<i class="bi bi-grid-3x3-gap"></i>';
+            if (_pedidosSortable) { _pedidosSortable.destroy(); _pedidosSortable = null; }
+            mostrarAlerta('✅ Cambios guardados');
+        }
+    }
+
+    function toggleWidget(btn) {
+        const panel = btn.closest('.widget-panel');
+        const isCollapsed = panel.classList.toggle('widget-collapsed');
+        const icon = btn.querySelector('i');
+        icon.className = isCollapsed ? 'bi bi-eye-slash' : 'bi bi-eye';
+
+        const hiddenWidgets = JSON.parse(localStorage.getItem(WIDGET_HIDDEN_KEY) || '[]');
+        const panelId = panel.dataset.panel;
+        if (isCollapsed && !hiddenWidgets.includes(panelId)) hiddenWidgets.push(panelId);
+        else if (!isCollapsed) { const idx = hiddenWidgets.indexOf(panelId); if (idx > -1) hiddenWidgets.splice(idx, 1); }
+        localStorage.setItem(WIDGET_HIDDEN_KEY, JSON.stringify(hiddenWidgets));
+    }
+
+    // ── Panel de notificaciones — auto-integra ──
+    let _notifPedidosOpen = false;
+    let _notifLog = JSON.parse(localStorage.getItem('pedidos_notif_log') || '[]');
+
+    function toggleNotifPedidosPanel() {
+        _notifPedidosOpen = !_notifPedidosOpen;
+        const panel  = document.getElementById('notifPedidosPanel');
+        const bellBtn = document.getElementById('btnToggleNotifPedidos');
+        const chevron = document.getElementById('notifPedidosChevron');
+
+        if (_notifPedidosOpen) {
+            panel.classList.add('is-open');
+            if (bellBtn) bellBtn.classList.add('panel-open');
+            if (chevron) chevron.className = 'bi bi-chevron-down text-white';
+            renderNotifPedidos();
+        } else {
+            panel.classList.remove('is-open');
+            if (bellBtn) bellBtn.classList.remove('panel-open');
+            if (chevron) chevron.className = 'bi bi-chevron-up text-white';
+        }
+    }
+
+    function addNotifLog(tipo, mensaje, datos = {}) {
+        const entry = {
+            id: Date.now(),
+            tipo, mensaje, datos,
+            hora: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+            activa: true
+        };
+        _notifLog.unshift(entry);
+        if (_notifLog.length > 30) _notifLog.pop();
+        localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
+        actualizarBadgeNotif();
+        if (_notifPedidosOpen) renderNotifPedidos();
+    }
+
+    function actualizarBadgeNotif() {
+        const activas = _notifLog.filter(n => n.activa).length;
+        const cnt = activas > 9 ? '9+' : activas;
+        ['notifPedidosBadge','notifPedidosBadge2'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.textContent = cnt; el.style.display = activas > 0 ? 'flex' : 'none'; }
+        });
+    }
+
+    function renderNotifPedidos() {
+        const body = document.getElementById('notifPedidosBody');
+        if (!body) return;
+        if (_notifLog.length === 0) {
+            body.innerHTML = '<div class="text-center text-muted py-3 small"><i class="bi bi-inbox d-block mb-1"></i>Sin notificaciones recientes</div>';
+            return;
+        }
+        const ICONS = { nuevo: 'bi-cart-plus text-success', cancelado: 'bi-x-circle text-danger', estado: 'bi-arrow-repeat text-primary', pago: 'bi-cash-coin text-warning', info: 'bi-info-circle text-muted' };
+        body.innerHTML = _notifLog.map(n => `
+            <div class="notif-item-row ${n.activa ? '' : 'inactiva'}" id="notifrow-${n.id}">
+                <div class="d-flex align-items-start gap-2 flex-grow-1">
+                    <i class="bi ${ICONS[n.tipo] || ICONS.info} mt-1"></i>
+                    <div>
+                        <div style="font-weight:600;font-size:0.8rem;">${n.mensaje}</div>
+                        <div style="font-size:0.7rem;color:#888;">${n.hora}</div>
+                    </div>
+                </div>
+                <div class="d-flex gap-1 ms-2 flex-shrink-0">
+                    <button class="widget-action-btn" onclick="toggleNotifItem(${n.id})" title="${n.activa ? 'Desactivar' : 'Activar'}">
+                        <i class="bi bi-toggle-${n.activa ? 'on text-success' : 'off text-muted'}"></i>
+                    </button>
+                    <button class="widget-action-btn text-danger" onclick="deleteNotifItem(${n.id})" title="Eliminar">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </div>
+            </div>`).join('');
+    }
+
+    function toggleNotifItem(id) {
+        const n = _notifLog.find(x => x.id === id);
+        if (n) { n.activa = !n.activa; localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog)); actualizarBadgeNotif(); renderNotifPedidos(); }
+    }
+
+    function deleteNotifItem(id) {
+        _notifLog = _notifLog.filter(x => x.id !== id);
+        localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
+        actualizarBadgeNotif(); renderNotifPedidos();
+    }
+
+    function limpiarNotifPedidos() {
+        _notifLog = [];
+        localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
+        actualizarBadgeNotif(); renderNotifPedidos();
+    }
+
+    // Exponer para pedidos.js
+    window.addNotifLog = addNotifLog;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initWidgetSystem();
+        actualizarBadgeNotif();
+    });
+    </script>
     <script src="{{ url_for('static', filename='js/admin_js/pedidos.js') }}"></script>
     {% endif %}
 </body>

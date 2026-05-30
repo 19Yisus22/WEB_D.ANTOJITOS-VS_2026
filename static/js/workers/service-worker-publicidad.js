@@ -1,90 +1,84 @@
-const CACHE_NAME = 'dantojitos-admin-v3';
-const STATIC_FILES = [
-    '/',
+const CACHE_NAME = 'dantojitos-publicidad-v4';
+const STATIC_ASSETS = [
     '/publicidad_page',
-    '/static/css/style_publicidad.css',
-    '/static/js/publicidad.js',
+    '/static/css/admin_modules/style_publicidad.css',
+    '/static/css/global_modules/style_navbar.css',
+    '/static/css/global_modules/style_utils.css',
+    '/static/js/admin_js/publicidad.js',
     '/static/uploads/logo.ico',
+    '/static/uploads/logo.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
 ];
 
-self.addEventListener('install', (e) => {
+const NETWORK_FIRST_ROUTES = [
+    '/publicidad_page',
+    '/api/publicidad/activa',
+    '/api/admin/publicidad/',
+    '/api/admin/notificaciones',
+    '/api/admin/notificaciones/'
+];
+
+self.addEventListener('install', event => {
     self.skipWaiting();
-    e.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return Promise.allSettled(
-                STATIC_FILES.map(url => cache.add(url))
-            );
-        })
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache =>
+            Promise.allSettled(
+                STATIC_ASSETS.map(url =>
+                    fetch(url).then(res => { if (res.ok) cache.put(url, res); }).catch(() => {})
+                )
+            )
+        )
     );
 });
 
-self.addEventListener('activate', (e) => {
-    e.waitUntil(
-        caches.keys().then((keys) => {
-            return Promise.all(
-                keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-            );
-        })
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(keys =>
+            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+        ).then(() => self.clients.claim())
     );
-    return self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
-    if (e.request.method !== 'GET') return;
+self.addEventListener('fetch', event => {
+    if (event.request.method !== 'GET') return;
 
-    const url = new URL(e.request.url);
-    const isNavigation = e.request.mode === 'navigate' || url.pathname === '/publicidad_page';
-    const isApi = url.pathname.includes('/api/');
-    const isImage = e.request.destination === 'image' || url.hostname.includes('cloudinary.com');
+    const url = new URL(event.request.url);
+    const isCloudinary = url.hostname.includes('cloudinary.com') || url.hostname.includes('res.cloudinary.com');
 
-    if (isApi || isNavigation) {
-        e.respondWith(
-            fetch(e.request)
-                .then((res) => {
-                    if (res.ok) {
-                        const clone = res.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-                    }
-                    return res;
-                })
-                .catch(() => {
-                    return caches.match(e.request).then((cached) => {
-                        return cached || (isNavigation ? caches.match('/publicidad_page') : Response.error());
-                    });
-                })
-        );
+    if (NETWORK_FIRST_ROUTES.some(r => url.pathname.startsWith(r))) {
+        event.respondWith(networkFirst(event.request));
         return;
     }
 
-    if (isImage) {
-        e.respondWith(
-            caches.match(e.request).then((cached) => {
-                const fetchPromise = fetch(e.request).then((res) => {
-                    if (res.ok) {
-                        const clone = res.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-                    }
-                    return res;
-                });
-                return cached || fetchPromise;
-            })
-        );
+    if (isCloudinary || event.request.destination === 'image') {
+        event.respondWith(staleWhileRevalidate(event.request));
         return;
     }
 
-    e.respondWith(
-        caches.match(e.request).then((res) => {
-            const fetchPromise = fetch(e.request).then((networkRes) => {
-                if (networkRes.ok) {
-                    const clone = networkRes.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-                }
-                return networkRes;
-            });
-            return res || fetchPromise;
-        })
-    );
+    event.respondWith(staleWhileRevalidate(event.request));
 });
+
+async function networkFirst(request) {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+        const res = await fetch(request);
+        if (res.ok) cache.put(request, res.clone());
+        return res;
+    } catch {
+        return await cache.match(request) || new Response(JSON.stringify({ error: 'Sin conexión' }), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+}
+
+async function staleWhileRevalidate(request) {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(request);
+    const fetchPromise = fetch(request).then(res => {
+        if (res && res.status === 200) cache.put(request, res.clone());
+        return res;
+    }).catch(() => cached);
+    return cached || fetchPromise;
+}

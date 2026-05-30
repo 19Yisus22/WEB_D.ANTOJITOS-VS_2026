@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -9,12 +9,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_modules/style_gestion_productos.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
 </head>
-<body class="d-flex flex-column min-vh-100">
+<body>
     {% include 'global_modules/navbar.html' %}
-    
-    {% if session.get('user_id') and session.get('rol') == 'admin' %}
-    <main class="flex-grow-1 py-4">
+
+    {% if session.get('user_id') and session.get('rol') in ['admin', 'vendedor'] %}
+    <main class="page-wrapper py-4">
         <div class="container-fluid px-lg-5">
             <div class="card-title-marketing text-center mb-4">
                 <h3 class="fw-bold m-0"><i class="bi bi-box-seam me-2"></i> Panel de Productos</h3>
@@ -145,20 +146,6 @@
             </section>
         </div>
 
-        <div class="storage-fixed-wrapper" id="storageWrapper" onclick="showStorageDetails()" style="cursor: pointer;">
-        <div class="storage-container">
-            <div class="storage-visual-wrapper">
-                <svg class="storage-ring-svg" width="60" height="60">
-                    <circle class="storage-ring-bg" cx="30" cy="30" r="26"></circle>
-                    <circle id="storageCircle" class="storage-ring-progress" cx="30" cy="30" r="26"></circle>
-                </svg>
-                <div class="storage-cloud-inner">
-                    <i class="bi bi-cloud-fill"></i>
-                </div>
-            </div>
-            <span id="storageText" class="d-none">Cargando...</span>
-        </div>
-    </div>
     </main>
 
     <div class="modal fade" id="modalPostre" tabindex="-1">
@@ -202,13 +189,15 @@
             </div>
         </div>
     </div>
-    {% else %}
-    <script>setTimeout(() => { window.location.href = "{{ url_for('inicio') }}"; }, 3000);</script>
     {% endif %}
 
     {% include 'global_modules/footer.html' %}
     <div id="toastContainer"></div>
+    <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/global_js/widget_system.js') }}"></script>
     <script src="{{ url_for('static', filename='js/admin_js/gestion_productos.js') }}"></script>
 </body>
 </html>

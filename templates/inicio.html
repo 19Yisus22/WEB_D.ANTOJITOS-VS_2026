@@ -9,119 +9,278 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_inicio.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='/uploads/logo.ico') }}">
 </head>
 <body class="body-fondo-logo">
 
-    {% include 'global_modules/navbar.html' %}
+{% set is_admin = session.get('rol') == 'admin' %}
+<script>const IS_ADMIN = {{ 'true' if is_admin else 'false' }};</script>
 
-    <main class="container mt-4 mt-md-5">
+{% include 'global_modules/navbar.html' %}
+
+{% if is_admin %}
+<div id="saveBar" class="save-bar">
+    <span class="save-info"><i class="bi bi-info-circle me-1"></i> Modo edición — arrastra secciones, doble clic para editar textos</span>
+    <div class="save-actions">
+        <button class="btn-cancel-edit" onclick="cancelarEdicion()"><i class="bi bi-x me-1"></i>Cancelar</button>
+        <button class="btn-save" onclick="guardarEdicion()"><i class="bi bi-cloud-check me-1"></i>Guardar Cambios</button>
+    </div>
+</div>
+{% endif %}
+
+<main class="container mt-4 mt-md-5 page-wrapper">
+
+    <div class="widget-bloque" data-widget="bienvenida">
+        <div class="widget-controls">
+            <span class="widget-handle"><i class="bi bi-grip-vertical"></i></span>
+            <span class="widget-label"><i class="bi bi-type me-1"></i>Bienvenida</span>
+            <div class="widget-actions">
+                <button class="btn-widget-action widget-toggle" data-widget="bienvenida" title="Mostrar/Ocultar">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+        </div>
         <header class="catalog-header text-center mb-5 fade-in">
             <h1 class="display-4 fw-bold">
                 Bienvenid@ a D'Antojitos{% if session.get('user') %} - {{ session.user.nombre }}{% endif %}
             </h1>
-            <div class="divider" style="width: 120px; height: 3px; margin: 5px auto 0 auto; background-color: #d6336c;"></div>
-            <p class="text-muted mt-3" id="mensajeBienvenidaDinamico">Endulza tu día con deliciosos postres caseros!</p>
-
-            {% if session.get('user') and (session.user.rol == 'admin' or (session.user.roles and session.user.roles.nombre_role == 'admin')) %}
-            <div class="admin-edit-zone mx-auto mb-4" style="max-width: 500px; margin-top: 15px;">
-            </div>
-            {% endif %}
+            <div class="divider" style="width:120px;height:3px;margin:5px auto 0;background:#d6336c;"></div>
+            <p class="text-muted mt-3"
+               id="mensajeBienvenidaDinamico"
+               data-config-key="bienvenida_mensaje">Endulza tu día con deliciosos postres caseros!</p>
         </header>
-        <div class="row g-4">
-            <div class="col-lg-8">
-                <section id="vision" class="fade-in">
-                    <div class="d-flex flex-column mb-4 align-items-start">
+    </div>
 
-</div>
-                    <div class="carousel-container-custom shadow-lg rounded-4 overflow-hidden mb-4">
-                        <div class="swiper swiperPromo">
-                            <div class="swiper-wrapper" id="carouselItems">
-                                <div class="swiper-slide">
-                                    <div class="d-flex justify-content-center align-items-center bg-light" style="height: 400px;">
-                                        <div class="spinner-border text-primary" role="status"></div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div id="sortable-main">
+
+                <div class="widget-bloque" data-widget="carousel">
+                    <div class="widget-controls">
+                        <span class="widget-handle"><i class="bi bi-grip-vertical"></i></span>
+                        <span class="widget-label"><i class="bi bi-images me-1"></i>Carrusel</span>
+                        <div class="widget-actions">
+                            <a class="btn-widget-action" href="/publicidad_page" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                            <button class="btn-widget-action widget-toggle" data-widget="carousel">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <section id="section-carousel">
+                        <div class="carousel-container-custom shadow-lg rounded-4 overflow-hidden mb-4">
+                            <div class="swiper swiperPromo">
+                                <div class="swiper-wrapper" id="carouselItems">
+                                    <div class="swiper-slide">
+                                        <div class="d-flex justify-content-center align-items-center bg-light" style="height:400px;">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                        </div>
                                     </div>
                                 </div>
+                                <div class="swiper-pagination"></div>
+                                <div class="swiper-button-prev"></div>
+                                <div class="swiper-button-next"></div>
                             </div>
-                            <div class="swiper-pagination"></div>
-                            <div class="swiper-button-prev"></div>
-                            <div class="swiper-button-next"></div>
                         </div>
-                    </div><br>
-                    <h3 class="fw-bold h5 text-uppercase" style="text-align:center">Nuestra historia y pasión</h3>
-                    <div class="divider" style="width: 120px; height: 3px; margin: 5px auto 0 auto; background-color: #d6336c;"></div>
-                    <div class="mt-4 content-text">
-                        <p class="descripcion-postre">
-                            Le damos la bienvenida a <strong>D'Antojitos</strong>, un espacio donde la pasión por la repostería se convierte en experiencias inolvidables. Nuestro emprendimiento nace del amor por los sabores auténticos y la creatividad en cada detalle, transformando ingredientes frescos y de la más alta calidad en postres que deleitan tanto la vista como el paladar.
-                        </p>
-                        <p class="descripcion-postre">
-                            En <strong>D'Antojitos</strong> creemos que los momentos más simples pueden convertirse en recuerdos extraordinarios con un toque de dulzura. Por ello, cada una de nuestras creaciones es elaborada de manera artesanal, respetando los tiempos y procesos que garantizan una textura perfecta y un sabor que evoca la calidez del hogar, pero con la sofisticación de la alta repostería.
-                        </p>
-                        <p class="descripcion-postre">
-                            Nuestro compromiso va más allá de ofrecer un producto; buscamos ser parte de tus celebraciones y momentos especiales. Desde la selección de la materia prima hasta el empaque final, trabajamos con dedicación para asegurar que cada entrega sea un regalo para tus sentidos, reafirmando por qué somos el destino favorito para quienes buscan endulzar su vida con calidad y amor.
-                        </p>
-                        <h4 id="tituloInicio" class="mt-4 fw-bold"></h4>
-                        <p class="descripcion-postre" id="infoInicioTexto"></p>
-                    </div>
-                </section>
-            </div>
-            <div class="col-lg-4">
-                <div id="seccionesAlFrente" class="d-flex flex-column gap-3 mb-4"></div>
-                
-                <div class="sidebar-custom fade-in p-4 bg-white rounded-4 shadow-sm border">
-                    <h5 class="mb-4 fw-bold" style="color: #333; border-left: 4px solid #d35400; padding-left: 12px;">Explorar</h5>
-                    <nav class="d-flex flex-column gap-2" id="navExplorar">
-                        <a href="/catalogo_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
-                            <i class="bi bi-shop fs-3 me-3 text-primary"></i>
-                            <div>
-                                <span class="d-block fw-bold text-dark">Catálogo de Dulces</span>
-                                <small class="text-muted">Explora nuestros postres frescos</small>
-                            </div>
-                        </a>
-
-                        {% if session.get('user') %}
-                        <a href="/carrito_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
-                            <i class="bi bi-cart3 fs-3 me-3 text-success"></i>
-                            <div>
-                                <span class="d-block fw-bold text-dark">Mi Carrito</span>
-                                <small class="text-muted">Revisa tus pedidos seleccionados</small>
-                            </div>
-                        </a>
-                        {% endif %}
-                        
-                        <a href="/comentarios_page" id="btnSugerencias" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all">
-                            <i class="bi bi-chat-heart fs-3 me-3 text-danger"></i>
-                            <div>
-                                <span class="d-block fw-bold text-dark">Tu Opinión</span>
-                                <small class="text-muted">Comentarios y sugerencias</small>
-                            </div>
-                        </a>
-
-                        {% if session.get('user') and (session.user.rol == 'admin' or (session.user.roles and session.user.roles.nombre_role == 'admin')) %}
-                        <a href="/manual_page" id="btnManualAdmin" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 transition-all" style="border-color: #0d6efd !important; background-color: #f8fbff; margin-top: 8px;">
-                            <i class="bi bi-book fs-3 me-3 text-primary"></i>
-                            <div>
-                                <span class="d-block fw-bold text-dark">Manual Admin</span>
-                                <small class="text-muted">Guía de uso para administradores</small>
-                            </div>
-                        </a>
-                        {% endif %}
-                    </nav>
+                    </section>
                 </div>
+
+                <div class="widget-bloque" data-widget="historia">
+                    <div class="widget-controls">
+                        <span class="widget-handle"><i class="bi bi-grip-vertical"></i></span>
+                        <span class="widget-label"><i class="bi bi-file-text me-1"></i>Historia</span>
+                        <div class="widget-actions">
+                            <button class="btn-widget-action widget-toggle" data-widget="historia">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <section id="section-historia">
+                        <h3 class="fw-bold h5 text-uppercase text-center"
+                            data-config-key="historia_titulo">Nuestra historia y pasión</h3>
+                        <div class="divider" style="width:120px;height:3px;margin:5px auto 12px;background:#d6336c;"></div>
+                        <div class="mt-2 content-text">
+                            <p class="descripcion-postre" data-config-key="historia_p1">Le damos la bienvenida a <strong>D'Antojitos</strong>, un espacio donde la pasión por la repostería se convierte en experiencias inolvidables.</p>
+                            <p class="descripcion-postre" data-config-key="historia_p2">En <strong>D'Antojitos</strong> creemos que los momentos más simples pueden convertirse en recuerdos extraordinarios con un toque de dulzura.</p>
+                            <p class="descripcion-postre" data-config-key="historia_p3">Nuestro compromiso va más allá de ofrecer un producto; buscamos ser parte de tus celebraciones y momentos especiales.</p>
+                            <h4 id="tituloInicio" class="mt-4 fw-bold"></h4>
+                            <p class="descripcion-postre" id="infoInicioTexto"></p>
+                        </div>
+                    </section>
+                </div>
+
             </div>
         </div>
 
-        <section class="mt-5 pb-5">
+        <div class="col-lg-4">
+            <div id="sortable-sidebar">
+
+                <div class="widget-bloque" data-widget="secciones-frente">
+                    <div class="widget-controls">
+                        <span class="widget-handle"><i class="bi bi-grip-vertical"></i></span>
+                        <span class="widget-label"><i class="bi bi-grid me-1"></i>Secciones</span>
+                        <div class="widget-actions">
+                            <a class="btn-widget-action" href="/publicidad_page" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                            <button class="btn-widget-action widget-toggle" data-widget="secciones-frente">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="seccionesAlFrente" class="d-flex flex-column gap-3 mb-4"></div>
+                </div>
+
+                <div class="widget-bloque" data-widget="explorar">
+                    <div class="widget-controls">
+                        <span class="widget-handle"><i class="bi bi-grip-vertical"></i></span>
+                        <span class="widget-label"><i class="bi bi-compass me-1"></i>Explorar</span>
+                        <div class="widget-actions">
+                            <button class="btn-widget-action widget-toggle" data-widget="explorar">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="sidebar-custom fade-in p-4 bg-white rounded-4 shadow-sm border">
+                        <h5 class="mb-4 fw-bold" style="color:#333;border-left:4px solid #d35400;padding-left:12px;"
+                            data-config-key="explorar_titulo">Explorar</h5>
+                        <nav class="d-flex flex-column gap-2" id="navExplorar">
+                            <a href="/catalogo_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
+                                <i class="bi bi-shop fs-3 me-3 text-primary"></i>
+                                <div>
+                                    <span class="d-block fw-bold text-dark">Catálogo de Dulces</span>
+                                    <small class="text-muted">Explora nuestros postres frescos</small>
+                                </div>
+                            </a>
+                            {% if session.get('user') %}
+                            <a href="/carrito_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
+                                <i class="bi bi-cart3 fs-3 me-3 text-success"></i>
+                                <div>
+                                    <span class="d-block fw-bold text-dark">Mi Carrito</span>
+                                    <small class="text-muted">Revisa tus pedidos seleccionados</small>
+                                </div>
+                            </a>
+                            {% endif %}
+                            <a href="/comentarios_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
+                                <i class="bi bi-chat-heart fs-3 me-3 text-danger"></i>
+                                <div>
+                                    <span class="d-block fw-bold text-dark">Tu Opinión</span>
+                                    <small class="text-muted">Comentarios y sugerencias</small>
+                                </div>
+                            </a>
+                            {% if is_admin %}
+                            <a href="/manual_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3" style="border-color:#0d6efd!important;background:#f8fbff;">
+                                <i class="bi bi-book fs-3 me-3 text-primary"></i>
+                                <div>
+                                    <span class="d-block fw-bold text-dark">Manual Admin</span>
+                                    <small class="text-muted">Guía de uso para administradores</small>
+                                </div>
+                            </a>
+                            <button onclick="toggleModoEdicion()"
+                                    id="btnEditarInicio"
+                                    class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3 w-100 text-start"
+                                    style="background:linear-gradient(135deg,#fff5ee,#fff);border-color:#d35400!important;cursor:pointer;">
+                                <i class="bi bi-pencil-fill fs-3 me-3" style="color:#d35400;"></i>
+                                <div>
+                                    <span class="d-block fw-bold" style="color:#d35400;" id="editBtnLabel">Editar Inicio</span>
+                                    <small class="text-muted">Modo administrador</small>
+                                </div>
+                            </button>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="widget-bloque mt-4" data-widget="marketing">
+        <div class="widget-controls">
+            <span class="widget-handle"><i class="bi bi-grip-vertical"></i></span>
+            <span class="widget-label"><i class="bi bi-megaphone me-1"></i>Marketing</span>
+            <div class="widget-actions">
+                <a class="btn-widget-action" href="/publicidad_page" target="_blank">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                <button class="btn-widget-action widget-toggle" data-widget="marketing">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+        </div>
+        <section class="pb-5">
             <div id="seccionesDebajo" class="row g-4 justify-content-start fade-in"></div>
         </section>
-    </main>
+    </div>
 
-    <div id="toastContainer" class="position-fixed bottom-0 start-0 p-3" style="z-index: 1080;"></div>
+    <div id="cintaInicio" class="cinta-inicio-marquee" style="display:none;"></div>
 
-    {% include 'global_modules/footer.html' %}
+</main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/global_js/inicio.js') }}"></script>
+{% if is_admin %}
+<div id="notifAdminPanel" class="notif-admin-panel">
+    <div class="notif-admin-header" onclick="toggleNotifPanel()">
+        <span><i class="bi bi-bell-fill me-1"></i> Notificaciones</span>
+        <span class="badge bg-danger" id="notifCount">0</span>
+        <i class="bi bi-chevron-up ms-auto" id="notifChevron"></i>
+    </div>
+    <div class="notif-admin-body" id="notifAdminBody">
+        <div class="notif-empty" id="notifEmpty">
+            <i class="bi bi-bell-slash"></i>
+            <p>Sin notificaciones</p>
+        </div>
+        <ul class="notif-list" id="notifList"></ul>
+        <div class="notif-admin-footer">
+            <small class="text-muted">Activas se muestran aleatoriamente al público cada 12s</small>
+        </div>
+    </div>
+</div>
+
+<div id="modalEditorTexto" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:20000;align-items:center;justify-content:center;">
+    <div style="background:#fff;width:95%;max-width:540px;border-radius:20px;padding:28px;box-shadow:0 25px 60px rgba(0,0,0,0.4);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h5 id="modalEditorLabel" style="margin:0;font-weight:800;color:#1e272e;"></h5>
+            <button onclick="cerrarModalEditor()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#747d8c;">×</button>
+        </div>
+        <textarea id="modalEditorTextarea" style="width:100%;min-height:120px;border:2px solid #dee2e6;border-radius:12px;padding:12px;font-size:0.95rem;resize:vertical;outline:none;" placeholder="Escribe el contenido aquí..."></textarea>
+        <small style="color:#a4b0be;display:block;margin-top:6px;">Puedes usar HTML básico: &lt;strong&gt;, &lt;em&gt;</small>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+            <button onclick="cerrarModalEditor()" style="padding:10px 22px;border-radius:12px;border:2px solid #dee2e6;background:#fff;font-weight:700;cursor:pointer;">Cancelar</button>
+            <button onclick="aplicarCambioTexto()" style="padding:10px 22px;border-radius:12px;border:none;background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;font-weight:700;cursor:pointer;">
+                <i class="bi bi-check2 me-1"></i>Aplicar
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div id="toastContainer"></div>
+
+{% if is_admin %}
+<button id="btnCampanaNotif" title="Notificaciones admin"
+        onclick="toggleNotifPanel()"
+        style="position:fixed;bottom:84px;left:20px;width:46px;height:46px;border-radius:50%;
+               background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;border:none;
+               font-size:1.2rem;display:flex;align-items:center;justify-content:center;
+               box-shadow:0 4px 16px rgba(211,84,0,0.35);z-index:1300;cursor:pointer;
+               transition:transform 0.2s;">
+    <i class="bi bi-bell-fill"></i>
+    <span id="campanaBadge" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;
+          border-radius:50%;background:#e74c3c;color:#fff;font-size:0.6rem;font-weight:700;
+          display:none;align-items:center;justify-content:center;">0</span>
+</button>
+{% endif %}
+
+{% include 'global_modules/footer.html' %}
+<button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/global_js/widget_system.js') }}"></script>
+<script src="{{ url_for('static', filename='js/global_js/inicio.js') }}"></script>
 </body>
 </html>

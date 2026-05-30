@@ -3,102 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Registro | D'Antojitos©</title>
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
+    <title>Registro · D'Antojitos©</title>
+    <link rel="icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_registro.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_login.css') }}">
 </head>
+<body class="reg-body">
 
-<body>
-    <div id="toastContainer" class="position-fixed bottom-0 start-0 p-3" style="z-index: 1080;"></div>
+<div id="toastContainer"></div>
 
-    <div class="registro-wrapper">
-        <div class="card-registro">
+<button class="login-theme-btn" id="regThemeBtn" onclick="toggleTheme()" title="Cambiar tema">
+    <i class="bi bi-moon-fill" id="regThemeIcon"></i>
+</button>
 
-            <div class="registro-header">
-                <div class="logo-wrap">
-                    <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo D'Antojitos" class="registro-logo floating">
-                </div>
-                <h2>Crear Cuenta</h2>
-                <p class="registro-subtitle">Únete a nuestra dulce comunidad</p>
+<div class="reg-wrapper">
+
+    <div class="reg-left">
+        <div class="reg-brand">
+            <div class="reg-logo-ring">
+                <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo">
+            </div>
+            <h1>D'Antojitos©</h1>
+            <p>Tu dulce rincón favorito</p>
+            <div class="reg-dots"><span></span><span></span><span></span></div>
+        </div>
+        <div class="reg-features">
+            <div class="reg-feat"><i class="bi bi-shield-check-fill"></i><span>Registro seguro</span></div>
+            <div class="reg-feat"><i class="bi bi-bag-heart-fill"></i><span>Postres artesanales</span></div>
+            <div class="reg-feat"><i class="bi bi-lightning-charge-fill"></i><span>Acceso inmediato</span></div>
+        </div>
+        <div class="reg-deco d1"></div>
+        <div class="reg-deco d2"></div>
+    </div>
+
+    <div class="reg-right">
+        <div class="reg-card">
+
+            <div class="reg-header">
+                <h2>Crear cuenta</h2>
+                <p>Completa tus datos y empieza a disfrutar</p>
             </div>
 
-            <form id="registerForm" autocomplete="off">
-
-                <div class="fields-grid">
-
-                    <div class="field-group">
-                        <label for="nombre" class="field-label">Nombre</label>
-                        <div class="field-input-wrap">
-                            <i class="bi bi-person field-icon-left"></i>
-                            <input type="text" id="nombre" name="nombre" class="field-input" required placeholder="Su nombre" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ ]+" inputmode="text" autocomplete="given-name">
+            <form id="formRegistro" novalidate autocomplete="off">
+                <div class="reg-row">
+                    <div class="reg-field">
+                        <label>Nombre <span class="req">*</span></label>
+                        <div class="field-wrap">
+                            <i class="bi bi-person-fill"></i>
+                            <input type="text" id="nombre" name="nombre" maxlength="50" placeholder="Ej: María" required>
                         </div>
                     </div>
-
-                    <div class="field-group">
-                        <label for="apellido" class="field-label">Apellido</label>
-                        <div class="field-input-wrap">
-                            <i class="bi bi-person-fill field-icon-left"></i>
-                            <input type="text" id="apellido" name="apellido" class="field-input" required placeholder="Su apellido" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ ]+" inputmode="text" autocomplete="family-name">
+                    <div class="reg-field">
+                        <label>Apellido <span class="req">*</span></label>
+                        <div class="field-wrap">
+                            <i class="bi bi-person-fill"></i>
+                            <input type="text" id="apellido" name="apellido" maxlength="50" placeholder="Ej: García" required>
                         </div>
                     </div>
-
-                    <div class="field-group">
-                        <label for="cedula" class="field-label">Cédula</label>
-                        <div class="field-input-wrap">
-                            <i class="bi bi-card-text field-icon-left"></i>
-                            <input type="text" id="cedula" name="cedula" class="field-input" required placeholder="Solo números" pattern="\d{6,}" inputmode="numeric" minlength="6">
-                        </div>
-                    </div>
-
-                    <div class="field-group">
-                        <label for="telefono" class="field-label">Teléfono</label>
-                        <div class="field-input-wrap">
-                            <i class="bi bi-telephone field-icon-left"></i>
-                            <input type="tel" id="telefono" name="telefono" class="field-input" placeholder="Solo números" pattern="\d{10,}" inputmode="tel" minlength="10">
-                        </div>
-                    </div>
-
-                    <div class="field-group">
-                        <label for="correo" class="field-label">Correo Electrónico</label>
-                        <div class="field-input-wrap">
-                            <i class="bi bi-envelope field-icon-left"></i>
-                            <input type="email" id="correo" name="correo" class="field-input" required placeholder="usuario@example.com">
-                        </div>
-                    </div>
-
-                    <div class="field-group">
-                        <label for="contrasena" class="field-label">Contraseña</label>
-                        <div class="field-input-wrap">
-                            <i class="bi bi-lock field-icon-left"></i>
-                            <input type="password" id="contrasena" name="contrasena" class="field-input has-right-icon" required placeholder="Ingrese contraseña">
-                            <i class="bi bi-eye field-icon-right" id="togglePassword" style="cursor:pointer;"></i>
-                        </div>
-                        <div class="strength-bar-wrap">
-                            <div class="strength-bar">
-                                <div id="passwordStrengthBar" class="strength-fill"></div>
-                            </div>
-                            <span id="strengthLabel" class="strength-label"></span>
-                        </div>
-                    </div>
-
                 </div>
 
-                <button type="submit" id="btnSubmit" class="btn-gradient">
-                    <span>Crear Cuenta</span>
-                    <i class="bi bi-arrow-right ms-2"></i>
+                <div class="reg-row">
+                    <div class="reg-field">
+                        <label>Cédula <span class="req">*</span></label>
+                        <div class="field-wrap">
+                            <i class="bi bi-card-text"></i>
+                            <input type="text" id="cedula" name="cedula" inputmode="numeric" maxlength="15" placeholder="Ej: 1234567" required>
+                        </div>
+                        <small class="field-hint">7–15 dígitos</small>
+                    </div>
+                    <div class="reg-field">
+                        <label>Teléfono <span class="req">*</span></label>
+                        <div class="field-wrap">
+                            <i class="bi bi-telephone-fill"></i>
+                            <input type="text" id="telefono" name="telefono" inputmode="numeric" maxlength="15" placeholder="Ej: 3001234567" required>
+                        </div>
+                        <small class="field-hint">7–15 dígitos</small>
+                    </div>
+                </div>
+
+                <div class="reg-field">
+                    <label>Correo Electrónico <span class="req">*</span></label>
+                    <div class="field-wrap">
+                        <i class="bi bi-envelope-fill"></i>
+                        <input type="email" id="correo" name="correo" maxlength="150"
+                               placeholder="usuario@gmail.com" required autocomplete="email">
+                    </div>
+                    <small class="field-hint">usuario@dominio.com</small>
+                </div>
+
+                <div class="reg-field">
+                    <label>Nombre de Usuario <small class="text-muted">(opcional)</small></label>
+                    <div class="field-wrap">
+                        <i class="bi bi-at"></i>
+                        <input type="text" id="username" name="username" maxlength="30" placeholder="Ej: maria99">
+                    </div>
+                </div>
+
+                <div class="reg-field">
+                    <label>Contraseña <span class="req">*</span></label>
+                    <div class="field-wrap">
+                        <i class="bi bi-lock-fill"></i>
+                        <input type="password" id="contrasena" name="contrasena" placeholder="Mín. 5 caracteres" required>
+                        <i class="bi bi-eye toggle-pw" id="togglePw"></i>
+                    </div>
+                    <div class="pw-strength-wrap">
+                        <div class="pw-bar" id="pwBar">
+                            <div class="pw-fill" id="pwFill"></div>
+                        </div>
+                        <span class="pw-label" id="pwLabel">Sin contraseña</span>
+                    </div>
+                    <small class="field-hint">Mín. 5 caracteres</small>
+                </div>
+
+                <button type="submit" class="btn-reg" id="btnRegistrar">
+                    <span id="btnRegText"><i class="bi bi-person-check-fill me-2"></i>Crear Cuenta</span>
+                    <span id="btnRegLoader" style="display:none">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Creando cuenta...
+                    </span>
                 </button>
             </form>
 
-            <p class="registro-footer-text">
-                ¿Ya tienes cuenta? <a href="/login" class="link-highlight">Inicia sesión aquí</a>
-            </p>
+            <p class="reg-footer-text">¿Ya tienes cuenta? <a href="/login" class="link-hl">Inicia sesión</a></p>
 
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/general_js/login_registro.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/global_js/login_registro.js') }}"></script>
+<script>
+(function() {
+    const icon = document.getElementById('regThemeIcon');
+    if (!icon) return;
+    const t = localStorage.getItem('dantojitos_theme') || 'light';
+    icon.className = t === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+})();
+</script>
 </body>
 </html>
