@@ -732,4 +732,10 @@ if ('serviceWorker' in navigator) {
 document.addEventListener('DOMContentLoaded', () => {
     const pubBtn = document.getElementById('navPubBtn');
     if (pubBtn) pubBtn.style.display = '';
+
+    /* Marcar el botón de velocidad activo según el valor guardado */
+    const currentSpeed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
+    document.querySelectorAll('.ticker-speed-btn').forEach(btn => {
+        btn.classList.toggle('active', parseFloat(btn.dataset.speed) === currentSpeed);
+    });
 });

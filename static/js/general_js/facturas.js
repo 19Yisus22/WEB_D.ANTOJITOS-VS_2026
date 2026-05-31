@@ -5,6 +5,7 @@ let facturasLocalesCache = [];
 let metodosPagoCache = [];
 let ultimaSincronizacion = new Date();
 let mostrarArchivadas = false;
+const expandedFacturas = new Set(); // facturas con card abierta — persiste entre re-renders
 
 const FormateadorCosto = new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -267,15 +268,55 @@ async function cargarMetodosPago() {
 
 function _getBankConfig(entidad) {
     const MAP = {
-        'Nequi':        { color: '#8e24aa', bg: '#f3e5f5', icon: 'bi-phone-fill' },
-        'Daviplata':     { color: '#e53935', bg: '#ffebee', icon: 'bi-credit-card-2-front-fill' },
-        'Bancolombia':   { color: '#f9a825', bg: '#fff8e1', icon: 'bi-bank2' },
-        'NuBank':        { color: '#6200ea', bg: '#ede7f6', icon: 'bi-wallet2' },
-        'Efecty':        { color: '#ff6f00', bg: '#fff3e0', icon: 'bi-currency-dollar' },
-        'Movii':         { color: '#0d47a1', bg: '#e3f2fd', icon: 'bi-phone' },
-        'PSE':           { color: '#1565c0', bg: '#e8f5e9', icon: 'bi-building' },
+        'Nequi':       {
+            color: '#9c27b0', bg: '#f3e5f5', icon: 'bi-phone-fill',
+            initials: 'N',
+            gradient: 'linear-gradient(135deg,#9c27b0 0%,#e91e8c 100%)',
+            textColor: '#fff'
+        },
+        'Daviplata':   {
+            color: '#e53935', bg: '#ffebee', icon: 'bi-credit-card-2-front-fill',
+            initials: 'DA',
+            gradient: '#e53935',
+            textColor: '#fff'
+        },
+        'Bancolombia': {
+            color: '#1a1a1a', bg: '#fff8e1', icon: 'bi-bank2',
+            initials: 'BC',
+            gradient: 'linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%)',
+            textColor: '#f9a825'
+        },
+        'NuBank':      {
+            color: '#6200ea', bg: '#ede7f6', icon: 'bi-wallet2',
+            initials: 'Nu',
+            gradient: '#6200ea',
+            textColor: '#fff'
+        },
+        'Efecty':      {
+            color: '#ff6f00', bg: '#fff3e0', icon: 'bi-currency-dollar',
+            initials: 'EF',
+            gradient: '#ff6f00',
+            textColor: '#fff'
+        },
+        'Movii':       {
+            color: '#0d47a1', bg: '#e3f2fd', icon: 'bi-phone',
+            initials: 'MV',
+            gradient: '#0d47a1',
+            textColor: '#fff'
+        },
+        'PSE':         {
+            color: '#1565c0', bg: '#e8f5e9', icon: 'bi-building',
+            initials: 'PSE',
+            gradient: '#1565c0',
+            textColor: '#fff'
+        },
     };
-    return MAP[entidad] || { color: '#d35400', bg: '#fff5e1', icon: 'bi-wallet-fill' };
+    return MAP[entidad] || {
+        color: '#d35400', bg: '#fff5e1', icon: 'bi-wallet-fill',
+        initials: entidad ? entidad.slice(0,2).toUpperCase() : '?',
+        gradient: '#d35400',
+        textColor: '#fff'
+    };
 }
 
 function abrirModalPago(facturaNum, total) {
@@ -291,7 +332,9 @@ function abrirModalPago(facturaNum, total) {
                 <p class="small text-muted">Estamos actualizando nuestras cuentas.</p>
             </div>`;
     } else {
-        const bancoActivo = 0;
+        const first = metodosPagoCache[0];
+        const firstCfg = _getBankConfig(first.entidad);
+
         modalBody.innerHTML = `
             <div class="payment-modal-header">
                 <div class="payment-secure-badge">
@@ -304,40 +347,38 @@ function abrirModalPago(facturaNum, total) {
                 </div>
             </div>
 
-            <div class="payment-bank-tabs" id="paymentBankTabs">
+            <div class="payment-qr-area">
+                <div class="payment-qr-box" id="paymentQrBox">
+                    ${first.qr_url
+                        ? `<img src="${first.qr_url}" alt="QR ${first.entidad}"
+                                onerror="this.outerHTML='<div class=\\"payment-qr-ph\\"><i class=\\"bi bi-qr-code-scan\\"></i></div>'">`
+                        : `<div class="payment-qr-ph"><i class="bi bi-qr-code-scan"></i></div>`}
+                </div>
+            </div>
+
+            <div class="payment-bank-subtitle" id="paymentBankSubtitle">
+                <i class="bi bi-building me-1"></i>Pagar con <strong>${first.entidad}</strong>
+            </div>
+
+            ${metodosPagoCache.length > 1 ? `
+            <div class="payment-bank-pager" id="paymentBankPager">
                 ${metodosPagoCache.map((m, i) => {
                     const cfg = _getBankConfig(m.entidad);
                     return `
-                    <button class="payment-bank-tab ${i === 0 ? 'active' : ''}"
-                            onclick="_selectBanco(${i})" id="ptab-${i}"
-                            style="--bank-color:${cfg.color};">
-                        <div class="payment-bank-tab-img" style="background:${cfg.bg};">
-                            ${m.qr_url
-                                ? `<img src="${m.qr_url}" alt="${m.entidad}"
-                                        style="border-radius:6px;"
-                                        onerror="this.outerHTML='<i class=\\'bi ${cfg.icon}\\' style=\\'color:${cfg.color};font-size:1.4rem;\\'></i>'">`
-                                : `<i class="bi ${cfg.icon}" style="color:${cfg.color};font-size:1.4rem;"></i>`}
+                    <button class="payment-pager-btn ${i === 0 ? 'active' : ''}"
+                            onclick="_selectBanco(${i})" id="ptab-${i}" title="${m.entidad}">
+                        <div class="payment-pager-initials"
+                             style="background:${cfg.gradient};color:${cfg.textColor};border-color:${i === 0 ? cfg.color : 'rgba(0,0,0,0.08)'};">
+                            ${cfg.initials}
                         </div>
                         <span>${m.entidad}</span>
                     </button>`;
                 }).join('')}
-            </div>
+            </div>` : ''}
 
-            <div id="paymentBankDetail">
+            <div id="paymentAccountPanels">
                 ${metodosPagoCache.map((m, i) => `
-                    <div class="payment-bank-panel ${i === 0 ? 'active' : ''}" id="bpanel-${i}">
-                        <div class="payment-qr-container">
-                            <div class="payment-qr-box">
-                                ${m.qr_url
-                                    ? `<img src="${m.qr_url}" alt="QR ${m.entidad}"
-                                            onerror="this.outerHTML='<div class=payment-qr-ph><i class=bi.bi-qr-code-scan></i></div>'">`
-                                    : `<div class="payment-qr-ph"><i class="bi bi-qr-code-scan"></i></div>`}
-                            </div>
-                            <div class="payment-qr-instructions">
-                                <i class="bi bi-phone me-1 text-muted"></i>
-                                Escanea con la app de <strong>${m.entidad}</strong>
-                            </div>
-                        </div>
+                    <div class="payment-account-panel ${i === 0 ? 'active' : ''}" id="bpanel-${i}">
                         <div class="payment-account-info">
                             <div class="payment-account-row">
                                 <span class="payment-account-label">${m.tipo_cuenta || 'Tipo de cuenta'}</span>
@@ -368,8 +409,37 @@ function abrirModalPago(facturaNum, total) {
 }
 
 window._selectBanco = function(idx) {
-    document.querySelectorAll('.payment-bank-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-    document.querySelectorAll('.payment-bank-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+    const m = metodosPagoCache[idx];
+    if (!m) return;
+    const cfg = _getBankConfig(m.entidad);
+
+    const qrBox = document.getElementById('paymentQrBox');
+    if (qrBox) {
+        qrBox.style.opacity = '0';
+        qrBox.style.transition = 'opacity 0.18s';
+        setTimeout(() => {
+            qrBox.innerHTML = m.qr_url
+                ? `<img src="${m.qr_url}" alt="QR ${m.entidad}"
+                        onerror="this.outerHTML='<div class=\\"payment-qr-ph\\"><i class=\\"bi bi-qr-code-scan\\"></i></div>'">`
+                : `<div class="payment-qr-ph"><i class="bi bi-qr-code-scan"></i></div>`;
+            qrBox.style.opacity = '1';
+        }, 180);
+    }
+
+    const subtitle = document.getElementById('paymentBankSubtitle');
+    if (subtitle) subtitle.innerHTML = `<i class="bi bi-building me-1"></i>Pagar con <strong>${m.entidad}</strong>`;
+
+    document.querySelectorAll('.payment-pager-btn').forEach((t, i) => {
+        t.classList.toggle('active', i === idx);
+        const initEl = t.querySelector('.payment-pager-initials');
+        if (initEl) {
+            const c = _getBankConfig(metodosPagoCache[i].entidad);
+            initEl.style.borderColor = i === idx ? c.color : 'rgba(0,0,0,0.08)';
+            initEl.style.boxShadow   = i === idx ? `0 4px 14px ${c.color}55` : 'none';
+        }
+    });
+
+    document.querySelectorAll('.payment-account-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
 };
 
 async function descargarPDF(f) {
@@ -716,16 +786,17 @@ function mostrarFacturasBuscadas() {
 
     container.innerHTML = "";
 
+    const emptyEl = document.getElementById('facturasEmpty');
     if (filtradas.length === 0) {
-        container.innerHTML = `
-            <div class="text-center p-5 rounded-4 border">
-                <i class="bi bi-folder2-open display-4 text-muted opacity-25 d-block mb-3"></i>
-                <h6 class="fw-bold">No se encontraron registros</h6>
-                <p class="text-muted small">${mostrarArchivadas ? "No hay facturas archivadas." : "No se encontraron facturas."}</p>
-            </div>`;
+        if (emptyEl) {
+            emptyEl.style.display = 'block';
+            const sub = emptyEl.querySelector('.facturas-empty-sub');
+            if (sub) sub.textContent = mostrarArchivadas ? 'No hay facturas archivadas.' : 'No se encontraron facturas con ese criterio de búsqueda.';
+        }
         paginar(0);
         return;
     }
+    if (emptyEl) emptyEl.style.display = 'none';
 
     const inicio   = (paginaActual - 1) * itemsPorPagina;
     const paginadas = filtradas.slice(inicio, inicio + itemsPorPagina);
@@ -756,6 +827,14 @@ function mostrarFacturasBuscadas() {
         const item = document.createElement('div');
         item.className = `inv-item inv-${cv.color}`;
         item.id = `inv-item-${globalIdx}`;
+        item.dataset.facturaNum = f.numero_factura;
+
+        const clienteNombre  = f.cliente_nombre  || '—';
+        const clienteCedula  = f.cedula         || '—';
+        const clienteTel     = f.telefono       || '—';
+        const clienteDir     = f.direccion      || '—';
+        const clienteMetodo  = f.metodo_pago    || '—';
+        const clienteUser    = f.username_cliente ? `@${f.username_cliente}` : '';
 
         item.innerHTML = `
             <div class="inv-header" onclick="toggleInvItem(${globalIdx})">
@@ -774,10 +853,40 @@ function mostrarFacturasBuscadas() {
 
             <div class="inv-body" id="inv-body-${globalIdx}">
                 <div class="inv-products-box">${productosHtml}</div>
+
                 <div class="inv-total-row">
                     <span class="text-muted small fw-bold text-uppercase">Total</span>
                     <span class="inv-total-amount">${FormateadorCosto.format(totalSuma)}</span>
                 </div>
+
+                <div class="inv-client-section">
+                    <div class="inv-client-title">
+                        <i class="bi bi-person-vcard-fill me-1"></i>Datos del Cliente
+                    </div>
+                    <div class="inv-client-grid">
+                        <div class="inv-client-item">
+                            <span class="inv-client-label"><i class="bi bi-person-fill"></i> Nombre</span>
+                            <span class="inv-client-val">${clienteNombre}${clienteUser ? ` <span class="inv-client-user">${clienteUser}</span>` : ''}</span>
+                        </div>
+                        <div class="inv-client-item">
+                            <span class="inv-client-label"><i class="bi bi-card-text"></i> Cédula</span>
+                            <span class="inv-client-val font-monospace">${clienteCedula}</span>
+                        </div>
+                        <div class="inv-client-item">
+                            <span class="inv-client-label"><i class="bi bi-telephone-fill"></i> Teléfono</span>
+                            <span class="inv-client-val">${clienteTel}</span>
+                        </div>
+                        <div class="inv-client-item">
+                            <span class="inv-client-label"><i class="bi bi-wallet2"></i> Método de Pago</span>
+                            <span class="inv-client-val">${clienteMetodo}</span>
+                        </div>
+                        <div class="inv-client-item inv-client-full">
+                            <span class="inv-client-label"><i class="bi bi-geo-alt-fill"></i> Dirección de Entrega</span>
+                            <span class="inv-client-val">${clienteDir}</span>
+                        </div>
+                    </div>
+                </div>
+
                 ${!esFinal ? `
                     <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold inv-btn-pagar">
                         <i class="bi bi-qr-code-scan me-2"></i>PROCEDER AL PAGO
@@ -815,6 +924,20 @@ function mostrarFacturasBuscadas() {
     });
 
     container.appendChild(lista);
+
+    // Restaurar cards que estaban expandidas antes del re-render
+    paginadas.forEach((f, idx) => {
+        if (expandedFacturas.has(f.numero_factura)) {
+            const gIdx    = inicio + idx;
+            const body    = document.getElementById(`inv-body-${gIdx}`);
+            const invItem = document.getElementById(`inv-item-${gIdx}`);
+            const chevron = invItem?.querySelector('.inv-chevron');
+            if (body)    body.classList.add('open');
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
+            if (invItem) invItem.classList.add('expanded');
+        }
+    });
+
     paginar(filtradas.length);
 }
 
@@ -826,6 +949,12 @@ window.toggleInvItem = function(idx) {
     const open = body.classList.toggle('open');
     if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
     if (item) item.classList.toggle('expanded', open);
+    // Registrar estado para que sobreviva al auto-refresh
+    const facturaNum = item?.dataset.facturaNum;
+    if (facturaNum) {
+        if (open) expandedFacturas.add(facturaNum);
+        else      expandedFacturas.delete(facturaNum);
+    }
 };
 
 function paginar(totalItems) {
@@ -894,21 +1023,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             mostrarArchivadas = !mostrarArchivadas;
 
-            const icono = '<i class="bi bi-archive-fill me-2"></i>';
-
             btnArchivadas.innerHTML = mostrarArchivadas
-                ? `${icono}Ocultar archivadas`
-                : `${icono}Mostrar archivadas`;
+                ? `<i class="bi bi-archive-fill"></i><span>Ocultar archivadas</span>`
+                : `<i class="bi bi-archive-fill"></i><span>Mostrar archivadas</span>`;
 
-            btnArchivadas.classList.toggle(
-                "btn-primary",
-                mostrarArchivadas
-            );
-
-            btnArchivadas.classList.toggle(
-                "btn-outline-primary",
-                !mostrarArchivadas
-            );
+            btnArchivadas.classList.toggle('active', mostrarArchivadas);
 
             paginaActual = 1;
 

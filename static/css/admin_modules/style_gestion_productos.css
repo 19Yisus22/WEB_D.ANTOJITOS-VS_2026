@@ -359,6 +359,25 @@ main {
 
 .card.gris { opacity: 0.6; filter: grayscale(50%); }
 
+.btn-card-action {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(0,0,0,0.05);
+    color: #6c757d;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+    flex-shrink: 0;
+}
+.btn-card-action:hover { transform: scale(1.1); }
+.btn-card-view:hover { background: rgba(13,110,253,0.1); color: #0d6efd; }
+.btn-card-edit:hover { background: rgba(211,84,0,0.12); color: #d35400; }
+
 /* Modal image */
 .modal-img-container {
     height: 250px;

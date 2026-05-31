@@ -42,10 +42,19 @@ def gestionar_facturas_page():
 @historial_facturas_bp.route("/obtener_facturas_page")
 @login_required
 def obtener_facturas_page():
-    user_id = session.get("user_id")
+    user_id   = session.get("user_id")
+    user_data = session.get("user") or {}
     try:
         facturas = db.factura_get_by_user(user_id)
-        return jsonify([_enriquecer_factura(f) for f in facturas]), 200
+        resultado = []
+        for f in facturas:
+            enriquecida = _enriquecer_factura(f)
+            enriquecida["cliente_nombre"]   = f"{user_data.get('nombre','')} {user_data.get('apellido','')}".strip()
+            enriquecida["username_cliente"] = str(user_data.get("username") or "")
+            enriquecida["telefono"]         = str(user_data.get("telefono") or "")
+            enriquecida["direccion"]        = str(user_data.get("direccion") or "")
+            resultado.append(enriquecida)
+        return jsonify(resultado), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -82,11 +91,15 @@ def buscar_facturas_page():
         facturas           = db.factura_get_by_user(usuario["cedula"])
         nombre_completo    = f"{usuario.get('nombre', '')} {usuario.get('apellido', '')}".strip()
         username_cliente   = str(usuario.get("username") or "")
+        telefono           = str(usuario.get("telefono") or "")
+        direccion          = str(usuario.get("direccion") or "")
         resultado          = []
         for f in facturas:
             enriquecida = _enriquecer_factura(f)
             enriquecida["cliente_nombre"]   = nombre_completo
             enriquecida["username_cliente"] = username_cliente
+            enriquecida["telefono"]         = telefono
+            enriquecida["direccion"]        = direccion
             resultado.append(enriquecida)
         return jsonify(resultado), 200
     except Exception as e:
@@ -108,6 +121,19 @@ def anular_factura_page(numero_factura):
             return jsonify({"message": f"No se puede anular en estado: {factura['estado']}"}), 400
         db.factura_update(numero_factura, {"estado": "Anulada"})
         db.pedido_update(factura["id_pedido"], {"estado": "Cancelado"})
+
+        # Restaurar stock de los productos del pedido anulado
+        try:
+            detalles = db.detalle_get(str(factura["id_pedido"]))
+            for det in detalles:
+                prod = db.producto_get(det["id_producto"])
+                if prod:
+                    stock_actual   = int(prod.get("stock", 0) or 0)
+                    cantidad_devol = int(det.get("cantidad", 0) or 0)
+                    db.producto_update(str(det["id_producto"]), {"stock": stock_actual + cantidad_devol})
+        except Exception:
+            pass  # La anulación ya se registró; no bloquear por error de stock
+
         return jsonify({"message": "Factura anulada con éxito"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500

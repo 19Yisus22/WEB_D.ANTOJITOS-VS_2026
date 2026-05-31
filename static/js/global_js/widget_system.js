@@ -1,251 +1,371 @@
-﻿
-//  D'Antojitos — Sistema Global de Widgets Reordenables
-//  Aplica a TODOS los módulos con un botón de modo edición.
-//  Usa SortableJS para drag-and-drop con scroll simultáneo.
 
-(function() {
-    const MODULE_ID = (() => {
-        const path = window.location.pathname.replace(/\//g, '_').replace(/^_/, '') || 'index';
-        return path;
-    })();
+//  D'Antojitos — Sistema de Widgets v4
+//  • Ojo y grip integrados dentro de la tarjeta (no barra externa)
+//  • Ojo: siempre funcional sin entrar a modo edición
+//  • Grip: visible solo en modo edición (cursor grab, Sortable activo)
+//  • Módulos con sistema: pedidos, productos, facturación, publicidad, usuarios, manual
+//  • Módulos SIN sistema: perfil, historial de facturas, catálogo, carrito, sugerencias
 
-    const ORDER_KEY   = `dantojitos_widget_order_${MODULE_ID}`;
-    const HIDDEN_KEY  = `dantojitos_widget_hidden_${MODULE_ID}`;
-    let   _editMode   = false;
-    let   _sortable   = null;
+(function () {
 
+    /* ── Claves de módulo ─────────────────────────────────────── */
+    const MODULE_ID = window.location.pathname.replace(/\//g, '_').replace(/^_/, '') || 'index';
+    const ORDER_KEY  = `dantojitos_widget_order_${MODULE_ID}`;
+    const HIDDEN_KEY = `dantojitos_widget_hidden_${MODULE_ID}`;
+
+    let _editMode = false;
+    let _sortable = null;
+
+    /* ── Rutas donde NO corre el sistema de edición ──────────── */
+    const EXCLUDED = new Set([
+        '/', '/inicio', '/login', '/registro',
+        '/carrito_page', '/comentarios_page',
+        '/mi_perfil', '/gestionar_facturas_page', '/catalogo_page',
+        '/pedidos_page',
+        '/publicidad_page', '/facturacion_page', '/gestionar_productos_page',
+        '/manual_page', '/gestion_usuarios_page', '/zona_pagos',
+    ]);
+    const shouldRun = () => !EXCLUDED.has(window.location.pathname);
+
+    /* ── Selectores de contenedor y widgets ──────────────────── */
     function getContainer() {
-        return document.querySelector('main') || document.querySelector('.page-wrapper') || document.body;
+        return document.querySelector('main') ||
+               document.querySelector('.page-wrapper') ||
+               document.body;
     }
 
     function getWidgets() {
-        const container = getContainer();
+        const cont  = getContainer();
+        const expl  = [...cont.querySelectorAll(':scope > [data-widget]')];
+        if (expl.length) return expl;
+        const nest  = [...cont.querySelectorAll(':scope > * > [data-widget]')];
+        if (nest.length) return nest;
 
-        // 1. Buscar data-widget explícitos directos en main
-        const explicit = [...container.querySelectorAll(':scope > [data-widget]')];
-        if (explicit.length > 0) return explicit;
-
-        // 2. Buscar data-widget dentro de container-fluid
-        const inContainer = [...container.querySelectorAll(':scope > * > [data-widget]')];
-        if (inContainer.length > 0) return inContainer;
-
-        // 3. Auto-detectar: .card hijos directos del primer div/container-fluid
-        const innerContainer = container.querySelector('.container-fluid, .container, .container-central');
-        const source = innerContainer || container;
-        const cards = [...source.children].filter(el => {
+        const inner = cont.querySelector('.container-fluid,.container,.container-central') || cont;
+        const cards = [...inner.children].filter(el => {
             const tag = el.tagName.toLowerCase();
             return (tag === 'div' || tag === 'section') && el.children.length > 0;
         });
-
         if (cards.length >= 2) {
             return cards.map((el, i) => {
                 if (!el.dataset.widget) {
                     el.dataset.widget = `auto-${i}`;
-                    el.dataset.widgetLabel = el.querySelector('h1,h2,h3,h4,h5,h6')
-                        ?.textContent?.trim()?.slice(0, 28) || `Sección ${i + 1}`;
+                    el.dataset.widgetLabel =
+                        el.querySelector('h1,h2,h3,h4,h5,h6')?.textContent?.trim()?.slice(0, 32)
+                        || `Sección ${i + 1}`;
                 }
                 return el;
             });
         }
-
         return [];
     }
 
     function getWidgetContainer() {
-        const widgets = getWidgets();
-        return widgets.length > 0 ? widgets[0].parentElement : getContainer();
+        const ws = getWidgets();
+        return ws.length ? ws[0].parentElement : getContainer();
     }
 
+    /* ── Persistencia ─────────────────────────────────────────── */
     function saveOrder() {
-        const ids = getWidgets().map(w => w.dataset.widget);
-        localStorage.setItem(ORDER_KEY, JSON.stringify(ids));
+        localStorage.setItem(ORDER_KEY,
+            JSON.stringify(getWidgets().map(w => w.dataset.widget)));
     }
 
-    function saveHidden(panelId, hidden) {
+    function saveHidden(id, hidden) {
         const list = JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]');
-        const idx  = list.indexOf(panelId);
-        if (hidden && idx === -1) list.push(panelId);
+        const idx  = list.indexOf(id);
+        if (hidden && idx === -1) list.push(id);
         else if (!hidden && idx > -1) list.splice(idx, 1);
         localStorage.setItem(HIDDEN_KEY, JSON.stringify(list));
     }
 
-    function isHidden(panelId) {
-        return JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]').includes(panelId);
+    function isHidden(id) {
+        return JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]').includes(id);
     }
 
     function restoreOrder() {
         const saved = JSON.parse(localStorage.getItem(ORDER_KEY) || '[]');
         if (!saved.length) return;
-        // Primero inicializar widgets para que tengan dataset.widget
         getWidgets();
-        const container = getWidgetContainer();
+        const cont = getWidgetContainer();
         saved.forEach(id => {
             const el = document.querySelector(`[data-widget="${id}"]`);
-            if (el && el.parentElement === container) container.appendChild(el);
+            if (el && el.parentElement === cont) cont.appendChild(el);
         });
     }
 
-    function restoreVisibility() {
+    /* ── Toggle ocultar / mostrar sección ────────────────────── */
+    function toggleWidgetContent(w) {
+        const content = w.querySelector('.widget-content');
+        if (!content) return;
+        const showing = content.style.display !== 'none';
+        content.style.display = showing ? 'none' : '';
+        w.classList.toggle('widget-collapsed', showing);
+        saveHidden(w.dataset.widget, showing);
+
+        const eyeBtn = w.querySelector('.wg-eye-btn');
+        if (eyeBtn) {
+            const icon = eyeBtn.querySelector('i');
+            if (icon) icon.className = showing ? 'bi bi-eye-slash' : 'bi bi-eye';
+            eyeBtn.title = showing ? 'Mostrar sección' : 'Ocultar sección';
+        }
+    }
+
+    /* ── Buscar la fila de título nativa de la tarjeta ───────── */
+    function findHeaderRow(w) {
+        const body = w.querySelector('.card-body');
+        if (body) {
+            // 1. Primera fila flex con heading
+            const firstFlex = body.querySelector(
+                ':scope > div:first-child, :scope > .d-flex:first-child'
+            );
+            if (firstFlex && firstFlex.querySelector('h1,h2,h3,h4,h5,h6')) {
+                return firstFlex;
+            }
+            // 2. Heading directo en card-body — envolver en flex
+            const hdg = body.querySelector(':scope > h1,:scope > h2,:scope > h3,:scope > h4,:scope > h5,:scope > h6');
+            if (hdg) {
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'display:flex;align-items:center;gap:8px;';
+                body.insertBefore(wrap, hdg);
+                wrap.appendChild(hdg);
+                return wrap;
+            }
+        }
+        // 3. .card-header Bootstrap
+        const ch = w.querySelector('.card-header');
+        if (ch) return ch;
+        // 4. section-header
+        const sh = w.querySelector('.section-header');
+        if (sh) return sh;
+        return null;
+    }
+
+    /* ── Inyectar controles (ojo + grip) dentro de la tarjeta ── */
+    function addWidgetControls() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const eyeColor  = isDark ? 'rgba(240,136,62,0.5)'  : 'rgba(211,84,0,0.4)';
+        const gripColor = isDark ? 'rgba(240,136,62,0.35)' : 'rgba(211,84,0,0.3)';
+
         getWidgets().forEach(w => {
-            const id = w.dataset.widget;
-            if (isHidden(id)) {
-                const content = w.querySelector('.widget-content');
-                if (content) content.style.display = 'none';
+            if (w.querySelector('.wg-ctrl-group')) return;
+
+            const id     = w.dataset.widget;
+            const hidden = isHidden(id);
+
+            /* Restaurar visibilidad persistida */
+            const content = w.querySelector('.widget-content');
+            if (content && hidden) {
+                content.style.display = 'none';
                 w.classList.add('widget-collapsed');
-                const eyeBtn = w.querySelector('.widget-eye-btn i');
-                if (eyeBtn) eyeBtn.className = 'bi bi-eye-slash';
+            }
+
+            /* Grupo de control: [👁] [⠿] */
+            const group = document.createElement('div');
+            group.className = 'wg-ctrl-group';
+            group.style.cssText = `
+                display:inline-flex;align-items:center;gap:3px;
+                margin-left:auto;flex-shrink:0;
+            `;
+            group.innerHTML = `
+                <button class="wg-eye-btn"
+                        title="${hidden ? 'Mostrar sección' : 'Ocultar sección'}"
+                        style="display:flex;align-items:center;justify-content:center;
+                               background:none;border:none;cursor:pointer;
+                               width:24px;height:24px;border-radius:7px;
+                               color:${eyeColor};font-size:0.82rem;line-height:1;
+                               transition:color 0.15s,background 0.15s,transform 0.15s;">
+                    <i class="bi ${hidden ? 'bi-eye-slash' : 'bi-eye'}"></i>
+                </button>
+                <span class="wg-grip-icon"
+                      title="Arrastrar para reorganizar"
+                      style="display:flex;align-items:center;justify-content:center;
+                             width:22px;height:22px;border-radius:7px;
+                             color:${gripColor};font-size:1rem;line-height:1;
+                             opacity:0;cursor:grab;flex-shrink:0;
+                             transition:opacity 0.2s ease,color 0.15s;">
+                    <i class="bi bi-grip-vertical"></i>
+                </span>`;
+
+            /* Hover en ojo */
+            const eye = group.querySelector('.wg-eye-btn');
+            eye.addEventListener('mouseenter', () => {
+                eye.style.color      = isDark ? '#f0883e' : '#d35400';
+                eye.style.background = isDark ? 'rgba(240,136,62,0.12)' : 'rgba(211,84,0,0.08)';
+                eye.style.transform  = 'scale(1.1)';
+            });
+            eye.addEventListener('mouseleave', () => {
+                eye.style.color      = eyeColor;
+                eye.style.background = 'none';
+                eye.style.transform  = '';
+            });
+            eye.addEventListener('click', e => {
+                e.stopPropagation();
+                toggleWidgetContent(w);
+            });
+
+            /* Hover en grip */
+            const grip = group.querySelector('.wg-grip-icon');
+            grip.addEventListener('mouseenter', () => {
+                grip.style.color = isDark ? '#f0883e' : '#d35400';
+            });
+            grip.addEventListener('mouseleave', () => {
+                grip.style.color = gripColor;
+            });
+
+            /* Inyectar en el header nativo o en un strip de respaldo */
+            const headerRow = findHeaderRow(w);
+            if (headerRow) {
+                headerRow.style.display    = 'flex';
+                headerRow.style.alignItems = 'center';
+                headerRow.appendChild(group);
+            } else {
+                const strip = document.createElement('div');
+                strip.style.cssText = 'display:flex;justify-content:flex-end;padding:6px 10px 2px;';
+                strip.appendChild(group);
+                const target = w.querySelector('.card-body') || w;
+                target.insertBefore(strip, target.firstChild);
             }
         });
     }
 
-    function toggleWidgetContent(btn) {
-        const panel   = btn.closest('[data-widget]');
-        const content = panel.querySelector('.widget-content');
-        if (!content) return;
-        const isVisible = content.style.display !== 'none';
-        content.style.display = isVisible ? 'none' : '';
-        panel.classList.toggle('widget-collapsed', isVisible);
-        const icon = btn.querySelector('i');
-        if (icon) icon.className = isVisible ? 'bi bi-eye-slash' : 'bi bi-eye';
-        saveHidden(panel.dataset.widget, isVisible);
+    /* ── Activar / desactivar grip en edit mode ──────────────── */
+    function _showGrip() {
+        document.querySelectorAll('.wg-grip-icon').forEach(g => {
+            g.style.opacity = '0.65';
+            g.style.cursor  = 'grab';
+        });
+    }
+    function _hideGrip() {
+        document.querySelectorAll('.wg-grip-icon').forEach(g => {
+            g.style.opacity = '0';
+            g.style.cursor  = 'grab';
+        });
     }
 
+    /* ── Barra de modo edición — bottom bar permanente ──────── */
     function buildEditBar() {
-        const existing = document.getElementById('widgetEditBar');
-        if (existing) return;
+        if (document.getElementById('widgetEditBar')) return;
         const bar = document.createElement('div');
         bar.id = 'widgetEditBar';
         bar.style.cssText = `
-            position:fixed;top:0;left:0;right:0;z-index:9990;
-            background:linear-gradient(135deg,#1a0800,#d35400);
-            color:#fff;padding:8px 20px;
+            position:fixed;bottom:0;left:0;right:0;z-index:9990;
+            background:linear-gradient(90deg,#0e0400 0%,#8a2800 30%,#c25000 65%,#d35400 100%);
+            color:#fff;
             display:flex;align-items:center;justify-content:space-between;
-            font-size:0.82rem;font-weight:700;letter-spacing:0.5px;
-            box-shadow:0 4px 20px rgba(211,84,0,0.4);
-            animation:slideDown 0.3s ease;
-        `;
+            gap:12px;padding:0 20px;
+            height:52px;
+            box-shadow:0 -4px 28px rgba(211,84,0,0.45),0 -1px 0 rgba(255,255,255,0.06);
+            animation:wgBarIn 0.32s cubic-bezier(0.22,1,0.36,1) both;
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);`;
         bar.innerHTML = `
-            <style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style>
-            <span><i class="bi bi-arrows-move me-2"></i>MODO EDICIÓN — Arrastra los widgets para reorganizar</span>
-            <div class="d-flex gap-2">
-                <button onclick="resetWidgetLayout()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;
-                    padding:5px 14px;border-radius:20px;font-size:0.75rem;cursor:pointer;font-weight:600;">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i>Restablecer
+            <style>
+                @keyframes wgBarIn{
+                    from{transform:translateY(100%);opacity:0;}
+                    to  {transform:translateY(0);   opacity:1;}
+                }
+                .wg-bar-label{
+                    display:flex;align-items:center;gap:8px;
+                    font-size:0.78rem;font-weight:700;letter-spacing:0.4px;
+                    opacity:0.92;flex:1;min-width:0;
+                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+                }
+                .wg-bar-label i.bi-grip-vertical{
+                    font-size:1rem;vertical-align:middle;
+                    filter:drop-shadow(0 0 4px rgba(255,255,255,0.4));
+                }
+                .wg-bar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+                .wg-bar-btn{
+                    display:inline-flex;align-items:center;gap:6px;
+                    border:none;cursor:pointer;
+                    font-size:0.74rem;font-weight:700;letter-spacing:0.2px;
+                    padding:7px 16px;border-radius:24px;
+                    transition:all 0.18s ease;
+                    white-space:nowrap;
+                }
+                .wg-bar-btn:hover{transform:translateY(-2px);filter:brightness(1.12);}
+                .wg-bar-btn:active{transform:scale(0.95);}
+                .wg-bar-btn.reset{
+                    background:rgba(255,255,255,0.12);
+                    color:#fff;
+                    border:1.5px solid rgba(255,255,255,0.22);
+                }
+                .wg-bar-btn.reset:hover{background:rgba(255,255,255,0.22);}
+                .wg-bar-btn.save{
+                    background:#fff;
+                    color:#c25000;
+                    font-weight:800;
+                }
+                .wg-bar-btn.save:hover{background:#fff3ee;}
+            </style>
+            <div class="wg-bar-label">
+                <i class="bi bi-pencil-square"></i>
+                <span>MODO EDICIÓN</span>
+                <span style="opacity:0.55;font-weight:500;margin:0 4px;">—</span>
+                <span style="opacity:0.8;font-weight:500;">
+                    Arrastra
+                    <i class="bi bi-grip-vertical"></i>
+                    para reorganizar secciones
+                </span>
+            </div>
+            <div class="wg-bar-actions">
+                <button class="wg-bar-btn reset" onclick="resetWidgetLayout()">
+                    <i class="bi bi-arrow-counterclockwise"></i>Restablecer
                 </button>
-                <button onclick="window._widgetSystem.exitEditMode()" style="background:rgba(255,255,255,0.25);border:none;color:#fff;
-                    padding:5px 14px;border-radius:20px;font-size:0.75rem;cursor:pointer;font-weight:700;">
-                    <i class="bi bi-check-lg me-1"></i>Listo
+                <button class="wg-bar-btn save"  onclick="window._widgetSystem.exitEditMode()">
+                    <i class="bi bi-floppy-fill"></i>Guardar
                 </button>
             </div>`;
-        document.body.prepend(bar);
-        document.body.style.paddingTop = '42px';
+        document.body.appendChild(bar);
+        /* Evitar que el contenido quede oculto detrás de la barra */
+        document.body.style.paddingBottom = '52px';
     }
 
     function removeEditBar() {
         const bar = document.getElementById('widgetEditBar');
-        if (bar) bar.remove();
-        document.body.style.paddingTop = '';
+        if (bar) {
+            bar.style.animation = 'wgBarOut 0.22s ease forwards';
+            /* Inyectar keyframe de salida si no existe */
+            if (!document.getElementById('_wgBarOutKF')) {
+                const s = document.createElement('style');
+                s.id = '_wgBarOutKF';
+                s.textContent = '@keyframes wgBarOut{from{transform:translateY(0);opacity:1}to{transform:translateY(100%);opacity:0}}';
+                document.head.appendChild(s);
+            }
+            setTimeout(() => bar.remove(), 230);
+        }
+        document.body.style.paddingBottom = '';
     }
 
-    function addWidgetHandles() {
-        getWidgets().forEach(w => {
-            if (w.querySelector('.widget-handle-bar')) return;
-            const label = w.dataset.widgetLabel || w.dataset.widget;
-
-            // Detectar el border-radius del widget para que el handle lo herede
-            const computedStyle = window.getComputedStyle(w);
-            const br = computedStyle.borderRadius || '0';
-            const topBr = computedStyle.borderTopLeftRadius || br;
-            const topBrR = computedStyle.borderTopRightRadius || br;
-
-            const handleBar = document.createElement('div');
-            handleBar.className = 'widget-handle-bar';
-            handleBar.style.cssText = `
-                display:flex;align-items:center;justify-content:space-between;
-                padding:5px 10px 5px 8px;
-                cursor:grab;user-select:none;
-                background:linear-gradient(90deg,rgba(211,84,0,0.1),rgba(211,84,0,0.05));
-                border-bottom:2px solid rgba(211,84,0,0.2);
-                font-size:0.68rem;font-weight:800;
-                text-transform:uppercase;letter-spacing:1px;
-                color:rgba(211,84,0,0.9);
-                border-radius:${topBr} ${topBrR} 0 0;
-                margin:-1px -1px 0 -1px;
-                transition:background 0.15s;
-                position:sticky;top:0;z-index:10;
-                backdrop-filter:blur(8px);
-                -webkit-backdrop-filter:blur(8px);
-                box-shadow:0 1px 6px rgba(211,84,0,0.08);
-            `;
-            handleBar.innerHTML = `
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <i class="bi bi-grip-horizontal" style="font-size:0.85rem;opacity:0.5;"></i>
-                    <span>${label}</span>
-                </div>
-                <button class="widget-eye-btn" style="background:none;border:none;cursor:pointer;
-                    padding:1px 5px;color:rgba(211,84,0,0.5);font-size:0.8rem;line-height:1;" title="Mostrar/Ocultar">
-                    <i class="bi ${isHidden(w.dataset.widget) ? 'bi-eye-slash' : 'bi-eye'}"></i>
-                </button>`;
-            handleBar.onmouseenter = () => {
-                handleBar.style.background = 'linear-gradient(90deg,rgba(211,84,0,0.15),rgba(211,84,0,0.08))';
-                handleBar.style.cursor = 'grab';
-            };
-            handleBar.onmouseleave = () => {
-                handleBar.style.background = 'linear-gradient(90deg,rgba(211,84,0,0.08),rgba(211,84,0,0.04))';
-            };
-            handleBar.querySelector('.widget-eye-btn').onclick = (e) => {
-                e.stopPropagation();
-                toggleWidgetContent(handleBar.querySelector('.widget-eye-btn'));
-            };
-            w.prepend(handleBar);
-        });
-    }
-
-    function removeWidgetHandles() {
-        document.querySelectorAll('.widget-handle-bar').forEach(h => h.remove());
-    }
-
+    /* ── Modos ────────────────────────────────────────────────── */
     function enterEditMode() {
         if (_editMode) return;
         _editMode = true;
         buildEditBar();
-        addWidgetHandles();
-
-        const container = getContainer();
-        container.style.position = 'relative';
+        _showGrip();
+        getContainer().style.position = 'relative';
 
         if (typeof Sortable !== 'undefined') {
-            const widgetContainer = getWidgetContainer();
-            _sortable = Sortable.create(widgetContainer, {
-                animation: 280,
-                easing: 'cubic-bezier(0.2, 1, 0.3, 1)',
-                handle: '.widget-handle-bar',
+            _sortable = Sortable.create(getWidgetContainer(), {
+                animation: 300,
+                easing: 'cubic-bezier(0.2,1,0.3,1)',
+                handle: '.wg-grip-icon',
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
                 dragClass: 'sortable-drag',
-                scroll: true,
-                scrollSensitivity: 60,
-                scrollSpeed: 18,
-                bubbleScroll: true,
-                forceFallback: false,
+                scroll: true, scrollSensitivity: 60, scrollSpeed: 18, bubbleScroll: true,
                 fallbackTolerance: 5,
-                onStart() {
-                    document.body.style.userSelect = 'none';
-                    document.body.style.cursor = 'grabbing';
-                },
-                onEnd(evt) {
-                    document.body.style.userSelect = '';
-                    document.body.style.cursor = '';
-                    saveOrder(evt);
-                }
+                onStart() { document.body.style.userSelect = 'none'; document.body.style.cursor = 'grabbing'; },
+                onEnd()   { document.body.style.userSelect = ''; document.body.style.cursor = ''; saveOrder(); },
             });
         }
 
-        const editBtn = document.getElementById('widgetEditModeBtn');
-        if (editBtn) {
-            editBtn.innerHTML = '<i class="bi bi-check-lg"></i>';
-            editBtn.style.background = 'linear-gradient(135deg,#1e8449,#27ae60)';
-            editBtn.title = 'Salir del modo edición';
+        const btn = document.getElementById('widgetEditModeBtn');
+        if (btn) {
+            btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+            btn.style.background = 'linear-gradient(135deg,#1e8449,#27ae60)';
+            btn.title = 'Salir del modo edición';
         }
     }
 
@@ -253,76 +373,61 @@
         if (!_editMode) return;
         _editMode = false;
         removeEditBar();
-        removeWidgetHandles();
+        _hideGrip();
         if (_sortable) { _sortable.destroy(); _sortable = null; }
-        const editBtn = document.getElementById('widgetEditModeBtn');
-        if (editBtn) {
-            editBtn.innerHTML = '<i class="bi bi-pencil-fill"></i>';
-            editBtn.style.background = '';
-            editBtn.title = 'Organizar widgets';
+
+        const btn = document.getElementById('widgetEditModeBtn');
+        if (btn) {
+            btn.innerHTML = '<i class="bi bi-pencil-fill"></i>';
+            btn.style.background = '';
+            btn.title = 'Organizar secciones';
         }
     }
 
-    window.resetWidgetLayout = function() {
+    /* ── Restablecer ──────────────────────────────────────────── */
+    window.resetWidgetLayout = () => {
         localStorage.removeItem(ORDER_KEY);
         localStorage.removeItem(HIDDEN_KEY);
         location.reload();
     };
 
-    // Rutas donde NO aplica el sistema de widgets
-    const EXCLUDED_PATHS = [
-        '/inicio', '/', '/carrito_page', '/comentarios_page',
-        '/mi_perfil', '/login', '/registro', '/pedidos_page',
-        '/gestionar_facturas_page', '/gestion_usuarios_page',
-        '/catalogo_page'   // el catálogo tiene galería de imágenes — no interferir
-    ];
-
-    function shouldRun() {
-        return !EXCLUDED_PATHS.includes(window.location.pathname);
-    }
-
+    /* ── Botón de edición en la navbar o flotante ─────────────── */
     function createEditButton() {
         if (!shouldRun()) return;
-
-        // Preferir el botón de la navbar; si no existe, crear uno flotante como respaldo
         const navBtn = document.getElementById('navWidgetEditBtn');
         if (navBtn) {
             navBtn.style.display = '';
-            navBtn.onclick = () => _editMode ? exitEditMode() : enterEditMode();
-            // registrar en DOM con el id que usa el resto del sistema
+            navBtn.onclick = () => (_editMode ? exitEditMode() : enterEditMode());
             navBtn.id = 'widgetEditModeBtn';
             return;
         }
-
-        const existing = document.getElementById('widgetEditModeBtn');
-        if (existing) return;
-
+        if (document.getElementById('widgetEditModeBtn')) return;
         const btn = document.createElement('button');
-        btn.id = 'widgetEditModeBtn';
-        btn.title = 'Organizar widgets';
+        btn.id        = 'widgetEditModeBtn';
+        btn.title     = 'Organizar secciones';
         btn.innerHTML = '<i class="bi bi-pencil-fill"></i>';
         btn.style.cssText = `
             position:fixed;bottom:30px;right:85px;
             background:linear-gradient(135deg,#d35400,#e67e22);
             color:#fff;border:none;border-radius:50%;
-            width:40px;height:40px;font-size:0.95rem;
+            width:42px;height:42px;font-size:0.95rem;
             cursor:pointer;z-index:1300;
-            transition:all 0.2s;display:flex;align-items:center;justify-content:center;
-        `;
-        btn.onmouseenter = () => { btn.style.transform = 'scale(1.1)'; };
-        btn.onmouseleave = () => { btn.style.transform = ''; };
-        btn.onclick = () => _editMode ? exitEditMode() : enterEditMode();
+            box-shadow:0 4px 16px rgba(211,84,0,0.35);
+            transition:all 0.2s;display:flex;align-items:center;justify-content:center;`;
+        btn.onmouseenter = () => { btn.style.transform = 'scale(1.12)'; btn.style.boxShadow = '0 6px 22px rgba(211,84,0,0.5)'; };
+        btn.onmouseleave = () => { btn.style.transform = ''; btn.style.boxShadow = '0 4px 16px rgba(211,84,0,0.35)'; };
+        btn.onclick = () => (_editMode ? exitEditMode() : enterEditMode());
         document.body.appendChild(btn);
     }
 
+    /* ── Bootstrap ────────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', () => {
-        if (!shouldRun()) return;
-        if (!getWidgets().length) return;
+        if (!shouldRun() || !getWidgets().length) return;
         restoreOrder();
-        restoreVisibility();
+        addWidgetControls();
         createEditButton();
     });
 
     window._widgetSystem = { enterEditMode, exitEditMode, saveOrder };
-})();
 
+})();

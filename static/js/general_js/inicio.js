@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const e = notificacionesDisponibles[indiceAleatorio];
             mostrarToastPublicidad(e.imagen_url, e.titulo, e.descripcion);
         }
-    }, 12000);
+    }, 15000);
     monitorearCambiosCatalogo();
     setInterval(monitorearCambiosCatalogo, 10000);
 

@@ -110,6 +110,29 @@ function actualizarEstadisticas(listaAMostrar) {
     document.getElementById("statAgotNum").textContent = agotados;
 }
 
+function _abrirFormularioEdicion(index) {
+    const p = postres[index];
+    indexActual = index;
+    document.getElementById("nombrePostre").value = p.nombre;
+    document.getElementById("precioPostre").value = p.precio;
+    document.getElementById("descripcionPostre").value = p.descripcion || "";
+    document.getElementById("stockPostre").value = p.stock;
+    const previewImg = document.getElementById("previewNotificacionImg");
+    const placeholder = document.getElementById("placeholderNotif");
+    if (p.imagen_url) {
+        previewImg.src = p.imagen_url;
+        previewImg.classList.remove("d-none");
+        placeholder.classList.add("d-none");
+    } else {
+        resetPrevisualizador();
+    }
+    document.getElementById("formPanelTitle").textContent = "Editar Producto";
+    btnSubmitForm.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Actualizar Cambios';
+    formAgregarPostre.classList.remove("d-none");
+    if (modal) modal.hide();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function _crearCardProducto(p) {
     const indexOriginal = postres.findIndex(pr => pr.id_producto === p.id_producto);
     const card = document.createElement("div");
@@ -125,11 +148,26 @@ function _crearCardProducto(p) {
             <p class="card-text text-primary fw-bold mb-2">${Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
             <div class="d-flex justify-content-between align-items-center">
                 <span class="badge ${stockActual <= 5 ? 'bg-danger' : 'bg-success'}">Stock: ${stockActual}</span>
-                <i class="bi bi-eye text-muted"></i>
+                <div class="d-flex gap-1">
+                    <button class="btn-card-action btn-card-view" title="Ver detalle">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn-card-action btn-card-edit" title="Editar producto">
+                        <i class="bi bi-pencil-fill"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>`;
     card.querySelector(".card").onclick = () => abrirModalPostre(indexOriginal);
+    card.querySelector(".btn-card-view").addEventListener('click', e => {
+        e.stopPropagation();
+        abrirModalPostre(indexOriginal);
+    });
+    card.querySelector(".btn-card-edit").addEventListener('click', e => {
+        e.stopPropagation();
+        _abrirFormularioEdicion(indexOriginal);
+    });
     return card;
 }
 
@@ -314,25 +352,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById("btnEditar").onclick = () => {
         if (indexActual === null) return;
-        const p = postres[indexActual];
-        document.getElementById("nombrePostre").value = p.nombre;
-        document.getElementById("precioPostre").value = p.precio;
-        document.getElementById("descripcionPostre").value = p.descripcion || "";
-        document.getElementById("stockPostre").value = p.stock;
-        const previewImg = document.getElementById("previewNotificacionImg");
-        const placeholder = document.getElementById("placeholderNotif");
-        if (p.imagen_url) {
-            previewImg.src = p.imagen_url;
-            previewImg.classList.remove("d-none");
-            placeholder.classList.add("d-none");
-        } else {
-            resetPrevisualizador();
-        }
-        document.getElementById("formPanelTitle").textContent = "Editar Producto";
-        btnSubmitForm.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Actualizar Cambios';
-        formAgregarPostre.classList.remove("d-none");
-        modal.hide();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        _abrirFormularioEdicion(indexActual);
     };
 });
 

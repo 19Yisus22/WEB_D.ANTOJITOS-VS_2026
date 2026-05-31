@@ -1,5 +1,4 @@
 const catalogoContainer = document.getElementById("catalogoProductos");
-const publicidadContainer = document.getElementById("publicidadContainer");
 const btnFiltrar = document.getElementById("btnFiltrar");
 const searchInput = document.getElementById("searchInput");
 const toastContainer = document.getElementById("toastContainer");
@@ -12,8 +11,6 @@ let contadorCarrito = 0;
 let isFirstLoad = true;
 let isProcessingPurchase = false;
 let searchTimeout = null;
-let cintaPublicitariaItems = [];
-let notificacionesActivas = [];
 const productosNotificados = new Set();
 const filtros = ['Recientes', 'Antiguos', 'Favoritos'];
 const userLogged = window.userLogged || false;
@@ -134,46 +131,6 @@ function actualizarInterfazContador() {
     }
 }
 
-async function cargarCintaPublicitaria() {
-    if (!publicidadContainer) return;
-    try {
-        const res = await fetch("/api/publicidad/activa");
-        const data = await res.json();
-        if (!Array.isArray(data)) return;
-        notificacionesActivas = data.filter(item => item.tipo === 'notificacion' && item.estado);
-        const itemsCinta = data.filter(item => item.tipo === 'cinta' && item.estado);
-        if (itemsCinta.length > 0) {
-            cintaPublicitariaItems = itemsCinta;
-            publicidadContainer.innerHTML = `
-                <div class="promo-banner shadow-sm overflow-hidden">
-                    <div class="marquee-content">
-                        ${itemsCinta.concat(itemsCinta, itemsCinta).map(item => `
-                            <div class="promo-item mx-5 d-flex align-items-center" style="min-width: max-content;">
-                                <div class="promo-img-container">
-                                    ${item.imagen_url
-                                    ? `<img src="${item.imagen_url}" class="promo-img-glow" onerror="this.outerHTML='<i class=\\'bi bi-image-slash promo-img-broken\\'></i>'">`
-                                    : `<i class="bi bi-image-slash promo-img-broken"></i>`}
-                                </div>
-                                <span class="promo-text">${item.titulo || ''}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
-            publicidadContainer.classList.remove("d-none");
-        }
-    } catch (e) {
-        publicidadContainer.classList.add("d-none");
-    }
-}
-
-function iniciarNotificacionesPeriodicas() {
-    setInterval(() => {
-        if (notificacionesActivas.length > 0 && !isProcessingPurchase) {
-            const elegido = notificacionesActivas[Math.floor(Math.random() * notificacionesActivas.length)];
-            mostrarAlerta({ imagen: elegido.imagen_url || '/static/uploads/logo.png', titulo: elegido.titulo, descripcion: elegido.descripcion, tipo: "info", duracion: 5000 });
-        }
-    }, 12000);
-}
 
 function toggleFavorito(id) {
     const idStr = id.toString();
@@ -442,11 +399,9 @@ function resetBotonesEstado() {
 }
 
 window.onload = () => {
-    cargarCintaPublicitaria().then(() => { iniciarNotificacionesPeriodicas(); });
     cargarProductos();
     resetBotonesEstado();
     setInterval(() => { if (!isProcessingPurchase) cargarProductos(); }, 3000);
-    setInterval(() => { if (!isProcessingPurchase) cargarCintaPublicitaria(); }, 8000);
     if (userLogged && userLogged !== "false") {
         sincronizarContadorCarrito();
         setInterval(() => { if (!isProcessingPurchase) sincronizarContadorCarrito(); }, 3000);

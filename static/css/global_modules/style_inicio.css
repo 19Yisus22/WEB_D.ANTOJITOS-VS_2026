@@ -30,6 +30,8 @@ html, body {
     scroll-behavior: smooth;
 }
 
+/* Inicio tiene su propio mt-4/mt-md-5; neutralizamos el padding-top global */
+main.page-wrapper { padding-top: 0 !important; }
 main { flex-grow: 1; width: 100%; }
 
 .catalog-header { width: 100%; display: block; clear: both; }
@@ -1242,66 +1244,115 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
 
 .cinta-inicio-marquee {
     overflow: hidden;
-    background: linear-gradient(135deg, #1a0a02, #2d1505);
-    border-radius: 16px;
-    padding: 10px 0;
+    background: linear-gradient(145deg,
+        #130212 0%,
+        #220b1c 22%,
+        #2e1018 45%,
+        #261414 65%,
+        #180a0a 82%,
+        #0e0308 100%
+    );
+    border-radius: 18px;
+    padding: 0;
     margin: 24px 0 8px;
-    border: 1px solid rgba(211,84,0,0.2);
-    box-shadow: 0 4px 16px rgba(211,84,0,0.12);
-}
-
-.cinta-inicio-track {
+    border: 1px solid rgba(200, 75, 120, 0.22);
+    box-shadow:
+        0 8px 32px rgba(180, 55, 100, 0.16),
+        0 2px 8px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255,255,255,0.04);
     display: flex;
-    animation: cintaInicioScroll 22s linear infinite;
-    width: max-content;
+    align-items: center;
+    height: 68px;
+    position: relative;
 }
 
-.cinta-inicio-track:hover { animation-play-state: paused; }
+/* máscaras de desvanecimiento laterales */
+.cinta-inicio-marquee::before,
+.cinta-inicio-marquee::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 60px;
+    z-index: 2;
+    pointer-events: none;
+}
+.cinta-inicio-marquee::before {
+    left: 0;
+    background: linear-gradient(to right, #130212 0%, transparent 100%);
+}
+.cinta-inicio-marquee::after {
+    right: 0;
+    background: linear-gradient(to left, #0e0308 0%, transparent 100%);
+}
 
-.cinta-inicio-item {
+/* ── ci-track: pista animada (misma lógica que .payment-track del footer) ── */
+.ci-track {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    animation-name: ciScroll;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform;
+}
+
+@keyframes ciScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-33.333%); }
+}
+
+/* ── ci-item: cada elemento (igual al .payment-item del footer) ── */
+.ci-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 160px;
     gap: 10px;
-    color: rgba(255,255,255,0.9);
-    font-size: 0.82rem;
+    width: 180px;
+    flex-shrink: 0;
+    padding: 0 10px;
+    color: rgba(255,255,255,0.88);
+    font-size: 0.8rem;
     font-weight: 600;
-    padding: 0 20px;
-    white-space: nowrap;
 }
 
-.cinta-inicio-item img {
+/* imagen dentro del ítem: misma lógica que .payment-item img del footer */
+.ci-item img {
     width: 30px;
     height: 30px;
-    border-radius: 8px;
-    object-fit: cover;
-    background: white;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #fff;
     padding: 2px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 5px rgba(241,167,185,0.4));
+    transition: all 0.3s ease;
+}
+
+.ci-item:hover img { filter: drop-shadow(0 0 10px rgba(211,84,0,0.7)); }
+
+.ci-item-label {
+    color: rgba(255,255,255,0.88);
+    font-weight: 600;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+    letter-spacing: 0.3px;
+}
+
+.ci-item-icon {
+    color: rgba(220, 110, 150, 0.85);
+    font-size: 1.1rem;
     flex-shrink: 0;
 }
 
-.cinta-inicio-header {
-    padding: 4px 16px 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.cinta-inicio-header strong {
-    color: rgba(255,255,255,0.7);
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-@keyframes cintaInicioScroll {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-}
-
 @media (max-width: 768px) {
-    .cinta-inicio-item { min-width: 130px; font-size: 0.75rem; }
+    .cinta-inicio-marquee { height: 56px; }
+    .ci-item { width: 150px; gap: 8px; }
+    .ci-item img { width: 26px; height: 26px; }
+    .ci-item-label { font-size: 0.74rem; max-width: 90px; }
 }
 
 #btnCampanaNotif {

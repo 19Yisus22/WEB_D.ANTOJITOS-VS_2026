@@ -169,8 +169,7 @@ h2::after {
 }
 
 [data-theme="dark"] body {
-    background: #0d0d0d !important;
-    background-image: none !important;
+    background: transparent !important;
     color: #e8e8e8 !important;
 }
 

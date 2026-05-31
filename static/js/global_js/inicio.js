@@ -109,22 +109,32 @@ async function cargarMarketing() {
             if (!cintaItems.length) cintaItems = arr.filter(i => i.tipo === 'cinta' && i.estado !== false);
 
             if (cintaItems.length > 0) {
-                const buildItem = (imgUrl, label) => {
-                    const validImg = imgUrl && imgUrl.startsWith('http');
-                    return `<div class="cinta-inicio-item">
-                        ${validImg
-                            ? `<div class="cinta-img-aura"><img src="${imgUrl}" alt="${label}" loading="lazy"
-                                   onerror="this.parentElement.style.display='none'"></div>`
-                            : ''}
-                        <span>${label || ''}</span>
+                const speed        = window.getTickerSpeed ? window.getTickerSpeed() : 1;
+                const ITEM_W       = 180; /* px — ancho fijo por ítem (igual que footer) */
+                const totalItems   = cintaItems.length;
+                const baseDuration = Math.max(18, totalItems * 5);
+                const duration     = (baseDuration / speed).toFixed(1);
+
+                /* Duplicar para loop continuo sin corte (mismo patrón que footer) */
+                const doubled = [...cintaItems, ...cintaItems, ...cintaItems];
+                const itemsHTML = doubled.map(i => {
+                    const validImg = i.imagen_url && i.imagen_url.startsWith('http');
+                    return `<div class="ci-item">${
+                        validImg
+                            ? `<img src="${i.imagen_url}" alt="${i.titulo || ''}" loading="lazy" onerror="this.style.display='none'">`
+                            : `<i class="bi bi-megaphone ci-item-icon"></i>`
+                    }<span class="ci-item-label">${i.titulo || ''}</span></div>`;
+                }).join('');
+
+                /* Ancho total; animación desplaza -33.33% (un tercio = un set completo) */
+                const trackW = doubled.length * ITEM_W;
+                cintaInicioEl.innerHTML = `
+                    <div class="ci-track"
+                         data-base-duration="${baseDuration}"
+                         style="width:${trackW}px;animation-duration:${duration}s;">
+                        ${itemsHTML}
                     </div>`;
-                };
-                // Triplicar para animación fluida
-                const tripled = [...cintaItems, ...cintaItems, ...cintaItems];
-                cintaInicioEl.innerHTML = `<div class="cinta-inicio-track">${
-                    tripled.map(i => buildItem(i.imagen_url || '', i.titulo || '')).join('')
-                }</div>`;
-                cintaInicioEl.style.display = 'block';
+                cintaInicioEl.style.display = 'flex';
             } else {
                 cintaInicioEl.style.display = 'none';
             }
@@ -522,13 +532,10 @@ async function cargarNotificacionesAdmin() {
         if (count) count.textContent = total;
         if (empty) empty.style.display = total ? 'none' : 'flex';
 
-        // Actualizar badge del botón campana (flotante e inicio Y navbar)
-        ['campanaBadge', 'navBellBadge'].forEach(id => {
-            const badge = document.getElementById(id);
-            if (!badge) return;
-            badge.textContent = total > 9 ? '9+' : total;
-            badge.style.display = total > 0 ? 'flex' : 'none';
-        });
+        // Solo actualiza el badge de publicidad (navPubBadge), nunca el de pedidos (navBellBadge)
+        const activas = Array.isArray(data) ? data.filter(n => n.estado).length : 0;
+        const pubBadge = document.getElementById('navPubBadge');
+        if (pubBadge) { pubBadge.textContent = activas > 9 ? '9+' : activas; pubBadge.style.display = activas > 0 ? 'flex' : 'none'; }
         // El panel usa clases CSS (no display:none) para animar
         // No lo abrimos automáticamente — el usuario lo abre con el botón campana
 
@@ -595,7 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const e = notificacionesDisponibles[Math.floor(Math.random() * notificacionesDisponibles.length)];
             mostrarToastPublicidad(e.imagen_url, e.titulo, e.descripcion);
         }
-    }, 12000);
+    }, 15000);
 
     setInterval(monitorearCambiosCatalogo, 10000);
 

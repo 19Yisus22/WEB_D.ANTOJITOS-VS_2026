@@ -81,9 +81,24 @@
             </div>
             <div class="card section-cinta mb-4">
                 <div class="card-body">
-                    <div class="d-flex align-items-center gap-2 mb-4">
-                        <i class="bi bi-cursor-text fs-4 text-success"></i>
-                        <h4 class="m-0 fw-bold">Cinta Publicitaria</h4>
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-3 flex-wrap">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-cursor-text fs-4 text-success"></i>
+                            <h4 class="m-0 fw-bold">Cinta Publicitaria</h4>
+                        </div>
+                        <!-- Control de velocidad -->
+                        <div class="ticker-speed-control d-flex align-items-center gap-2">
+                            <span class="text-muted small fw-bold" style="white-space:nowrap;">
+                                <i class="bi bi-speedometer2 me-1"></i>Velocidad
+                            </span>
+                            <div class="ticker-speed-group" role="group">
+                                <button class="ticker-speed-btn" data-speed="1"   onclick="setTickerSpeed(1)">1×</button>
+                                <button class="ticker-speed-btn" data-speed="1.5" onclick="setTickerSpeed(1.5)">1.5×</button>
+                                <button class="ticker-speed-btn" data-speed="2"   onclick="setTickerSpeed(2)">2×</button>
+                                <button class="ticker-speed-btn" data-speed="2.5" onclick="setTickerSpeed(2.5)">2.5×</button>
+                                <button class="ticker-speed-btn" data-speed="3"   onclick="setTickerSpeed(3)">3×</button>
+                            </div>
+                        </div>
                     </div>
                     <div id="cintaContainer" class="row g-4"></div>
                     <button class="btn btn-outline-success w-100 mt-4 fw-bold" onclick="agregarCinta()">

@@ -14,62 +14,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
-        /* ── Widget sistema drag ── */
-        .widget-panel {
-            position: relative;
-            margin-bottom: 1.5rem;
-            transition: box-shadow 0.2s;
-        }
-        .widget-panel.sortable-ghost { opacity: 0.4; }
-        .widget-panel.sortable-drag { box-shadow: 0 20px 50px rgba(0,0,0,0.25); z-index: 9999; }
-        .widget-handle-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 12px 4px;
-            cursor: grab;
-            user-select: none;
-            border-radius: 12px 12px 0 0;
-            background: rgba(211,84,0,0.06);
-            border-bottom: 1px solid rgba(211,84,0,0.1);
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #d35400;
-            transition: background 0.2s;
-        }
-        .widget-handle-bar:hover { background: rgba(211,84,0,0.12); cursor: grab; }
-        .widget-handle-bar:active { cursor: grabbing; }
-        .widget-handle-bar .handle-left { display: flex; align-items: center; gap: 8px; }
-        .widget-handle-bar .handle-right { display: flex; gap: 6px; }
-        .widget-action-btn {
-            background: none; border: none; padding: 2px 6px; border-radius: 6px;
-            cursor: pointer; color: #888; font-size: 0.8rem; transition: all 0.15s;
-        }
-        .widget-action-btn:hover { background: rgba(211,84,0,0.1); color: #d35400; }
-        .widget-collapsed .widget-content { display: none !important; }
-
-        [data-theme="dark"] .widget-handle-bar {
-            background: rgba(211,84,0,0.1) !important;
-            border-color: rgba(211,84,0,0.2) !important;
-        }
-        [data-theme="dark"] .widget-action-btn { color: #555 !important; }
-        [data-theme="dark"] .widget-action-btn:hover { color: #d35400 !important; }
-
-        /* ── Botón editar widgets (al lado izquierdo del scroll-to-top) ── */
-        #pedidosEditBtn {
-            position: fixed; bottom: 30px; right: 85px;
-            width: 40px; height: 40px; border-radius: 50%;
-            background: linear-gradient(135deg,#d35400,#e67e22);
-            color:#fff; border:none; font-size:0.95rem;
-            display:flex; align-items:center; justify-content:center;
-            cursor:pointer; z-index:1300; transition:all 0.2s;
-        }
-        #pedidosEditBtn:hover { transform:scale(1.1); }
-        #pedidosEditBtn.active {
-            background:linear-gradient(135deg,#1e8449,#27ae60);
-        }
+        /* Margen entre secciones */
+        .widget-panel { margin-bottom: 1.5rem; }
 
         /* ── Notif panel — bottom-left, integración suave ── */
         .notif-admin-pedidos {
@@ -156,12 +102,6 @@
 
         <!-- Widget: Header -->
         <div class="widget-panel" data-panel="header">
-            <div class="widget-handle-bar">
-                <div class="handle-left"><i class="bi bi-grip-vertical"></i> Encabezado del módulo</div>
-                <div class="handle-right">
-                    <button class="widget-action-btn" onclick="toggleWidget(this)" title="Mostrar/Ocultar"><i class="bi bi-eye"></i></button>
-                </div>
-            </div>
             <div class="widget-content card-title-marketing mb-4 text-center">
                 <h3 class="display-6 fw-bold m-0">
                     <i class="bi bi-clipboard-check me-2"></i> Panel de Pedidos</h3>
@@ -171,12 +111,6 @@
 
         <!-- Widget: Stats -->
         <div class="widget-panel" data-panel="stats">
-            <div class="widget-handle-bar">
-                <div class="handle-left"><i class="bi bi-grip-vertical"></i> Estadísticas de ventas</div>
-                <div class="handle-right">
-                    <button class="widget-action-btn" onclick="toggleWidget(this)" title="Mostrar/Ocultar"><i class="bi bi-eye"></i></button>
-                </div>
-            </div>
             <div class="widget-content">
                 <div class="row g-3 mb-2" id="statsVentasRow">
                     <div class="col-6 col-md-3">
@@ -231,12 +165,6 @@
 
         <!-- Widget: Filtros -->
         <div class="widget-panel" data-panel="filtros">
-            <div class="widget-handle-bar">
-                <div class="handle-left"><i class="bi bi-grip-vertical"></i> Filtros y búsqueda</div>
-                <div class="handle-right">
-                    <button class="widget-action-btn" onclick="toggleWidget(this)" title="Mostrar/Ocultar"><i class="bi bi-eye"></i></button>
-                </div>
-            </div>
             <div class="widget-content">
                 <div class="card p-0 mb-3">
                     <div class="card-body" style="padding: 1.5rem;">
@@ -286,12 +214,6 @@
 
         <!-- Widget: Tabla de pedidos -->
         <div class="widget-panel" data-panel="tabla">
-            <div class="widget-handle-bar">
-                <div class="handle-left"><i class="bi bi-grip-vertical"></i> Lista de pedidos</div>
-                <div class="handle-right">
-                    <button class="widget-action-btn" onclick="toggleWidget(this)" title="Mostrar/Ocultar"><i class="bi bi-eye"></i></button>
-                </div>
-            </div>
             <div class="widget-content">
                 <div class="table-responsive mb-4">
                     <table class="table table-hover table-bordered bg-white align-middle mb-0">
@@ -380,82 +302,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
     <script>
-    // ── Widget drag-and-drop — DESACTIVADO hasta presionar editar ──
-    const WIDGET_ORDER_KEY  = 'pedidos_widget_order';
-    const WIDGET_HIDDEN_KEY = 'pedidos_widget_hidden';
-    let _pedidosSortable = null;
-    let _pedidosEditMode = false;
-
-    function initWidgetSystem() {
-        const main = document.querySelector('main');
-        if (!main) return;
-
-        const savedOrder = JSON.parse(localStorage.getItem(WIDGET_ORDER_KEY) || '[]');
-        if (savedOrder.length) {
-            savedOrder.forEach(panelId => {
-                const el = main.querySelector(`.widget-panel[data-panel="${panelId}"]`);
-                if (el) main.appendChild(el);
-            });
-        }
-
-        const hiddenWidgets = JSON.parse(localStorage.getItem(WIDGET_HIDDEN_KEY) || '[]');
-        hiddenWidgets.forEach(panelId => {
-            const el = main.querySelector(`.widget-panel[data-panel="${panelId}"]`);
-            if (el) {
-                el.classList.add('widget-collapsed');
-                const btn = el.querySelector('.widget-action-btn i');
-                if (btn) btn.className = 'bi bi-eye-slash';
-            }
-        });
-    }
-
-    function togglePedidosEdit() {
-        const main = document.querySelector('main');
-        const btn  = document.getElementById('pedidosEditBtn');
-        if (!main || !btn) return;
-
-        _pedidosEditMode = !_pedidosEditMode;
-
-        if (_pedidosEditMode) {
-            btn.classList.add('active');
-            btn.title = 'Salir del modo edición';
-            btn.innerHTML = '<i class="bi bi-check-lg"></i>';
-            _pedidosSortable = Sortable.create(main, {
-                animation: 180,
-                handle: '.widget-handle-bar',
-                ghostClass: 'sortable-ghost',
-                dragClass: 'sortable-drag',
-                scroll: true,
-                scrollSensitivity: 60,
-                scrollSpeed: 10,
-                onEnd: () => {
-                    const panels = [...main.querySelectorAll('.widget-panel')].map(el => el.dataset.panel);
-                    localStorage.setItem(WIDGET_ORDER_KEY, JSON.stringify(panels));
-                }
-            });
-            mostrarAlerta('✏️ Modo edición activo — Arrastra los widgets para reorganizar');
-        } else {
-            btn.classList.remove('active');
-            btn.title = 'Organizar widgets';
-            btn.innerHTML = '<i class="bi bi-grid-3x3-gap"></i>';
-            if (_pedidosSortable) { _pedidosSortable.destroy(); _pedidosSortable = null; }
-            mostrarAlerta('✅ Cambios guardados');
-        }
-    }
-
-    function toggleWidget(btn) {
-        const panel = btn.closest('.widget-panel');
-        const isCollapsed = panel.classList.toggle('widget-collapsed');
-        const icon = btn.querySelector('i');
-        icon.className = isCollapsed ? 'bi bi-eye-slash' : 'bi bi-eye';
-
-        const hiddenWidgets = JSON.parse(localStorage.getItem(WIDGET_HIDDEN_KEY) || '[]');
-        const panelId = panel.dataset.panel;
-        if (isCollapsed && !hiddenWidgets.includes(panelId)) hiddenWidgets.push(panelId);
-        else if (!isCollapsed) { const idx = hiddenWidgets.indexOf(panelId); if (idx > -1) hiddenWidgets.splice(idx, 1); }
-        localStorage.setItem(WIDGET_HIDDEN_KEY, JSON.stringify(hiddenWidgets));
-    }
-
     // ── Notificaciones de pedidos → panel #sistemPanel de la navbar ──
     let _notifLog = JSON.parse(localStorage.getItem('pedidos_notif_log') || '[]');
 
@@ -481,76 +327,119 @@
         _renderNavSistemPanel();
     }
 
+    let _prevBellCount = 0;
+
     function _syncNavBell() {
-        const activas = _notifLog.filter(n => n.activa).length;
-        const cnt = activas > 9 ? '9+' : activas;
+        const total = _notifLog.length;
+        const cnt   = total > 9 ? '9+' : String(total);
         const badge = document.getElementById('navBellBadge');
         const count = document.getElementById('sistemCount');
-        if (badge) { badge.textContent = cnt; badge.style.display = activas > 0 ? 'flex' : 'none'; }
-        if (count) count.textContent = activas;
+        const empty = document.getElementById('sistemEmpty');
+
+        if (badge) {
+            const wasVisible = badge.style.display !== 'none';
+            badge.textContent = cnt;
+            badge.style.display = total > 0 ? 'flex' : 'none';
+            /* Animar si el conteo aumentó */
+            if (total > _prevBellCount && typeof _animateBadge === 'function') {
+                _animateBadge(badge);
+            }
+        }
+        if (count) { count.textContent = cnt; count.style.display = total > 0 ? 'inline-flex' : 'none'; }
+        if (empty) empty.style.display = total === 0 ? 'flex' : 'none';
+        _prevBellCount = total;
     }
 
     function _renderNavSistemPanel() {
-        const body  = document.getElementById('sistemBody');
+        const list  = document.getElementById('sistemList');
         const empty = document.getElementById('sistemEmpty');
-        if (!body) return;
+        if (!list) return;
+
         if (_notifLog.length === 0) {
+            list.innerHTML = '';
             if (empty) empty.style.display = 'flex';
             return;
         }
         if (empty) empty.style.display = 'none';
-        const list = document.getElementById('sistemList');
-        if (!list) return;
+
         list.innerHTML = _notifLog.map(n => `
-            <li class="notif-item" style="opacity:${n.activa ? 1 : 0.45};cursor:pointer;"
-                onclick="_pedidosNotifNav(event, '${n.datos?.id_pedido || ''}')">
+            <li class="notif-item" data-notif-id="${n.id}"
+                onclick="_pedidosNotifNav(event,'${n.datos?.id_pedido || ''}')">
                 <div class="notif-item-img">
-                    <i class="bi ${PEDIDOS_ICONS[n.tipo] || PEDIDOS_ICONS.info}" style="font-size:1.2rem;"></i>
+                    <i class="bi ${PEDIDOS_ICONS[n.tipo] || PEDIDOS_ICONS.info}" style="font-size:1rem;"></i>
                 </div>
-                <div class="notif-item-info flex-grow-1">
-                    <strong style="font-size:0.8rem;">${n.mensaje}</strong>
-                    <small class="d-block text-muted">${n.hora}</small>
-                    <small class="text-primary" style="font-size:0.65rem;">Ver en Pedidos →</small>
+                <div class="notif-item-info">
+                    <strong>${n.mensaje}</strong>
+                    <small>${n.hora}</small>
                 </div>
-                <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                    <div class="form-check form-switch mb-0" title="${n.activa ? 'Activa' : 'Inactiva'}">
-                        <input class="form-check-input" type="checkbox" ${n.activa ? 'checked' : ''}
-                               onchange="_pedidosToggleNotif(${n.id}, this.checked)"
-                               style="cursor:pointer;width:2em;height:1.1em;">
-                    </div>
-                    <button class="btn-notif-del" onclick="_pedidosDeleteNotif(${n.id})" title="Eliminar">
-                        <i class="bi bi-trash3" style="font-size:0.75rem;"></i>
+                <div class="notif-item-actions">
+                    <button class="btn-notif-visto"
+                            onclick="event.stopPropagation();_pedidosMarcarVisto(${n.id})"
+                            title="Marcar como visto">
+                        <i class="bi bi-check2"></i>
                     </button>
                 </div>
             </li>`).join('');
     }
 
     window._pedidosNotifNav = function(e, idPedido) {
-        if (e.target.closest('.btn-notif-del,.form-check')) return;
+        if (e.target.closest('.btn-notif-visto')) return;
         window.location.href = '/pedidos_page';
     };
 
-    window._pedidosDeleteNotif = function(id) {
-        _notifLog = _notifLog.filter(x => x.id !== id);
-        localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
-        _syncNavBell(); _renderNavSistemPanel();
+    /* Marcar un ítem como visto → se elimina permanentemente */
+    window._pedidosMarcarVisto = function(id) {
+        const li = document.querySelector(`[data-notif-id="${id}"]`);
+        if (li) {
+            li.style.transition = 'opacity 0.22s, transform 0.22s';
+            li.style.opacity    = '0';
+            li.style.transform  = 'translateX(18px)';
+            setTimeout(() => {
+                _notifLog = _notifLog.filter(x => x.id !== id);
+                localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
+                _syncNavBell();
+                _renderNavSistemPanel();
+            }, 240);
+        }
     };
 
-    window._pedidosToggleNotif = function(id, estado) {
-        const n = _notifLog.find(x => x.id === id);
-        if (n) { n.activa = estado; localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog)); _syncNavBell(); _renderNavSistemPanel(); }
+    /* Marcar TODO como visto → limpiar el log completo */
+    window._pedidosMarcarTodo = function() {
+        const items = [...document.querySelectorAll('#sistemList .notif-item')];
+        items.forEach((li, i) => {
+            setTimeout(() => {
+                li.style.transition = 'opacity 0.2s, transform 0.2s';
+                li.style.opacity    = '0';
+                li.style.transform  = 'translateX(18px)';
+            }, i * 40);
+        });
+        setTimeout(() => {
+            _notifLog = [];
+            localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
+            _syncNavBell();
+            _renderNavSistemPanel();
+        }, items.length * 40 + 250);
+
+        const readAllBtn = document.getElementById('sistemReadAllBtn');
+        if (readAllBtn) {
+            readAllBtn.innerHTML = '<i class="bi bi-check2-all"></i><span class="notif-read-label">Listo ✓</span>';
+            readAllBtn.disabled  = true;
+            readAllBtn.classList.add('did-read');
+            setTimeout(() => {
+                readAllBtn.innerHTML = '<i class="bi bi-check2-all"></i><span class="notif-read-label">Leído</span>';
+                readAllBtn.disabled  = false;
+                readAllBtn.classList.remove('did-read');
+            }, 3000);
+        }
     };
 
     window.addNotifLog = addNotifLog;
 
     document.addEventListener('DOMContentLoaded', () => {
-        initWidgetSystem();
         _syncNavBell();
         _renderNavSistemPanel();
-        const cargarNotifFn = window.cargarNotificacionesSistema;
-        window.cargarNotificacionesSistema = function() {
-            _renderNavSistemPanel();
-        };
+        /* Sobreescribir el fetch de la API por el log local en esta página */
+        window.cargarNotificacionesSistema = function() { _renderNavSistemPanel(); };
     });
     </script>
     <script src="{{ url_for('static', filename='js/admin_js/pedidos.js') }}"></script>

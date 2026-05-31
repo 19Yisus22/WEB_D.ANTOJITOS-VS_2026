@@ -36,24 +36,58 @@
     --theme-table-row2:  #161b22;
 }
 
+/* ── Degradado global de fondo — light mode ──────────────────────────
+   Se pone sobre html (no body) para que sea fijo mientras se scrollea.
+   body es transparente para que el degradado de html se vea a través.
+   !important asegura que ningún módulo lo sobreescriba.
+   ────────────────────────────────────────────────────────────────── */
+html {
+    min-height: 100%;
+    background-image: linear-gradient(160deg,
+        #fefcfa 0%,
+        #fdf5f0 18%,
+        #faf2f5 40%,
+        #f7f0fb 62%,
+        #f5f3ff 80%,
+        #faf4f0 100%
+    ) !important;
+    background-attachment: fixed !important;
+    background-color: #fefcfa !important;
+    color: var(--theme-text);
+    transition: color 0.25s ease;
+}
+
+/* Dark mode — degradado profundo ciruela/índigo */
+[data-theme="dark"] html {
+    background-image: linear-gradient(160deg,
+        #0c0312 0%,
+        #0f0a1c 22%,
+        #120d1a 45%,
+        #0e0a18 68%,
+        #0b0316 88%,
+        #0d0218 100%
+    ) !important;
+    background-color: #0c0312 !important;
+}
+
 html, body {
     height: 100%;
-    background-color: var(--theme-bg);
     color: var(--theme-text);
-    transition: background-color 0.3s ease, color 0.25s ease;
+    transition: color 0.25s ease;
 }
 
 body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    background: transparent !important;  /* el gradiente viene de html */
 }
 
-.page-wrapper { flex: 1 0 auto; }
+.page-wrapper { flex: 1 0 auto; padding-top: 32px; }
 
 [data-theme="dark"] body,
 [data-theme="dark"] .body-fondo-logo {
-    background-color: var(--theme-bg) !important;
+    background: transparent !important;  /* deja ver el gradiente del html */
     color: var(--theme-text) !important;
 }
 
@@ -414,8 +448,7 @@ body {
 
 [data-theme="dark"] body,
 [data-theme="dark"] .body-fondo-logo {
-    background: var(--dk-bg) !important;
-    background-image: none !important;
+    background: transparent !important;  /* hereda el degradado del html dark */
 }
 
 [data-theme="dark"] main,
@@ -425,10 +458,7 @@ body {
     background: transparent !important;
 }
 
-[data-theme="dark"] html,
-[data-theme="dark"] body {
-    background: var(--dk-bg) !important;
-}
+/* html dark mode gradient ya definido arriba; body es transparente */
 
 [data-theme="dark"] .card-title-marketing {
     background: linear-gradient(135deg, #1a0800 0%, #2d1200 100%) !important;
@@ -907,7 +937,7 @@ body {
 }
 }
 
-[data-theme="dark"] .page-wrapper { background: var(--dk-bg) !important; }
+[data-theme="dark"] .page-wrapper { background: transparent !important; }
 [data-theme="dark"] main { background: transparent !important; }
 
 /* Header/banner de módulo oscuro también */
@@ -984,5 +1014,222 @@ body {
 [data-theme="dark"] .sortable-drag {
     box-shadow: 0 28px 70px rgba(0,0,0,0.55),
                 0 10px 30px rgba(211,84,0,0.3) !important;
+}
+
+/* ══════════════════════════════════════════════════
+   CINTA PUBLICITARIA — estilos globales
+   (catálogo, inicio y cualquier módulo futuro)
+   ══════════════════════════════════════════════════ */
+
+/* Track: marquee continuo — entra desde el lateral derecho */
+.promo-track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    /* La animación-duration es sobreescrita por JS al cambiar velocidad */
+    animation: promoScroll 25s linear infinite;
+    will-change: transform;
+    position: relative;
+    z-index: 1;
+    /* Pequeño offset inicial para que los ítems entren desde la derecha */
+    transform-origin: right center;
+}
+
+.promo-banner:hover .promo-track,
+.cinta-inicio-marquee:hover .promo-track {
+    animation-play-state: paused;
+    cursor: default;
+}
+
+/* Animación del banner al aparecer: slide desde la derecha */
+.promo-banner {
+    animation: promoBannerIn 0.6s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes promoBannerIn {
+    from { opacity: 0; transform: translateX(18px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* El scroll: los ítems fluyen de derecha a izquierda continuamente */
+@keyframes promoScroll {
+    from { transform: translateX(0%); }
+    to   { transform: translateX(-50%); }
+}
+
+/* Ítem */
+.promo-item {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 0 42px;
+    flex-shrink: 0;
+}
+
+/* Imagen */
+.promo-item-img-wrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+.promo-item-img-wrap img {
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 13px;
+    border: 2px solid rgba(255,255,255,0.22);
+    display: block;
+    box-shadow: 0 0 18px rgba(251,146,60,0.5), 0 4px 14px rgba(0,0,0,0.45);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.promo-item:hover .promo-item-img-wrap img {
+    transform: scale(1.18) rotate(4deg);
+    box-shadow: 0 0 36px rgba(251,146,60,0.75), 0 6px 20px rgba(0,0,0,0.55);
+}
+
+.promo-item-img-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -9px;
+    background: rgba(251,146,60,0.28);
+    border-radius: 20px;
+    filter: blur(13px);
+    z-index: 0;
+    animation: promoGlowPulse 3.5s ease-in-out infinite;
+}
+
+@keyframes promoGlowPulse {
+    0%, 100% { opacity: 0.28; transform: scale(1); }
+    50%       { opacity: 0.5;  transform: scale(1.1); }
+}
+
+.promo-item:hover .promo-item-img-wrap::before {
+    animation-play-state: paused;
+    opacity: 0.7;
+}
+
+/* Ícono fallback */
+.promo-item-fallback-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 13px;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: rgba(251,146,60,0.65);
+    flex-shrink: 0;
+}
+
+/* Texto */
+.promo-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.promo-item-title {
+    font-weight: 800;
+    font-size: 0.92rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: linear-gradient(90deg, #fb923c 0%, #fde68a 50%, #fb923c 100%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: promoTitleShimmer 3.5s linear infinite;
+}
+
+@keyframes promoTitleShimmer {
+    from { background-position: 0% 0%; }
+    to   { background-position: 200% 0%; }
+}
+
+.promo-item-desc {
+    font-size: 0.64rem;
+    color: rgba(253,210,150,0.58);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* Separador */
+.promo-sep {
+    font-size: 0.68rem;
+    color: rgba(251,146,60,0.32);
+    flex-shrink: 0;
+    animation: promoSepSpin 4s ease-in-out infinite;
+    user-select: none;
+    display: inline-block;
+}
+
+@keyframes promoSepSpin {
+    0%, 100% { opacity: 0.32; transform: scale(1) rotate(0deg); }
+    50%       { opacity: 0.65; transform: scale(1.5) rotate(180deg); }
+}
+
+/* ── Botones de velocidad (módulo publicidad) ── */
+.ticker-speed-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ticker-speed-group {
+    display: flex;
+    gap: 4px;
+    background: rgba(211,84,0,0.06);
+    border-radius: 24px;
+    padding: 4px;
+    border: 1px solid rgba(211,84,0,0.12);
+}
+
+.ticker-speed-btn {
+    min-width: 38px;
+    padding: 4px 10px;
+    border-radius: 18px;
+    border: none;
+    background: transparent;
+    color: #b84500;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.2px;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.12s;
+    white-space: nowrap;
+}
+
+.ticker-speed-btn:hover:not(.active) {
+    background: rgba(211,84,0,0.1);
+    transform: translateY(-1px);
+}
+
+.ticker-speed-btn.active {
+    background: linear-gradient(135deg, #c25200, #d35400);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(211,84,0,0.35);
+}
+
+.ticker-speed-btn:active { transform: scale(0.94); }
+
+[data-theme="dark"] .ticker-speed-group {
+    background: rgba(240,136,62,0.08);
+    border-color: rgba(240,136,62,0.18);
+}
+
+[data-theme="dark"] .ticker-speed-btn { color: #f0883e; }
+[data-theme="dark"] .ticker-speed-btn.active {
+    background: linear-gradient(135deg, #a33f00, #c25200);
+    color: #fff;
 }
 

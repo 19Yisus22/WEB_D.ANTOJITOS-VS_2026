@@ -116,61 +116,84 @@ function mostrarAlertaPublica({
     if (!cont) {
         cont = document.createElement('div');
         cont.id = 'toastContainer';
-        cont.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;';
         document.body.appendChild(cont);
     }
+    cont.style.cssText = `
+        position:fixed;top:72px;left:16px;z-index:10000;
+        display:flex;flex-direction:column;gap:8px;
+        max-width:340px;width:calc(100vw - 32px);pointer-events:none;`;
 
     if (sonido) _playNotifSound(tipo === 'error' || tipo === 'warning' ? 'error' : 'default');
 
-    const esError      = tipo === 'error' || tipo === 'warning';
-    const colorPrimario = esError ? '#ff4757' : '#ff9800';
+    const esError       = tipo === 'error' || tipo === 'warning';
+    const isDark        = document.documentElement.getAttribute('data-theme') === 'dark';
+    const accentColor   = esError ? '#e53935' :
+                          tipo === 'favorito'   ? '#e91e8c' :
+                          tipo === 'bienvenida' ? '#27ae60' :
+                          tipo === 'success'    ? '#27ae60' : '#d35400';
     const iconClass     = esError            ? 'bi-exclamation-triangle-fill' :
                           tipo === 'favorito' ? 'bi-heart-fill'               :
-                          tipo === 'bienvenida'? 'bi-emoji-smile-fill'        : 'bi-stars';
-    const tituloFinal   = titulo || (esError ? 'Sistema' : 'D\'Antojitos');
+                          tipo === 'bienvenida'? 'bi-emoji-smile-fill'        :
+                          tipo === 'success'  ? 'bi-check-circle-fill'        : 'bi-megaphone-fill';
+    const tituloFinal   = titulo || (esError ? 'Aviso' : "D'Antojitos");
+    const bgToast       = isDark ? 'rgba(22,22,26,0.97)' : 'rgba(255,255,255,0.97)';
+    const textMain      = isDark ? '#f0f0f0' : '#1a1a1a';
+    const textSub       = isDark ? '#999' : '#555';
+    const borderImg     = isDark ? '#333' : '#eee';
 
     const toast = document.createElement('div');
     toast.style.cssText = `
-        background:#121212;color:#fff;padding:14px 18px;border-radius:12px;
-        box-shadow:0 8px 25px rgba(0,0,0,0.5);display:flex;align-items:center;
-        min-width:320px;max-width:400px;border-left:5px solid ${colorPrimario};
-        transition:all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
-        transform:translateX(120%);opacity:0;`;
+        background:${bgToast};
+        padding:11px 14px;border-radius:14px;
+        box-shadow:0 6px 24px rgba(0,0,0,0.13),0 1px 6px rgba(0,0,0,0.07);
+        display:flex;align-items:center;gap:11px;
+        border-left:3px solid ${accentColor};
+        backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+        transition:transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275),opacity 0.28s ease;
+        transform:translateX(-110%);opacity:0;pointer-events:auto;
+        cursor:default;min-width:0;width:100%;box-sizing:border-box;`;
 
     toast.innerHTML = `
-        <div class="d-flex align-items-center w-100">
-            <div style="position:relative;flex-shrink:0;">
-                <img src="${imagen}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;"
-                     onerror="this.src='/static/uploads/logo.png'">
-                <div style="position:absolute;bottom:-4px;right:-4px;background:${colorPrimario};
-                            width:20px;height:20px;border-radius:50%;display:flex;align-items:center;
-                            justify-content:center;border:2px solid #121212;">
-                    <i class="bi ${iconClass} text-white" style="font-size:0.65rem;"></i>
-                </div>
+        <div style="position:relative;flex-shrink:0;">
+            <img src="${imagen}"
+                 style="width:40px;height:40px;object-fit:cover;border-radius:9px;
+                        border:1.5px solid ${borderImg};display:block;"
+                 onerror="this.src='/static/uploads/logo.png'">
+            <div style="position:absolute;bottom:-3px;right:-3px;background:${accentColor};
+                        width:16px;height:16px;border-radius:50%;display:flex;align-items:center;
+                        justify-content:center;border:2px solid ${isDark ? '#16161a' : '#fff'};">
+                <i class="bi ${iconClass}" style="color:#fff;font-size:0.5rem;line-height:1;"></i>
             </div>
-            <div class="ms-3 flex-grow-1">
-                <strong style="display:block;font-size:0.7rem;text-transform:uppercase;
-                               color:${colorPrimario};letter-spacing:0.8px;">${tituloFinal}</strong>
-                <div style="font-size:0.85rem;font-weight:400;color:#f0f0f0;line-height:1.2;">${mensaje}</div>
-            </div>
-            <button class="btn-close-toast ms-2"
-                    style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>`;
+        </div>
+        <div style="flex:1;min-width:0;overflow:hidden;">
+            <strong style="display:block;font-size:0.65rem;text-transform:uppercase;
+                           color:${accentColor};letter-spacing:0.7px;font-weight:800;
+                           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tituloFinal}</strong>
+            <div style="font-size:0.8rem;font-weight:400;color:${textSub};line-height:1.3;
+                        overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${mensaje}</div>
+        </div>
+        <button class="btn-close-toast"
+                style="background:none;border:none;color:${textSub};cursor:pointer;
+                       padding:2px 4px;font-size:0.75rem;flex-shrink:0;line-height:1;
+                       opacity:0.6;transition:opacity 0.15s;">
+            <i class="bi bi-x-lg"></i>
+        </button>`;
 
     cont.appendChild(toast);
-    setTimeout(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
         toast.style.transform = 'translateX(0)';
         toast.style.opacity   = '1';
-    }, 50);
+    }));
 
     const remove = () => {
-        toast.style.transform = 'translateX(120%)';
+        toast.style.transform = 'translateX(-110%)';
         toast.style.opacity   = '0';
-        setTimeout(() => toast.remove(), 400);
+        setTimeout(() => toast.remove(), 380);
     };
-    toast.querySelector('.btn-close-toast').onclick = remove;
+    const closeBtn = toast.querySelector('.btn-close-toast');
+    closeBtn.onmouseenter = () => closeBtn.style.opacity = '1';
+    closeBtn.onmouseleave = () => closeBtn.style.opacity = '0.6';
+    closeBtn.onclick = remove;
     setTimeout(remove, duracion);
 }
 
@@ -401,6 +424,32 @@ function toggleSistemPanel() {
     }
 }
 
+/* ── Persistencia de vistos en pedidos (localStorage, sobrevive sesión) ── */
+const _PEDIDOS_VISTOS_KEY = '_dantojitos_pedidos_vistos';
+function _getPedidosVistos() {
+    try { return JSON.parse(localStorage.getItem(_PEDIDOS_VISTOS_KEY) || '[]'); }
+    catch { return []; }
+}
+function _savePedidoVisto(id) {
+    const list = _getPedidosVistos();
+    if (!list.includes(String(id))) { list.push(String(id)); localStorage.setItem(_PEDIDOS_VISTOS_KEY, JSON.stringify(list)); }
+}
+function _saveAllPedidosVistos(ids) {
+    const existing = _getPedidosVistos();
+    ids.forEach(id => { if (!existing.includes(String(id))) existing.push(String(id)); });
+    localStorage.setItem(_PEDIDOS_VISTOS_KEY, JSON.stringify(existing));
+}
+
+function _updateSistemBadge() {
+    const remaining = document.querySelectorAll('#sistemList .notif-item').length;
+    const badge = document.getElementById('navBellBadge');
+    const count = document.getElementById('sistemCount');
+    const empty = document.getElementById('sistemEmpty');
+    if (badge) { badge.textContent = remaining > 9 ? '9+' : remaining; badge.style.display = remaining > 0 ? 'flex' : 'none'; }
+    if (count) { count.textContent = remaining || ''; count.style.display = remaining > 0 ? 'inline-flex' : 'none'; }
+    if (empty) empty.style.display = remaining === 0 ? 'flex' : 'none';
+}
+
 async function cargarNotificacionesSistema() {
     const list  = document.getElementById('sistemList');
     const empty = document.getElementById('sistemEmpty');
@@ -412,43 +461,54 @@ async function cargarNotificacionesSistema() {
         if (!res.ok) return;
         const data = await res.json();
         list.innerHTML = '';
-        const total = Array.isArray(data) ? data.length : 0;
-        const activos = Array.isArray(data) ? data.filter(p => ['Pendiente','Emitida','Emitido'].includes(p.estado)).length : 0;
-        if (count) count.textContent = activos || total;
-        if (empty) empty.style.display = total ? 'none' : 'flex';
-        if (badge) { badge.textContent = activos > 9 ? '9+' : (activos || ''); badge.style.display = activos > 0 ? 'flex' : 'none'; }
+
+        const vistos = _getPedidosVistos();
+        /* Sólo mostramos los NO vistos */
+        const pendientes = (Array.isArray(data) ? data : [])
+            .filter((n, i) => !vistos.includes(String(n.id_pedido ?? i)));
+
+        const total   = pendientes.length;
+        const activos = pendientes.filter(p => ['Pendiente','Emitida','Emitido'].includes(p.estado)).length;
+
+        if (count) { count.textContent = total || ''; count.style.display = total > 0 ? 'inline-flex' : 'none'; }
+        if (empty) empty.style.display = total === 0 ? 'flex' : 'none';
+        if (badge) { badge.textContent = activos > 9 ? '9+' : activos; badge.style.display = activos > 0 ? 'flex' : 'none'; }
 
         const ESTADO_CFG = {
-            'Pendiente': { color:'#b45309', bg:'#fef3c7', icon:'bi-hourglass-split'   },
-            'Emitida':   { color:'#0369a1', bg:'#e0f2fe', icon:'bi-file-earmark-arrow-up' },
-            'Emitido':   { color:'#0369a1', bg:'#e0f2fe', icon:'bi-file-earmark-arrow-up' },
-            'Enviado':   { color:'#92400e', bg:'#fef3c7', icon:'bi-truck'              },
-            'Pagado ✓':  { color:'#15803d', bg:'#dcfce7', icon:'bi-check-circle-fill'  },
-            'Entregado': { color:'#15803d', bg:'#dcfce7', icon:'bi-house-check-fill'   },
-            'Cancelado': { color:'#64748b', bg:'#f1f5f9', icon:'bi-x-circle'           },
-            'Anulada':   { color:'#dc2626', bg:'#fee2e2', icon:'bi-slash-circle'       },
+            'Pendiente': { color:'#b45309', bg:'#fef3c7', icon:'bi-hourglass-split'        },
+            'Emitida':   { color:'#0369a1', bg:'#e0f2fe', icon:'bi-file-earmark-arrow-up'  },
+            'Emitido':   { color:'#0369a1', bg:'#e0f2fe', icon:'bi-file-earmark-arrow-up'  },
+            'Enviado':   { color:'#92400e', bg:'#fef3c7', icon:'bi-truck'                  },
+            'Pagado ✓':  { color:'#15803d', bg:'#dcfce7', icon:'bi-check-circle-fill'      },
+            'Entregado': { color:'#15803d', bg:'#dcfce7', icon:'bi-house-check-fill'       },
+            'Cancelado': { color:'#64748b', bg:'#f1f5f9', icon:'bi-x-circle'              },
+            'Anulada':   { color:'#dc2626', bg:'#fee2e2', icon:'bi-slash-circle'           },
         };
-        let _sistemRead = JSON.parse(sessionStorage.getItem('_sistemRead') || '[]');
-        (Array.isArray(data) ? data : []).forEach((n, i) => {
-            const li = document.createElement('li');
+
+        pendientes.forEach((n, i) => {
+            const id  = String(n.id_pedido ?? i);
+            const cfg = ESTADO_CFG[n.estado] || { color:'#888', bg:'#f0f0f0', icon:'bi-bell' };
+            const li  = document.createElement('li');
             li.className = 'notif-item';
-            li.id = `sitem-${i}`;
-            const cfg = ESTADO_CFG[n.estado] || { color:'#888', bg:'#f5f5f5', icon:'bi-bell' };
-            const isRead = _sistemRead.includes(n.id_pedido||String(i));
+            li.dataset.pedidoId = id;
             li.innerHTML = `
                 <div class="notif-item-img" style="background:${cfg.bg};">
-                    <i class="bi ${cfg.icon}" style="color:${cfg.color};font-size:1.1rem;"></i>
+                    <i class="bi ${cfg.icon}" style="color:${cfg.color};font-size:1rem;"></i>
                 </div>
-                <div class="notif-item-info" onclick="window.location.href='/pedidos_page'" style="flex:1;min-width:0;cursor:pointer;">
-                    <strong style="opacity:${isRead ? 0.5 : 1};">${n.titulo}</strong>
+                <div class="notif-item-info" onclick="window.location.href='/pedidos_page'"
+                     style="flex:1;min-width:0;cursor:pointer;">
+                    <strong>${n.titulo}</strong>
                     <small style="display:block;margin-top:2px;">
-                        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${cfg.color};vertical-align:middle;margin-right:4px;"></span>
-                        ${n.estado} · ${n.descripcion || ''} · <i class="bi bi-clock" style="font-size:0.6rem;"></i> ${n.fecha || ''}
+                        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;
+                                     background:${cfg.color};vertical-align:middle;margin-right:4px;"></span>
+                        ${n.estado}${n.descripcion ? ' · ' + n.descripcion : ''}${n.fecha ? ' · ' + n.fecha : ''}
                     </small>
                 </div>
                 <div class="notif-item-actions">
-                    <button class="btn-notif-del" onclick="event.stopPropagation();_quitarNotifSistem(this,'${n.id_pedido||i}')" title="Quitar">
-                        <i class="bi bi-x-lg"></i>
+                    <button class="btn-notif-visto"
+                            onclick="event.stopPropagation();_marcarVistoPedido(this,'${id}')"
+                            title="Marcar como visto">
+                        <i class="bi bi-check2"></i>
                     </button>
                 </div>`;
             list.appendChild(li);
@@ -470,14 +530,7 @@ async function cargarNotificacionesAdmin() {
         if (count) count.textContent = total;
         if (empty) empty.style.display = total ? 'none' : 'flex';
 
-        // Actualizar badge en navbar
-        ['campanaBadge','navBellBadge'].forEach(id => {
-            const b = document.getElementById(id);
-            if (!b) return;
-            b.textContent = total > 9 ? '9+' : total;
-            b.style.display = total > 0 ? 'flex' : 'none';
-        });
-
+        // Solo actualiza el badge de publicidad (navPubBadge), nunca el de pedidos (navBellBadge)
         const pubCount = document.getElementById('notifCount');
         const pubBadge = document.getElementById('navPubBadge');
         const activas  = Array.isArray(data) ? data.filter(n => n.estado).length : 0;
@@ -535,45 +588,312 @@ async function eliminarNotif(id) {
     });
 }
 
+/* ══════════════════════════════════════════════════════
+   MONITOR GLOBAL DE STOCK — visible para TODOS los roles
+   Detecta productos agotados y disponibles en tiempo real
+   ══════════════════════════════════════════════════════ */
+(function _initStockMonitor() {
+    let _stockSnapshot = {};  /* { id_producto: stock } */
+    let _firstRun      = true;
+
+    async function _checkStock() {
+        try {
+            const res  = await fetch('/obtener_catalogo', { cache: 'no-store' });
+            const data = await res.json();
+            const prods = data.productos || data || [];
+            if (!Array.isArray(prods) || !prods.length) return;
+
+            if (_firstRun) {
+                prods.forEach(p => { _stockSnapshot[p.id_producto] = parseInt(p.stock ?? 0, 10); });
+                _firstRun = false;
+                return;
+            }
+
+            prods.forEach(p => {
+                const prev = _stockSnapshot[p.id_producto] ?? -1;
+                const curr = parseInt(p.stock ?? 0, 10);
+                if (prev === curr) return;
+
+                if (prev > 0 && curr <= 0) {
+                    /* Producto recién agotado */
+                    mostrarAlertaPublica({
+                        titulo:  '¡Producto Agotado!',
+                        mensaje: `${p.nombre} ya no tiene stock disponible`,
+                        imagen:  p.imagen_url || '/static/uploads/logo.png',
+                        tipo:    'error',
+                        duracion: 6000,
+                        idUnico:  `agotado-${p.id_producto}-${Date.now()}`,
+                        sonido:  true,
+                    });
+                } else if (prev <= 0 && curr > 0) {
+                    /* Producto disponible de nuevo */
+                    mostrarAlertaPublica({
+                        titulo:  '¡Disponible!',
+                        mensaje: `${p.nombre} vuelve a tener stock (${curr} unidades)`,
+                        imagen:  p.imagen_url || '/static/uploads/logo.png',
+                        tipo:    'success',
+                        duracion: 6000,
+                        idUnico:  `disponible-${p.id_producto}-${Date.now()}`,
+                        sonido:  true,
+                    });
+                }
+
+                _stockSnapshot[p.id_producto] = curr;
+            });
+        } catch { /* silente */ }
+    }
+
+    /* Arrancar después de que la página cargue, luego cada 8 segundos */
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(_checkStock, 3000);
+        setInterval(_checkStock, 8000);
+    });
+})();
+
+/* ── Animación de badge cuando llega una nueva notificación ── */
+function _animateBadge(badgeEl) {
+    if (!badgeEl) return;
+    badgeEl.style.transition = 'none';
+    badgeEl.style.transform  = 'scale(1.7)';
+    badgeEl.style.background = '#e74c3c';
+    setTimeout(() => {
+        badgeEl.style.transition = 'transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275)';
+        badgeEl.style.transform  = 'scale(1)';
+    }, 80);
+}
+
+/* ── Polling de notificaciones del sistema en background ── */
+let _lastBellCount = 0;
+
+async function _pollSistemNotif() {
+    const badge = document.getElementById('navBellBadge');
+    if (!badge) return;                          // No hay campana → no es admin/vendedor
+    await cargarNotificacionesSistema();
+    const cnt = parseInt(badge.textContent || '0', 10);
+    if (cnt > _lastBellCount) _animateBadge(badge);
+    _lastBellCount = cnt;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initScrollToTop();
     initScrollProgressBar();
     solicitarPermisosNotificacion();
     setTheme(localStorage.getItem('dantojitos_theme') || 'light');
     if (document.getElementById('notifAdminPanel')) cargarNotificacionesAdmin();
+
+    /* Polling: cada 12 s para admin/vendedor que tienen la campana */
+    if (document.getElementById('navBellBadge')) {
+        /* Primera carga diferida 2s (deja cargar el DOM completamente) */
+        setTimeout(_pollSistemNotif, 2000);
+        setInterval(_pollSistemNotif, 12000);
+    }
 });
 
-/* ── Helpers bandeja sistema (pedidos) ── */
-function _quitarNotifSistem(btn, id) {
-    const li = btn.closest('.notif-item');
-    if (li) { li.style.transition = 'opacity 0.25s,transform 0.25s'; li.style.opacity = '0'; li.style.transform = 'translateX(16px)'; setTimeout(() => li.remove(), 260); }
-    let read = JSON.parse(sessionStorage.getItem('_sistemRead') || '[]');
-    if (!read.includes(String(id))) read.push(String(id));
-    sessionStorage.setItem('_sistemRead', JSON.stringify(read));
+/* ══════════════════════════════════════════════════
+   SISTEMA TICKER DE CINTAS PUBLICITARIAS
+   Muestra ítems uno a uno: entra desde la derecha,
+   permanece visible y sale por la izquierda.
+   La velocidad se persiste en localStorage.
+   ══════════════════════════════════════════════════ */
+
+const _TICKER_SPEED_KEY = '_dantojitos_ticker_speed';
+
+window.getTickerSpeed  = () => parseFloat(localStorage.getItem(_TICKER_SPEED_KEY) || '1');
+window.saveTickerSpeed = (v) => localStorage.setItem(_TICKER_SPEED_KEY, String(v));
+
+window.setTickerSpeed  = function(speed) {
+    window.saveTickerSpeed(speed);
+
+    /* .promo-track — cinta catálogo (legado) */
+    document.querySelectorAll('.promo-track').forEach(track => {
+        const base = parseFloat(track.dataset.baseDuration || '25');
+        track.style.animationDuration = (base / speed).toFixed(1) + 's';
+    });
+
+    /* .ci-track — cinta del inicio */
+    document.querySelectorAll('.ci-track').forEach(track => {
+        const base = parseFloat(track.dataset.baseDuration || '18');
+        track.style.animationDuration = (base / speed).toFixed(1) + 's';
+    });
+
+    /* .payment-track — marquee de bancos digitales del footer */
+    document.querySelectorAll('.payment-track').forEach(track => {
+        const base = parseFloat(track.dataset.baseDuration || '25');
+        track.style.animationDuration = (base / speed).toFixed(1) + 's';
+    });
+
+    /* Actualiza botones de la UI */
+    document.querySelectorAll('.ticker-speed-btn').forEach(btn => {
+        btn.classList.toggle('active', parseFloat(btn.dataset.speed) === speed);
+    });
+};
+
+/* Al cargar cualquier página, aplicar velocidad guardada al footer y cintas */
+document.addEventListener('DOMContentLoaded', () => {
+    const savedSpeed = window.getTickerSpeed();
+    if (savedSpeed !== 1) {
+        document.querySelectorAll('.payment-track, .promo-track').forEach(track => {
+            const base = parseFloat(track.dataset.baseDuration || '25');
+            track.style.animationDuration = (base / savedSpeed).toFixed(1) + 's';
+        });
+    }
+});
+
+class PromoBannerTicker {
+    /* @param {HTMLElement} track — el elemento .promo-ticker-track dentro del banner
+     * @param {Array}       items — objetos {imagen_url, titulo, descripcion}          */
+    constructor(track, items) {
+        this._track   = track;
+        this._items   = items;
+        this._idx     = 0;
+        this._timer   = null;
+        this._speed   = window.getTickerSpeed();
+        /* Duración base de permanencia por ítem (ms) a velocidad 1× */
+        this._DWELL   = 3800;
+        /* Duración de la transición CSS (ms) — debe coincidir con el CSS */
+        this._ENTER   = 680;
+        this._EXIT    = 540;
+        /* Registrar en el pool global */
+        if (!window._activeTickers) window._activeTickers = [];
+        window._activeTickers.push(this);
+    }
+
+    start() { this._show(0); }
+
+    stop() {
+        if (this._timer) clearTimeout(this._timer);
+        (window._activeTickers || []).splice(
+            (window._activeTickers || []).indexOf(this), 1
+        );
+    }
+
+    setSpeed(s) { this._speed = s; }
+
+    _show(idx) {
+        if (!this._track || !this._items.length) return;
+        const item = this._items[idx % this._items.length];
+
+        /* ── construir el nuevo ítem fuera de la vista (derecha) ── */
+        const el = document.createElement('div');
+        el.className = 'promo-ticker-item';
+        el.innerHTML = this._html(item);
+        /* Empieza dentro del borde derecho del banner (60% hacia la derecha) */
+        el.style.cssText = `
+            position:absolute;inset:0;display:flex;align-items:center;
+            justify-content:center;padding:0 50px;
+            transform:translateX(65%);opacity:0;
+            transition:transform ${this._ENTER}ms cubic-bezier(0.22,1,0.36,1),
+                        opacity ${this._ENTER * 0.55 | 0}ms ease;
+            pointer-events:none;`;
+        this._track.appendChild(el);
+
+        /* ── Entra al centro ── */
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            el.style.transform = 'translateX(0)';
+            el.style.opacity   = '1';
+        }));
+
+        /* ── Programa la salida ── */
+        const dwell = this._DWELL / this._speed;
+        this._timer = setTimeout(() => {
+            /* Expulsa a la izquierda */
+            el.style.transition = `transform ${this._EXIT}ms cubic-bezier(0.55,0,0.8,0),opacity ${this._EXIT * 0.6 | 0}ms ease`;
+            el.style.transform  = 'translateX(-65%)';
+            el.style.opacity    = '0';
+            setTimeout(() => { if (el.parentNode) el.remove(); }, this._EXIT + 80);
+
+            /* Siguiente ítem */
+            this._idx = (idx + 1) % this._items.length;
+            this._timer = setTimeout(() => this._show(this._idx), 60);
+        }, dwell + this._ENTER);
+    }
+
+    _html(item) {
+        /* Estilos inline para funcionar en CUALQUIER módulo sin depender
+           de style_catalogo.css ni style_inicio.css                     */
+        const imgS = [
+            'width:56px;height:56px;object-fit:cover',
+            'border-radius:14px;border:2px solid rgba(255,255,255,0.22)',
+            'display:block;flex-shrink:0;',
+            'box-shadow:0 0 20px rgba(251,146,60,0.55),0 4px 14px rgba(0,0,0,0.45)',
+        ].join(';');
+
+        const imgEl = item.imagen_url
+            ? `<img src="${item.imagen_url}" style="${imgS}"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : '';
+        const fallbackEl = `<i class="bi bi-megaphone-fill"
+            style="display:${item.imagen_url ? 'none' : 'flex'};
+                   font-size:1.5rem;color:rgba(251,146,60,0.7);
+                   width:56px;height:56px;align-items:center;justify-content:center;
+                   flex-shrink:0;border-radius:14px;
+                   background:rgba(255,255,255,0.06);"></i>`;
+
+        const subEl = item.descripcion
+            ? `<span style="font-size:0.66rem;color:rgba(253,210,150,0.6);
+                            font-weight:500;white-space:nowrap;
+                            overflow:hidden;text-overflow:ellipsis;max-width:240px;
+                            display:block;">${item.descripcion}</span>`
+            : '';
+
+        return `
+            <div style="position:relative;flex-shrink:0;">
+                <div style="position:absolute;inset:-10px;background:rgba(251,146,60,0.28);
+                            border-radius:20px;filter:blur(14px);z-index:0;
+                            animation:none;"></div>
+                ${imgEl}${fallbackEl}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+                <span style="font-weight:800;font-size:0.95rem;letter-spacing:0.5px;
+                             text-transform:uppercase;white-space:nowrap;
+                             background:linear-gradient(90deg,#fb923c 0%,#fde68a 50%,#fb923c 100%);
+                             background-size:200% 100%;
+                             -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                             background-clip:text;">${item.titulo || ''}</span>
+                ${subEl}
+            </div>`;
+    }
 }
 
+/* ── Helpers bandeja sistema (pedidos) ── */
+window._marcarVistoPedido = function(btn, id) {
+    _savePedidoVisto(id);
+    const li = btn.closest('.notif-item');
+    if (li) {
+        li.style.transition = 'opacity 0.25s, transform 0.25s';
+        li.style.opacity = '0';
+        li.style.transform = 'translateX(18px)';
+        setTimeout(() => { li.remove(); _updateSistemBadge(); }, 260);
+    }
+};
+
 window._pedidosMarcarTodo = function() {
-    document.querySelectorAll('#sistemList .notif-item strong').forEach(el => { el.style.opacity = '0.45'; });
-    const badge = document.getElementById('sistemCount');
-    if (badge) { badge.textContent = ''; badge.style.display = 'none'; }
-    const navBadge = document.getElementById('navBellBadge');
-    if (navBadge) navBadge.style.display = 'none';
+    /* Persistir todos los IDs visibles como vistos */
+    const items = [...document.querySelectorAll('#sistemList .notif-item')];
+    const ids   = items.map(li => li.dataset.pedidoId).filter(Boolean);
+    _saveAllPedidosVistos(ids);
+
+    /* Animar salida en cascada */
+    items.forEach((li, i) => {
+        setTimeout(() => {
+            li.style.transition = 'opacity 0.2s, transform 0.2s';
+            li.style.opacity    = '0';
+            li.style.transform  = 'translateX(18px)';
+            setTimeout(() => { li.remove(); if (i === items.length - 1) _updateSistemBadge(); }, 220);
+        }, i * 45);
+    });
+
+    /* Feedback en el botón */
     const readAllBtn = document.getElementById('sistemReadAllBtn');
     if (readAllBtn) {
         readAllBtn.innerHTML = '<i class="bi bi-check2-all"></i><span class="notif-read-label">Listo ✓</span>';
-        readAllBtn.disabled = true;
+        readAllBtn.disabled  = true;
         readAllBtn.classList.add('did-read');
         setTimeout(() => {
             readAllBtn.innerHTML = '<i class="bi bi-check2-all"></i><span class="notif-read-label">Leído</span>';
-            readAllBtn.disabled = false;
+            readAllBtn.disabled  = false;
             readAllBtn.classList.remove('did-read');
         }, 3000);
-    }
-    if (typeof window._pedidosLog !== 'undefined' || typeof _notifLog !== 'undefined') {
-        if (typeof _notifLog !== 'undefined') {
-            _notifLog.forEach(n => { n.activa = false; });
-            localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
-        }
     }
 };
 

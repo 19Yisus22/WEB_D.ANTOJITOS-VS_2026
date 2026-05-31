@@ -66,8 +66,8 @@ def obtener_carrito():
 @carrito_bp.route("/agregar_al_carrito", methods=["POST"])
 @login_required
 def agregar_al_carrito():
-    user_id  = session.get("user_id")
-    data     = request.get_json() or {}
+    user_id   = session.get("user_id")
+    data      = request.get_json() or {}
     productos = data.get("productos", [])
     if not productos:
         return jsonify({"error": "Sin productos"}), 400
@@ -78,14 +78,22 @@ def agregar_al_carrito():
             if not prod:
                 return jsonify({"error": "Producto no existe"}), 400
             cantidad = int(p["cantidad"])
-            if int(prod.get("stock", 0)) < cantidad:
+            stock_actual = int(prod.get("stock", 0) or 0)
+            if stock_actual < cantidad:
                 return jsonify({"error": f"Stock insuficiente para {prod.get('nombre')}"}), 400
+
+            # Agregar al carrito
             db.carrito_add(
                 cedula=user_id,
                 id_producto=p["id_producto"],
                 nombre=prod["nombre"],
                 cantidad=cantidad,
                 precio=float(prod["precio"]),
+            )
+            # Descontar stock inmediatamente (reserva)
+            db.producto_update(
+                str(p["id_producto"]),
+                {"stock": max(0, stock_actual - cantidad)}
             )
         return jsonify({"message": "Carrito actualizado"}), 200
     except Exception as e:
@@ -97,6 +105,22 @@ def agregar_al_carrito():
 def carrito_quitar(id_carrito):
     user_id = session.get("user_id")
     try:
+        # Obtener el ítem antes de eliminarlo para restaurar su stock
+        carrito_items = db.carrito_get(user_id)
+        item = next(
+            (i for i in carrito_items if str(i.get("id_carrito")) == str(id_carrito)),
+            None
+        )
+        if item:
+            prod = db.producto_get(item["id_producto"])
+            if prod:
+                cantidad_devolver = int(item.get("cantidad", 1) or 1)
+                stock_actual      = int(prod.get("stock", 0) or 0)
+                db.producto_update(
+                    str(item["id_producto"]),
+                    {"stock": stock_actual + cantidad_devolver}
+                )
+
         db.carrito_delete_item(id_carrito, user_id)
         return jsonify({"ok": True}), 200
     except Exception as e:
@@ -120,10 +144,12 @@ def finalizar_compra():
         if not carrito:
             return jsonify({"message": "Carrito vacío", "ok": False}), 400
 
+        # El stock ya fue descontado al agregar al carrito (reserva inmediata).
+        # Solo verificamos que los productos aún existan.
         for item in carrito:
             prod = db.producto_get(item["id_producto"])
-            if not prod or int(prod.get("stock", 0)) < int(item["cantidad"]):
-                return jsonify({"message": f"Stock insuficiente: {item.get('nombre_producto')}", "ok": False}), 400
+            if not prod:
+                return jsonify({"message": f"Producto no disponible: {item.get('nombre_producto')}", "ok": False}), 400
 
         metodo = usuario.get("metodo_pago", "Efectivo")
         if metodo not in METODOS_PAGO_VALIDOS:

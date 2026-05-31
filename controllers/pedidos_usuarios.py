@@ -120,6 +120,20 @@ def eliminar_pedidos():
     ids  = data.get("ids", [])
     if not ids:
         return jsonify({"success": False, "message": "Sin elementos seleccionados"}), 400
+
+    # Restaurar stock de cada pedido antes de eliminarlo
+    for id_pedido in ids:
+        try:
+            detalles = db.detalle_get(str(id_pedido))
+            for det in detalles:
+                prod = db.producto_get(det["id_producto"])
+                if prod:
+                    stock_actual   = int(prod.get("stock", 0) or 0)
+                    cantidad_devol = int(det.get("cantidad", 0) or 0)
+                    db.producto_update(str(det["id_producto"]), {"stock": stock_actual + cantidad_devol})
+        except Exception:
+            pass  # No bloquear la eliminación si falla la restauración de stock
+
     result = db.pedido_delete_many(ids)
     if not result:
         return jsonify({"success": False, "message": "No se pudo eliminar"}), 404

@@ -76,6 +76,7 @@ body {
 .main-content {
     flex: 1 0 auto;
     width: 100%;
+    padding-top: 0; /* el container hijo ya tiene py-4/py-md-5 */
 }
 
 .progress-container {
@@ -121,154 +122,6 @@ body {
     border-radius: 15px;
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.promo-banner {
-    border-radius: 16px;
-    height: 110px;
-    background: #070707;
-    background-image: linear-gradient(to bottom, #0a0a0a 0%, #0d0d0d 100%);
-    border-top: 4px solid transparent;
-    border-image: linear-gradient(to right, #fb923c, #f97316, #f59e0b, #fb923c) 1;
-    display: flex;
-    align-items: center;
-    position: relative;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(251,146,60,0.15);
-    overflow: hidden;
-    margin: 25px 0;
-}
-
-.promo-banner::before,
-.promo-banner::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    width: 100px;
-    height: 100%;
-    z-index: 2;
-    pointer-events: none;
-}
-
-.promo-banner::before {
-    left: 0;
-    background: linear-gradient(to right, #070707, transparent);
-}
-
-.promo-banner::after {
-    right: 0;
-    background: linear-gradient(to left, #070707, transparent);
-}
-
-.marquee-content {
-    display: flex;
-    white-space: nowrap;
-    transform: translateX(-33.33%);
-    animation: marqueeCatalog 25s linear infinite;
-    align-items: center;
-    will-change: transform;
-}
-
-.promo-banner:hover .marquee-content {
-    animation-play-state: paused;
-    cursor: pointer;
-}
-
-@keyframes marqueeCatalog {
-    0%   { transform: translateX(-33.33%); }
-    100% { transform: translateX(0%); }
-}
-
-.promo-item {
-    display: flex;
-    align-items: center;
-    padding: 0 50px;
-    flex-shrink: 0;
-    --glow-color: #fb923c;
-}
-
-.promo-item:nth-child(5n+1) { --glow-color: #fb923c; }
-.promo-item:nth-child(5n+2) { --glow-color: #f1a7b9; }
-.promo-item:nth-child(5n+3) { --glow-color: #77dd77; }
-.promo-item:nth-child(5n+4) { --glow-color: #5ecfff; }
-.promo-item:nth-child(5n+5) { --glow-color: #ffd700; }
-
-.promo-img-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 18px;
-    flex-shrink: 0;
-}
-
-.promo-img-container::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: -8px;
-    right: -8px;
-    bottom: -8px;
-    background: var(--glow-color);
-    border-radius: 50%;
-    filter: blur(12px);
-    opacity: 0.35;
-    z-index: -1;
-    animation: pulseGlow 4s ease-in-out infinite;
-}
-
-@keyframes pulseGlow {
-    0%, 100% { opacity: 0.35; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.08); }
-}
-
-.promo-img-glow {
-    width: 52px;
-    height: 52px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 3px solid rgba(255, 255, 255, 0.8);
-    background-color: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(2px);
-    transition: var(--transition-smooth);
-    animation: floatingGlow 3s infinite ease-in-out;
-    box-shadow: 0 0 14px var(--glow-color);
-    position: relative;
-    z-index: 1;
-}
-
-@keyframes floatingGlow {
-    0%, 100% {
-        transform: translateY(0) scale(1);
-        filter: brightness(1) saturate(1.2);
-    }
-    50% {
-        transform: translateY(-8px) scale(1.1);
-        filter: brightness(1.1) saturate(1.5);
-    }
-}
-
-.promo-item:hover .promo-img-glow {
-    animation-play-state: paused;
-    transform: scale(1.25) rotate(5deg);
-    filter: brightness(1.2) saturate(2);
-    border-width: 6px;
-    box-shadow: 0 0 35px var(--glow-color);
-}
-
-.promo-item:hover .promo-img-container::before {
-    animation-play-state: paused;
-    opacity: 0.7;
-}
-
-.promo-text {
-    font-weight: 800;
-    font-size: 1.15rem;
-    letter-spacing: 0.8px;
-    color: var(--text-strong-pastel);
-    text-transform: uppercase;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
-    font-family: 'Lucida Handwriting', 'DM Sans', cursive;
-    font-style: italic;
 }
 
 /* Section header titles in catalog */
@@ -512,10 +365,6 @@ body {
 
 @media (max-width: 768px) {
     .img-wrapper { height: 180px; }
-    .promo-banner { height: 85px; }
-    .promo-img-glow { width: 40px; height: 40px; border-width: 2px; }
-    .promo-img-container { margin-right: 12px; }
-    .marquee-content { animation-duration: 12s; }
 
     .btn-top {
         bottom: 85px;

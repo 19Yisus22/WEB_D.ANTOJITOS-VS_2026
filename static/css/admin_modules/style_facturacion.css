@@ -582,10 +582,8 @@ html, body {
 [data-theme="dark"] .invoice-numero-row { background: #141414 !important; }
 [data-theme="dark"] .invoice-preview-footer { background: rgba(255,193,7,0.05) !important; border-color: rgba(255,193,7,0.15) !important; color: #888 !important; }
 
-[data-theme="dark"] html,
 [data-theme="dark"] body {
-    background: #0d0d0d !important;
-    background-image: none !important;
+    background: transparent !important;  /* hereda degradado de html en style_utils.css */
 }
 
 [data-theme="dark"] .main-content,

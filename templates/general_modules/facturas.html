@@ -27,45 +27,53 @@
         <hr class="my-5">
 
         <section>
-            <header class="section-header mb-4 d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-                <div>
-                    <h3 class="fw-bold h4 mb-1"><i class="bi bi-journal-text me-2"></i>Historial de Facturas</h3>
-                    <p class="text-muted mb-0">Controla, filtra, archiva y revisa tus facturas con rapidez.</p>
+            <!-- Cabecera de sección -->
+            <div class="facturas-section-head">
+                <div class="facturas-section-info">
+                    <h3 class="facturas-section-title">
+                        <i class="bi bi-journal-text"></i>
+                        Historial de Facturas
+                    </h3>
+                    <p class="facturas-section-sub">Controla, filtra, archiva y revisa tus facturas con rapidez.</p>
                 </div>
-                <button id="btnToggleArchivadas" class="btn btn-outline-primary rounded-pill px-4 py-2">
-                    <i class="bi bi-archive-fill me-2"></i>Mostrar archivadas
+                <button id="btnToggleArchivadas" class="btn-archive-toggle">
+                    <i class="bi bi-archive-fill"></i>
+                    <span>Mostrar archivadas</span>
                 </button>
-            </header>
+            </div>
 
-            <section class="search-panel shadow-sm border">
-                <div class="row gy-3 gx-3 align-items-center">
-                    <div class="col-12">
-                        <p class="text-muted small mb-2">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Busca por <strong>nombre completo</strong>, <strong>usuario (@)</strong> o <strong>cédula</strong> para ver las facturas asociadas.
-                        </p>
-                    </div>
-                    <div class="col-md-7">
-                        <div class="input-group">
-                            <span class="input-group-text border-end-0">
-                                <i class="bi bi-search text-muted"></i>
-                            </span>
-                            <input type="text" id="buscarFactura" class="form-control border-start-0 shadow-none" placeholder="Juan García, @usuario o 1234567890...">
-                        </div>
-                    </div>
-                    <div class="col-md-5 d-flex gap-2">
-                        <select id="filtroEstadoFactura" class="form-select shadow-none rounded-4">
-                            <option value="todos">Todos los estados</option>
-                            <option value="emitida">Emitida</option>
-                            <option value="pagado">Pagada / Completada</option>
-                            <option value="anulada">Anulada</option>
-                        </select>
-                    </div>
+            <!-- Panel de búsqueda rediseñado -->
+            <div class="facturas-search-card">
+                <div class="facturas-search-hint">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span>Busca por <span class="hint-tag">nombre completo</span>, <span class="hint-tag">usuario @</span> o <span class="hint-tag">cédula</span> para ver las facturas asociadas</span>
                 </div>
-            </section>
+                <div class="facturas-search-row">
+                    <div class="facturas-input-wrap">
+                        <i class="bi bi-search facturas-input-icon"></i>
+                        <input type="text"
+                               id="buscarFactura"
+                               class="facturas-input"
+                               placeholder="Juan García, @usuario o 1234567890...">
+                    </div>
+                    <select id="filtroEstadoFactura" class="facturas-select">
+                        <option value="todos">Todos los estados</option>
+                        <option value="emitida">Emitida</option>
+                        <option value="pagado">Pagada / Completada</option>
+                        <option value="anulada">Anulada</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Estado vacío -->
+            <div id="facturasEmpty" class="facturas-empty-state" style="display:none;">
+                <div class="facturas-empty-icon"><i class="bi bi-folder2-open"></i></div>
+                <h5 class="facturas-empty-title">Sin resultados</h5>
+                <p class="facturas-empty-sub">No se encontraron facturas con ese criterio de búsqueda.</p>
+            </div>
 
             <div id="facturasContainer" class="row g-3 g-md-4"></div>
-            
+
             <nav class="mt-5">
                 <ul class="pagination justify-content-center custom-pagination" id="paginacion"></ul>
             </nav>

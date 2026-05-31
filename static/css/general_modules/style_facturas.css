@@ -78,44 +78,226 @@ body {
     margin: 0 auto 1.5rem;
 }
 
+/* ══════════════════════════════════════
+   CABECERA DE SECCIÓN
+   ══════════════════════════════════════ */
+.facturas-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.facturas-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+}
+
+.facturas-section-title i {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.facturas-section-sub {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin: 0;
+}
+
+.btn-archive-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 20px;
+    border-radius: 50px;
+    border: 1.5px solid rgba(211,84,0,0.25);
+    background: transparent;
+    color: var(--primary);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-archive-toggle:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(211,84,0,0.28);
+    transform: translateY(-1px);
+}
+
+.btn-archive-toggle.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+/* ══════════════════════════════════════
+   PANEL DE BÚSQUEDA
+   ══════════════════════════════════════ */
+.facturas-search-card {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 20px 22px;
+    border: 1px solid var(--border-invoice);
+    box-shadow: 0 4px 20px rgba(15,23,42,0.06);
+    margin-bottom: 28px;
+}
+
+.facturas-search-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 0.82rem;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+.facturas-search-hint i {
+    color: var(--primary);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.hint-tag {
+    display: inline-block;
+    background: rgba(211,84,0,0.08);
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 1px 8px;
+    border-radius: 20px;
+    border: 1px solid rgba(211,84,0,0.15);
+}
+
+.facturas-search-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.facturas-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.facturas-input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aab4bf;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.facturas-input {
+    width: 100%;
+    height: 50px;
+    padding: 0 16px 0 44px;
+    border: 1.5px solid #e4e9ef;
+    border-radius: 14px;
+    font-size: 0.92rem;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--dark);
+    background: #f9fafb;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.facturas-input::placeholder { color: #b0bec5; }
+
+.facturas-input:focus {
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(211,84,0,0.1);
+}
+
+.facturas-select {
+    height: 50px;
+    min-width: 200px;
+    padding: 0 40px 0 16px;
+    border: 1.5px solid #e4e9ef;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--dark);
+    background: #f9fafb;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    flex-shrink: 0;
+}
+
+.facturas-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(211,84,0,0.1);
+}
+
+/* ══════════════════════════════════════
+   ESTADO VACÍO
+   ══════════════════════════════════════ */
+.facturas-empty-state {
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1px dashed #dde3ea;
+    padding: 56px 20px;
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.facturas-empty-icon {
+    font-size: 3rem;
+    color: #cdd5df;
+    margin-bottom: 12px;
+    line-height: 1;
+}
+
+.facturas-empty-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #4a5568;
+    margin-bottom: 6px;
+}
+
+.facturas-empty-sub {
+    font-size: 0.84rem;
+    color: #a0aec0;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .facturas-search-row { flex-direction: column; }
+    .facturas-select     { min-width: 0; width: 100%; }
+    .facturas-section-head { flex-direction: column; align-items: flex-start; }
+}
+
+/* old .search-panel kept for compatibility */
 .search-panel {
     width: 100%;
     background: var(--surface);
-    border-radius: 24px;
-    padding: 1.6rem;
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    border-radius: 20px;
+    padding: 1.4rem;
+    box-shadow: 0 4px 20px rgba(15,23,42,0.06);
     border: 1px solid var(--border-invoice);
-    margin-bottom: 3rem;
-}
-
-.search-panel .input-group {
-    width: 100%;
-}
-
-.search-panel input#buscarFactura {
-    height: 56px;
-    font-size: 0.98rem;
-    border-radius: 0 24px 24px 0 !important;
-}
-
-.search-panel .form-select {
-    min-height: 56px;
-    border-radius: 24px;
-    font-size: 0.95rem;
-}
-
-.search-panel .input-group-text {
-    background-color: var(--surface) !important;
-    border: 1px solid var(--border-invoice) !important;
-    border-right: 0 !important;
-    border-radius: 24px 0 0 24px !important;
-}
-
-.search-panel .input-group-text {
-    background-color: white !important;
-    border-radius: 12px 0 0 12px !important;
-    padding-left: 20px;
-    padding-right: 15px;
+    margin-bottom: 28px;
 }
 
 #facturasContainer {
@@ -376,12 +558,18 @@ body {
 .inv-body {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border-top: 1px solid transparent;
 }
 .inv-body.open {
-    max-height: 600px;
+    max-height: 1400px;
     border-top-color: #f0f0f0;
+}
+
+/* botón PROCEDER AL PAGO dentro de la card con márgenes iguales a inv-actions */
+.inv-btn-pagar {
+    margin: 4px 18px 0 !important;
+    width: calc(100% - 36px) !important;
 }
 
 .inv-products-box {
@@ -412,6 +600,79 @@ body {
     font-size: 1.35rem;
     font-weight: 900;
     color: #d35400;
+}
+
+/* ── Sección datos del cliente ── */
+.inv-client-section {
+    margin: 0 18px 10px;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f6fa 100%);
+    border-radius: 12px;
+    padding: 11px 14px 13px;
+    border: 1px solid #eef1f5;
+}
+
+.inv-client-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: #8a97a6;
+    margin-bottom: 10px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #e8edf2;
+    display: flex;
+    align-items: center;
+}
+
+.inv-client-title i { color: #d35400; }
+
+.inv-client-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+}
+
+.inv-client-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.inv-client-item.inv-client-full {
+    grid-column: 1 / -1;
+}
+
+.inv-client-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #a0aec0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.inv-client-val {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.inv-client-user {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #d35400;
+    margin-left: 4px;
+}
+
+@media (max-width: 520px) {
+    .inv-client-grid { grid-template-columns: 1fr; }
+    .inv-client-item.inv-client-full { grid-column: 1; }
 }
 
 .inv-actions {
@@ -488,19 +749,105 @@ body {
 .payment-bank-panel { display: none; }
 .payment-bank-panel.active { display: block; }
 
-.payment-qr-container { text-align: center; margin-bottom: 16px; }
+/* ── QR único central ── */
+.payment-qr-area { text-align: center; padding: 12px 0 4px; }
 .payment-qr-box {
     width: 200px; height: 200px;
-    margin: 0 auto 10px;
-    border-radius: 16px;
+    margin: 0 auto;
+    border-radius: 18px;
     overflow: hidden;
     border: 2px solid #eee;
     background: #f8f9fa;
     display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    transition: opacity 0.18s;
 }
 .payment-qr-box img { width: 100%; height: 100%; object-fit: contain; }
 .payment-qr-ph { font-size: 3rem; color: #ccc; }
+.payment-qr-container { text-align: center; margin-bottom: 16px; }
 .payment-qr-instructions { font-size: 0.78rem; color: #888; }
+
+/* ── Subtítulo banco activo ── */
+.payment-bank-subtitle {
+    text-align: center;
+    padding: 10px 0 6px;
+    font-size: 0.82rem;
+    color: #666;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+.payment-bank-subtitle strong { color: #d35400; font-weight: 800; }
+
+/* ── Paginación de bancos ── */
+.payment-bank-pager {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 4px 16px 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.payment-bank-pager::-webkit-scrollbar { display: none; }
+.payment-pager-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 3px;
+    cursor: pointer;
+    transition: transform 0.15s;
+    flex-shrink: 0;
+}
+.payment-pager-btn:hover { transform: translateY(-2px); }
+.payment-pager-img {
+    width: 50px; height: 50px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(0,0,0,0.08);
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.payment-pager-img img { width: 100%; height: 100%; object-fit: cover; }
+.payment-pager-btn.active .payment-pager-img {
+    box-shadow: 0 4px 12px rgba(211,84,0,0.22);
+}
+.payment-pager-btn span {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #999;
+    max-width: 60px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.payment-pager-btn.active span { color: #d35400; }
+
+/* Iniciales de banco en selector del modal (reemplaza la miniatura QR) */
+.payment-pager-initials {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    border: 2px solid rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    user-select: none;
+}
+.payment-pager-btn.active .payment-pager-initials {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+}
+
+/* ── Paneles de cuenta por banco ── */
+.payment-account-panel { display: none; }
+.payment-account-panel.active { display: block; }
 
 .payment-account-info {
     background: #f8f9fa;
@@ -540,7 +887,7 @@ body {
     .payment-qr-box { width: 160px; height: 160px; }
 }
 
-[data-theme="dark"] body { background: #0d0d0d !important; }
+[data-theme="dark"] body { background: transparent !important; }
 [data-theme="dark"] .section-header h2,
 [data-theme="dark"] .section-header h3 { color: #e8e8e8 !important; }
 [data-theme="dark"] .section-header p { color: #888 !important; }
@@ -548,6 +895,31 @@ body {
     background: #1a1a1a !important;
     border-color: #2a2a2a !important;
 }
+[data-theme="dark"] .facturas-search-card {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+}
+[data-theme="dark"] .facturas-section-title { color: #e8e8e8 !important; }
+[data-theme="dark"] .facturas-section-sub { color: #666 !important; }
+[data-theme="dark"] .facturas-search-hint { color: #666 !important; }
+[data-theme="dark"] .hint-tag { background: rgba(240,136,62,0.12) !important; color: #f0883e !important; border-color: rgba(240,136,62,0.2) !important; }
+[data-theme="dark"] .facturas-input {
+    background: #141414 !important;
+    border-color: #2a2a2a !important;
+    color: #e8e8e8 !important;
+}
+[data-theme="dark"] .facturas-input:focus { border-color: #f0883e !important; box-shadow: 0 0 0 3px rgba(240,136,62,0.12) !important; }
+[data-theme="dark"] .facturas-select {
+    background-color: #141414 !important;
+    border-color: #2a2a2a !important;
+    color: #e8e8e8 !important;
+}
+[data-theme="dark"] .facturas-empty-state { background: #1a1a1a !important; border-color: #2a2a2a !important; }
+[data-theme="dark"] .facturas-empty-icon { color: #2a2a2a !important; }
+[data-theme="dark"] .facturas-empty-title { color: #aaa !important; }
+[data-theme="dark"] .facturas-empty-sub { color: #555 !important; }
+[data-theme="dark"] .btn-archive-toggle { color: #f0883e !important; border-color: rgba(240,136,62,0.3) !important; }
+[data-theme="dark"] .btn-archive-toggle:hover, [data-theme="dark"] .btn-archive-toggle.active { background: #d35400 !important; border-color: #d35400 !important; color: #fff !important; }
 [data-theme="dark"] #facturasContainer .card,
 [data-theme="dark"] .access-overlay .access-panel {
     background: #1a1a1a !important;
@@ -576,6 +948,11 @@ body {
     background: rgba(255,193,7,0.08) !important;
 }
 
+[data-theme="dark"] .inv-client-section { background: linear-gradient(135deg,#141414,#1c1c1c) !important; border-color: #2a2a2a !important; }
+[data-theme="dark"] .inv-client-title { color: #666 !important; border-color: #2a2a2a !important; }
+[data-theme="dark"] .inv-client-label { color: #555 !important; }
+[data-theme="dark"] .inv-client-val   { color: #d0d0d0 !important; }
+[data-theme="dark"] .inv-client-user  { color: #f0883e !important; }
 [data-theme="dark"] .inv-item { background: #1a1a1a !important; border-color: #2a2a2a !important; }
 [data-theme="dark"] .inv-num { color: #e8e8e8 !important; }
 [data-theme="dark"] .inv-header-center { color: #888 !important; }
@@ -590,6 +967,12 @@ body {
 [data-theme="dark"] .payment-bank-tab span { color: #aaa !important; }
 [data-theme="dark"] .payment-bank-tab-img { background: #141414 !important; }
 [data-theme="dark"] .payment-account-info { background: #141414 !important; border-color: #2a2a2a !important; }
+[data-theme="dark"] .payment-qr-box { background: #1a1a1a !important; border-color: #2a2a2a !important; }
+[data-theme="dark"] .payment-bank-subtitle { color: #aaa !important; }
+[data-theme="dark"] .payment-bank-subtitle strong { color: #f0883e !important; }
+[data-theme="dark"] .payment-pager-img { background: #141414 !important; border-color: #2a2a2a !important; }
+[data-theme="dark"] .payment-pager-btn span { color: #666 !important; }
+[data-theme="dark"] .payment-pager-btn.active span { color: #f0883e !important; }
 [data-theme="dark"] .payment-account-row { border-color: #2a2a2a !important; }
 [data-theme="dark"] .payment-account-val { color: #e8e8e8 !important; }
 [data-theme="dark"] .payment-number-row { background: #1a1a1a !important; border-color: #2a2a2a !important; }
