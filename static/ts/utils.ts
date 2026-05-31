@@ -1,4 +1,13 @@
-type ToastTipo = "info" | "success" | "error" | "warning" | "favorito" | "bienvenida";
+/* ═══════════════════════════════════════════════════════════════
+   utils.ts — D'Antojitos©
+   TypeScript fuente de utils.js. Compila a static/js/compiled/
+   Ejecutar: npm run build  (esbuild, ES2020, no bundle)
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── Tipos ──────────────────────────────────────────────────────
+type Theme       = "light" | "dark";
+type SoundType   = "error" | "default";
+type ToastTipo   = "info" | "success" | "error" | "warning" | "favorito" | "bienvenida";
 
 interface ToastPublicaOpts {
   mensaje:   string;
@@ -10,64 +19,150 @@ interface ToastPublicaOpts {
   sonido?:   boolean;
 }
 
+// Declaraciones de globals de otros módulos
+declare function getLang(): string;
+
+// AudioContext cross-browser
+interface WindowWithAudio extends Window {
+  AudioContext?:       typeof AudioContext;
+  webkitAudioContext?: typeof AudioContext;
+}
+declare const window: WindowWithAudio;
+
+// ── Estado interno ─────────────────────────────────────────────
 const _notifIdSet = new Set<string>();
 
+// ── Helpers de AudioContext ────────────────────────────────────
+function _getAudioContextClass(): typeof AudioContext | undefined {
+  return window.AudioContext ?? window.webkitAudioContext;
+}
+
+function _playNotifSound(type: SoundType = "default"): void {
+  try {
+    const AudioCtxClass = _getAudioContextClass();
+    if (!AudioCtxClass) return;
+
+    const ctx  = new AudioCtxClass();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    if (type === "error") {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(330, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.03, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } else {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    }
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+  } catch {
+    /* AudioContext bloqueado por política del navegador — silencio */
+  }
+}
+
+// ── Toast admin (fondo blanco, derecha) ───────────────────────
 function mostrarAlerta(mensaje: string, esError = false, duracionMs = 4000): void {
   let container = document.getElementById("toastContainer");
   if (!container) {
     container = document.createElement("div");
     container.id = "toastContainer";
     container.style.cssText =
-      "position:fixed;top:25px;right:25px;z-index:10000;display:flex;flex-direction:column;gap:12px;";
+      "position:fixed;top:25px;right:25px;z-index:10000;display:flex;" +
+      "flex-direction:column;gap:10px;pointer-events:none;max-width:420px;" +
+      "width:calc(100vw - 40px);";
     document.body.appendChild(container);
   }
 
-  const colorPrimario = esError ? "#ff4757" : "#2ed573";
-  const sombra        = esError ? "rgba(255,71,87,0.2)" : "rgba(46,213,115,0.2)";
+  _playNotifSound(esError ? "error" : "default");
+
+  const isDark       = document.documentElement.getAttribute("data-theme") === "dark";
+  const color        = esError ? "#ff4757" : "#2ed573";
+  const bgSurface    = isDark ? "#1e1e1e" : "#ffffff";
+  const textMain     = isDark ? "#e8e8e8" : "#1a1a1a";
+  const textMuted    = isDark ? "#888"    : "#747d8c";
+  const shadow       = isDark
+    ? "0 12px 36px rgba(0,0,0,0.5)"
+    : `0 10px 30px ${esError ? "rgba(255,71,87,0.18)" : "rgba(46,213,115,0.18)"}`;
 
   const toast = document.createElement("div");
-  toast.className = "custom-toast-alert";
-  toast.style.cssText = `
-    background:#fff;color:#2f3542;padding:16px 24px;border-radius:12px;
-    box-shadow:0 10px 30px ${sombra};display:flex;justify-content:space-between;
-    align-items:center;min-width:350px;max-width:450px;border-left:6px solid ${colorPrimario};
-    transition:all 0.5s cubic-bezier(0.175,0.885,0.32,1.275);transform:translateX(100%);opacity:0;`;
+  toast.style.cssText = [
+    `background:${bgSurface}`,
+    `color:${textMain}`,
+    "padding:14px 18px",
+    "border-radius:16px",
+    `box-shadow:${shadow}`,
+    "display:flex",
+    "align-items:center",
+    "gap:14px",
+    `border-left:5px solid ${color}`,
+    "pointer-events:auto",
+    "transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.35s ease",
+    "transform:translateX(110%)",
+    "opacity:0",
+    "overflow:hidden",
+    "position:relative",
+  ].join(";");
 
   toast.innerHTML = `
-    <div class="d-flex align-items-center">
-      <div style="background:${colorPrimario};width:35px;height:35px;border-radius:50%;
-                  display:flex;align-items:center;justify-content:center;margin-right:15px;">
-        <i class="bi ${esError ? "bi-x-circle-fill" : "bi-check-circle-fill"} text-white fs-5"></i>
-      </div>
-      <div>
-        <strong style="display:block;font-size:0.8rem;text-transform:uppercase;color:#747d8c;">
-          Notificación de Sistema
-        </strong>
-        <span style="font-size:0.95rem;font-weight:600;">${mensaje}</span>
-      </div>
+    <div style="width:38px;height:38px;min-width:38px;border-radius:50%;background:${color};
+                display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                box-shadow:0 0 0 5px ${color}22;">
+      <i class="bi ${esError ? "bi-x-lg" : "bi-check-lg"}"
+         style="color:#fff;font-size:1rem;font-weight:900;line-height:1;
+                display:flex;align-items:center;justify-content:center;width:100%;height:100%;"></i>
     </div>
-    <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer;font-size:1rem;color:#a4b0be;"></i>`;
+    <div style="flex:1;min-width:0;">
+      <strong style="display:block;font-size:0.7rem;text-transform:uppercase;
+                     letter-spacing:0.6px;color:${textMuted};margin-bottom:2px;">
+        ${esError ? "Error" : "Sistema"}
+      </strong>
+      <span style="font-size:0.9rem;font-weight:600;line-height:1.3;word-break:break-word;">
+        ${mensaje}
+      </span>
+    </div>
+    <button class="btn-close-toast"
+            style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;
+                   color:${textMuted};font-size:0.8rem;flex-shrink:0;line-height:1;
+                   transition:background 0.15s, color 0.15s;"
+            onmouseenter="this.style.background='${color}22';this.style.color='${color}'"
+            onmouseleave="this.style.background='none';this.style.color='${textMuted}'">
+      <i class="bi bi-x-lg"></i>
+    </button>`;
 
   container.appendChild(toast);
-  requestAnimationFrame(() => {
+
+  // Doble rAF garantiza que el navegador aplique el estado inicial antes de animar
+  requestAnimationFrame(() => requestAnimationFrame(() => {
     toast.style.transform = "translateX(0)";
     toast.style.opacity   = "1";
-  });
+  }));
 
-  const eliminar = () => {
-    toast.style.transform = "translateX(120%)";
+  const eliminar = (): void => {
+    toast.style.transform = "translateX(110%)";
     toast.style.opacity   = "0";
-    setTimeout(() => toast.remove(), 500);
+    setTimeout(() => toast.remove(), 400);
   };
   (toast.querySelector(".btn-close-toast") as HTMLElement).onclick = eliminar;
   setTimeout(eliminar, duracionMs);
 }
 
+// ── Toast público (fondo oscuro, izquierda, con imagen) ────────
 function mostrarAlertaPublica({
   mensaje,
   titulo    = "",
   imagen    = "/static/uploads/logo.png",
-  tipo      = "info" as ToastTipo,
+  tipo      = "info",
   duracion  = 4000,
   idUnico   = null,
   sonido    = true,
@@ -82,68 +177,105 @@ function mostrarAlertaPublica({
   if (!cont) {
     cont = document.createElement("div");
     cont.id = "toastContainer";
-    cont.style.cssText =
-      "position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;";
     document.body.appendChild(cont);
   }
+  cont.style.cssText =
+    "position:fixed;top:72px;left:16px;z-index:10000;" +
+    "display:flex;flex-direction:column;gap:8px;" +
+    "max-width:340px;width:calc(100vw - 32px);pointer-events:none;";
 
   if (sonido) _playNotifSound(tipo === "error" || tipo === "warning" ? "error" : "default");
 
-  const esError       = tipo === "error" || tipo === "warning";
-  const colorPrimario = esError ? "#ff4757" : "#ff9800";
-  const iconClass     = esError
-    ? "bi-exclamation-triangle-fill"
-    : tipo === "favorito"
-    ? "bi-heart-fill"
-    : tipo === "bienvenida"
-    ? "bi-emoji-smile-fill"
-    : "bi-stars";
-  const tituloFinal = titulo || (esError ? "Sistema" : "D'Antojitos");
+  const esError     = tipo === "error" || tipo === "warning";
+  const isDark      = document.documentElement.getAttribute("data-theme") === "dark";
+  const accentColor = esError ? "#e53935"
+    : tipo === "favorito"    ? "#e91e8c"
+    : tipo === "bienvenida"  ? "#27ae60"
+    : tipo === "success"     ? "#27ae60"
+    : "#d35400";
+  const iconClass   = esError              ? "bi-exclamation-triangle-fill"
+    : tipo === "favorito"    ? "bi-heart-fill"
+    : tipo === "bienvenida"  ? "bi-emoji-smile-fill"
+    : tipo === "success"     ? "bi-check-circle-fill"
+    : "bi-megaphone-fill";
+  const tituloFinal = titulo || (esError ? "Aviso" : "D'Antojitos");
+  const bgToast     = isDark ? "rgba(22,22,26,0.97)" : "rgba(255,255,255,0.97)";
+  const textMain    = isDark ? "#f0f0f0" : "#1a1a1a";
+  const textSub     = isDark ? "#999"    : "#555";
+  const borderImg   = isDark ? "#333"    : "#eee";
 
   const toast = document.createElement("div");
-  toast.style.cssText = `
-    background:#121212;color:#fff;padding:14px 18px;border-radius:12px;
-    box-shadow:0 8px 25px rgba(0,0,0,0.5);display:flex;align-items:center;
-    min-width:320px;max-width:400px;border-left:5px solid ${colorPrimario};
-    transition:all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);transform:translateX(120%);opacity:0;`;
+  toast.style.cssText = [
+    `background:${bgToast}`,
+    "padding:11px 14px",
+    "border-radius:14px",
+    "box-shadow:0 6px 24px rgba(0,0,0,0.13),0 1px 6px rgba(0,0,0,0.07)",
+    "display:flex",
+    "align-items:center",
+    "gap:11px",
+    `border-left:3px solid ${accentColor}`,
+    "backdrop-filter:blur(20px)",
+    "-webkit-backdrop-filter:blur(20px)",
+    "transition:transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275),opacity 0.28s ease",
+    "transform:translateX(-110%)",
+    "opacity:0",
+    "pointer-events:auto",
+    "cursor:default",
+    "min-width:0",
+    "width:100%",
+    "box-sizing:border-box",
+  ].join(";");
 
   toast.innerHTML = `
-    <div class="d-flex align-items-center w-100">
-      <div style="position:relative;flex-shrink:0;">
-        <img src="${imagen}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;"
-             onerror="this.src='/static/uploads/logo.png'">
-        <div style="position:absolute;bottom:-4px;right:-4px;background:${colorPrimario};
-                    width:20px;height:20px;border-radius:50%;display:flex;align-items:center;
-                    justify-content:center;border:2px solid #121212;">
-          <i class="bi ${iconClass} text-white" style="font-size:0.65rem;"></i>
-        </div>
+    <div style="position:relative;flex-shrink:0;">
+      <img src="${imagen}"
+           style="width:40px;height:40px;object-fit:cover;border-radius:9px;
+                  border:1.5px solid ${borderImg};display:block;"
+           onerror="this.src='/static/uploads/logo.png'">
+      <div style="position:absolute;bottom:-3px;right:-3px;background:${accentColor};
+                  width:16px;height:16px;border-radius:50%;display:flex;align-items:center;
+                  justify-content:center;border:2px solid ${isDark ? "#16161a" : "#fff"};">
+        <i class="bi ${iconClass}" style="color:#fff;font-size:0.5rem;line-height:1;"></i>
       </div>
-      <div class="ms-3 flex-grow-1">
-        <strong style="display:block;font-size:0.7rem;text-transform:uppercase;
-                       color:${colorPrimario};letter-spacing:0.8px;">${tituloFinal}</strong>
-        <div style="font-size:0.85rem;color:#f0f0f0;">${mensaje}</div>
+    </div>
+    <div style="flex:1;min-width:0;overflow:hidden;">
+      <strong style="display:block;font-size:0.65rem;text-transform:uppercase;
+                     color:${accentColor};letter-spacing:0.7px;font-weight:800;
+                     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        ${tituloFinal}
+      </strong>
+      <div style="font-size:0.8rem;font-weight:400;color:${textSub};line-height:1.3;
+                  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        ${mensaje}
       </div>
-      <button class="btn-close-toast ms-2"
-              style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;">
-        <i class="bi bi-x-lg"></i>
-      </button>
-    </div>`;
+    </div>
+    <button class="btn-close-toast"
+            style="background:none;border:none;color:${textSub};cursor:pointer;
+                   padding:2px 4px;font-size:0.75rem;flex-shrink:0;line-height:1;
+                   opacity:0.6;transition:opacity 0.15s;">
+      <i class="bi bi-x-lg"></i>
+    </button>`;
 
   cont.appendChild(toast);
-  setTimeout(() => {
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
     toast.style.transform = "translateX(0)";
     toast.style.opacity   = "1";
-  }, 50);
+  }));
 
-  const remove = () => {
-    toast.style.transform = "translateX(120%)";
+  const remove = (): void => {
+    toast.style.transform = "translateX(-110%)";
     toast.style.opacity   = "0";
-    setTimeout(() => toast.remove(), 400);
+    setTimeout(() => toast.remove(), 380);
   };
-  (toast.querySelector(".btn-close-toast") as HTMLElement).onclick = remove;
+  const closeBtn = toast.querySelector<HTMLElement>(".btn-close-toast")!;
+  closeBtn.onmouseenter = () => { closeBtn.style.opacity = "1"; };
+  closeBtn.onmouseleave = () => { closeBtn.style.opacity = "0.6"; };
+  closeBtn.onclick = remove;
   setTimeout(remove, duracion);
 }
 
+// ── Modal de confirmación ──────────────────────────────────────
 function mostrarConfirmacionApp(
   titulo: string,
   mensaje: string,
@@ -151,53 +283,92 @@ function mostrarConfirmacionApp(
 ): void {
   document.getElementById("appModalConfirm")?.remove();
 
+  const isDark   = document.documentElement.getAttribute("data-theme") === "dark";
+  const bgCard   = isDark ? "#1a1a1a" : "#ffffff";
+  const textH    = isDark ? "#e8e8e8" : "#1a1a1a";
+  const textBody = isDark ? "#aaa"    : "#555";
+  const borderC  = isDark ? "#2a2a2a" : "#f1f2f6";
+
   const overlay = document.createElement("div");
   overlay.id = "appModalConfirm";
-  overlay.style.cssText = `
-    position:fixed;top:0;left:0;width:100%;height:100%;
-    background:rgba(0,0,0,0.8);display:flex;align-items:center;
-    justify-content:center;z-index:20000;backdrop-filter:blur(5px);`;
+  overlay.style.cssText =
+    "position:fixed;top:0;left:0;width:100%;height:100%;" +
+    "background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;" +
+    "z-index:20000;backdrop-filter:blur(6px);transition:opacity 0.3s ease;";
 
   const modal = document.createElement("div");
-  modal.style.cssText = `
-    background:#fff;width:95%;max-width:420px;padding:35px;
-    border-radius:25px;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,0.4);
-    transform:scale(0.7);transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);`;
+  modal.style.cssText = [
+    `background:${bgCard}`,
+    "width:95%",
+    "max-width:400px",
+    "padding:36px 32px",
+    "border-radius:24px",
+    "text-align:center",
+    "box-shadow:0 28px 60px rgba(0,0,0,0.35)",
+    "transform:scale(0.8) translateY(20px)",
+    "transition:transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275),opacity 0.3s",
+    "opacity:0",
+  ].join(";");
 
   modal.innerHTML = `
-    <div style="color:#ff4757;font-size:4rem;margin-bottom:20px;">
-      <i class="bi bi-exclamation-triangle-fill"></i>
+    <div style="width:68px;height:68px;border-radius:50%;
+                background:linear-gradient(135deg,#ff4757,#c0392b);
+                display:flex;align-items:center;justify-content:center;
+                margin:0 auto 20px;
+                box-shadow:0 0 0 8px rgba(255,71,87,0.12),0 8px 24px rgba(255,71,87,0.3);">
+      <i class="bi bi-exclamation-lg"
+         style="color:#fff;font-size:2rem;font-weight:900;line-height:1;"></i>
     </div>
-    <h2 style="margin-bottom:12px;font-weight:800;color:#1e272e;">${titulo}</h2>
-    <p style="color:#485460;margin-bottom:30px;">${mensaje}</p>
-    <div style="display:flex;gap:12px;justify-content:center;">
-      <button id="btnCancelModal" class="btn btn-light"
-              style="padding:12px 30px;border-radius:15px;font-weight:700;border:2px solid #f1f2f6;">
-        CANCELAR
+    <h3 style="margin-bottom:10px;font-weight:800;color:${textH};
+               font-size:1.25rem;letter-spacing:-0.3px;">${titulo}</h3>
+    <p style="color:${textBody};margin-bottom:28px;line-height:1.6;font-size:0.95rem;">
+      ${mensaje}
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button id="btnCancelModal"
+              style="flex:1;padding:12px 20px;border-radius:14px;font-weight:700;
+                     font-size:0.9rem;background:transparent;border:2px solid ${borderC};
+                     color:${textBody};cursor:pointer;transition:all 0.2s;">
+        Cancelar
       </button>
-      <button id="btnConfirmModal" class="btn btn-danger"
-              style="padding:12px 30px;border-radius:15px;font-weight:700;
-                     background:#ff4757;border:none;">
-        CONFIRMAR
+      <button id="btnConfirmModal"
+              style="flex:1;padding:12px 20px;border-radius:14px;font-weight:700;
+                     font-size:0.9rem;background:linear-gradient(135deg,#ff4757,#c0392b);
+                     border:none;color:#fff;cursor:pointer;
+                     box-shadow:0 6px 18px rgba(255,71,87,0.3);transition:all 0.2s;">
+        Confirmar
       </button>
     </div>`;
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-  setTimeout(() => { modal.style.transform = "scale(1)"; }, 10);
 
-  const cerrar = () => {
-    modal.style.transform = "scale(0.7)";
-    overlay.style.opacity  = "0";
-    setTimeout(() => overlay.remove(), 300);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    modal.style.transform = "scale(1) translateY(0)";
+    modal.style.opacity   = "1";
+  }));
+
+  const btnCancel  = modal.querySelector<HTMLButtonElement>("#btnCancelModal")!;
+  const btnConfirm = modal.querySelector<HTMLButtonElement>("#btnConfirmModal")!;
+
+  btnCancel.onmouseenter  = () => { btnCancel.style.background  = isDark ? "#252525" : "#f1f2f6"; };
+  btnCancel.onmouseleave  = () => { btnCancel.style.background  = "transparent"; };
+  btnConfirm.onmouseenter = () => { btnConfirm.style.filter = "brightness(1.1)"; btnConfirm.style.transform = "translateY(-1px)"; };
+  btnConfirm.onmouseleave = () => { btnConfirm.style.filter = ""; btnConfirm.style.transform = ""; };
+
+  const cerrar = (): void => {
+    modal.style.transform = "scale(0.85) translateY(10px)";
+    modal.style.opacity   = "0";
+    overlay.style.opacity = "0";
+    setTimeout(() => overlay.remove(), 320);
   };
-  (document.getElementById("btnCancelModal")  as HTMLButtonElement).onclick = cerrar;
-  (document.getElementById("btnConfirmModal") as HTMLButtonElement).onclick = () => {
-    onConfirm();
-    cerrar();
-  };
+
+  btnCancel.onclick  = cerrar;
+  btnConfirm.onclick = () => { onConfirm(); cerrar(); };
+  overlay.onclick    = (e: MouseEvent) => { if (e.target === overlay) cerrar(); };
 }
 
+// ── Scroll to top ──────────────────────────────────────────────
 function initScrollToTop(): void {
   const btn = document.getElementById("scrollToTopBtn");
   if (!btn) return;
@@ -207,15 +378,21 @@ function initScrollToTop(): void {
   btn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 }
 
+// ── Barra de progreso de scroll ────────────────────────────────
 function initScrollProgressBar(): void {
   const bar = document.getElementById("scrollProgressBar");
   if (!bar) return;
-  window.addEventListener("scroll", () => {
-    const h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    bar.style.width = h > 0 ? (document.documentElement.scrollTop / h * 100) + "%" : "0%";
-  }, { passive: true });
+  const update = (): void => {
+    const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+    const height    = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct       = height > 0 ? Math.min((winScroll / height) * 100, 100) : 0;
+    bar.style.width = `${pct}%`;
+  };
+  window.addEventListener("scroll", update, { passive: true });
+  update();
 }
 
+// ── Permisos de notificación del navegador ─────────────────────
 function solicitarPermisosNotificacion(): void {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") return;
@@ -231,63 +408,105 @@ function lanzarNotificacionNativa(
   icono = "/static/uploads/logo.png"
 ): void {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
-  try { new Notification(titulo, { body: cuerpo, icon: icono }); } catch {}
-}
-
-function setTheme(theme: "light" | "dark"): void {
-  document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("dantojitos_theme", theme);
-  const btn  = document.getElementById("themeToggleBtn");
-  if (!btn) return;
-  const icon = btn.querySelector("i");
-  if (icon) icon.className = theme === "dark" ? "bi bi-sun-fill me-2" : "bi bi-moon-fill me-2";
-  const label = btn.querySelector<HTMLElement>('[data-i18n="nav.theme"]');
-  if (label) {
-    const lang = localStorage.getItem("dantojitos_lang") || "es";
-    label.textContent =
-      theme === "dark"
-        ? lang === "en" ? "Light Mode" : "Modo Claro"
-        : lang === "en" ? "Dark Mode"  : "Modo Oscuro";
+  try {
+    new Notification(titulo, { body: cuerpo, icon: icono });
+  } catch {
+    console.warn("Notificación nativa no disponible");
   }
 }
 
+// ── Tema claro / oscuro ───────────────────────────────────────
+function setTheme(theme: Theme): void {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("dantojitos_theme", theme);
+
+  const lang = (typeof getLang === "function") ? getLang() : "es";
+
+  // Botón principal (navbar desktop)
+  const btn = document.getElementById("themeToggleBtn");
+  if (btn) {
+    const icon = btn.querySelector<HTMLElement>("i");
+    if (icon) icon.className = theme === "dark" ? "bi bi-sun-fill me-2" : "bi bi-moon-fill me-2";
+    const label = btn.querySelector<HTMLElement>('[data-i18n="nav.theme"]');
+    if (label) {
+      label.textContent = theme === "dark"
+        ? (lang === "en" ? "Light Mode" : "Modo Claro")
+        : (lang === "en" ? "Dark Mode"  : "Modo Oscuro");
+    }
+  }
+
+  // Iconos en navbar compacto / móvil
+  const navIcon  = document.getElementById("navThemeIcon");
+  const navLabel = document.getElementById("navThemeLabel");
+  if (navIcon)  navIcon.className    = theme === "dark" ? "bi bi-sun-fill" : "bi bi-moon-fill";
+  if (navLabel) navLabel.textContent = theme === "dark"
+    ? (lang === "en" ? "Light" : "Claro")
+    : (lang === "en" ? "Dark"  : "Oscuro");
+}
+
 function toggleTheme(): void {
-  const current = (document.documentElement.getAttribute("data-theme") || "light") as "light" | "dark";
+  const current = (document.documentElement.getAttribute("data-theme") ?? "light") as Theme;
   setTheme(current === "dark" ? "light" : "dark");
 }
 
-function _playNotifSound(type: "error" | "default"): void {
-  try {
-    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx  = new AudioCtx();
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    if (type === "error") {
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(330, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.3);
-      gain.gain.setValueAtTime(0.03, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-      osc.start(); osc.stop(ctx.currentTime + 0.4);
-    } else {
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.05, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-      osc.start(); osc.stop(ctx.currentTime + 0.2);
-    }
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-  } catch {}
+// ── Velocidad del ticker (cinta publicitaria) ──────────────────
+const _TICKER_SPEED_KEY = "_dantojitos_ticker_speed";
+
+function getTickerSpeed(): number {
+  return parseFloat(localStorage.getItem(_TICKER_SPEED_KEY) ?? "1");
 }
 
-declare function getLang(): string;
+function saveTickerSpeed(v: number): void {
+  localStorage.setItem(_TICKER_SPEED_KEY, String(v));
+}
 
+function setTickerSpeed(speed: number): void {
+  saveTickerSpeed(speed);
+
+  const selectors: Array<[string, number]> = [
+    [".promo-track",   25],
+    [".ci-track",      25],
+    [".payment-track", 25],
+  ];
+  selectors.forEach(([sel, base]) => {
+    document.querySelectorAll<HTMLElement>(sel).forEach(track => {
+      const b = parseFloat(track.dataset.baseDuration ?? String(base));
+      track.style.animationDuration = `${(b / speed).toFixed(1)}s`;
+    });
+  });
+
+  document.querySelectorAll<HTMLElement>(".ticker-speed-btn").forEach(btn => {
+    btn.classList.toggle("active", parseFloat(btn.dataset.speed ?? "0") === speed);
+  });
+}
+
+// ── Animación de badge ─────────────────────────────────────────
+function _animateBadge(badgeEl: HTMLElement | null): void {
+  if (!badgeEl) return;
+  badgeEl.style.transition = "none";
+  badgeEl.style.transform  = "scale(1.7)";
+  badgeEl.style.background = "#e74c3c";
+  setTimeout(() => {
+    badgeEl.style.transition = "transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275)";
+    badgeEl.style.transform  = "scale(1)";
+  }, 80);
+}
+
+// ── DOMContentLoaded ───────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   initScrollToTop();
   initScrollProgressBar();
   solicitarPermisosNotificacion();
-  setTheme((localStorage.getItem("dantojitos_theme") as "light" | "dark") || "light");
+  setTheme((localStorage.getItem("dantojitos_theme") as Theme | null) ?? "light");
+
+  // Restaurar velocidad guardada en todas las cintas
+  const savedSpeed = getTickerSpeed();
+  if (savedSpeed !== 1) {
+    [".payment-track", ".promo-track", ".ci-track"].forEach(sel => {
+      document.querySelectorAll<HTMLElement>(sel).forEach(track => {
+        const base = parseFloat(track.dataset.baseDuration ?? "25");
+        track.style.animationDuration = `${(base / savedSpeed).toFixed(1)}s`;
+      });
+    });
+  }
 });

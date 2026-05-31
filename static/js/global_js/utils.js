@@ -1,10 +1,4 @@
-﻿
-//  D'Antojitos — Utilidades globales
-//  Toast admin (blanco), toast público (oscuro), confirm modal,
-//  scroll-to-top, barra de progreso, notificaciones navegador.
-
-// ——— TOAST ADMIN (fondo blanco, verde/rojo) — modelo: pedidos.js ———
-function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
+﻿function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement('div');
@@ -589,11 +583,122 @@ async function eliminarNotif(id) {
 }
 
 /* ══════════════════════════════════════════════════════
+   BANDEJA DE NOTIFICACIONES — CLIENTE (localStorage)
+   ══════════════════════════════════════════════════════ */
+const _CLIENT_NOTIF_KEY = '_dantojitos_client_notifs';
+const _CLIENT_NOTIF_MAX = 30;
+
+function _getClientNotifs() {
+    try { return JSON.parse(localStorage.getItem(_CLIENT_NOTIF_KEY) || '[]'); } catch { return []; }
+}
+function _saveClientNotifs(arr) {
+    localStorage.setItem(_CLIENT_NOTIF_KEY, JSON.stringify(arr.slice(0, _CLIENT_NOTIF_MAX)));
+}
+function _pushClientNotif(notif) {
+    const arr = _getClientNotifs();
+    arr.unshift({ ...notif, ts: Date.now() });
+    _saveClientNotifs(arr);
+    _renderClientNotifs();
+}
+function _renderClientNotifs() {
+    const list    = document.getElementById('clientNotifList');
+    const empty   = document.getElementById('clientNotifEmpty');
+    const count   = document.getElementById('clientNotifCount');
+    const badge   = document.getElementById('navClientBellBadge');
+    if (!list) return;
+    const notifs  = _getClientNotifs();
+    list.innerHTML = '';
+    if (notifs.length === 0) {
+        if (empty)  empty.style.display  = 'flex';
+        if (count)  count.style.display  = 'none';
+        if (badge)  badge.style.display  = 'none';
+        return;
+    }
+    if (empty)  empty.style.display  = 'none';
+    if (count)  { count.textContent  = notifs.length > 9 ? '9+' : notifs.length; count.style.display = 'inline-flex'; }
+    if (badge)  { badge.textContent  = notifs.length > 9 ? '9+' : notifs.length; badge.style.display = 'flex'; }
+    notifs.forEach((n, i) => {
+        const agotado = n.tipo === 'agotado';
+        const icon  = agotado ? 'bi-x-circle-fill' : 'bi-check-circle-fill';
+        const color = agotado ? '#dc2626' : '#15803d';
+        const bg    = agotado ? '#fee2e2' : '#dcfce7';
+        const li = document.createElement('li');
+        li.className = 'notif-item';
+        li.innerHTML = `
+            <div class="notif-item-img" style="background:${bg};">
+                ${n.imagen ? `<img src="${n.imagen}" onerror="this.outerHTML='<i class=\\"bi ${icon}\\" style=\\"color:${color};font-size:1rem;\\"></i>'">` : `<i class="bi ${icon}" style="color:${color};font-size:1rem;"></i>`}
+            </div>
+            <div class="notif-item-info" style="flex:1;min-width:0;">
+                <strong style="font-size:0.78rem;">${n.titulo}</strong>
+                <small style="display:block;margin-top:2px;color:#888;">${n.mensaje}</small>
+            </div>
+            <div class="notif-item-actions">
+                <button class="btn-notif-visto" onclick="_clientNotifRemove(${i})" title="Quitar">
+                    <i class="bi bi-x-lg" style="font-size:0.7rem;"></i>
+                </button>
+            </div>`;
+        list.appendChild(li);
+    });
+}
+window._clientNotifRemove = function(idx) {
+    const arr = _getClientNotifs();
+    arr.splice(idx, 1);
+    _saveClientNotifs(arr);
+    _renderClientNotifs();
+};
+window._clientNotifClearAll = function() {
+    _saveClientNotifs([]);
+    _renderClientNotifs();
+};
+
+let _clientPanelOpen = false;
+function toggleClientNotifPanel() {
+    _clientPanelOpen = _togglePanel('clientNotifPanel','clientNotifBody','clientNotifChevron','navClientBellBtn', _clientPanelOpen, _renderClientNotifs);
+}
+
+/* ══════════════════════════════════════════════════════
    MONITOR GLOBAL DE STOCK — visible para TODOS los roles
    Detecta productos agotados y disponibles en tiempo real
    ══════════════════════════════════════════════════════ */
+
+/* Empuja una notificación de stock al panel del sistem (admin/vendedor) */
+function _pushStockToSistemPanel(p, tipo) {
+    const list = document.getElementById('sistemList');
+    if (!list) return;
+    const empty = document.getElementById('sistemEmpty');
+    if (empty) empty.style.display = 'none';
+    const agotado = tipo === 'agotado';
+    const icon  = agotado ? 'bi-x-circle-fill' : 'bi-check-circle-fill';
+    const color = agotado ? '#dc2626' : '#15803d';
+    const bg    = agotado ? '#fee2e2' : '#dcfce7';
+    const titulo = agotado ? '¡Agotado! ' + p.nombre : '¡Disponible! ' + p.nombre;
+    const desc   = agotado ? 'Sin stock disponible' : (p.stock + ' unidades disponibles');
+    const li = document.createElement('li');
+    li.className = 'notif-item';
+    li.dataset.pedidoId = `stock-${p.id_producto}`;
+    li.innerHTML = `
+        <div class="notif-item-img" style="background:${bg};">
+            ${p.imagen_url ? `<img src="${p.imagen_url}" onerror="this.outerHTML='<i class=\\"bi ${icon}\\" style=\\"color:${color};font-size:1rem;\\"></i>'" style="width:100%;height:100%;object-fit:cover;">` : `<i class="bi ${icon}" style="color:${color};font-size:1rem;"></i>`}
+        </div>
+        <div class="notif-item-info" style="flex:1;min-width:0;">
+            <strong style="font-size:0.78rem;">${titulo}</strong>
+            <small style="display:block;margin-top:2px;">
+                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};vertical-align:middle;margin-right:4px;"></span>
+                ${desc}
+            </small>
+        </div>
+        <div class="notif-item-actions">
+            <button class="btn-notif-visto" onclick="_marcarVistoPedido(this,'stock-${p.id_producto}')" title="Marcar como visto">
+                <i class="bi bi-check2"></i>
+            </button>
+        </div>`;
+    list.insertBefore(li, list.firstChild);
+    _updateSistemBadge();
+    _animateBadge(document.getElementById('navBellBadge'));
+}
+
 (function _initStockMonitor() {
-    let _stockSnapshot = {};  /* { id_producto: stock } */
+    let _stockSnapshot = {};
     let _firstRun      = true;
 
     async function _checkStock() {
@@ -615,7 +720,6 @@ async function eliminarNotif(id) {
                 if (prev === curr) return;
 
                 if (prev > 0 && curr <= 0) {
-                    /* Producto recién agotado */
                     mostrarAlertaPublica({
                         titulo:  '¡Producto Agotado!',
                         mensaje: `${p.nombre} ya no tiene stock disponible`,
@@ -625,8 +729,12 @@ async function eliminarNotif(id) {
                         idUnico:  `agotado-${p.id_producto}-${Date.now()}`,
                         sonido:  true,
                     });
+                    /* Bandeja cliente */
+                    _pushClientNotif({ tipo:'agotado', titulo:'¡Agotado!', mensaje: p.nombre + ' no tiene stock', imagen: p.imagen_url });
+                    /* Panel sistem admin/vendedor */
+                    _pushStockToSistemPanel({ ...p, stock: curr }, 'agotado');
+
                 } else if (prev <= 0 && curr > 0) {
-                    /* Producto disponible de nuevo */
                     mostrarAlertaPublica({
                         titulo:  '¡Disponible!',
                         mensaje: `${p.nombre} vuelve a tener stock (${curr} unidades)`,
@@ -636,6 +744,10 @@ async function eliminarNotif(id) {
                         idUnico:  `disponible-${p.id_producto}-${Date.now()}`,
                         sonido:  true,
                     });
+                    /* Bandeja cliente */
+                    _pushClientNotif({ tipo:'disponible', titulo:'¡Disponible!', mensaje: p.nombre + ' · ' + curr + ' unidades', imagen: p.imagen_url });
+                    /* Panel sistem admin/vendedor */
+                    _pushStockToSistemPanel({ ...p, stock: curr }, 'disponible');
                 }
 
                 _stockSnapshot[p.id_producto] = curr;
@@ -643,7 +755,6 @@ async function eliminarNotif(id) {
         } catch { /* silente */ }
     }
 
-    /* Arrancar después de que la página cargue, luego cada 8 segundos */
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(_checkStock, 3000);
         setInterval(_checkStock, 8000);
@@ -683,9 +794,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* Polling: cada 12 s para admin/vendedor que tienen la campana */
     if (document.getElementById('navBellBadge')) {
-        /* Primera carga diferida 2s (deja cargar el DOM completamente) */
         setTimeout(_pollSistemNotif, 2000);
         setInterval(_pollSistemNotif, 12000);
+    }
+
+    /* Cargar bandeja del cliente desde localStorage al iniciar */
+    if (document.getElementById('clientNotifList')) {
+        _renderClientNotifs();
     }
 });
 
@@ -710,14 +825,8 @@ window.setTickerSpeed  = function(speed) {
         track.style.animationDuration = (base / speed).toFixed(1) + 's';
     });
 
-    /* .ci-track — cinta del inicio */
-    document.querySelectorAll('.ci-track').forEach(track => {
-        const base = parseFloat(track.dataset.baseDuration || '18');
-        track.style.animationDuration = (base / speed).toFixed(1) + 's';
-    });
-
-    /* .payment-track — marquee de bancos digitales del footer */
-    document.querySelectorAll('.payment-track').forEach(track => {
+    /* .ci-track (inicio) y .payment-track (footer) — misma lógica de duración */
+    document.querySelectorAll('.ci-track, .payment-track').forEach(track => {
         const base = parseFloat(track.dataset.baseDuration || '25');
         track.style.animationDuration = (base / speed).toFixed(1) + 's';
     });
@@ -728,11 +837,11 @@ window.setTickerSpeed  = function(speed) {
     });
 };
 
-/* Al cargar cualquier página, aplicar velocidad guardada al footer y cintas */
+/* Al cargar, aplica velocidad guardada a todas las cintas */
 document.addEventListener('DOMContentLoaded', () => {
     const savedSpeed = window.getTickerSpeed();
     if (savedSpeed !== 1) {
-        document.querySelectorAll('.payment-track, .promo-track').forEach(track => {
+        document.querySelectorAll('.payment-track, .promo-track, .ci-track').forEach(track => {
             const base = parseFloat(track.dataset.baseDuration || '25');
             track.style.animationDuration = (base / savedSpeed).toFixed(1) + 's';
         });
@@ -918,4 +1027,3 @@ window._publicidadMarcarTodo = async function() {
     const navPub = document.getElementById('navPubBadge');
     if (navPub) navPub.style.display = 'none';
 };
-

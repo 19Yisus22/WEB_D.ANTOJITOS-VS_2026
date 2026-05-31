@@ -1,6 +1,4 @@
 ﻿
-//  D'Antojitos — Inicio (publicidad + monitor catálogo + editor admin)
-
 let productosMemoria       = [];
 let notificacionesDisponibles = [];
 let isFirstLoad            = true;
@@ -8,13 +6,11 @@ let audioCtx               = null;
 let swiperInstance         = null;
 
 let _editMode      = false;
-let _configOriginal = {};   // snapshot antes de editar para poder cancelar
-let _configActual   = {};   // config cargada del servidor
+let _configOriginal = {};
+let _configActual   = {}; 
 let _sortableMain   = null;
 let _sortableSidebar = null;
-let _targetConfigKey = null; // para el modal de texto
-
-//  AUDIO
+let _targetConfigKey = null;
 
 function initAudioContext() {
     if (!audioCtx) {
@@ -50,8 +46,6 @@ function playNotificationSound(type = 'default') {
     } catch {}
 }
 
-//  TOAST
-
 function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
     mostrarAlertaPublica({ imagen, titulo, mensaje: descripcion, tipo: isError ? 'error' : 'info', duracion: 6000 });
 }
@@ -59,8 +53,6 @@ function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
 function mostrarToastActualizacion(imagen, titulo, descripcion, idUnico, isError = false) {
     mostrarAlertaPublica({ imagen, titulo, mensaje: descripcion, tipo: isError ? 'error' : 'info', idUnico, duracion: 6000 });
 }
-
-//  MONITOR CATÁLOGO
 
 async function monitorearCambiosCatalogo() {
     try {
@@ -82,8 +74,6 @@ async function monitorearCambiosCatalogo() {
     } catch {}
 }
 
-//  MARKETING / PUBLICIDAD
-
 async function cargarMarketing() {
     try {
         const res = await fetch("/api/publicidad/activa", { cache: "no-store" });
@@ -100,34 +90,31 @@ async function cargarMarketing() {
         if (carouselInner) carouselInner.innerHTML = "";
 
         notificacionesDisponibles = arr.filter(i => i.tipo === 'notificacion');
-
-        // Cinta inicio — solo muestra lo que el admin configura en publicidad
-        // Prioridad: inicio_cinta → cinta; si no hay nada configurado, se oculta
         const cintaInicioEl = document.getElementById('cintaInicio');
+        
         if (cintaInicioEl) {
             let cintaItems = arr.filter(i => i.tipo === 'inicio_cinta' && i.estado !== false);
             if (!cintaItems.length) cintaItems = arr.filter(i => i.tipo === 'cinta' && i.estado !== false);
 
             if (cintaItems.length > 0) {
                 const speed        = window.getTickerSpeed ? window.getTickerSpeed() : 1;
-                const ITEM_W       = 180; /* px — ancho fijo por ítem (igual que footer) */
-                const totalItems   = cintaItems.length;
-                const baseDuration = Math.max(18, totalItems * 5);
+                const ITEM_W       = 180;
+                const realCount    = cintaItems.length;
+                const baseDuration = Math.max(18, realCount * 4);
                 const duration     = (baseDuration / speed).toFixed(1);
+                const doubled = [...cintaItems, ...cintaItems];
+                const trackW  = doubled.length * ITEM_W;
 
-                /* Duplicar para loop continuo sin corte (mismo patrón que footer) */
-                const doubled = [...cintaItems, ...cintaItems, ...cintaItems];
                 const itemsHTML = doubled.map(i => {
                     const validImg = i.imagen_url && i.imagen_url.startsWith('http');
                     return `<div class="ci-item">${
                         validImg
-                            ? `<img src="${i.imagen_url}" alt="${i.titulo || ''}" loading="lazy" onerror="this.style.display='none'">`
+                            ? `<img src="${i.imagen_url}" alt="${i.titulo || ''}" loading="lazy"
+                                    onerror="this.style.display='none'">`
                             : `<i class="bi bi-megaphone ci-item-icon"></i>`
                     }<span class="ci-item-label">${i.titulo || ''}</span></div>`;
                 }).join('');
 
-                /* Ancho total; animación desplaza -33.33% (un tercio = un set completo) */
-                const trackW = doubled.length * ITEM_W;
                 cintaInicioEl.innerHTML = `
                     <div class="ci-track"
                          data-base-duration="${baseDuration}"
@@ -140,7 +127,6 @@ async function cargarMarketing() {
             }
         }
 
-        // Secciones
         arr.filter(i => i.tipo === 'seccion' && i.estado !== false).forEach((item, idx) => {
             const imgSrc = (item.imagen_url && item.imagen_url.startsWith('http'))
                 ? item.imagen_url : '/static/uploads/logo.png';
@@ -166,7 +152,6 @@ async function cargarMarketing() {
             }
         });
 
-        // Carrusel — solo items con imagen válida
         const carrusel = arr.filter(i =>
             i.tipo === 'carrusel' &&
             i.estado !== false &&
@@ -202,7 +187,6 @@ async function cargarMarketing() {
                 carouselInner.appendChild(div);
             });
 
-            // Pequeño delay para que el DOM se pinte antes de iniciar Swiper
             requestAnimationFrame(() => {
                 swiperInstance = new Swiper('.swiperPromo', {
                     loop:         carrusel.length > 1,
@@ -216,8 +200,6 @@ async function cargarMarketing() {
         }
     } catch (e) { console.error("Error publicidad:", e); }
 }
-
-//  CONFIG — cargar y aplicar textos
 
 async function cargarConfigInicio() {
     try {
@@ -234,7 +216,6 @@ function aplicarConfigAlDOM(cfg) {
         if (val !== undefined && val !== null) el.innerHTML = val;
     });
 
-    // Visibilidad de widgets
     Object.keys(cfg).forEach(k => {
         if (k.startsWith('visible_')) {
             const widgetId = k.replace('visible_', '');
@@ -244,7 +225,6 @@ function aplicarConfigAlDOM(cfg) {
         }
     });
 
-    // Orden widgets (main)
     try {
         const orden = JSON.parse(cfg['orden_main'] || '[]');
         if (orden.length) reordenarWidgets('sortable-main', orden);
@@ -278,8 +258,6 @@ function aplicarVisibilidadWidget(bloque, visible) {
     }
 }
 
-//  MENSAJE BIENVENIDA (botón admin en template)
-
 function actualizarMensajeBienvenida() {
     const inp = document.getElementById('inputMensajeAdmin');
     const el  = document.getElementById('mensajeBienvenidaDinamico');
@@ -297,8 +275,6 @@ function actualizarMensajeBienvenida() {
         mostrarAlerta(d.ok ? 'Mensaje actualizado' : (d.error || 'Error'), !d.ok);
     }).catch(() => mostrarAlerta('Error de conexión', true));
 }
-
-//  EDITOR DE WIDGETS
 
 function toggleModoEdicion() {
     if (_editMode) {
@@ -332,32 +308,26 @@ function cancelarEdicion() {
     if (bar)   bar.classList.remove('show');
 
     destruirSortable();
-
-    // Restaurar config original
     aplicarConfigAlDOM(_configOriginal);
     _configActual = JSON.parse(JSON.stringify(_configOriginal));
 }
 
 async function guardarEdicion() {
-    // Recoger textos editados
+
     document.querySelectorAll('[data-config-key]').forEach(el => {
         _configActual[el.dataset.configKey] = el.innerHTML.trim();
     });
-
-    // Recoger visibilidad
     document.querySelectorAll('.widget-bloque[data-widget]').forEach(bloque => {
         const wid = bloque.dataset.widget;
         _configActual[`visible_${wid}`] = bloque.classList.contains('widget-oculto') ? 'false' : 'true';
     });
 
-    // Recoger orden main
     const main = document.getElementById('sortable-main');
     if (main) {
         const orden = [...main.querySelectorAll(':scope > .widget-bloque')].map(b => b.dataset.widget);
         _configActual['orden_main'] = JSON.stringify(orden);
     }
 
-    // Recoger orden sidebar
     const sidebar = document.getElementById('sortable-sidebar');
     if (sidebar) {
         const orden = [...sidebar.querySelectorAll(':scope > .widget-bloque')].map(b => b.dataset.widget);
@@ -452,7 +422,6 @@ function aplicarCambioTexto() {
     cerrarModalEditor();
 }
 
-// Doble clic en texto editable abre modal (más cómodo que contenteditable)
 function vincularEdicionTexto() {
     document.querySelectorAll('[data-config-key]').forEach(el => {
         el.addEventListener('dblclick', function () {
@@ -469,12 +438,10 @@ function vincularEdicionTexto() {
         });
     });
 
-    // Cerrar modal con Escape
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') cerrarModalEditor();
     });
 
-    // Click fuera cierra modal
     const modal = document.getElementById('modalEditorTexto');
     if (modal) {
         modal.addEventListener('click', e => {
@@ -482,8 +449,6 @@ function vincularEdicionTexto() {
         });
     }
 }
-
-//  MINI-PANEL NOTIFICACIONES ADMIN
 
 let _notifPanelOpen = false;
 
@@ -531,13 +496,9 @@ async function cargarNotificacionesAdmin() {
         const total = Array.isArray(data) ? data.length : 0;
         if (count) count.textContent = total;
         if (empty) empty.style.display = total ? 'none' : 'flex';
-
-        // Solo actualiza el badge de publicidad (navPubBadge), nunca el de pedidos (navBellBadge)
         const activas = Array.isArray(data) ? data.filter(n => n.estado).length : 0;
         const pubBadge = document.getElementById('navPubBadge');
         if (pubBadge) { pubBadge.textContent = activas > 9 ? '9+' : activas; pubBadge.style.display = activas > 0 ? 'flex' : 'none'; }
-        // El panel usa clases CSS (no display:none) para animar
-        // No lo abrimos automáticamente — el usuario lo abre con el botón campana
 
         (Array.isArray(data) ? data : []).forEach(n => {
             const li = document.createElement('li');
@@ -562,7 +523,6 @@ async function cargarNotificacionesAdmin() {
             list.appendChild(li);
         });
 
-        // Sincroniza el array de publicadas que se lanzan cada 12s
         notificacionesDisponibles = (Array.isArray(data) ? data : []).filter(n => n.estado);
     } catch {}
 }
@@ -589,8 +549,6 @@ async function eliminarNotif(id) {
         } catch { mostrarAlerta('Error al eliminar', true); }
     });
 }
-
-//  INIT
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarMarketing();
@@ -630,4 +588,3 @@ if ('serviceWorker' in navigator) {
             .catch(() => {});
     });
 }
-

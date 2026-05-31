@@ -49,6 +49,16 @@
                     <i class="bi bi-pencil-fill"></i>
                 </button>
 
+                {% if session.get('user') and session.get('rol') == 'cliente' %}
+                <!-- Campana de notificaciones para clientes (stock productos) -->
+                <button id="navClientBellBtn" title="Mis notificaciones"
+                        onclick="toggleClientNotifPanel()"
+                        class="navbar-action-btn position-relative">
+                    <i class="bi bi-bell-fill"></i>
+                    <span id="navClientBellBadge" class="nav-bell-badge" style="background:#d35400;display:none;">0</span>
+                </button>
+                {% endif %}
+
                 {% if session.get('rol') in ['admin', 'vendedor'] %}
                 <!-- Campana de pedidos: visible para admin y vendedor -->
                 <button id="navBellBtn" title="Notificaciones del sistema"
@@ -156,6 +166,33 @@
         </div>
     </nav>
 </header>
+{% if session.get('user') and session.get('rol') == 'cliente' %}
+<!-- Panel de notificaciones del cliente (productos agotados / disponibles) -->
+<div id="clientNotifPanel" class="notif-admin-panel" style="right:60px;">
+    <div class="notif-admin-header" onclick="toggleClientNotifPanel()">
+        <span class="notif-header-title"><i class="bi bi-bell-fill me-1"></i> Mis Notificaciones</span>
+        <div class="notif-header-actions" onclick="event.stopPropagation()">
+            <span class="notif-count-badge" id="clientNotifCount" style="display:none;">0</span>
+            <button class="notif-read-all-btn" title="Limpiar todo" onclick="_clientNotifClearAll()">
+                <i class="bi bi-check2-all"></i>
+                <span class="notif-read-label">Limpiar</span>
+            </button>
+        </div>
+        <i class="bi bi-chevron-down notif-chevron" id="clientNotifChevron"></i>
+    </div>
+    <div class="notif-admin-body" id="clientNotifBody">
+        <div class="notif-empty" id="clientNotifEmpty">
+            <i class="bi bi-bell-slash"></i>
+            <p>Sin notificaciones</p>
+        </div>
+        <ul class="notif-list" id="clientNotifList"></ul>
+    </div>
+    <div class="notif-admin-footer">
+        <small class="text-muted"><i class="bi bi-clock me-1"></i>Cambios de stock en tiempo real</small>
+    </div>
+</div>
+{% endif %}
+
 {% if session.get('rol') in ['admin', 'vendedor'] %}
 <!-- Panel de pedidos: accesible para admin y vendedor -->
 <div id="sistemPanel" class="notif-admin-panel" style="right:60px;">

@@ -14,7 +14,6 @@ const STATIC_ASSETS = [
     'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js'
 ];
 
-// Siempre desde la red — pedidos en tiempo real
 const NETWORK_FIRST_ROUTES = [
     '/pedidos_page',
     '/obtener_pedidos',

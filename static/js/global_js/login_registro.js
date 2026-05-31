@@ -295,8 +295,6 @@ function initRegistroForm() {
     });
 }
 
-function initStep2() { /* eliminado — ya no se usa verificación */ }
-
 document.addEventListener('DOMContentLoaded', () => {
     loadGoogleButton();
     initLoginForm();

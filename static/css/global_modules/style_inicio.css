@@ -1286,20 +1286,24 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     background: linear-gradient(to left, #0e0308 0%, transparent 100%);
 }
 
-/* ── ci-track: pista animada (misma lógica que .payment-track del footer) ── */
+/* ── ci-track: pista animada — lógica idéntica a .payment-track del footer ── */
 .ci-track {
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    animation-name: ciScroll;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
+    animation: ciScroll 25s linear infinite;
     will-change: transform;
+}
+
+/* Pausa en hover — igual que el footer */
+.cinta-inicio-marquee:hover .ci-track {
+    animation-play-state: paused;
+    cursor: default;
 }
 
 @keyframes ciScroll {
     0%   { transform: translateX(0); }
-    100% { transform: translateX(-33.333%); }
+    100% { transform: translateX(-50%); }
 }
 
 /* ── ci-item: cada elemento (igual al .payment-item del footer) ── */

@@ -5,7 +5,7 @@ let facturasLocalesCache = [];
 let metodosPagoCache = [];
 let ultimaSincronizacion = new Date();
 let mostrarArchivadas = false;
-const expandedFacturas = new Set(); // facturas con card abierta — persiste entre re-renders
+const expandedFacturas = new Set();
 
 const FormateadorCosto = new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -816,11 +816,11 @@ function mostrarFacturasBuscadas() {
         const productosHtml = (f.productos || []).map(p => {
             totalSuma += Number(p.subtotal || 0);
             return `<div class="inv-product-row">
-                        <div>
-                            <span class="fw-semibold">${p.nombre_producto}</span>
-                            <small class="text-muted ms-2">× ${p.cantidad}</small>
+                        <div class="inv-product-info">
+                            <span class="inv-product-name">${p.nombre_producto}</span>
+                            <span class="inv-product-qty">Cant: ${p.cantidad}</span>
                         </div>
-                        <span class="fw-bold">${FormateadorCosto.format(Number(p.subtotal || 0))}</span>
+                        <span class="inv-product-price">${FormateadorCosto.format(Number(p.subtotal || 0))}</span>
                     </div>`;
         }).join('');
 
@@ -837,27 +837,31 @@ function mostrarFacturasBuscadas() {
         const clienteUser    = f.username_cliente ? `@${f.username_cliente}` : '';
 
         item.innerHTML = `
+            <!-- ── Cabecera recibo: logo + marca | número + fecha + badge ── -->
             <div class="inv-header" onclick="toggleInvItem(${globalIdx})">
-                <div class="inv-header-left">
-                    <i class="bi bi-receipt-cutoff inv-icon text-${cv.color}"></i>
-                    <span class="inv-num font-monospace fw-bold">${f.numero_factura}</span>
+                <div class="inv-brand-side">
+                    <div class="inv-brand-logo">
+                        <img src="/static/uploads/logo.png" alt="Logo D'Antojitos"
+                             onerror="this.src='/static/uploads/logo.ico'">
+                    </div>
+                    <span class="inv-brand-name">D'Antojitos©</span>
                 </div>
-                <div class="inv-header-center text-muted small">${fechaStr}</div>
-                <div class="inv-header-right">
-                    <span class="badge inv-badge badge-${cv.color}">
+                <div class="inv-meta-side">
+                    <span class="inv-num">${f.numero_factura}</span>
+                    <span class="inv-date">${fechaStr}</span>
+                    <span class="inv-badge badge-${cv.color}">
                         <i class="bi ${cv.icono} me-1"></i>${cv.label}
                     </span>
-                    <i class="bi bi-chevron-down inv-chevron ms-2"></i>
                 </div>
+                <i class="bi bi-chevron-down inv-chevron"></i>
+            </div>
+            <div class="inv-products-box">${productosHtml}</div>
+            <div class="inv-total-row">
+                <span class="inv-total-label">TOTAL</span>
+                <span class="inv-total-amount">${FormateadorCosto.format(totalSuma)}</span>
             </div>
 
             <div class="inv-body" id="inv-body-${globalIdx}">
-                <div class="inv-products-box">${productosHtml}</div>
-
-                <div class="inv-total-row">
-                    <span class="text-muted small fw-bold text-uppercase">Total</span>
-                    <span class="inv-total-amount">${FormateadorCosto.format(totalSuma)}</span>
-                </div>
 
                 <div class="inv-client-section">
                     <div class="inv-client-title">
@@ -925,7 +929,6 @@ function mostrarFacturasBuscadas() {
 
     container.appendChild(lista);
 
-    // Restaurar cards que estaban expandidas antes del re-render
     paginadas.forEach((f, idx) => {
         if (expandedFacturas.has(f.numero_factura)) {
             const gIdx    = inicio + idx;

@@ -227,61 +227,135 @@ async function cargarPedidos(isAutoRefresh = false) {
 
             card.innerHTML = `
                 <div class="card border-0 bg-transparent">
-                    <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0 py-3">
+
+                    <!-- ── Cabecera: foto · factura · saldo · acciones ── -->
+                    <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0"
+                         style="padding: 1rem 1.25rem 1.25rem;">
                         <div class="d-flex align-items-center gap-3">
                             <div class="btn-fijar-wrapper">
-                                <i class="bi ${esFijado ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle text-muted'} fs-4 btn-fijar" style="cursor:pointer transition: 0.3s;"></i>
+                                <i class="bi ${esFijado ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle text-muted'} fs-4 btn-fijar"
+                                   style="cursor:pointer;transition:0.3s;"></i>
                             </div>
                             <div class="position-relative">
-                                <img src="${user.imagen_url || '/static/uploads/default.png'}" class="rounded-circle border border-2 border-white shadow-sm" style="width:45px;height:45px;object-fit:cover;">
-                                <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-light rounded-circle" style="${pedido.estado === 'Entregado' ? '' : 'display:none'}"></span>
+                                <img src="${user.imagen_url || '/static/uploads/default.png'}"
+                                     class="rounded-circle border border-2 border-white shadow"
+                                     style="width:52px;height:52px;object-fit:cover;">
+                                <span class="position-absolute bottom-0 end-0 bg-success border border-2 border-white rounded-circle"
+                                      style="width:13px;height:13px;${pedido.estado === 'Entregado' ? '' : 'display:none'}"></span>
                             </div>
-                            <div class="lh-sm">
-                                <strong class="d-block text-dark" style="font-size:1.05rem">${facturaAMostrar}</strong>
-                                <small class="status-info ${esAnulado ? 'text-danger fw-bold' : 'text-muted'}" style="font-size:0.8rem">
-                                    <i class="bi bi-clock-history me-1"></i>${fechaFormat} | <span class="badge ${esAnulado ? 'bg-danger' : 'bg-secondary'}">${pedido.estado}</span>
+                            <div style="line-height:1.3;">
+                                <strong class="d-block text-dark" style="font-size:1.05rem;letter-spacing:-0.2px;">${facturaAMostrar}</strong>
+                                <small class="status-info ${esAnulado ? 'text-danger fw-bold' : 'text-muted'}" style="font-size:0.78rem;">
+                                    <i class="bi bi-clock-history me-1"></i>${fechaFormat}
+                                    &nbsp;·&nbsp;
+                                    <span class="badge rounded-pill ${esAnulado ? 'bg-danger' : (esTerminado ? 'bg-success' : 'bg-secondary')}">
+                                        ${pedido.estado}
+                                    </span>
                                 </small>
                             </div>
                         </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="d-flex flex-column align-items-end me-2">
-                                <small class="text-muted fw-bold" style="font-size: 0.75rem; text-transform: uppercase;">
-                                    Saldo:
-                                </small>
-                                <span class="saldo-header fw-bolder ${totalPendiente === 0 ? 'text-success' : 'text-danger'} d-flex align-items-center justify-content-end" style="font-size: 0.95rem; gap:0.35rem;">
-                                    <i class="bi bi-wallet2 me-1"></i>
-                                    ${totalPendiente === 0 ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="text-end me-1" style="line-height:1.2;">
+                                <div class="text-muted fw-semibold" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;">Saldo</div>
+                                <span class="saldo-header fw-bolder ${totalPendiente === 0 ? 'text-success' : 'text-danger'}"
+                                      style="font-size:0.92rem;">
+                                    <i class="bi bi-wallet2 me-1"></i>${totalPendiente === 0 ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
                                 </span>
                             </div>
-                            <button class="btn btn-light btn-sm rounded-circle toggle-detalle" style="width:35px; height:35px; display:flex; align-items:center; justify-content:center;">
+                            <button class="btn btn-light btn-sm rounded-circle toggle-detalle"
+                                    style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                                 <i class="bi bi-chevron-down icono transition-all"></i>
                             </button>
-                            <button class="btn btn-outline-danger btn-sm border-0 rounded-circle btn-eliminar-individual" style="width:35px; height:35px;">
+                            <button class="btn btn-outline-danger btn-sm border-0 rounded-circle btn-eliminar-individual"
+                                    style="width:36px;height:36px;flex-shrink:0;">
                                 <i class="bi bi-trash3-fill"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="card-body pt-0 collapse-content">
-                        <div class="p-3 mb-3 bg-light rounded-3 border-0" style="font-size:0.9rem">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <div class="text-muted mb-1"><i class="bi bi-person-fill me-1"></i> Datos del Cliente</div>
-                                    <div class="fw-bold">${user.nombre || ''} ${user.apellido || ''}</div>
-                                    <div class="text-secondary">${user.cedula || 'Documento N/A'}</div>
+
+                    <!-- ── Separador visual antes del cuerpo desplegable ── -->
+                    <div class="collapse-content" style="padding: 0 1.25rem 1.25rem;">
+
+                        <hr style="margin:0 0 1.4rem;opacity:0.12;">
+
+                        <!-- ── Datos del usuario organizados con etiquetas ── -->
+                        <div class="pedido-user-panel">
+
+                            <!-- Encabezado del panel -->
+                            <div class="pedido-user-panel-head">
+                                <div class="pedido-user-avatar-wrap">
+                                    <img src="${user.imagen_url || '/static/uploads/default.png'}"
+                                         class="pedido-user-avatar"
+                                         onerror="this.src='/static/uploads/default.png'">
+                                    <div class="pedido-user-avatar-info">
+                                        <span class="pedido-user-fullname">${(user.nombre || '') + ' ' + (user.apellido || '') || '—'}</span>
+                                        <span class="pedido-user-username">${user.username ? '@' + user.username : ''}</span>
+                                    </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="text-muted mb-1"><i class="bi bi-geo-alt-fill me-1"></i> Destino de Entrega</div>
-                                    <div class="fw-bold">${pedido.direccion_envio || user.direccion || 'Entrega en Local'}</div>
-                                    <div class="text-secondary">${user.telefono || 'Sin teléfono'}</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="text-muted mb-1"><i class="bi bi-credit-card-fill me-1"></i> Transacción</div>
-                                    <div class="fw-bold">${pedido.metodo_pago || 'Efectivo'}</div>
-                                    <div class="badge bg-white text-dark border shadow-sm mt-1">Ref: ${pedido.id_pedido}</div>
-                                </div>
+                                <span class="pedido-user-rol-badge">${user.rol || 'cliente'}</span>
                             </div>
-                        </div>
-                        <div class="table-responsive rounded-3 border">
+
+                            <!-- Grid de campos etiquetados -->
+                            <div class="pedido-user-fields">
+
+                                <!-- Columna 1: Identificación -->
+                                <div class="pedido-field-group">
+                                    <div class="pedido-field-group-title">
+                                        <i class="bi bi-person-vcard-fill"></i> Identificación
+                                    </div>
+                                    <div class="pedido-field-row">
+                                        <span class="pedido-field-label">Nombre completo</span>
+                                        <span class="pedido-field-value">${(user.nombre || '') + ' ' + (user.apellido || '') || '—'}</span>
+                                    </div>
+                                    <div class="pedido-field-row">
+                                        <span class="pedido-field-label">Cédula / Doc.</span>
+                                        <span class="pedido-field-value font-monospace">${user.cedula || '—'}</span>
+                                    </div>
+                                    <div class="pedido-field-row">
+                                        <span class="pedido-field-label">Correo electrónico</span>
+                                        <span class="pedido-field-value">${user.email || user.correo || '—'}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Columna 2: Contacto y destino -->
+                                <div class="pedido-field-group">
+                                    <div class="pedido-field-group-title">
+                                        <i class="bi bi-telephone-fill"></i> Contacto &amp; Entrega
+                                    </div>
+                                    <div class="pedido-field-row">
+                                        <span class="pedido-field-label">Teléfono</span>
+                                        <span class="pedido-field-value">${user.telefono || '—'}</span>
+                                    </div>
+                                    <div class="pedido-field-row">
+                                        <span class="pedido-field-label">Dirección de entrega</span>
+                                        <span class="pedido-field-value">${pedido.direccion_envio || user.direccion || 'Entrega en local'}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Columna 3: Transacción -->
+                                <div class="pedido-field-group">
+                                    <div class="pedido-field-group-title">
+                                        <i class="bi bi-receipt-cutoff"></i> Transacción
+                                    </div>
+                                    <div class="pedido-field-row">
+                                        <span class="pedido-field-label">Método de pago</span>
+                                        <span class="pedido-field-value">${pedido.metodo_pago || 'Efectivo'}</span>
+                                    </div>
+                                    <div class="pedido-field-row">
+                                        <span class="pedido-field-label">Referencia</span>
+                                        <span class="pedido-field-value font-monospace">#${pedido.id_pedido}</span>
+                                    </div>
+                                    <div class="pedido-field-row">
+                                        <span class="pedido-field-label">Factura</span>
+                                        <span class="pedido-field-value font-monospace">${facturaAMostrar}</span>
+                                    </div>
+                                </div>
+
+                            </div><!-- /.pedido-user-fields -->
+                        </div><!-- /.pedido-user-panel -->
+
+                        <!-- Tabla de productos -->
+                        <div class="table-responsive rounded-3 border mb-0">
                             <table class="table table-hover text-center mb-0">
                                 <thead class="table-dark">
                                     <tr>
@@ -292,8 +366,8 @@ async function cargarPedidos(isAutoRefresh = false) {
                                     </tr>
                                 </thead>
                                 <tbody>${itemsRows}</tbody>
-                                <tfoot class="bg-white border-top-2">
-                                    <tr style="height: 60px;">
+                                <tfoot class="border-top">
+                                    <tr style="height:56px;">
                                         <td colspan="2" class="text-end align-middle fw-bold fs-6">SALDO PENDIENTE:</td>
                                         <td colspan="2" class="text-start align-middle fw-bolder ${totalPendiente === 0 ? 'text-success' : 'text-danger'} fs-5 ps-3 saldo-pendiente-valor">
                                             ${totalPendiente === 0 ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
@@ -302,21 +376,25 @@ async function cargarPedidos(isAutoRefresh = false) {
                                 </tfoot>
                             </table>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center mt-4 bg-light p-3 rounded-3">
+
+                        <!-- Cambiar estado -->
+                        <div class="d-flex justify-content-between align-items-center mt-3 p-3 rounded-3"
+                             style="background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.05);">
                             <div class="d-flex align-items-center gap-2 flex-grow-1">
-                                <label class="fw-bold text-muted small text-uppercase">Cambiar Estado:</label>
+                                <label class="fw-bold text-muted small text-uppercase" style="white-space:nowrap;">Cambiar Estado:</label>
                                 <select class="form-select estado-select shadow-none" style="max-width:200px;" ${bloqueado ? 'disabled' : ''}>
-                                    <option value="Pendiente" ${pedido.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                                    <option value="Enviado" ${pedido.estado === 'Enviado' ? 'selected' : ''}>Enviado</option>
-                                    <option value="Entregado" ${pedido.estado === 'Entregado' ? 'selected' : ''}>Finalizado</option>
-                                    <option value="Cancelado" ${pedido.estado === 'Cancelado' ? 'selected' : ''}>Anular</option>
+                                    <option value="Pendiente"  ${pedido.estado === 'Pendiente'  ? 'selected' : ''}>Pendiente</option>
+                                    <option value="Enviado"    ${pedido.estado === 'Enviado'    ? 'selected' : ''}>Enviado</option>
+                                    <option value="Entregado"  ${pedido.estado === 'Entregado'  ? 'selected' : ''}>Finalizado</option>
+                                    <option value="Cancelado"  ${pedido.estado === 'Cancelado'  ? 'selected' : ''}>Anular</option>
                                 </select>
                             </div>
                             <button class="btn btn-primary actualizar-btn px-4 py-2 rounded-pill fw-bold shadow-sm" ${bloqueado ? 'disabled' : ''}>
-                                <i class="bi bi-arrow-repeat me-2"></i>GUARDAR CAMBIOS
+                                <i class="bi bi-arrow-repeat me-2"></i>GUARDAR
                             </button>
                         </div>
-                    </div>
+
+                    </div><!-- /.collapse-content -->
                 </div>`;
 
             // Eventos

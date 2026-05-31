@@ -14,7 +14,6 @@ const STATIC_ASSETS = [
     'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'
 ];
 
-// Siempre desde la red — datos y uploads de publicidad
 const NETWORK_FIRST_ROUTES = [
     '/publicidad_page',
     '/api/publicidad/activa',

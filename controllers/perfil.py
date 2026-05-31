@@ -62,16 +62,21 @@ def perfil_usuarios():
 @login_required
 def actualizar_perfil(cedula):
     user_id = session.get("user_id")
-    # Usar cedula de sesión si la de URL está vacía o es inválida
-    if not cedula or cedula == "None":
-        cedula = str(user_id or "")
-    if not cedula:
+    # Siempre usar el user_id de sesión como clave de búsqueda (nunca la URL)
+    lookup_id = str(user_id or "")
+    if not lookup_id:
         return jsonify({"ok": False, "error": "Usuario no identificado"}), 400
-    usuario_previo = db.usuario_get(cedula)
+
+    usuario_previo = db.usuario_get(lookup_id)
     if not usuario_previo:
         return jsonify({"ok": False, "error": "Usuario no encontrado"}), 404
 
     data = request.form if request.form else (request.json or {})
+
+    # La cédula es la PK de usuarios y referenciada por FK en carrito, pedidos,
+    # facturas y comentarios. No debe editarse desde el perfil para evitar
+    # violaciones de integridad referencial. Solo se permite cambiar datos
+    # de contacto y preferencias.
     campos = {
         "nombre":      (data.get("nombrePerfil") or "").strip(),
         "apellido":    (data.get("apellidoPerfil") or "").strip(),
@@ -80,16 +85,19 @@ def actualizar_perfil(cedula):
         "direccion":   (data.get("direccionPerfil") or "").strip(),
         "metodo_pago": (data.get("metodoPagoPerfil") or "").strip(),
     }
+
     campos = {k: v for k, v in campos.items() if v}
 
     archivo = request.files.get("imagen_url")
     if archivo and archivo.filename:
         old_url = usuario_previo.get("imagen_url", "")
-        if old_url and "default_icon_profile" not in old_url:
+        if old_url and "default_icon_profile" not in old_url and "cloudinary" in old_url:
             delete_image(old_url)
-        nueva_url = upload_image(archivo, folder="usuarios/perfiles", public_id=f"user_{cedula}")
+        nueva_url = upload_image(archivo, folder="usuarios/perfiles", public_id=f"user_{lookup_id}")
         if nueva_url:
             campos["imagen_url"] = nueva_url
+        else:
+            return jsonify({"ok": False, "error": "No se pudo subir la imagen. Verifica el archivo e intenta de nuevo."}), 500
 
     if "nombre" in campos and not is_valid_name(campos["nombre"]):
         return jsonify({"ok": False, "error": "Nombre inválido."}), 400
@@ -104,8 +112,10 @@ def actualizar_perfil(cedula):
         return jsonify({"ok": False, "error": "Sin datos válidos"}), 400
 
     try:
-        db.usuario_update(cedula, campos)
-        usuario_final = db.usuario_get(cedula)
+        db.usuario_update(lookup_id, campos)
+
+        # La cédula no cambia nunca desde este endpoint
+        usuario_final = db.usuario_get(lookup_id)
 
         if usuario_final is None:
             return jsonify({"ok": False, "error": "No se pudo recuperar el usuario actualizado"}), 500
@@ -115,11 +125,10 @@ def actualizar_perfil(cedula):
             img = "/" + img
         usuario_final["imagen_url"] = img
 
-        if str(user_id) == str(cedula):
-            s = session.get("user") or {}
-            s.update({k: usuario_final.get(k) for k in ["nombre", "apellido", "telefono", "correo", "direccion", "metodo_pago", "imagen_url"]})
-            session["user"] = s
-            session.modified = True
+        s = session.get("user") or {}
+        s.update({k: usuario_final.get(k) for k in ["nombre", "apellido", "telefono", "correo", "direccion", "metodo_pago", "imagen_url", "cedula"]})
+        session["user"] = s
+        session.modified = True
 
         return jsonify({"ok": True, "usuario": usuario_final})
     except Exception as e:

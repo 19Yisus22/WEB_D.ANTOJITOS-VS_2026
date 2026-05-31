@@ -174,14 +174,12 @@ async function cargarProductos() {
                     }
                 }
             });
-            // Detectar productos nuevos
             const viejosIds = new Set(productos.map(p => p.id_producto));
             const nuevos = nuevosProductos.filter(p => !viejosIds.has(p.id_producto));
             nuevos.forEach(nuevo => {
                 mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.png', "¡Nuevo!", `${nuevo.nombre} disponible`, `nuevo-${nuevo.id_producto}`, false);
                 huboCambios = true;
             });
-            // Detectar productos eliminados
             const nuevosIds = new Set(nuevosProductos.map(p => p.id_producto));
             const eliminados = productos.filter(p => !nuevosIds.has(p.id_producto));
             eliminados.forEach(eliminado => {

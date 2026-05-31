@@ -74,42 +74,142 @@ document.addEventListener('click', (e) => {
     }
 });
 
-function insertEmoji(emoji) {
-    const start = mensajeInput.selectionStart;
-    const end = mensajeInput.selectionEnd;
-    mensajeInput.value = mensajeInput.value.substring(0, start) + emoji + mensajeInput.value.substring(end);
+/* ── Helpers del editor WYSIWYG ── */
+
+/** Devuelve el ancestro .chat-list-item del nodo dado, si existe dentro del editor */
+function _getParentListItem(node) {
+    while (node && node !== mensajeInput) {
+        if (node.nodeType === 1 && node.classList?.contains('chat-list-item')) return node;
+        node = node.parentNode;
+    }
+    return null;
+}
+
+/** Aplica/quita negrita, cursiva o subrayado sobre la selección con previsualización */
+function applyRichFormat(command) {
     mensajeInput.focus();
+    document.execCommand(command, false, null);
+    _updateToolbarState();
+}
+
+/** Inserta un ítem de lista en la posición actual (sin newline previo, con indentación) */
+function insertListItem() {
+    mensajeInput.focus();
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+
+    const range = sel.getRangeAt(0);
+    const existingItem = _getParentListItem(range.startContainer);
+
+    if (existingItem) {
+        // Ya está en un list-item: quitar el formato de lista
+        const text = document.createTextNode(
+            existingItem.textContent           // quita el bullet del ::before
+        );
+        existingItem.replaceWith(text);
+        // Colocar cursor al final del texto insertado
+        const newRange = document.createRange();
+        newRange.setStartAfter(text);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+    } else {
+        // Insertar un nuevo ítem de lista (el '•' viene del CSS ::before, no del texto)
+        const selectedText = range.toString();
+        // Borramos la selección primero
+        range.deleteContents();
+        const div = document.createElement('div');
+        div.className = 'chat-list-item';
+        div.textContent = selectedText;   // sin bullet en el DOM — lo pone CSS
+        range.insertNode(div);
+        // Poner cursor al final del ítem recién insertado
+        const newRange = document.createRange();
+        newRange.setStart(div, div.childNodes.length || 0);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+    }
+    _updateToolbarState();
+}
+
+/** Maneja Enter dentro de un list-item: continúa la lista o la termina si está vacía */
+mensajeInput.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const listItem = _getParentListItem(sel.getRangeAt(0).startContainer);
+    if (!listItem) return;
+
+    e.preventDefault();
+
+    if (listItem.textContent.trim() === '') {
+        // Ítem vacío → salir del modo lista
+        listItem.replaceWith(document.createElement('br'));
+    } else {
+        // Crear nuevo ítem de lista (indentado, sin newline visible)
+        const newItem = document.createElement('div');
+        newItem.className = 'chat-list-item';
+        newItem.innerHTML = '&#8203;'; // zero-width space para que el div no colapse
+        listItem.after(newItem);
+        const range = document.createRange();
+        range.setStart(newItem, 0);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+});
+
+/** Actualiza el estado visual (is-active) de los botones de formato según la selección */
+function _updateToolbarState() {
+    ['bold', 'italic', 'underline'].forEach(cmd => {
+        const btn = document.querySelector(`[data-format="${cmd}"]`);
+        if (btn) btn.classList.toggle('is-active', document.queryCommandState(cmd));
+    });
+    // Estado botón de lista
+    const sel = window.getSelection();
+    const btnLista = document.getElementById('btnListado');
+    if (btnLista && sel && sel.rangeCount) {
+        const inList = !!_getParentListItem(sel.getRangeAt(0).startContainer);
+        btnLista.classList.toggle('is-active', inList);
+    }
+}
+
+mensajeInput.addEventListener('keyup',   _updateToolbarState);
+mensajeInput.addEventListener('mouseup', _updateToolbarState);
+mensajeInput.addEventListener('input',   ajustarAlturaInput);
+
+/** Inserta emoji en la posición del cursor */
+function insertEmoji(emoji) {
+    mensajeInput.focus();
+    document.execCommand('insertText', false, emoji);
     ajustarAlturaInput();
     const panel = document.getElementById('emojiPanel');
     if (panel) panel.style.display = 'none';
 }
 
-function insertFormat(startTag, endTag) {
-    const start = mensajeInput.selectionStart;
-    const end = mensajeInput.selectionEnd;
-    const text = mensajeInput.value;
-    const selectedText = text.substring(start, end);
-    let replacement = startTag + selectedText + endTag;
-    
-    if (startTag === "\n- ") {
-        replacement = selectedText.length > 0 
-            ? selectedText.split('\n').map(line => line.trim() ? `\n- ${line}` : line).join('')
-            : "\n- ";
-    }
-    
-    mensajeInput.value = text.substring(0, start) + replacement + text.substring(end);
-    const newCursorPos = start + replacement.length;
-    mensajeInput.setSelectionRange(newCursorPos, newCursorPos);
-    mensajeInput.focus();
-    ajustarAlturaInput();
-}
-
+/** Ajusta altura del editor al contenido */
 function ajustarAlturaInput() {
     mensajeInput.style.height = 'auto';
     mensajeInput.style.height = Math.min(mensajeInput.scrollHeight, 150) + 'px';
 }
 
-mensajeInput.addEventListener("input", ajustarAlturaInput);
+/** Devuelve el HTML limpio del editor para enviar al servidor */
+function _getEditorContent() {
+    return mensajeInput.innerHTML.trim();
+}
+
+/** Limpia el editor */
+function _clearEditor() {
+    mensajeInput.innerHTML = '';
+    ajustarAlturaInput();
+}
+
+/** Carga contenido en el editor (al editar un mensaje existente) */
+function _setEditorContent(html) {
+    mensajeInput.innerHTML = html;
+    ajustarAlturaInput();
+}
 
 function getUserPastelColor(userId) {
     const gradients = [
@@ -172,10 +272,11 @@ function renderComentario(c) {
     wrapper.id = `msg-${c.id}`;
     const estadoClase = info.conectado ? 'estado-conectado' : 'estado-desconectado';
     
+    // Compatibilidad hacia atrás: convierte markdown antiguo a HTML;
+    // los mensajes nuevos ya vienen como HTML del editor WYSIWYG.
     const mensajeFormateado = c.mensaje
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/_(.*?)_/g, '<em>$1</em>')
-        .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
+        .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
+        .replace(/_(.*?)_/gs,       '<em>$1</em>');
 
     wrapper.innerHTML = `
         <div class="contenedor-foto-estado">
@@ -196,13 +297,26 @@ function renderComentario(c) {
                 <div class="mensaje-texto">${mensajeFormateado}</div>
                 ${c.updated_at ? '<span class="text-muted" style="font-size:0.6rem;">(editado)</span>' : ''}
             </div>
-            <!-- Corazón fuera de la burbuja, estilo Instagram -->
-            <div class="btn-like-mini d-flex align-items-center gap-1 mt-1"
-                 onclick="toggleLike('${c.id}')"
-                 style="cursor:pointer;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.85);
-                        box-shadow:0 1px 6px rgba(0,0,0,0.1);backdrop-filter:blur(4px);width:fit-content;">
-                <i class="bi ${haDadoLike ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="font-size:0.9rem;${haDadoLike ? '' : 'color:#888;'}"></i>
-                <small class="fw-bold" style="font-size:0.72rem;color:#555;">${(c.likes_usuarios || []).length}</small>
+            <!-- Acciones bajo la burbuja: corazón + responder (independientes) -->
+            <div class="d-flex align-items-center gap-2 mt-1">
+                <!-- Like -->
+                <div class="btn-like-mini d-flex align-items-center gap-1"
+                     onclick="toggleLike('${c.id}')"
+                     style="cursor:pointer;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.85);
+                            box-shadow:0 1px 6px rgba(0,0,0,0.1);backdrop-filter:blur(4px);">
+                    <i class="bi ${haDadoLike ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="font-size:0.9rem;${haDadoLike ? '' : 'color:#888;'}"></i>
+                    <small class="fw-bold" style="font-size:0.72rem;color:#555;">${(c.likes_usuarios || []).length}</small>
+                </div>
+                <!-- Responder individualmente (visible para admin/vendedor, independiente del like) -->
+                ${(USER_CONFIG.userRol === 'admin' || USER_CONFIG.userRol === 'vendedor') && !esMio ? `
+                <div class="btn-reply-pub d-flex align-items-center gap-1"
+                     onclick="responderPublicamente('${c.id}', \`${(nombre).replace(/`/g,"'")}\`, \`${(c.mensaje || '').replace(/`/g,"'").substring(0,60)}\`)"
+                     title="Responder a este mensaje"
+                     style="cursor:pointer;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.85);
+                            box-shadow:0 1px 6px rgba(0,0,0,0.1);backdrop-filter:blur(4px);">
+                    <i class="bi bi-reply-fill" style="font-size:0.85rem;color:#d35400;"></i>
+                    <small class="fw-bold" style="font-size:0.7rem;color:#d35400;">Responder</small>
+                </div>` : ''}
             </div>
         </div>
     `;
@@ -258,36 +372,37 @@ async function ejecutarEliminacionDirecta(id) {
 }
 
 function iniciarEdicion(id, msg) {
-    mensajeInput.value = msg;
+    _setEditorContent(msg);
     editandoComentario = id;
     sendBtn.innerHTML = `<span>Guardar</span><i class="bi bi-check-lg ms-2"></i>`;
+    mensajeInput.focus();
     ajustarAlturaInput();
     mensajeInput.focus();
 }
 
 sendBtn.onclick = async () => {
-    const mensaje = mensajeInput.value.trim();
-    if(!mensaje) return;
+    const mensaje = _getEditorContent();
+    // Considera vacío si solo tiene un <br> o está realmente vacío
+    if (!mensaje || mensaje === '<br>' || mensaje === '&nbsp;' || mensaje === '&#8203;') return;
     sendBtn.disabled = true;
     try {
         let url = "/comentarios", method = "POST";
-        if(editandoComentario) {
-            url = `/comentarios/${editandoComentario}`;
+        if (editandoComentario) {
+            url  = `/comentarios/${editandoComentario}`;
             method = "PUT";
         }
         const res = await fetch(url, {
-            method: method,
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({mensaje})
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mensaje })
         });
-        if(res.ok) {
-            mensajeInput.value = "";
-            mensajeInput.style.height = 'auto';
+        if (res.ok) {
+            _clearEditor();
             editandoComentario = null;
             sendBtn.innerHTML = `<span>Enviar Sugerencia</span><i class="bi bi-send-fill ms-2"></i>`;
             await cargarComentarios();
         }
-    } catch(e) { showMessage("Error al procesar", true); }
+    } catch (e) { showMessage("Error al procesar", true); }
     finally { sendBtn.disabled = false; }
 };
 
@@ -295,7 +410,307 @@ window.onload = () => {
     cargarComentarios();
     monitorConexion.iniciar();
     setInterval(cargarComentarios, 15000);
+    if (USER_CONFIG.isLogged) {
+        _iniciarPrivado();
+        setInterval(_pollNoLeidos, 20000);
+    }
 };
+
+/* ══════════════════════════════════════════════════
+   RESPUESTA PÚBLICA INDIVIDUAL (admin / vendedor)
+   Coloca una cita en el editor del chat público
+   ══════════════════════════════════════════════════ */
+let _replyTargetId = null;
+
+function responderPublicamente(id, nombre, extracto) {
+    _replyTargetId = id;
+    const quoteEl = document.getElementById('replyQuote');
+    const textEl  = document.getElementById('replyQuoteText');
+    if (quoteEl && textEl) {
+        textEl.textContent = `${nombre}: ${extracto}…`;
+        quoteEl.style.display = 'flex';
+    }
+    mensajeInput.focus();
+}
+
+function cancelarRespuesta() {
+    _replyTargetId = null;
+    const quoteEl = document.getElementById('replyQuote');
+    if (quoteEl) quoteEl.style.display = 'none';
+}
+
+// Override sendBtn para incluir la cita si hay respuesta activa
+const _origSendClick = sendBtn.onclick;
+sendBtn.onclick = async function() {
+    if (_replyTargetId) {
+        const quoteText = document.getElementById('replyQuoteText')?.textContent || '';
+        const contenido = _getEditorContent();
+        if (!contenido || contenido === '<br>') return;
+        // Arma el mensaje con la cita (HTML)
+        const withQuote = `<div class="pub-reply-quote">${quoteText}</div>${contenido}`;
+        sendBtn.disabled = true;
+        try {
+            const res = await fetch('/comentarios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mensaje: withQuote })
+            });
+            if (res.ok) {
+                _clearEditor();
+                cancelarRespuesta();
+                await cargarComentarios();
+            }
+        } catch { showMessage('Error al procesar', true); }
+        finally { sendBtn.disabled = false; }
+        return;
+    }
+    _origSendClick.call(this);
+};
+
+/* ══════════════════════════════════════════════════
+   SISTEMA DE TABS
+   ══════════════════════════════════════════════════ */
+function switchTab(tab) {
+    const panelPub  = document.getElementById('panelPublico');
+    const panelPriv = document.getElementById('panelPrivado');
+    const tabPub    = document.getElementById('tabPublico');
+    const tabPriv   = document.getElementById('tabPrivado');
+    const titleEl   = document.getElementById('chatTitleLabel');
+
+    if (tab === 'publico') {
+        panelPub?.style.setProperty('display', '');
+        panelPriv && (panelPriv.style.display = 'none');
+        tabPub?.classList.add('active');
+        tabPriv?.classList.remove('active');
+        if (titleEl) titleEl.textContent = 'Muro de Sugerencias';
+    } else {
+        panelPub?.style.setProperty('display', 'none');
+        if (panelPriv) { panelPriv.style.display = 'flex'; panelPriv.style.flex = '1'; }
+        tabPub?.classList.remove('active');
+        tabPriv?.classList.add('active');
+        if (titleEl) titleEl.textContent = 'Mensajes Privados';
+        _cargarPanelPrivado();
+        // Limpiar badge al abrir
+        _setBadgePrivado(0);
+    }
+}
+
+function _setBadgePrivado(n) {
+    const badge = document.getElementById('tabPrivadoBadge');
+    if (!badge) return;
+    badge.textContent = n > 9 ? '9+' : n;
+    badge.style.display = n > 0 ? 'inline-flex' : 'none';
+}
+
+async function _pollNoLeidos() {
+    try {
+        const r = await fetch('/mensajes_privados/no_leidos');
+        if (!r.ok) return;
+        const d = await r.json();
+        _setBadgePrivado(d.count || 0);
+    } catch {}
+}
+
+/* ══════════════════════════════════════════════════
+   PANEL PRIVADO — inicialización
+   ══════════════════════════════════════════════════ */
+function _iniciarPrivado() {
+    _pollNoLeidos();
+    if (USER_CONFIG.userRol === 'cliente') {
+        _cargarMensajesPredeterminados();
+    }
+}
+
+async function _cargarPanelPrivado() {
+    if (USER_CONFIG.userRol === 'cliente') {
+        await _cargarHiloCliente();
+    } else {
+        await _cargarHilosVendedor();
+    }
+}
+
+/* ══════════════════════════════════════════════════
+   VISTA CLIENTE
+   ══════════════════════════════════════════════════ */
+async function _cargarMensajesPredeterminados() {
+    const cont = document.getElementById('predefinedBtns');
+    if (!cont) return;
+    try {
+        const r = await fetch('/mensajes_privados/predeterminados');
+        const lista = await r.json();
+        cont.innerHTML = lista.map(m => `
+            <button class="priv-predefined-btn" onclick="enviarMensajePredeterminado(${m.id}, \`${m.texto}\`)">
+                <span class="priv-pred-icon">${m.icono}</span>
+                <span>${m.texto}</span>
+            </button>
+        `).join('');
+    } catch {}
+}
+
+async function _cargarHiloCliente() {
+    const box = document.getElementById('clienteHiloBox');
+    if (!box) return;
+    try {
+        const r = await fetch('/mensajes_privados/mi_hilo');
+        if (!r.ok) return;
+        const msgs = await r.json();
+        box.innerHTML = '';
+        if (!msgs.length) {
+            box.innerHTML = '<div class="priv-hilo-empty"><i class="bi bi-chat-dots"></i><p>Envía un mensaje para iniciar la conversación con nuestro equipo.</p></div>';
+            return;
+        }
+        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.es_vendedor)));
+        box.scrollTop = box.scrollHeight;
+    } catch {}
+}
+
+async function enviarMensajePredeterminado(idMsg, texto) {
+    try {
+        const r = await fetch('/mensajes_privados/enviar', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mensaje: texto, es_predeterminado: true })
+        });
+        if (r.ok) {
+            showMessage('Mensaje enviado al equipo de vendedores');
+            await _cargarHiloCliente();
+        }
+    } catch { showMessage('Error al enviar', true); }
+}
+
+/* ══════════════════════════════════════════════════
+   VISTA VENDEDOR
+   ══════════════════════════════════════════════════ */
+let _hiloSeleccionado = null;
+
+async function _cargarHilosVendedor() {
+    const lista = document.getElementById('hilosLista');
+    if (!lista) return;
+    try {
+        const r = await fetch('/mensajes_privados/hilos');
+        const hilos = await r.json();
+        if (!hilos.length) {
+            lista.innerHTML = '<div class="priv-hilo-empty" style="padding:1.5rem;text-align:center;color:#888;font-size:0.85rem;"><i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:8px;"></i>Sin conversaciones</div>';
+            return;
+        }
+        lista.innerHTML = '';
+        hilos.forEach(h => {
+            const div = document.createElement('div');
+            div.className = 'priv-hilo-item';
+            div.dataset.cedula = h.cedula_cliente;
+            if (h.no_leidos > 0) div.classList.add('has-unread');
+            const foto = h.info_cliente?.imagen || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+            div.innerHTML = `
+                <div class="priv-hilo-avatar">
+                    <img src="${foto}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+                </div>
+                <div class="priv-hilo-info">
+                    <span class="priv-hilo-name">${h.info_cliente?.nombre || h.cedula_cliente}</span>
+                    <span class="priv-hilo-last">${h.ultimo_mensaje?.substring(0, 50) || '...'}</span>
+                </div>
+                ${h.no_leidos > 0 ? `<span class="priv-hilo-badge">${h.no_leidos}</span>` : ''}
+            `;
+            div.onclick = () => abrirConversacion(h.cedula_cliente, h.info_cliente?.nombre || h.cedula_cliente, foto);
+            lista.appendChild(div);
+        });
+    } catch {}
+}
+
+async function abrirConversacion(cedulaCliente, nombreCliente, fotoCliente) {
+    _hiloSeleccionado = cedulaCliente;
+
+    // UI: mostrar header, box, input
+    const empty  = document.getElementById('privConvEmpty');
+    const header = document.getElementById('privConvHeader');
+    const box    = document.getElementById('privConvBox');
+    const input  = document.getElementById('privConvInput');
+    if (empty)  empty.style.display  = 'none';
+    if (header) { header.style.display = 'flex'; header.innerHTML = `
+        <img src="${fotoCliente}" class="priv-conv-avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+        <div>
+            <strong>${nombreCliente}</strong>
+            <small style="display:block;color:#888;font-size:0.72rem;">Cliente</small>
+        </div>
+    `; }
+    if (box)   box.style.display   = 'block';
+    if (input) input.style.display = 'flex';
+
+    // Marcar hilo como activo en sidebar
+    document.querySelectorAll('.priv-hilo-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.cedula === cedulaCliente);
+        if (el.dataset.cedula === cedulaCliente) {
+            el.classList.remove('has-unread');
+            const badge = el.querySelector('.priv-hilo-badge');
+            if (badge) badge.remove();
+        }
+    });
+
+    // Cargar mensajes
+    try {
+        const r = await fetch(`/mensajes_privados/hilo/${cedulaCliente}`);
+        const msgs = await r.json();
+        box.innerHTML = '';
+        if (!msgs.length) {
+            box.innerHTML = '<div class="priv-hilo-empty" style="padding:2rem;text-align:center;color:#aaa;"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;"></i><p>Sin mensajes aún</p></div>';
+        } else {
+            msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, !m.es_vendedor)));
+        }
+        box.scrollTop = box.scrollHeight;
+    } catch {}
+}
+
+async function enviarRespuestaVendedor() {
+    if (!_hiloSeleccionado) return;
+    const textarea = document.getElementById('privRespuestaInput');
+    const msg = (textarea?.value || '').trim();
+    if (!msg) return;
+    const btn = document.getElementById('privEnviarBtn');
+    if (btn) btn.disabled = true;
+    try {
+        const r = await fetch('/mensajes_privados/enviar', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mensaje: msg, cedula_cliente: _hiloSeleccionado })
+        });
+        if (r.ok) {
+            textarea.value = '';
+            await abrirConversacion(_hiloSeleccionado,
+                document.querySelector('#privConvHeader strong')?.textContent || '',
+                document.querySelector('#privConvHeader .priv-conv-avatar')?.src || '');
+        }
+    } catch { showMessage('Error al enviar', true); }
+    finally { if (btn) btn.disabled = false; }
+}
+
+// Enter en el textarea del vendedor envía (Shift+Enter = salto de línea)
+document.addEventListener('DOMContentLoaded', () => {
+    const ta = document.getElementById('privRespuestaInput');
+    if (ta) {
+        ta.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                enviarRespuestaVendedor();
+            }
+        });
+    }
+});
+
+/* ══════════════════════════════════════════════════
+   Render de un mensaje privado
+   ══════════════════════════════════════════════════ */
+function _renderMsgPrivado(m, esMio) {
+    const div = document.createElement('div');
+    div.className = `priv-msg ${esMio ? 'priv-msg--mio' : 'priv-msg--otro'}`;
+    const hora = new Date(m.created_at).toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
+    div.innerHTML = `
+        <div class="priv-msg-bubble">
+            ${m.es_predeterminado ? '<span class="priv-pred-tag"><i class="bi bi-list-check me-1"></i>Predeterminado</span>' : ''}
+            <span class="priv-msg-text">${m.mensaje}</span>
+            <span class="priv-msg-time">${hora}</span>
+        </div>
+    `;
+    return div;
+}
 
 (function() {
     window.history.pushState(null, "", window.location.href);

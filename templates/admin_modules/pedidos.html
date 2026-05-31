@@ -13,82 +13,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <style>
-        /* Margen entre secciones */
-        .widget-panel { margin-bottom: 1.5rem; }
-
-        /* ── Notif panel — bottom-left, integración suave ── */
-        .notif-admin-pedidos {
-            position: fixed;
-            bottom: 20px; left: 20px;
-            width: 320px;
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-            z-index: 1200;
-            overflow: hidden;
-            border: 1px solid #f0e0d0;
-            transform: translateY(calc(100% + 24px));
-            opacity: 0;
-            transition: transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275),
-                        opacity 0.3s ease;
-            pointer-events: none;
-        }
-        .notif-admin-pedidos.is-open {
-            transform: translateY(0);
-            opacity: 1;
-            pointer-events: auto;
-        }
-        [data-theme="dark"] .notif-admin-pedidos {
-            background: #1a1a1a !important;
-            border-color: #2a2a2a !important;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
-        }
-        .notif-pedidos-header {
-            background: linear-gradient(135deg,#d35400,#e67e22);
-            padding: 10px 14px;
-            display: flex; align-items: center; justify-content: space-between;
-            cursor: pointer;
-        }
-        .notif-pedidos-header span { color:#fff; font-weight:700; font-size:0.82rem; }
-        .notif-pedidos-body { max-height: 260px; overflow-y: auto; padding: 6px 0; }
-        .notif-item-row {
-            display:flex; align-items:center; justify-content:space-between;
-            padding:7px 12px; font-size:0.8rem; border-bottom:1px solid #f5f0ea;
-            transition:background 0.15s;
-        }
-        [data-theme="dark"] .notif-item-row { border-color:#222 !important; color:#e8e8e8; }
-        .notif-item-row:hover { background:#fff8f5; }
-        [data-theme="dark"] .notif-item-row:hover { background:#222 !important; }
-        .notif-item-row.inactiva { opacity:0.45; }
-        .notif-pedidos-footer {
-            padding:7px 14px; text-align:center;
-            background:#f9f5f2; border-top:1px solid #f0e0d0;
-        }
-        [data-theme="dark"] .notif-pedidos-footer { background:#111 !important; border-color:#222 !important; }
-
-        /* ── Botón campana bottom-left (encima del panel cuando cerrado) ── */
-        #btnToggleNotifPedidos {
-            position:fixed; bottom:20px; left:20px;
-            width:46px; height:46px; border-radius:50%;
-            background:linear-gradient(135deg,#d35400,#e67e22);
-            color:#fff; border:none; font-size:1.1rem;
-            display:flex; align-items:center; justify-content:center;
-            box-shadow:0 4px 16px rgba(211,84,0,0.4);
-            cursor:pointer; z-index:1201; transition:all 0.3s;
-        }
-        #btnToggleNotifPedidos.panel-open {
-            opacity:0; pointer-events:none; transform:scale(0.8);
-        }
-        #btnToggleNotifPedidos:hover:not(.panel-open) { transform:scale(1.1); }
-        .notif-badge-pedidos {
-            position:absolute; top:-4px; right:-4px;
-            width:18px; height:18px; border-radius:50%;
-            background:#e74c3c; color:#fff;
-            font-size:0.6rem; font-weight:700;
-            display:flex; align-items:center; justify-content:center;
-        }
-    </style>
     {% endif %}
 </head>
 <body>
@@ -100,7 +24,6 @@
     <div class="page-wrapper">
     <main class="mt-4">
 
-        <!-- Widget: Header -->
         <div class="widget-panel" data-panel="header">
             <div class="widget-content card-title-marketing mb-4 text-center">
                 <h3 class="display-6 fw-bold m-0">
@@ -109,7 +32,6 @@
             </div>
         </div>
 
-        <!-- Widget: Stats -->
         <div class="widget-panel" data-panel="stats">
             <div class="widget-content">
                 <div class="row g-3 mb-2" id="statsVentasRow">
@@ -163,7 +85,6 @@
             </div>
         </div>
 
-        <!-- Widget: Filtros -->
         <div class="widget-panel" data-panel="filtros">
             <div class="widget-content">
                 <div class="card p-0 mb-3">
@@ -212,7 +133,6 @@
             </div>
         </div>
 
-        <!-- Widget: Tabla de pedidos -->
         <div class="widget-panel" data-panel="tabla">
             <div class="widget-content">
                 <div class="table-responsive mb-4">
@@ -233,7 +153,6 @@
 
     </main>
 
-    <!-- Modal PDF -->
     <div class="modal fade" id="modalConfigReporte" tabindex="-1" aria-labelledby="modalReporteTitulo">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -293,155 +212,13 @@
         </div>
     </div>
 
-    {# Botones flotantes movidos a la navbar (lápiz + campana del sistema) #}
-
-    </div><!-- /page-wrapper -->
+    </div>
     {% include 'global_modules/footer.html' %}
     <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
-    <script>
-    // ── Notificaciones de pedidos → panel #sistemPanel de la navbar ──
-    let _notifLog = JSON.parse(localStorage.getItem('pedidos_notif_log') || '[]');
-
-    const PEDIDOS_ICONS = {
-        nuevo:     'bi-cart-plus text-success',
-        cancelado: 'bi-x-circle text-danger',
-        estado:    'bi-arrow-repeat text-primary',
-        pago:      'bi-cash-coin text-warning',
-        info:      'bi-info-circle text-muted'
-    };
-
-    function addNotifLog(tipo, mensaje, datos = {}) {
-        const entry = {
-            id:     Date.now(),
-            tipo, mensaje, datos,
-            hora:   new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-            activa: true
-        };
-        _notifLog.unshift(entry);
-        if (_notifLog.length > 30) _notifLog.pop();
-        localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
-        _syncNavBell();
-        _renderNavSistemPanel();
-    }
-
-    let _prevBellCount = 0;
-
-    function _syncNavBell() {
-        const total = _notifLog.length;
-        const cnt   = total > 9 ? '9+' : String(total);
-        const badge = document.getElementById('navBellBadge');
-        const count = document.getElementById('sistemCount');
-        const empty = document.getElementById('sistemEmpty');
-
-        if (badge) {
-            const wasVisible = badge.style.display !== 'none';
-            badge.textContent = cnt;
-            badge.style.display = total > 0 ? 'flex' : 'none';
-            /* Animar si el conteo aumentó */
-            if (total > _prevBellCount && typeof _animateBadge === 'function') {
-                _animateBadge(badge);
-            }
-        }
-        if (count) { count.textContent = cnt; count.style.display = total > 0 ? 'inline-flex' : 'none'; }
-        if (empty) empty.style.display = total === 0 ? 'flex' : 'none';
-        _prevBellCount = total;
-    }
-
-    function _renderNavSistemPanel() {
-        const list  = document.getElementById('sistemList');
-        const empty = document.getElementById('sistemEmpty');
-        if (!list) return;
-
-        if (_notifLog.length === 0) {
-            list.innerHTML = '';
-            if (empty) empty.style.display = 'flex';
-            return;
-        }
-        if (empty) empty.style.display = 'none';
-
-        list.innerHTML = _notifLog.map(n => `
-            <li class="notif-item" data-notif-id="${n.id}"
-                onclick="_pedidosNotifNav(event,'${n.datos?.id_pedido || ''}')">
-                <div class="notif-item-img">
-                    <i class="bi ${PEDIDOS_ICONS[n.tipo] || PEDIDOS_ICONS.info}" style="font-size:1rem;"></i>
-                </div>
-                <div class="notif-item-info">
-                    <strong>${n.mensaje}</strong>
-                    <small>${n.hora}</small>
-                </div>
-                <div class="notif-item-actions">
-                    <button class="btn-notif-visto"
-                            onclick="event.stopPropagation();_pedidosMarcarVisto(${n.id})"
-                            title="Marcar como visto">
-                        <i class="bi bi-check2"></i>
-                    </button>
-                </div>
-            </li>`).join('');
-    }
-
-    window._pedidosNotifNav = function(e, idPedido) {
-        if (e.target.closest('.btn-notif-visto')) return;
-        window.location.href = '/pedidos_page';
-    };
-
-    /* Marcar un ítem como visto → se elimina permanentemente */
-    window._pedidosMarcarVisto = function(id) {
-        const li = document.querySelector(`[data-notif-id="${id}"]`);
-        if (li) {
-            li.style.transition = 'opacity 0.22s, transform 0.22s';
-            li.style.opacity    = '0';
-            li.style.transform  = 'translateX(18px)';
-            setTimeout(() => {
-                _notifLog = _notifLog.filter(x => x.id !== id);
-                localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
-                _syncNavBell();
-                _renderNavSistemPanel();
-            }, 240);
-        }
-    };
-
-    /* Marcar TODO como visto → limpiar el log completo */
-    window._pedidosMarcarTodo = function() {
-        const items = [...document.querySelectorAll('#sistemList .notif-item')];
-        items.forEach((li, i) => {
-            setTimeout(() => {
-                li.style.transition = 'opacity 0.2s, transform 0.2s';
-                li.style.opacity    = '0';
-                li.style.transform  = 'translateX(18px)';
-            }, i * 40);
-        });
-        setTimeout(() => {
-            _notifLog = [];
-            localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
-            _syncNavBell();
-            _renderNavSistemPanel();
-        }, items.length * 40 + 250);
-
-        const readAllBtn = document.getElementById('sistemReadAllBtn');
-        if (readAllBtn) {
-            readAllBtn.innerHTML = '<i class="bi bi-check2-all"></i><span class="notif-read-label">Listo ✓</span>';
-            readAllBtn.disabled  = true;
-            readAllBtn.classList.add('did-read');
-            setTimeout(() => {
-                readAllBtn.innerHTML = '<i class="bi bi-check2-all"></i><span class="notif-read-label">Leído</span>';
-                readAllBtn.disabled  = false;
-                readAllBtn.classList.remove('did-read');
-            }, 3000);
-        }
-    };
-
-    window.addNotifLog = addNotifLog;
-
-    document.addEventListener('DOMContentLoaded', () => {
-        _syncNavBell();
-        _renderNavSistemPanel();
-        /* Sobreescribir el fetch de la API por el log local en esta página */
-        window.cargarNotificacionesSistema = function() { _renderNavSistemPanel(); };
-    });
-    </script>
+    <script src="{{ url_for('static', filename='js/admin_js/pedidos_notif.js') }}"></script>
     <script src="{{ url_for('static', filename='js/admin_js/pedidos.js') }}"></script>
     {% endif %}
 </body>

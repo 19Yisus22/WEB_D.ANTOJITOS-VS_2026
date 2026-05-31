@@ -1,9 +1,3 @@
-﻿
-//  D'Antojitos — Sistema i18n ES / EN
-//  Diccionario extendido — filtro superficial universal
-//  Traduce ABSOLUTAMENTE TODO: textos, placeholders, titles,
-//  valores dinámicos, estados DB, toasts, footer, navbar.
-
 const LANG_DATA = {
   es: {
 
@@ -174,6 +168,7 @@ const LANG_DATA = {
     'legal.accept':          'CONTINUAR',
     'legal.accept_terms':    'Entendido y Aceptar',
     'legal.back_login':      'Volver al inicio de sesión',
+
     'reg.title':         'Crear cuenta',
     'reg.subtitle':      'Completa tus datos para comenzar',
     'reg.personal_data': 'Datos personales',
@@ -275,6 +270,7 @@ const LANG_DATA = {
     'ord.delivered_cnt': 'Entregados',
     'ord.success_rate':  'Tasa de Éxito',
     'ord.waiting':       'Cargando Pedidos — Por favor espere...',
+    'ord.client_name':   'Nombre del Cliente',
 
     'prod.title':        'Módulo Gestión de Productos',
     'prod.subtitle':     'Administra el catálogo de postres disponibles.',
@@ -327,6 +323,9 @@ const LANG_DATA = {
     'prof.auth_email':   'Correo D\'Antojitos',
     'prof.users_mgmt':   'Gestión de Usuarios',
     'prof.users_btn':    'Ir a Gestión de Usuarios',
+    'prof.users_sub':    'Administra usuarios desde el módulo centralizado.',
+    'prof.cedula_hint':  'Ingresa tu número de cédula',
+    'prof.cedula_info':  'Puedes establecer tu cédula real al editar el perfil.',
 
     'inv.title':         'Historial de Facturas',
     'inv.subtitle':      'Visualiza el historial de tus compras.',
@@ -357,6 +356,8 @@ const LANG_DATA = {
     'inv.cancelled_ok':  'Pedido cancelado exitosamente',
     'inv.no_archived':   'No hay facturas archivadas.',
     'inv.no_results_q':  'No se encontraron facturas con ese criterio.',
+    'inv.paid_completed':'Pagada / Completada',
+
     'pay.official':      'Medios de Pago Oficiales',
     'pay.secure':        'Pago 100% Seguro',
     'pay.ref':           'Referencia de Pago',
@@ -365,11 +366,20 @@ const LANG_DATA = {
     'pay.after':         'tras realizar la transferencia',
     'pay.unavailable':   'Canales de pago no disponibles',
     'pay.updating':      'Estamos actualizando nuestras cuentas.',
+
     'nav.orders_open':   'Abrir Módulo Pedidos',
     'nav.no_orders':     'Sin pedidos recientes',
     'nav.no_ads':        'Sin alertas activas',
     'nav.ads_freq':      'Se muestran al público cada 15s',
     'nav.read':          'Leído',
+    'nav.my_notif':      'Mis Notificaciones',
+    'nav.clear':         'Limpiar',
+    'nav.stock_rt':      'Cambios de stock en tiempo real',
+    'nav.go_home':       'Ir a Inicio',
+    'nav.see_catalog':   'Ver Catálogo',
+    'nav.see_cart':      'Ver Carrito',
+    'nav.see_suggest':   'Ver Sugerencias',
+    'nav.usr_mgmt':      'Gestión Usuarios',
 
     'pub.title':         'Panel de Publicidad',
     'pub.subtitle':      'Gestiona y filtra todo el contenido de tu marketing digital.',
@@ -464,6 +474,8 @@ const LANG_DATA = {
     'usr.results':       'Mostrando',
     'usr.of':            'de',
     'usr.users':         'usuarios',
+    'usr.loading':       'Cargando usuarios...',
+    'usr.limits':        'Límites del sistema: máx. 2 administradores y 3 vendedores.',
 
     'footer.contact':    'Contáctame:',
     'footer.follow':     'Síguenos',
@@ -508,6 +520,7 @@ const LANG_DATA = {
     'ph.pub_desc':       'Descripción de la alerta...',
     'ph.pub_ticker':     'Texto...',
     'ph.comment':        'Escribe tu sugerencia aquí...',
+    'ph.cedula_input':   'Ingresa tu número de cédula',
   },
 
   en: {
@@ -679,6 +692,7 @@ const LANG_DATA = {
     'legal.accept':          'CONTINUE',
     'legal.accept_terms':    'Understood & Accept',
     'legal.back_login':      'Back to login',
+
     'reg.title':         'Create account',
     'reg.subtitle':      'Complete your details to get started',
     'reg.personal_data': 'Personal information',
@@ -780,6 +794,7 @@ const LANG_DATA = {
     'ord.delivered_cnt': 'Delivered',
     'ord.success_rate':  'Success Rate',
     'ord.waiting':       'Loading Orders — Please wait...',
+    'ord.client_name':   'Client Name',
 
     'prod.title':        'Product Management',
     'prod.subtitle':     'Manage the available dessert catalog.',
@@ -832,6 +847,9 @@ const LANG_DATA = {
     'prof.auth_email':   'D\'Antojitos Email',
     'prof.users_mgmt':   'User Management',
     'prof.users_btn':    'Go to User Management',
+    'prof.users_sub':    'Manage users from the centralized module.',
+    'prof.cedula_hint':  'Enter your ID number',
+    'prof.cedula_info':  'You can set your actual ID when editing your profile.',
 
     'inv.title':         'Invoice History',
     'inv.subtitle':      'View the history of your purchases.',
@@ -862,6 +880,8 @@ const LANG_DATA = {
     'inv.cancelled_ok':  'Order cancelled successfully',
     'inv.no_archived':   'No archived invoices.',
     'inv.no_results_q':  'No invoices found with that criteria.',
+    'inv.paid_completed':'Paid / Completed',
+
     'pay.official':      'Official Payment Methods',
     'pay.secure':        '100% Secure Payment',
     'pay.ref':           'Payment Reference',
@@ -870,11 +890,20 @@ const LANG_DATA = {
     'pay.after':         'after completing the transfer',
     'pay.unavailable':   'Payment channels unavailable',
     'pay.updating':      'We\'re updating our accounts.',
+
     'nav.orders_open':   'Open Orders Module',
     'nav.no_orders':     'No recent orders',
     'nav.no_ads':        'No active alerts',
     'nav.ads_freq':      'Shown to the public every 15s',
     'nav.read':          'Read',
+    'nav.my_notif':      'My Notifications',
+    'nav.clear':         'Clear',
+    'nav.stock_rt':      'Real-time stock changes',
+    'nav.go_home':       'Go to Home',
+    'nav.see_catalog':   'View Catalog',
+    'nav.see_cart':      'View Cart',
+    'nav.see_suggest':   'View Suggestions',
+    'nav.usr_mgmt':      'User Management',
 
     'pub.title':         'Advertising Panel',
     'pub.subtitle':      'Manage all your digital marketing content.',
@@ -969,6 +998,8 @@ const LANG_DATA = {
     'usr.results':       'Showing',
     'usr.of':            'of',
     'usr.users':         'users',
+    'usr.loading':       'Loading users...',
+    'usr.limits':        'System limits: max. 2 administrators and 3 vendors.',
 
     'footer.contact':    'Contact me:',
     'footer.follow':     'Follow us',
@@ -1013,10 +1044,10 @@ const LANG_DATA = {
     'ph.pub_desc':       'Alert description...',
     'ph.pub_ticker':     'Text...',
     'ph.comment':        'Write your suggestion here...',
+    'ph.cedula_input':   'Enter your ID number',
   }
 };
 
-// Traduce valores que vienen de la base de datos directamente
 const DB_VALUE_MAP = {
   es: {
     'Pendiente':     'Pendiente',
@@ -1052,13 +1083,11 @@ const DB_VALUE_MAP = {
   }
 };
 
-/** Traduce un valor de DB al idioma actual */
 function tDB(value) {
   const lang = getLang();
   return (DB_VALUE_MAP[lang] && DB_VALUE_MAP[lang][value]) || value;
 }
 
-/** @param {'es'|'en'} lang */
 function setLang(lang) {
   if (!LANG_DATA[lang]) return;
   localStorage.setItem('dantojitos_lang', lang);
@@ -1117,17 +1146,12 @@ function getLang() {
   return localStorage.getItem('dantojitos_lang') || 'es';
 }
 
-/** Traducir una clave directamente (uso en JS) */
 function t(key) {
   const lang = getLang();
   return (LANG_DATA[lang] && LANG_DATA[lang][key]) || key;
 }
 
-//  MAPA UNIVERSAL — pares ES→EN para nodos de texto sin data-i18n
-//  Orden: más largo primero para evitar reemplazos parciales
-
 const UNIVERSAL_ES_EN = [
-  // ── Frases largas primero (evita reemplazos parciales) ─────────────────
   ['Guardar Cambios en Servidor','Save Changes to Server'],
   ['Vista Previa — Factura para el Cliente','Preview — Customer Invoice'],
   ['Módulo Gestión de Productos','Product Management'],
@@ -1168,7 +1192,6 @@ const UNIVERSAL_ES_EN = [
   ['se ha terminado','has run out'],
   ['ha sido eliminado','has been removed'],
   ['¡Nuevo!','New!'],
-  ['se ha terminado','has run out'],
   ['Modo edición — arrastra secciones, doble clic para editar textos','Edit mode — drag sections, double-click to edit text'],
   ['Activas se muestran aleatoriamente al público cada 12s','Active ones randomly shown to the public every 12s'],
   ['Se muestran al público cada 15s','Shown to the public every 15s'],
@@ -1214,6 +1237,7 @@ const UNIVERSAL_ES_EN = [
   ['Tipo de Usuario','User Type'],
   ['Seguridad de la Cuenta','Account Security'],
   ['Zona de Peligro','Danger Zone'],
+  ['¡Zona de Peligro!','Danger Zone!'],
   ['Eliminar Cuenta','Delete Account'],
   ['Gestión de Usuarios','User Management'],
   ['Ir a Gestión de Usuarios','Go to User Management'],
@@ -1297,6 +1321,7 @@ const UNIVERSAL_ES_EN = [
   ['Cancelado','Cancelled'],
   ['Emitida','Issued'],
   ['Pagada','Paid'],
+  ['Pagada / Completada','Paid / Completed'],
   ['Anulada','Voided'],
   ['Disponible','Available'],
   ['Agotado','Sold Out'],
@@ -1338,14 +1363,54 @@ const UNIVERSAL_ES_EN = [
   ['de','of'],
   ['usuarios','users'],
   ['Mostrando','Showing'],
+  ['Ir a Inicio','Go to Home'],
+  ['Ir al Inicio','Go to Home'],
+  ['Ver Catálogo','View Catalog'],
+  ['Ver Carrito','View Cart'],
+  ['Ver Sugerencias','View Suggestions'],
+  ['Módulos Principales','Main Modules'],
+  ['Módulos Administrativos','Admin Modules'],
+  ['Módulos de Usuario','User Modules'],
+  ['Panel Vendedor','Vendor Panel'],
+  ['Gestión Usuarios','User Management'],
+  ['Mis Notificaciones','My Notifications'],
+  ['Limpiar','Clear'],
+  ['Cambios de stock en tiempo real','Real-time stock changes'],
+  ['Escribe el contenido aquí...','Write the content here...'],
+  ['Modo administrador','Admin mode'],
+  ['Bienvenida','Welcome'],
+  ['Carrusel','Carousel'],
+  ['Historia','History'],
+  ['Secciones','Sections'],
+  ['Explorar','Explore'],
+  ['Marketing','Marketing'],
+  ['Cargando usuarios...','Loading users...'],
+  ['Administra usuarios desde el módulo centralizado.','Manage users from the centralized module.'],
+  ['Nombre del Cliente','Client Name'],
+  ['Acceso Restringido','Restricted Access'],
+  ['Debes iniciar sesión para acceder a este módulo.','You must sign in to access this module.'],
+  ['Redirigiendo al inicio de sesión...','Redirecting to login...'],
+  ['Acceso Denegado','Access Denied'],
+  ['Tu cuenta no tiene los permisos necesarios para visualizar este contenido.','Your account does not have the necessary permissions to view this content.'],
+  ['Tu cuenta no tiene los permisos necesarios.','Your account does not have the necessary permissions.'],
+  ['Redirigiendo automáticamente...','Redirecting automatically...'],
+  ['VOLVER AL PANEL DE CONTROL','BACK TO CONTROL PANEL'],
+  ['Contáctame:','Contact me:'],
+  ['Síguenos','Follow us'],
+  ['Todos los derechos reservados','All rights reserved'],
+  ['Bancos Digitales:','Digital Banks:'],
+  ['Sábados - Domingos & Festivos | 9:00 AM - 6:00 PM','Saturdays - Sundays & Holidays | 9:00 AM - 6:00 PM'],
+  ['Ingresa tu número de cédula','Enter your ID number'],
+  ['Puedes establecer tu cédula real al editar el perfil.','You can set your actual ID when editing your profile.'],
+  ['Buscar por nombre, correo o cédula...','Search by name, email or ID...'],
+  ['Administra todos los pedidos de tus clientes en este módulo.','Manage all your customers\' orders in this module.'],
+  ['Administra todos los usuarios registrados en D\'Antojitos.','Manage all registered users in D\'Antojitos.'],
+  ['Presione la imagen para cambiarla','Click image to change it'],
+  ['Autenticado con Google','Authenticated with Google'],
+  ['Controla, filtra, archiva y revisa tus facturas con rapidez.','Control, filter, archive and review your invoices quickly.'],
 ];
 
-/**
- * Walker universal bidireccional ES↔EN.
- * Guarda los textos originales la primera vez (ES→EN) para poder
- * restaurarlos exactamente al volver al español.
- */
-const _origCache = new Map();   // nodo de texto → texto original en ES
+const _origCache = new Map();
 
 function _getTextNodes() {
   const nodes = [];
@@ -1404,4 +1469,3 @@ window.setLang = function(lang) {
 document.addEventListener('DOMContentLoaded', () => {
   window.setLang(getLang());
 });
-

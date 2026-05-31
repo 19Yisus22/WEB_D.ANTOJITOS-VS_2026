@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 _RETRY_EXCEPTIONS = ("RemoteProtocolError", "ConnectError", "ReadError", "WriteError", "TimeoutException")
 
 def _run(query) -> object:
-    """Ejecuta la query con retry automático ante errores de conexión HTTP/2."""
     last_exc = None
     for attempt in range(3):
         try:
@@ -27,7 +26,6 @@ def _run(query) -> object:
     raise last_exc
 
 def _run_safe(query) -> object | None:
-    """Ejecuta la query y retorna None si falla (solo para lecturas no críticas)."""
     try:
         return _run(query)
     except Exception as e:
@@ -136,6 +134,17 @@ def usuario_delete(cedula: str) -> list:
 
 def usuario_set_role(cedula: str, id_role: str) -> list:
     return _many(_run(supabase.table("usuarios").update({"id_role": id_role}).eq("cedula", cedula)))
+
+def usuario_count_por_rol(nombre_rol: str, excluir_cedula: str | None = None) -> int:
+    """Devuelve cuántos usuarios tienen el rol indicado, excluyendo opcionalmente una cédula."""
+    id_role = rol_get_id(nombre_rol)
+    if not id_role:
+        return 0
+    q = supabase.table("usuarios").select("cedula", count="exact").eq("id_role", id_role)
+    if excluir_cedula:
+        q = q.neq("cedula", str(excluir_cedula))
+    res = _run(q)
+    return res.count if res and hasattr(res, "count") and res.count is not None else 0
 
 def usuario_touch(cedula: str, ts: str) -> None:
     _run_safe(supabase.table("usuarios").update({"ultima_conexion": ts}).eq("cedula", cedula))
@@ -432,6 +441,81 @@ def inicio_config_save(data: dict) -> None:
         supabase.table("inicio_config").upsert(rows, on_conflict="clave").execute()
     except Exception as e:
         logger.warning("inicio_config_save error: %s", e)
+
+# MENSAJES PRIVADOS (clientes ↔ vendedores)
+# Tabla Supabase requerida:
+#   CREATE TABLE mensajes_privados (
+#     id           UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+#     cedula_cliente    TEXT NOT NULL,
+#     cedula_remitente  TEXT NOT NULL,
+#     es_vendedor       BOOLEAN DEFAULT false,
+#     mensaje           TEXT NOT NULL,
+#     es_predeterminado BOOLEAN DEFAULT false,
+#     leido             BOOLEAN DEFAULT false,
+#     created_at        TIMESTAMPTZ DEFAULT now()
+#   );
+
+_MP_SELECT = "id,cedula_cliente,cedula_remitente,es_vendedor,mensaje,es_predeterminado,leido,created_at"
+
+def mp_get_conversacion(cedula_cliente: str) -> list:
+    return _many(_run(
+        supabase.table("mensajes_privados")
+        .select(_MP_SELECT)
+        .eq("cedula_cliente", cedula_cliente)
+        .order("created_at", desc=False)
+    ))
+
+def mp_get_todos_hilos() -> list:
+    """Devuelve todos los mensajes para que el vendedor pueda agruparlos por cedula_cliente."""
+    return _many(_run(
+        supabase.table("mensajes_privados")
+        .select(_MP_SELECT)
+        .order("created_at", desc=True)
+    ))
+
+def mp_create(cedula_cliente: str, cedula_remitente: str,
+              es_vendedor: bool, mensaje: str, es_predeterminado: bool = False) -> dict | None:
+    return _single(_run(
+        supabase.table("mensajes_privados").insert({
+            "cedula_cliente":    cedula_cliente,
+            "cedula_remitente":  cedula_remitente,
+            "es_vendedor":       es_vendedor,
+            "mensaje":           mensaje,
+            "es_predeterminado": es_predeterminado,
+        })
+    ))
+
+def mp_marcar_leidos(cedula_cliente: str, es_vendedor_leyendo: bool) -> None:
+    """Marca como leídos los mensajes del lado opuesto al lector."""
+    _run_safe(
+        supabase.table("mensajes_privados")
+        .update({"leido": True})
+        .eq("cedula_cliente", cedula_cliente)
+        .eq("es_vendedor", not es_vendedor_leyendo)
+        .eq("leido", False)
+    )
+
+def mp_no_leidos(cedula_cliente: str, para_vendedor: bool) -> int:
+    """Cuenta mensajes no leídos para el receptor indicado."""
+    res = _run(
+        supabase.table("mensajes_privados")
+        .select("id", count="exact")
+        .eq("cedula_cliente", cedula_cliente)
+        .eq("es_vendedor", not para_vendedor)
+        .eq("leido", False)
+    )
+    return res.count if res and hasattr(res, "count") and res.count is not None else 0
+
+def mp_total_no_leidos_vendedor() -> int:
+    """Total de mensajes de clientes no leídos por ningún vendedor."""
+    res = _run(
+        supabase.table("mensajes_privados")
+        .select("id", count="exact")
+        .eq("es_vendedor", False)
+        .eq("leido", False)
+    )
+    return res.count if res and hasattr(res, "count") and res.count is not None else 0
+
 
 # TABLA UTILIDADES
 

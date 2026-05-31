@@ -8,300 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
-    <style>
-        body { background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%); }
-        .card-title-marketing {
-            background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
-            color: white; padding: 2.2rem 2rem; border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(211,84,0,0.22);
-            position: relative; overflow: hidden; margin-bottom: 1.5rem;
-        }
-        .card-title-marketing::before {
-            content:''; position:absolute; top:-60%; left:-10%;
-            width:260px; height:260px; background:rgba(255,255,255,0.06); border-radius:50%;
-        }
-        .card-title-marketing::after {
-            content:''; position:absolute; bottom:-40%; right:-5%;
-            width:200px; height:200px; background:rgba(255,255,255,0.04); border-radius:50%;
-        }
-        .user-avatar { width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--theme-border); }
-        .user-avatar-broken { width:42px;height:42px;border-radius:50%;display:flex;align-items:center;
-            justify-content:center;background:#f0f0f0;color:#adb5bd;font-size:1.2rem;border:2px solid #dee2e6; }
-        .role-badge  { font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px; }
-        .role-admin   { background:#fff3cd;color:#856404; }
-        .role-vendedor{ background:#cfe2ff;color:#084298; }
-        .role-cliente { background:#d1e7dd;color:#0a3622; }
-        .method-google{ background:#fce8e6;color:#d32f2f; }
-        .method-email { background:#e8f4fd;color:#0277bd; }
-        .search-bar   { max-width:400px; }
-        .user-row     { transition:background 0.15s, box-shadow 0.15s; cursor:default; }
-        .user-row:hover { background:rgba(211,84,0,0.04) !important; box-shadow: inset 3px 0 0 #d35400; }
-        .action-btn   { padding:4px 10px;border-radius:8px;font-size:0.78rem;font-weight:600; }
-        [data-theme="dark"] .role-admin    { background:#332900;color:#ffc107; }
-        [data-theme="dark"] .role-vendedor { background:#001133;color:#90caf9; }
-        [data-theme="dark"] .role-cliente  { background:#002211;color:#81c784; }
-        [data-theme="dark"] .method-google { background:#330000;color:#ef9a9a; }
-        [data-theme="dark"] .method-email  { background:#001a33;color:#4fc3f7; }
-        .stats-grid   { display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-bottom:28px; }
-        .stat-box     { background:var(--theme-card);border:1px solid var(--theme-border);border-radius:14px;
-            padding:18px 16px;text-align:center;transition:transform 0.2s, box-shadow 0.2s; }
-        .stat-box:hover { transform:translateY(-3px); box-shadow:0 8px 20px rgba(211,84,0,0.12); }
-        .stat-box .num{ font-size:1.8rem;font-weight:800;color:var(--theme-link); }
-        .stat-box .lbl{ font-size:0.78rem;color:var(--theme-text-muted);text-transform:uppercase;letter-spacing:0.5px; }
-        /* Sortable table */
-        .sortable-col { cursor:pointer; user-select:none; white-space:nowrap; }
-        .sortable-col:hover { color: #d35400; }
-        .sort-icon { font-size:0.65rem; margin-left:4px; opacity:0.5; }
-        .sort-asc .sort-icon, .sort-desc .sort-icon { opacity:1; color:#d35400; }
-        .table-card { border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.07); }
-        .table thead th { background: #1a1a1a; color:#fff; border:none; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.6px; }
-        .table-striped > tbody > tr:nth-of-type(odd) > * { background-color: rgba(211,84,0,0.02); }
-        .badge-online { width:8px;height:8px;border-radius:50%;background:#27ae60;display:inline-block; }
-        @media (max-width:768px) {
-            .table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            .table-card .table { min-width: 700px; }
-            .action-btn { padding:4px 8px; font-size:0.72rem; }
-            .search-bar { max-width:100%; }
-        }
-
-        /* ── User Detail Modal ── */
-        .udet-content {
-            border-radius: 24px !important;
-            overflow: hidden;
-            border: none !important;
-            box-shadow: 0 32px 80px rgba(0,0,0,0.2) !important;
-        }
-
-        .udet-hero {
-            position: relative;
-            background: linear-gradient(135deg, #1a0800 0%, #d35400 45%, #f39c12 100%);
-            padding: 32px 28px 80px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .udet-hero-bg {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.12) 0%, transparent 60%),
-                        radial-gradient(ellipse at 10% 80%, rgba(0,0,0,0.2) 0%, transparent 50%);
-            pointer-events: none;
-        }
-
-        .udet-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            z-index: 10;
-            filter: brightness(2);
-            opacity: 0.8;
-        }
-        .udet-close:hover { opacity: 1; }
-
-        .udet-avatar-wrap {
-            position: relative;
-            z-index: 2;
-            margin-bottom: 16px;
-        }
-
-        .udet-avatar-ring {
-            width: 110px;
-            height: 110px;
-            border-radius: 50%;
-            padding: 4px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.4));
-            box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 0 0 4px rgba(255,255,255,0.2);
-        }
-
-        .udet-avatar {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .udet-auth-badge {
-            position: absolute;
-            bottom: 2px;
-            right: 2px;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            border: 2px solid rgba(255,255,255,0.8);
-        }
-
-        .udet-hero-info {
-            text-align: center;
-            z-index: 2;
-            position: relative;
-        }
-
-        .udet-name {
-            color: #fff;
-            font-size: 1.45rem;
-            font-weight: 900;
-            letter-spacing: -0.3px;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            margin: 0 0 4px;
-        }
-
-        .udet-username {
-            color: rgba(255,255,255,0.75);
-            font-size: 0.88rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-            letter-spacing: 0.3px;
-        }
-
-        .udet-badges {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .udet-rol-badge {
-            padding: 5px 14px;
-            border-radius: 20px;
-            font-size: 0.76rem;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .udet-method-badge {
-            display: flex;
-            align-items: center;
-            padding: 5px 12px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.18);
-            color: #fff;
-            font-size: 0.76rem;
-            font-weight: 700;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,255,255,0.25);
-        }
-
-        .udet-body {
-            padding: 0 24px 20px;
-            margin-top: -48px;
-            position: relative;
-            z-index: 3;
-        }
-
-        .udet-section-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #d35400;
-            padding: 14px 0 8px;
-            border-bottom: 2px solid rgba(211,84,0,0.12);
-            margin-bottom: 10px;
-        }
-        .udet-section-title i { font-size: 0.85rem; }
-
-        .udet-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .udet-info-card {
-            background: #f8f9fa;
-            border-radius: 14px;
-            padding: 12px 14px;
-            border: 1px solid #eef1f5;
-            transition: box-shadow 0.2s, transform 0.15s;
-        }
-        .udet-info-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.07); transform: translateY(-1px); }
-        .udet-warm { background: linear-gradient(135deg, #fff8f0, #fff3e0) !important; border-color: rgba(255,152,0,0.15) !important; }
-        .udet-green { background: linear-gradient(135deg, #f0fff4, #e8f5e9) !important; border-color: rgba(39,174,96,0.15) !important; }
-
-        .udet-info-label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.65rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: #888;
-            margin-bottom: 5px;
-        }
-        .udet-info-label i { color: #d35400; font-size: 0.75rem; }
-
-        .udet-info-value {
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: #1a1a1a;
-            line-height: 1.4;
-        }
-
-        .udet-footer {
-            display: flex;
-            gap: 8px;
-            padding: 16px 24px 22px;
-            background: #f8f9fa;
-            border-top: 1px solid #eef1f5;
-            flex-wrap: wrap;
-        }
-
-        .udet-btn {
-            flex: 1;
-            min-width: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 10px 14px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .udet-btn-ghost   { background: #fff; color: #d35400; border: 1.5px solid rgba(211,84,0,0.3); }
-        .udet-btn-ghost:hover { background: rgba(211,84,0,0.06); transform: translateY(-1px); }
-        .udet-btn-warning { background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff; }
-        .udet-btn-warning:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(230,126,34,0.35); }
-        .udet-btn-danger  { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; }
-        .udet-btn-danger:hover  { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(231,76,60,0.3); }
-        .udet-btn-close   { background: #1a1a1a; color: #fff; }
-        .udet-btn-close:hover   { background: #333; transform: translateY(-1px); }
-
-        @media (max-width: 576px) {
-            .udet-grid { grid-template-columns: 1fr; }
-            .udet-btn { min-width: 80px; font-size: 0.72rem; padding: 9px 10px; }
-            .udet-name { font-size: 1.2rem; }
-        }
-
-        [data-theme="dark"] .udet-content { box-shadow: 0 32px 80px rgba(0,0,0,0.6) !important; }
-        [data-theme="dark"] .udet-hero { background: linear-gradient(135deg, #0d0d0d 0%, #8a2200 45%, #b45309 100%) !important; }
-        [data-theme="dark"] .udet-body { background: transparent; }
-        [data-theme="dark"] .udet-info-card { background: #1e1e1e !important; border-color: #2a2a2a !important; }
-        [data-theme="dark"] .udet-info-value { color: #e8e8e8 !important; }
-        [data-theme="dark"] .udet-info-label { color: #666 !important; }
-        [data-theme="dark"] .udet-warm { background: linear-gradient(135deg, #1a1200, #201500) !important; border-color: rgba(255,152,0,0.15) !important; }
-        [data-theme="dark"] .udet-green { background: linear-gradient(135deg, #0a1f10, #0d2714) !important; border-color: rgba(39,174,96,0.15) !important; }
-        [data-theme="dark"] .udet-section-title { color: #f0883e !important; border-color: rgba(240,136,62,0.2) !important; }
-        [data-theme="dark"] .udet-footer { background: #141414 !important; border-color: #2a2a2a !important; }
-        [data-theme="dark"] .udet-btn-ghost { background: #1e1e1e !important; color: #f0883e !important; border-color: rgba(240,136,62,0.3) !important; }
-        [data-theme="dark"] .udet-btn-close { background: #2a2a2a !important; color: #e8e8e8 !important; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_modules/style_gestion_usuarios.css') }}">
 </head>
 <body>
     {% include 'global_modules/navbar.html' %}
@@ -314,12 +21,6 @@
                 Administra todos los usuarios registrados en D'Antojitos.</p>
         </div>
 
-        <div class="d-flex align-items-center justify-content-end mb-3">
-            <button class="btn btn-outline-secondary btn-sm" onclick="cargarUsuarios()">
-                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
-            </button>
-        </div>
-
         <div class="stats-grid" id="statsGrid">
             <div class="stat-box"><div class="num" id="statTotal">-</div><div class="lbl">Total</div></div>
             <div class="stat-box"><div class="num" id="statAdmins">-</div><div class="lbl">Admins</div></div>
@@ -330,23 +31,48 @@
 
         <div class="card border-0 shadow-sm">
             <div class="card-body p-3">
-                <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                    <div class="input-group search-bar">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" id="buscarUsuario" class="form-control"
-                               placeholder="Nombre, correo o cédula..." oninput="filtrarUsuarios()">
+                <div class="gu-toolbar">
+
+                    <!-- Barra de búsqueda -->
+                    <div class="gu-search-wrap">
+                        <i class="bi bi-search gu-search-icon"></i>
+                        <input type="text" id="buscarUsuario" class="gu-search-input"
+                               placeholder="Buscar por nombre, correo o cédula..."
+                               oninput="filtrarUsuarios()" autocomplete="off">
+                        <button class="gu-search-clear" id="btnClearSearch" style="display:none;"
+                                onclick="document.getElementById('buscarUsuario').value='';document.getElementById('btnClearSearch').style.display='none';filtrarUsuarios();">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
                     </div>
-                    <select id="filtroRol" class="form-select" style="max-width:150px;" onchange="filtrarUsuarios()">
-                        <option value="">Todos los roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="vendedor">Vendedor</option>
-                        <option value="cliente">Cliente</option>
-                    </select>
-                    <select id="filtroAuth" class="form-select" style="max-width:160px;" onchange="filtrarUsuarios()">
-                        <option value="">Todos los métodos</option>
-                        <option value="google">Google</option>
-                        <option value="email">Correo</option>
-                    </select>
+
+                    <!-- Filtros select -->
+                    <div class="gu-filters">
+                        <div class="gu-select-wrap">
+                            <i class="bi bi-shield-fill gu-select-icon"></i>
+                            <select id="filtroRol" class="gu-select" onchange="filtrarUsuarios()">
+                                <option value="">Todos los roles</option>
+                                <option value="admin">Admin</option>
+                                <option value="vendedor">Vendedor</option>
+                                <option value="cliente">Cliente</option>
+                            </select>
+                            <i class="bi bi-chevron-down gu-select-chevron"></i>
+                        </div>
+
+                        <div class="gu-select-wrap">
+                            <i class="bi bi-key-fill gu-select-icon"></i>
+                            <select id="filtroAuth" class="gu-select" onchange="filtrarUsuarios()">
+                                <option value="">Todos los métodos</option>
+                                <option value="google">Google</option>
+                                <option value="email">Correo</option>
+                            </select>
+                            <i class="bi bi-chevron-down gu-select-chevron"></i>
+                        </div>
+
+                        <button class="gu-refresh-btn" onclick="cargarUsuarios()" title="Actualizar lista">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+
                 </div>
 
                 <div class="table-responsive table-card">
@@ -400,11 +126,20 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-2" id="modalRolNombre"></p>
-                    <select id="selectNuevoRol" class="form-select">
+                    <select id="selectNuevoRol" class="form-select mb-2">
                         <option value="cliente">Cliente</option>
                         <option value="vendedor">Vendedor</option>
                         <option value="admin">Admin</option>
                     </select>
+                    <!-- Mensaje de error del límite de roles -->
+                    <div id="modalRolError"
+                         class="alert alert-danger py-2 px-3 mb-0 small fw-semibold"
+                         style="display:none;border-radius:10px;font-size:0.82rem;">
+                    </div>
+                    <div class="mt-2 text-muted" style="font-size:0.74rem;line-height:1.4;">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Límites del sistema: máx. <strong>2 administradores</strong> y <strong>3 vendedores</strong>.
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
@@ -417,340 +152,13 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/global_js/i18n.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_js/gestion_usuarios.js') }}"></script>
     <script>
-    let _usuarios = [];
-    let _cedula_modal = null;
-    let _sortCol = '';
-    let _sortAsc = true;
-    let _paginaUsuarios = 1;
-    const _ITEMS_PAG = 10;
-    const _modal_rol = new bootstrap.Modal(document.getElementById('modalRol'));
-
-    const ROLES_CLASS = { admin:'role-admin', vendedor:'role-vendedor', cliente:'role-cliente', visitante:'role-cliente' };
-
-    function _fecha(iso) {
-        if (!iso) return '-';
-        try { return new Date(iso).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' }); } catch { return '-'; }
-    }
-
-    async function cargarUsuarios() {
-        try {
-            const res  = await fetch('/listar_usuarios');
-            _usuarios  = await res.json();
-            _actualizarStats();
-            filtrarUsuarios();
-        } catch { mostrarAlerta('Error al cargar usuarios', true); }
-    }
-
-    function _actualizarStats() {
-        document.getElementById('statTotal').textContent     = _usuarios.length;
-        document.getElementById('statAdmins').textContent    = _usuarios.filter(u => u.rol === 'admin').length;
-        document.getElementById('statVendedores').textContent= _usuarios.filter(u => u.rol === 'vendedor').length;
-        document.getElementById('statClientes').textContent  = _usuarios.filter(u => u.rol === 'cliente').length;
-        document.getElementById('statGoogle').textContent    = _usuarios.filter(u => u.auth_method === 'google').length;
-    }
-
-    function filtrarUsuarios() {
-        const q    = (document.getElementById('buscarUsuario').value || '').toLowerCase();
-        const rol  = document.getElementById('filtroRol').value;
-        const auth = document.getElementById('filtroAuth').value;
-
-        const filtrados = _usuarios.filter(u => {
-            const texto = `${u.nombre_completo} ${u.correo} ${u.cedula}`.toLowerCase();
-            const okQ   = !q   || texto.includes(q);
-            const okRol = !rol || u.rol === rol;
-            const okAuth= !auth|| u.auth_method === auth;
-            return okQ && okRol && okAuth;
+        /* Mostrar/ocultar botón limpiar búsqueda */
+        document.getElementById('buscarUsuario').addEventListener('input', function() {
+            const btn = document.getElementById('btnClearSearch');
+            if (btn) btn.style.display = this.value.length > 0 ? 'flex' : 'none';
         });
-
-        _paginaUsuarios = 1;
-        _renderTabla(filtrados);
-        const inicio = Math.min((_paginaUsuarios - 1) * _ITEMS_PAG + 1, filtrados.length);
-        const fin    = Math.min(_paginaUsuarios * _ITEMS_PAG, filtrados.length);
-        document.getElementById('conteoResultados').textContent =
-            filtrados.length > 0
-            ? `Mostrando ${inicio}–${fin} de ${filtrados.length} usuarios`
-            : `0 resultados de ${_usuarios.length} usuarios`;
-    }
-
-    function sortTabla(col) {
-        if (_sortCol === col) { _sortAsc = !_sortAsc; }
-        else { _sortCol = col; _sortAsc = true; }
-        document.querySelectorAll('.sort-icon').forEach(el => {
-            el.className = 'bi bi-chevron-expand sort-icon';
-            el.closest('.sortable-col')?.classList.remove('sort-asc','sort-desc');
-        });
-        const iconEl = document.getElementById('sort-' + col);
-        if (iconEl) {
-            iconEl.className = `bi bi-chevron-${_sortAsc ? 'up' : 'down'} sort-icon`;
-            iconEl.closest('.sortable-col')?.classList.add(_sortAsc ? 'sort-asc' : 'sort-desc');
-        }
-        filtrarUsuarios();
-    }
-
-    function _avatarHTML(u) {
-        if (u.imagen_url) {
-            return `<img src="${u.imagen_url}" class="user-avatar"
-                        onerror="this.outerHTML='<div class=\\'user-avatar-broken\\'><i class=\\'bi bi-image-slash\\'></i></div>'">`;
-        }
-        return `<div class="user-avatar-broken"><i class="bi bi-person-fill"></i></div>`;
-    }
-
-    function _renderPaginacion(total, pagina) {
-        let nav = document.getElementById('paginacionUsuarios');
-        if (!nav) {
-            nav = document.createElement('nav');
-            nav.id = 'paginacionUsuarios';
-            nav.className = 'mt-3';
-            document.getElementById('conteoResultados').after(nav);
-        }
-        const maxPag = Math.ceil(total / _ITEMS_PAG);
-        if (maxPag <= 1) { nav.innerHTML = ''; return; }
-        let html = '<ul class="pagination pagination-sm justify-content-center mb-0">';
-        for (let i = 1; i <= maxPag; i++) {
-            html += `<li class="page-item ${i === pagina ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="event.preventDefault();_paginaUsuarios=${i};filtrarUsuarios();">${i}</a>
-                     </li>`;
-        }
-        html += '</ul>';
-        nav.innerHTML = html;
-    }
-
-    function _renderTabla(lista) {
-        const tbody = document.getElementById('tablaUsuarios');
-        if (!lista.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bi bi-search display-6 d-block mb-2"></i>Sin resultados</td></tr>';
-            _renderPaginacion(0, 1);
-            return;
-        }
-        let ordenada = [...lista];
-        if (_sortCol) {
-            ordenada.sort((a,b) => {
-                const va = (a[_sortCol] || '').toString().toLowerCase();
-                const vb = (b[_sortCol] || '').toString().toLowerCase();
-                return _sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
-            });
-        }
-        _renderPaginacion(ordenada.length, _paginaUsuarios);
-        const inicio = (_paginaUsuarios - 1) * _ITEMS_PAG;
-        const paginada = ordenada.slice(inicio, inicio + _ITEMS_PAG);
-        tbody.innerHTML = '';
-        paginada.forEach(u => {
-            const tr = document.createElement('tr');
-            tr.className = 'user-row';
-            tr.innerHTML = `
-                <td>${_avatarHTML(u)}</td>
-                <td>
-                    <div class="fw-semibold" style="font-size:0.9rem;">${u.nombre_completo || '-'}</div>
-                    ${u.username ? `<small class="text-muted">@${u.username}</small>` : ''}
-                </td>
-                <td><small class="text-muted">${u.cedula || '-'}</small></td>
-                <td>
-                    <div class="d-flex align-items-center gap-1">
-                        <small>${u.correo || '-'}</small>
-                        <button class="btn btn-sm p-0 border-0 text-muted ms-1 btn-copiar-correo" title="Copiar correo" data-correo="${u.correo || ''}">
-                            <i class="bi bi-clipboard" style="font-size:0.75rem;"></i>
-                        </button>
-                    </div>
-                </td>
-                <td><span class="role-badge ${ROLES_CLASS[u.rol] || 'role-cliente'}">${u.rol || 'cliente'}</span></td>
-                <td>
-                    <span class="role-badge ${u.auth_method === 'google' ? 'method-google' : 'method-email'}">
-                        <i class="bi bi-${u.auth_method === 'google' ? 'google' : 'envelope-fill'} me-1"></i>
-                        ${u.auth_method === 'google' ? 'Google' : 'Correo'}
-                    </span>
-                </td>
-                <td><small class="text-muted">${_fecha(u.fecha_creacion)}</small></td>
-                <td class="text-center">
-                    <div class="d-flex gap-1 justify-content-center">
-                        <button class="btn btn-outline-secondary action-btn btn-ver-usuario" title="Ver detalles" data-idx="${_usuarios.indexOf(u)}">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                        <button class="btn btn-outline-primary action-btn"
-                                onclick="abrirModalRol('${u.cedula}','${u.nombre_completo}','${u.rol}')"
-                                title="Cambiar rol">
-                            <i class="bi bi-shield-lock"></i>
-                        </button>
-                        <button class="btn btn-outline-danger action-btn"
-                                onclick="eliminarUsuario('${u.correo}','${u.nombre_completo}')"
-                                title="Eliminar usuario">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </td>`;
-            tr.querySelector('.btn-ver-usuario').onclick = () => mostrarDetalleUsuario(u);
-            tr.querySelector('.btn-copiar-correo').onclick = async (e) => {
-                const btn = e.currentTarget;
-                const correo = btn.dataset.correo;
-                try {
-                    await navigator.clipboard.writeText(correo);
-                    btn.innerHTML = '<i class="bi bi-clipboard-check text-success" style="font-size:0.75rem;"></i>';
-                    setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard" style="font-size:0.75rem;"></i>'; }, 2000);
-                    mostrarAlerta('Correo copiado al portapapeles');
-                } catch { mostrarAlerta('No se pudo copiar el correo', true); }
-            };
-            tbody.appendChild(tr);
-        });
-    }
-
-    function abrirModalRol(cedula, nombre, rolActual) {
-        _cedula_modal = cedula;
-        document.getElementById('modalRolNombre').textContent  = nombre;
-        document.getElementById('selectNuevoRol').value        = rolActual || 'cliente';
-        document.getElementById('btnGuardarRol').onclick       = guardarRol;
-        _modal_rol.show();
-    }
-
-    async function guardarRol() {
-        const nuevoRol = document.getElementById('selectNuevoRol').value;
-        try {
-            const res  = await fetch('/actualizar_rol_usuario', {
-                method: 'PUT',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ cedula: _cedula_modal, rol: nuevoRol })
-            });
-            const data = await res.json();
-            if (data.ok) { mostrarAlerta('Rol actualizado'); _modal_rol.hide(); cargarUsuarios(); }
-            else mostrarAlerta(data.error || 'Error', true);
-        } catch { mostrarAlerta('Error de conexión', true); }
-    }
-
-    function eliminarUsuario(correo, nombre) {
-        mostrarConfirmacionApp(
-            'Eliminar Usuario',
-            `¿Deseas eliminar permanentemente a <strong>${nombre}</strong>? Esta acción no se puede deshacer.`,
-            async () => {
-                try {
-                    const res  = await fetch('/eliminar_usuario_admin', {
-                        method: 'DELETE',
-                        headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify({ correo })
-                    });
-                    const data = await res.json();
-                    if (data.ok) { mostrarAlerta('Usuario eliminado'); cargarUsuarios(); }
-                    else mostrarAlerta(data.error || 'Error', true);
-                } catch { mostrarAlerta('Error de conexión', true); }
-            }
-        );
-    }
-
-    function mostrarDetalleUsuario(u) {
-        const esGoogle     = u.auth_method === 'google';
-        const rol          = u.rol || 'cliente';
-        const rolClass     = ROLES_CLASS[rol] || 'role-cliente';
-        const fmtDate = iso => iso
-            ? new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
-            : '—';
-        const fechaCreacion = fmtDate(u.fecha_creacion);
-        const fechaConexion = fmtDate(u.ultima_conexion);
-
-        const ROL_ICONS = { admin:'bi-shield-fill-check', vendedor:'bi-shop', cliente:'bi-person-fill', visitante:'bi-eye' };
-        const ROL_COLORS = { admin:'#856404', vendedor:'#084298', cliente:'#0a3622' };
-        const ROL_BKGS   = { admin:'#fff3cd', vendedor:'#cfe2ff', cliente:'#d1e7dd' };
-
-        const metodo = esGoogle
-            ? `<img src="/static/uploads/googlogo.ico" style="width:14px;height:14px;margin-right:4px;">Google`
-            : `<i class="bi bi-envelope-fill" style="margin-right:4px;color:#0277bd;"></i>Correo D'Antojitos`;
-
-        const infoRow = (icon, label, value, accent='') => `
-            <div class="udet-info-card${accent ? ' udet-'+accent : ''}">
-                <div class="udet-info-label"><i class="bi ${icon}"></i>${label}</div>
-                <div class="udet-info-value">${value || '<span style="opacity:.45">—</span>'}</div>
-            </div>`;
-
-        const existing = document.getElementById('modalDetalleUsuario');
-        if (existing) existing.remove();
-        const modal = document.createElement('div');
-        modal.id = 'modalDetalleUsuario';
-        modal.className = 'modal fade';
-        modal.setAttribute('tabindex', '-1');
-        modal.innerHTML = `
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content udet-content">
-
-                    <div class="udet-hero">
-                        <div class="udet-hero-bg"></div>
-                        <button type="button" class="btn-close btn-close-white udet-close" data-bs-dismiss="modal"></button>
-
-                        <div class="udet-avatar-wrap">
-                            <div class="udet-avatar-ring">
-                                <img src="${u.imagen_url || '/static/uploads/default_icon_profile.png'}"
-                                     onerror="this.src='/static/uploads/default_icon_profile.png'"
-                                     class="udet-avatar">
-                            </div>
-                            <div class="udet-auth-badge">
-                                ${esGoogle
-                                    ? '<img src="/static/uploads/googlogo.ico" style="width:16px;height:16px;">'
-                                    : '<i class="bi bi-envelope-fill" style="color:#d35400;font-size:.85rem;"></i>'}
-                            </div>
-                        </div>
-
-                        <div class="udet-hero-info">
-                            <h3 class="udet-name">${u.nombre_completo || '—'}</h3>
-                            ${u.username ? `<div class="udet-username">@${u.username}</div>` : ''}
-                            <div class="udet-badges">
-                                <span class="udet-rol-badge" style="background:${ROL_BKGS[rol]||'#eee'};color:${ROL_COLORS[rol]||'#555'};">
-                                    <i class="bi ${ROL_ICONS[rol]||'bi-person'} me-1"></i>${rol.charAt(0).toUpperCase()+rol.slice(1)}
-                                </span>
-                                <span class="udet-method-badge">${metodo}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="udet-body">
-                        <div class="udet-section-title">
-                            <i class="bi bi-person-lines-fill"></i>Información Personal
-                        </div>
-                        <div class="udet-grid">
-                            ${infoRow('bi-card-text', 'Cédula / ID', `<strong class="font-monospace">${u.cedula||'—'}</strong>`)}
-                            ${infoRow('bi-telephone-fill', 'Teléfono', u.telefono)}
-                            ${infoRow('bi-envelope-fill', 'Correo', `<span style="word-break:break-all;font-size:.88rem;">${u.correo||'—'}</span>`)}
-                            ${infoRow('bi-geo-alt-fill', 'Dirección', `<span style="font-size:.88rem;">${u.direccion||'—'}</span>`)}
-                        </div>
-
-                        <div class="udet-section-title mt-3">
-                            <i class="bi bi-activity"></i>Actividad de Cuenta
-                        </div>
-                        <div class="udet-grid">
-                            ${infoRow('bi-calendar-plus-fill', 'Registro', `<span style="font-size:.85rem;">${fechaCreacion}</span>`, 'warm')}
-                            ${infoRow('bi-clock-history', 'Última Conexión', `<span style="font-size:.85rem;">${fechaConexion}</span>`, 'green')}
-                        </div>
-
-                        <div class="udet-section-title mt-3">
-                            <i class="bi bi-gear-fill"></i>Preferencias
-                        </div>
-                        <div class="udet-grid">
-                            ${infoRow('bi-wallet2', 'Método de Pago', u.metodo_pago)}
-                            ${infoRow('bi-shield-lock-fill', 'Autenticación', metodo)}
-                        </div>
-                    </div>
-
-                    <div class="udet-footer">
-                        <button class="udet-btn udet-btn-ghost"
-                                onclick="navigator.clipboard.writeText('${u.correo||''}').then(()=>mostrarAlerta('Correo copiado'))">
-                            <i class="bi bi-clipboard-fill"></i>Copiar Correo
-                        </button>
-                        <button class="udet-btn udet-btn-warning"
-                                onclick="abrirModalRol('${u.cedula}','${u.nombre_completo}','${u.rol}');bootstrap.Modal.getInstance(document.getElementById('modalDetalleUsuario'))?.hide()">
-                            <i class="bi bi-shield-shaded"></i>Cambiar Rol
-                        </button>
-                        <button class="udet-btn udet-btn-danger"
-                                onclick="eliminarUsuario('${u.correo}','${u.nombre_completo}');bootstrap.Modal.getInstance(document.getElementById('modalDetalleUsuario'))?.hide()">
-                            <i class="bi bi-trash3-fill"></i>Eliminar
-                        </button>
-                        <button type="button" class="udet-btn udet-btn-close" data-bs-dismiss="modal">
-                            <i class="bi bi-x-lg"></i>Cerrar
-                        </button>
-                    </div>
-
-                </div>
-            </div>`;
-        document.body.appendChild(modal);
-        new bootstrap.Modal(modal).show();
-        modal.addEventListener('hidden.bs.modal', () => modal.remove());
-    }
-
-    document.addEventListener('DOMContentLoaded', cargarUsuarios);
     </script>
 </body>
 </html>

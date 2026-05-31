@@ -31,16 +31,42 @@ def listar_usuarios():
         return jsonify({"error": str(e)}), 500
 
 
+# Límites máximos por rol
+_LIMITES_ROL = {
+    "admin":    2,
+    "vendedor": 3,
+}
+_NOMBRES_ROL = {
+    "admin":    "administrador",
+    "vendedor": "vendedor",
+}
+
 @perfil_usuarios_bp.route("/actualizar_rol_usuario", methods=["PUT"])
 @admin_required
 def actualizar_rol_usuario():
     data      = request.get_json() or {}
-    cedula    = data.get("cedula") or data.get("id")
-    nuevo_rol = data.get("rol")
+    cedula    = str(data.get("cedula") or data.get("id") or "").strip()
+    nuevo_rol = (data.get("rol") or "").strip().lower()
+
+    if not cedula or not nuevo_rol:
+        return jsonify({"ok": False, "error": "Datos incompletos"}), 400
 
     id_role = db.rol_get_id(nuevo_rol)
     if not id_role:
         return jsonify({"ok": False, "error": "Rol no encontrado"}), 404
+
+    # Verificar límite antes de asignar
+    limite = _LIMITES_ROL.get(nuevo_rol)
+    if limite is not None:
+        # Excluir al propio usuario del conteo (por si ya tenía ese rol)
+        conteo_actual = db.usuario_count_por_rol(nuevo_rol, excluir_cedula=cedula)
+        if conteo_actual >= limite:
+            nombre_rol = _NOMBRES_ROL.get(nuevo_rol, nuevo_rol)
+            plural     = "es" if nuevo_rol == "admin" else "es"
+            return jsonify({
+                "ok":    False,
+                "error": f"Límite alcanzado: el sistema solo permite {limite} {nombre_rol}{plural}."
+            }), 409
 
     db.usuario_set_role(cedula, id_role)
     return jsonify({"ok": True})

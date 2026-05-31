@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual del Administrador - D'Antojitos</title>
+    <title>
+        {% if session.get('rol') == 'admin' %}Manual del Administrador
+        {% elif session.get('rol') == 'vendedor' %}Manual del Vendedor
+        {% else %}Manual de Usuario
+        {% endif %} - D'Antojitos
+    </title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_modules/style_manual.css') }}">
@@ -12,7 +17,7 @@
 <body>
     <div id="scrollProgressBar"></div>
 
-    {% if session.get('user_id') and session.get('rol') == 'admin' %}
+    {% if session.get('rol') == 'admin' %}
 
     <a href="/inicio" class="btn-back-home" title="Volver al Inicio">
         <i class="bi bi-house-door-fill"></i>
@@ -38,7 +43,7 @@
             <section id="inicio" class="content-section active">
                 <h2><i class="bi bi-stars"></i> Manual del Administrador</h2>
                 <p class="intro-text">Bienvenido al ecosistema administrativo de <strong>D'Antojitos©</strong>. Aquí encontrarás las directrices para operar la plataforma con máxima eficiencia y fluidez.</p>
-                
+
                 <div class="card-grid">
                     <div class="card">
                         <h3><i class="bi bi-lightning-charge"></i> Gestión Fluida</h3>
@@ -132,13 +137,105 @@
         </div>
     </footer>
 
+    {% elif session.get('rol') == 'vendedor' %}
+
+    <a href="/inicio" class="btn-back-home" title="Volver al Inicio">
+        <i class="bi bi-house-door-fill"></i>
+    </a>
+
+    <div class="wrapper">
+        <aside>
+            <div class="sidebar-header">
+                <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo" class="sidebar-logo">
+                <h1>D'Antojitos</h1>
+            </div>
+            <nav>
+                <div class="nav-item active" onclick="showSection('v-inicio')"><i class="bi bi-grid-1x2"></i> <span>Inicio</span></div>
+                <div class="nav-item" onclick="showSection('v-perfil')"><i class="bi bi-person-circle"></i> <span>Mi Perfil</span></div>
+                <div class="nav-item" onclick="showSection('v-pedidos')"><i class="bi bi-receipt"></i> <span>Pedidos</span></div>
+                <div class="nav-item" onclick="showSection('v-catalogo')"><i class="bi bi-shop"></i> <span>Catálogo</span></div>
+            </nav>
+        </aside>
+
+        <main>
+            <section id="v-inicio" class="content-section active">
+                <h2><i class="bi bi-stars"></i> Manual del Vendedor</h2>
+                <p class="intro-text">Bienvenido al panel de operaciones de <strong>D'Antojitos©</strong>. Este manual te guiará en las tareas del día a día para que puedas atender a los clientes de forma rápida y eficiente.</p>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <h3><i class="bi bi-lightning-charge"></i> Operación Ágil</h3>
+                        <p>Tienes acceso a las herramientas necesarias para gestionar pedidos y atender al cliente sin interrupciones durante el servicio.</p>
+                    </div>
+                    <div class="card">
+                        <h3><i class="bi bi-person-lock"></i> Acceso Controlado</h3>
+                        <p>Tu rol de vendedor te permite operar el flujo de ventas. Las configuraciones del sistema y reportes financieros son exclusivos del administrador.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="v-perfil" class="content-section">
+                <h2><i class="bi bi-person-circle"></i> Mi Perfil</h2>
+                <div class="card">
+                    <h3>Datos Personales</h3>
+                    <p>Gestiona la información asociada a tu cuenta de vendedor:</p>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-pencil-square"></i> <strong>Edición de Datos:</strong> Actualiza tu nombre, correo o contraseña desde tu perfil.</li>
+                        <li><i class="bi bi-image"></i> <strong>Foto de Perfil:</strong> Personaliza tu avatar para identificarte en el sistema.</li>
+                        <li><i class="bi bi-shield-lock"></i> <strong>Seguridad:</strong> Cambia tu contraseña periódicamente para proteger tu cuenta.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="v-pedidos" class="content-section">
+                <h2><i class="bi bi-receipt"></i> Gestión de Pedidos</h2>
+                <div class="card">
+                    <h3>Atención y Seguimiento</h3>
+                    <p>Consulta y gestiona el flujo de pedidos activos durante tu turno:</p>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-funnel"></i> <strong>Búsqueda:</strong> Filtra pedidos por nombre o cédula del cliente para localizarlos rápidamente.</li>
+                        <li><i class="bi bi-toggle-on"></i> <strong>Estado de Entrega:</strong> Marca pedidos como entregados una vez se complete la transacción.</li>
+                        <li><i class="bi bi-pin-angle"></i> <strong>Pedidos Fijados:</strong> Los pedidos prioritarios aparecen al inicio de la lista para atenderlos primero.</li>
+                        <li><i class="bi bi-cash-coin"></i> <strong>Saldo Pendiente:</strong> Identifica los pedidos con pagos incompletos para gestionarlos con el cliente.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="v-catalogo" class="content-section">
+                <h2><i class="bi bi-shop"></i> Catálogo de Productos</h2>
+                <div class="card">
+                    <h3>Consulta de Inventario</h3>
+                    <p>Explora el catálogo para orientar a los clientes sobre disponibilidad y precios:</p>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-search"></i> <strong>Búsqueda de Productos:</strong> Localiza cualquier artículo por nombre o categoría al instante.</li>
+                        <li><i class="bi bi-check2-circle"></i> <strong>Disponibilidad:</strong> El catálogo muestra el stock en tiempo real para evitar ventas de productos agotados.</li>
+                        <li><i class="bi bi-tag"></i> <strong>Precios Actualizados:</strong> Los precios que ves son los mismos que se aplican al momento de la venta.</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo" class="app-badge">
+                <span style="font-weight: 700; color: var(--secondary);">D'ANTOJITOS</span>
+            </div>
+            <div class="footer-info">
+                <div class="copyright-text">2025 D'Antojitos© - Todos los derechos reservados</div>
+                <div class="author-credit">Created By: 2022 Yisus™</div>
+            </div>
+        </div>
+    </footer>
+
     {% else %}
-    
+
     <div class="admin-lock-screen">
         <div class="lock-card">
             <i class="bi bi-shield-lock" style="font-size: 4rem; color: var(--primary);"></i>
             <h2 style="margin-top: 20px;">Acceso Restringido</h2>
-            <p>Debes iniciar sesión como administrador para acceder a esta documentación técnica.</p>
+            <p>Debes iniciar sesión para acceder a esta documentación.</p>
             <br>
             <a href="/login" class="btn-verify-admin" style="background: var(--secondary); color: white; padding: 15px 30px; border-radius: 12px; text-decoration: none; font-weight: 600; display: inline-block;">
                 Iniciar Sesión

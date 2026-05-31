@@ -52,8 +52,21 @@
 
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label class="form-label">Cédula / ID</label>
-                                <input type="text" id="cedulaPerfil" name="cedulaPerfil" class="form-control custom-input" value="{{ user.cedula or '' }}" required disabled>
+                                <label class="form-label">Cédula / ID
+                                    {% if user.contrasena == 'GOOGLE_AUTH_EXTERNAL' %}
+                                    <span class="badge bg-warning text-dark ms-1" style="font-size:0.6rem;">Editable</span>
+                                    {% endif %}
+                                </label>
+                                <input type="text" id="cedulaPerfil" name="cedulaPerfil"
+                                       class="form-control custom-input"
+                                       value="{{ user.cedula or '' }}"
+                                       placeholder="Ingresa tu número de cédula"
+                                       disabled>
+                                {% if user.contrasena == 'GOOGLE_AUTH_EXTERNAL' %}
+                                <div class="form-text text-warning-emphasis small">
+                                    <i class="bi bi-info-circle me-1"></i>Puedes establecer tu cédula real al editar el perfil.
+                                </div>
+                                {% endif %}
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nombre</label>

@@ -1,14 +1,5 @@
-
-//  D'Antojitos — Sistema de Widgets v4
-//  • Ojo y grip integrados dentro de la tarjeta (no barra externa)
-//  • Ojo: siempre funcional sin entrar a modo edición
-//  • Grip: visible solo en modo edición (cursor grab, Sortable activo)
-//  • Módulos con sistema: pedidos, productos, facturación, publicidad, usuarios, manual
-//  • Módulos SIN sistema: perfil, historial de facturas, catálogo, carrito, sugerencias
-
 (function () {
 
-    /* ── Claves de módulo ─────────────────────────────────────── */
     const MODULE_ID = window.location.pathname.replace(/\//g, '_').replace(/^_/, '') || 'index';
     const ORDER_KEY  = `dantojitos_widget_order_${MODULE_ID}`;
     const HIDDEN_KEY = `dantojitos_widget_hidden_${MODULE_ID}`;
@@ -16,7 +7,6 @@
     let _editMode = false;
     let _sortable = null;
 
-    /* ── Rutas donde NO corre el sistema de edición ──────────── */
     const EXCLUDED = new Set([
         '/', '/inicio', '/login', '/registro',
         '/carrito_page', '/comentarios_page',
@@ -27,7 +17,6 @@
     ]);
     const shouldRun = () => !EXCLUDED.has(window.location.pathname);
 
-    /* ── Selectores de contenedor y widgets ──────────────────── */
     function getContainer() {
         return document.querySelector('main') ||
                document.querySelector('.page-wrapper') ||
@@ -65,7 +54,6 @@
         return ws.length ? ws[0].parentElement : getContainer();
     }
 
-    /* ── Persistencia ─────────────────────────────────────────── */
     function saveOrder() {
         localStorage.setItem(ORDER_KEY,
             JSON.stringify(getWidgets().map(w => w.dataset.widget)));
@@ -94,7 +82,6 @@
         });
     }
 
-    /* ── Toggle ocultar / mostrar sección ────────────────────── */
     function toggleWidgetContent(w) {
         const content = w.querySelector('.widget-content');
         if (!content) return;
@@ -111,18 +98,15 @@
         }
     }
 
-    /* ── Buscar la fila de título nativa de la tarjeta ───────── */
     function findHeaderRow(w) {
         const body = w.querySelector('.card-body');
         if (body) {
-            // 1. Primera fila flex con heading
             const firstFlex = body.querySelector(
                 ':scope > div:first-child, :scope > .d-flex:first-child'
             );
             if (firstFlex && firstFlex.querySelector('h1,h2,h3,h4,h5,h6')) {
                 return firstFlex;
             }
-            // 2. Heading directo en card-body — envolver en flex
             const hdg = body.querySelector(':scope > h1,:scope > h2,:scope > h3,:scope > h4,:scope > h5,:scope > h6');
             if (hdg) {
                 const wrap = document.createElement('div');
@@ -132,16 +116,13 @@
                 return wrap;
             }
         }
-        // 3. .card-header Bootstrap
         const ch = w.querySelector('.card-header');
         if (ch) return ch;
-        // 4. section-header
         const sh = w.querySelector('.section-header');
         if (sh) return sh;
         return null;
     }
 
-    /* ── Inyectar controles (ojo + grip) dentro de la tarjeta ── */
     function addWidgetControls() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         const eyeColor  = isDark ? 'rgba(240,136,62,0.5)'  : 'rgba(211,84,0,0.4)';
@@ -152,15 +133,13 @@
 
             const id     = w.dataset.widget;
             const hidden = isHidden(id);
-
-            /* Restaurar visibilidad persistida */
             const content = w.querySelector('.widget-content');
+
             if (content && hidden) {
                 content.style.display = 'none';
                 w.classList.add('widget-collapsed');
             }
 
-            /* Grupo de control: [👁] [⠿] */
             const group = document.createElement('div');
             group.className = 'wg-ctrl-group';
             group.style.cssText = `
@@ -187,7 +166,6 @@
                     <i class="bi bi-grip-vertical"></i>
                 </span>`;
 
-            /* Hover en ojo */
             const eye = group.querySelector('.wg-eye-btn');
             eye.addEventListener('mouseenter', () => {
                 eye.style.color      = isDark ? '#f0883e' : '#d35400';
@@ -204,7 +182,6 @@
                 toggleWidgetContent(w);
             });
 
-            /* Hover en grip */
             const grip = group.querySelector('.wg-grip-icon');
             grip.addEventListener('mouseenter', () => {
                 grip.style.color = isDark ? '#f0883e' : '#d35400';
@@ -213,7 +190,6 @@
                 grip.style.color = gripColor;
             });
 
-            /* Inyectar en el header nativo o en un strip de respaldo */
             const headerRow = findHeaderRow(w);
             if (headerRow) {
                 headerRow.style.display    = 'flex';
@@ -229,7 +205,6 @@
         });
     }
 
-    /* ── Activar / desactivar grip en edit mode ──────────────── */
     function _showGrip() {
         document.querySelectorAll('.wg-grip-icon').forEach(g => {
             g.style.opacity = '0.65';
@@ -243,7 +218,6 @@
         });
     }
 
-    /* ── Barra de modo edición — bottom bar permanente ──────── */
     function buildEditBar() {
         if (document.getElementById('widgetEditBar')) return;
         const bar = document.createElement('div');
@@ -318,7 +292,6 @@
                 </button>
             </div>`;
         document.body.appendChild(bar);
-        /* Evitar que el contenido quede oculto detrás de la barra */
         document.body.style.paddingBottom = '52px';
     }
 
@@ -326,7 +299,6 @@
         const bar = document.getElementById('widgetEditBar');
         if (bar) {
             bar.style.animation = 'wgBarOut 0.22s ease forwards';
-            /* Inyectar keyframe de salida si no existe */
             if (!document.getElementById('_wgBarOutKF')) {
                 const s = document.createElement('style');
                 s.id = '_wgBarOutKF';
@@ -338,7 +310,6 @@
         document.body.style.paddingBottom = '';
     }
 
-    /* ── Modos ────────────────────────────────────────────────── */
     function enterEditMode() {
         if (_editMode) return;
         _editMode = true;
@@ -384,14 +355,12 @@
         }
     }
 
-    /* ── Restablecer ──────────────────────────────────────────── */
     window.resetWidgetLayout = () => {
         localStorage.removeItem(ORDER_KEY);
         localStorage.removeItem(HIDDEN_KEY);
         location.reload();
     };
 
-    /* ── Botón de edición en la navbar o flotante ─────────────── */
     function createEditButton() {
         if (!shouldRun()) return;
         const navBtn = document.getElementById('navWidgetEditBtn');
@@ -420,7 +389,6 @@
         document.body.appendChild(btn);
     }
 
-    /* ── Bootstrap ────────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', () => {
         if (!shouldRun() || !getWidgets().length) return;
         restoreOrder();

@@ -42,49 +42,95 @@
 
                     <div class="alert-legal">
                         <i class="bi bi-shield-lock-fill me-2"></i>
-                        Su privacidad es nuestra prioridad. Por favor, lea cómo gestionamos sus datos personales antes de continuar utilizando la aplicación.
+                        En <strong>D'Antojitos©</strong> tratamos tus datos con total responsabilidad. Esta política explica de manera clara qué información recopilamos, cómo la usamos y qué derechos tienes sobre ella. Al crear una cuenta o realizar un pedido, aceptas los términos aquí descritos.
                     </div>
 
                     <div class="content-sections">
+
                         <section class="legal-section">
-                            <p>En <strong>D'Antojitos©</strong>, valoramos la confianza que depositas en nosotros al compartir tus datos. Esta Política de Privacidad describe cómo recopilamos, utilizamos y protegemos tu información personal cuando utilizas nuestra aplicación y servicios.</p>
+                            <h2>1. Responsable del Tratamiento</h2>
+                            <p><strong>D'Antojitos©</strong> es la empresa responsable del tratamiento de los datos personales que recopilamos a través de esta plataforma web. Puedes contactarnos en cualquier momento a través de los canales oficiales disponibles en la aplicación para consultas relacionadas con tu privacidad.</p>
                         </section>
 
                         <section class="legal-section">
-                            <h2>1. Información que Recopilamos</h2>
-                            <p>Recopilamos información para proporcionar mejores servicios a nuestros usuarios. Esto incluye:</p>
+                            <h2>2. Datos que Recopilamos</h2>
+                            <p>Al registrarte o interactuar con nuestra plataforma, recopilamos únicamente los datos necesarios para operar el servicio:</p>
                             <ul class="custom-list">
-                                <li><strong>Información de cuenta:</strong> Nombre, apellido, correo electrónico y cédula al registrarte.</li>
-                                <li><strong>Autenticación de Terceros:</strong> Si utilizas Google Auth, recibimos tu nombre, correo y foto de perfil según tus ajustes de privacidad en Google.</li>
-                                <li><strong>Datos de Transacción:</strong> Detalles de los pedidos realizados y métodos de pago preferidos.</li>
+                                <li><strong>Datos de identidad:</strong> Nombre, apellido y número de cédula o documento de identidad.</li>
+                                <li><strong>Datos de contacto:</strong> Correo electrónico, número de teléfono y dirección de entrega.</li>
+                                <li><strong>Credenciales de acceso:</strong> Nombre de usuario y contraseña (almacenada con hash seguro). Si accedes con Google OAuth, recibimos tu nombre, correo y foto de perfil conforme a los permisos otorgados.</li>
+                                <li><strong>Datos transaccionales:</strong> Historial de pedidos, facturas emitidas, productos adquiridos y métodos de pago seleccionados.</li>
+                                <li><strong>Datos de uso:</strong> Preferencias de idioma, tema visual y configuraciones guardadas en el navegador mediante <em>localStorage</em>.</li>
                             </ul>
                         </section>
 
                         <section class="legal-section">
-                            <h2>2. Uso de la Información</h2>
-                            <p>Los datos recopilados se utilizan estrictamente para:</p>
+                            <h2>3. Finalidad del Tratamiento</h2>
+                            <p>Utilizamos tus datos exclusivamente para:</p>
                             <ul class="custom-list">
-                                <li>Gestionar tus pedidos y entregas de manera eficiente.</li>
-                                <li>Personalizar tu experiencia de usuario en la plataforma.</li>
-                                <li>Mantener la seguridad de tu cuenta y prevenir accesos no autorizados.</li>
-                                <li>Cumplir con obligaciones legales y contables.</li>
+                                <li>Gestionar tu cuenta, autenticación y acceso seguro a la plataforma.</li>
+                                <li>Procesar, registrar y hacer seguimiento de tus pedidos y facturas.</li>
+                                <li>Facilitarte el historial de compras y el estado actualizado de cada pedido.</li>
+                                <li>Enviarte notificaciones relacionadas con tu pedido (cambios de estado, confirmaciones).</li>
+                                <li>Personalizar tu experiencia de navegación (idioma, tema claro/oscuro).</li>
+                                <li>Cumplir con obligaciones legales, contables y fiscales aplicables.</li>
                             </ul>
                         </section>
 
                         <section class="legal-section">
-                            <h2>3. Protección de Datos</h2>
-                            <p>Implementamos medidas de seguridad técnicas y organizativas, incluyendo encriptación de contraseñas y protocolos de transferencia segura (SSL), para proteger tus datos contra pérdida, robo o uso indebido.</p>
+                            <h2>4. Base Legal del Tratamiento</h2>
+                            <p>El tratamiento de tus datos se fundamenta en:</p>
+                            <ul class="custom-list">
+                                <li><strong>Ejecución contractual:</strong> Es necesario para prestarte el servicio de pedidos y facturación.</li>
+                                <li><strong>Consentimiento:</strong> Otorgado al crear tu cuenta y aceptar esta política.</li>
+                                <li><strong>Interés legítimo:</strong> Para garantizar la seguridad de la plataforma y prevenir fraudes.</li>
+                            </ul>
                         </section>
 
                         <section class="legal-section">
-                            <h2>4. Derechos del Usuario</h2>
-                            <p>Como usuario, tienes derecho a acceder, rectificar o solicitar la eliminación de tus datos personales en cualquier momento a través de la configuración de tu perfil o contactando a nuestro equipo de soporte.</p>
+                            <h2>5. Almacenamiento y Seguridad</h2>
+                            <p>Tus datos se almacenan en servidores seguros gestionados por <strong>Supabase</strong> (PostgreSQL cifrado). La plataforma opera bajo protocolo <strong>HTTPS/TLS</strong> y las contraseñas se almacenan usando algoritmos de hash robustos. Implementamos controles de acceso basados en roles (cliente, vendedor, administrador) para garantizar que cada usuario solo accede a la información que le corresponde.</p>
                         </section>
 
                         <section class="legal-section">
-                            <h2>5. Cookies y Tecnologías Similares</h2>
-                            <p>Utilizamos cookies de sesión para mantener tu acceso activo y recordar tus preferencias del carrito de compras. Estas son esenciales para el funcionamiento técnico de la aplicación.</p>
+                            <h2>6. Compartición con Terceros</h2>
+                            <p><strong>No vendemos ni cedemos tus datos personales a terceros.</strong> Únicamente compartimos información con proveedores tecnológicos estrictamente necesarios para operar el servicio:</p>
+                            <ul class="custom-list">
+                                <li><strong>Supabase:</strong> Base de datos y autenticación segura.</li>
+                                <li><strong>Cloudinary:</strong> Almacenamiento de imágenes de productos y perfiles.</li>
+                                <li><strong>Vercel:</strong> Plataforma de despliegue y entrega del servicio web.</li>
+                                <li><strong>Google OAuth:</strong> Autenticación opcional mediante cuenta Google.</li>
+                            </ul>
+                            <p>Todos estos proveedores cumplen con estándares internacionales de protección de datos.</p>
                         </section>
+
+                        <section class="legal-section">
+                            <h2>7. Cookies y Almacenamiento Local</h2>
+                            <p>Utilizamos <strong>cookies de sesión</strong> para mantener tu acceso activo durante la navegación y <strong>localStorage</strong> del navegador para guardar preferencias de usuario (tema visual, idioma, velocidad de la cinta publicitaria). Estas tecnologías son esenciales para el correcto funcionamiento de la plataforma y no rastrean tu actividad fuera de ella.</p>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>8. Tus Derechos</h2>
+                            <p>Como titular de tus datos, tienes derecho a:</p>
+                            <ul class="custom-list">
+                                <li><strong>Acceso:</strong> Consultar qué datos tuyos tenemos almacenados desde tu perfil.</li>
+                                <li><strong>Rectificación:</strong> Corregir datos inexactos o desactualizados desde la configuración de tu cuenta.</li>
+                                <li><strong>Eliminación:</strong> Solicitar la eliminación de tu cuenta y datos asociados contactando al administrador.</li>
+                                <li><strong>Portabilidad:</strong> Solicitar una copia de tus datos en formato estructurado.</li>
+                                <li><strong>Oposición:</strong> Oponerte al tratamiento en casos donde la ley lo permita.</li>
+                            </ul>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>9. Retención de Datos</h2>
+                            <p>Conservamos tus datos durante el tiempo que mantengas tu cuenta activa o el necesario para cumplir con obligaciones legales. Las facturas y registros de pedidos se conservan conforme a los requisitos contables y fiscales vigentes. Una vez solicitada la eliminación de cuenta, los datos se borran en un plazo máximo de 30 días, salvo obligación legal de conservación.</p>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>10. Modificaciones de esta Política</h2>
+                            <p>Nos reservamos el derecho de actualizar esta Política de Privacidad cuando sea necesario. Las modificaciones relevantes serán notificadas a través de la plataforma. El uso continuado del servicio tras la publicación de cambios implica la aceptación de los mismos.</p>
+                        </section>
+
                     </div>
 
                     <div class="mt-5 pt-4 text-center border-top">

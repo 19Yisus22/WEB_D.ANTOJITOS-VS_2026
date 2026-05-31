@@ -14,7 +14,6 @@ const STATIC_ASSETS = [
     'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'
 ];
 
-// Siempre desde la red — métodos de pago y QR
 const NETWORK_FIRST_ROUTES = [
     '/facturacion_page',
     '/obtener_metodos_pago',

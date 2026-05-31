@@ -4,6 +4,20 @@ from flask import Blueprint, request, jsonify, session, redirect, url_for, rende
 import helpers.models as db
 from helpers.auth import sin_cache, login_required
 
+# Mensajes predeterminados que el cliente puede enviar al vendedor
+MENSAJES_PREDETERMINADOS = [
+    {"id": 1, "icono": "🚚", "texto": "Mi pedido no ha llegado"},
+    {"id": 2, "icono": "❌", "texto": "He cancelado mi pedido"},
+    {"id": 3, "icono": "🔄", "texto": "Quiero modificar o cambiar mi pedido"},
+    {"id": 4, "icono": "💳", "texto": "Tuve un problema con el pago"},
+    {"id": 5, "icono": "📦", "texto": "Mi pedido llegó incompleto o dañado"},
+    {"id": 6, "icono": "⏰", "texto": "¿Cuándo llegará mi pedido?"},
+    {"id": 7, "icono": "📍", "texto": "Necesito cambiar mi dirección de entrega"},
+    {"id": 8, "icono": "❓", "texto": "Tengo una pregunta sobre un producto"},
+    {"id": 9, "icono": "🤔", "texto": "No puedo completar mi compra"},
+    {"id": 10,"icono": "⭐", "texto": "Quiero dejar una reseña de mi experiencia"},
+]
+
 comentarios_bp = Blueprint("comentarios", __name__)
 
 
@@ -181,3 +195,134 @@ def actualizar_estado_comentarios():
         return jsonify({"status": "ok"}), 200
     except Exception:
         return jsonify({"error": "server_error"}), 500
+
+
+# ════════════════════════════════════════════════════
+#  MENSAJES PRIVADOS  (clientes ↔ vendedores)
+# ════════════════════════════════════════════════════
+
+@comentarios_bp.route("/mensajes_privados/predeterminados")
+@login_required
+def mensajes_predeterminados():
+    return jsonify(MENSAJES_PREDETERMINADOS)
+
+
+@comentarios_bp.route("/mensajes_privados/mi_hilo")
+@login_required
+def mi_hilo():
+    """Cliente: obtiene su propia conversación y marca mensajes del vendedor como leídos."""
+    cedula = session.get("user_id")
+    rol    = session.get("rol", "")
+    if rol not in ("cliente",):
+        return jsonify({"error": "Solo para clientes"}), 403
+    try:
+        mensajes = db.mp_get_conversacion(cedula)
+        db.mp_marcar_leidos(cedula, es_vendedor_leyendo=False)
+        return jsonify(mensajes)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@comentarios_bp.route("/mensajes_privados/hilos")
+@login_required
+def todos_los_hilos():
+    """Vendedor: obtiene todos los hilos con info del cliente."""
+    rol = session.get("rol", "")
+    if rol not in ("vendedor", "admin"):
+        return jsonify({"error": "Sin permiso"}), 403
+    try:
+        mensajes = db.mp_get_todos_hilos()
+        # Obtener info de clientes
+        cedulas  = list({m["cedula_cliente"] for m in mensajes})
+        usuarios = db.usuario_get_all()
+        info_map = {
+            u["cedula"]: {
+                "nombre":   f"{u.get('nombre','')} {u.get('apellido','')}".strip(),
+                "imagen":   u.get("imagen_url"),
+            }
+            for u in usuarios if u["cedula"] in cedulas
+        }
+        # Agrupa en hilos (último mensaje por cedula_cliente)
+        hilos = {}
+        for m in mensajes:
+            cc = m["cedula_cliente"]
+            if cc not in hilos:
+                hilos[cc] = {
+                    "cedula_cliente":   cc,
+                    "info_cliente":     info_map.get(cc, {"nombre": cc, "imagen": None}),
+                    "ultimo_mensaje":   m["mensaje"],
+                    "ultimo_at":        m["created_at"],
+                    "no_leidos":        0,
+                }
+            if not m["es_vendedor"] and not m["leido"]:
+                hilos[cc]["no_leidos"] += 1
+        return jsonify(list(hilos.values()))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@comentarios_bp.route("/mensajes_privados/hilo/<cedula_cliente>")
+@login_required
+def hilo_detalle(cedula_cliente):
+    """Vendedor: obtiene la conversación de un cliente específico y la marca leída."""
+    rol = session.get("rol", "")
+    if rol not in ("vendedor", "admin"):
+        return jsonify({"error": "Sin permiso"}), 403
+    try:
+        mensajes = db.mp_get_conversacion(cedula_cliente)
+        db.mp_marcar_leidos(cedula_cliente, es_vendedor_leyendo=True)
+        return jsonify(mensajes)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@comentarios_bp.route("/mensajes_privados/enviar", methods=["POST"])
+@login_required
+def enviar_mensaje_privado():
+    data   = request.get_json() or {}
+    cedula = session.get("user_id")
+    rol    = session.get("rol", "")
+    msg    = (data.get("mensaje") or "").strip()
+
+    if not msg:
+        return jsonify({"error": "Mensaje vacío"}), 400
+
+    es_vendedor = rol in ("vendedor", "admin")
+
+    if es_vendedor:
+        # Vendedor responde → cedula_cliente viene del body
+        cedula_cliente = (data.get("cedula_cliente") or "").strip()
+        if not cedula_cliente:
+            return jsonify({"error": "cedula_cliente requerida"}), 400
+        es_pred = False
+    else:
+        # Cliente → es su propio hilo
+        cedula_cliente = cedula
+        es_pred = bool(data.get("es_predeterminado", False))
+
+    try:
+        nuevo = db.mp_create(
+            cedula_cliente    = cedula_cliente,
+            cedula_remitente  = cedula,
+            es_vendedor       = es_vendedor,
+            mensaje           = msg,
+            es_predeterminado = es_pred,
+        )
+        return jsonify({"ok": True, "mensaje": nuevo})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@comentarios_bp.route("/mensajes_privados/no_leidos")
+@login_required
+def no_leidos_count():
+    cedula = session.get("user_id")
+    rol    = session.get("rol", "")
+    try:
+        if rol == "cliente":
+            n = db.mp_no_leidos(cedula, para_vendedor=False)
+        else:
+            n = db.mp_total_no_leidos_vendedor()
+        return jsonify({"count": n})
+    except Exception:
+        return jsonify({"count": 0})

@@ -14,7 +14,6 @@ const STATIC_ASSETS = [
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
 ];
 
-// Siempre desde la red — inventario en tiempo real
 const NETWORK_ONLY_ROUTES = [
     '/obtener_catalogo',
     '/agregar_al_carrito',
