@@ -1,33 +1,74 @@
-# D'Antojitos© — Plataforma Web de Dulcería Artesanal
+<!-- ============================ HEADER ============================ -->
+<div align="center">
 
-> Aplicación web full-stack para la gestión integral de una tienda de postres artesanales colombiana. Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, mensajería privada y panel administrativo.
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:FFB6B9,50:E07A5F,100:8B5A2B&height=220&section=header&text=D'Antojitos%C2%A9&fontSize=68&fontColor=ffffff&animation=fadeIn&fontAlignY=36&desc=Dulcer%C3%ADa%20Artesanal%20Colombiana&descAlignY=58&descSize=20&descAlign=50" width="100%" alt="D'Antojitos banner"/>
 
----
+<a href="https://readme-typing-svg.demolab.com">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3200&pause=900&color=E07A5F&center=true&vCenter=true&width=640&lines=Postres+artesanales+hechos+con+amor;Cat%C3%A1logo+%C2%B7+Carrito+%C2%B7+Pedidos+%C2%B7+Facturaci%C3%B3n;Python+%C2%B7+Flask+%C2%B7+Supabase+%C2%B7+Cloudinary" alt="Typing SVG"/>
+</a>
 
-## Índice
+<br/>
 
-1. [Descripción General](#descripción-general)
-2. [Stack Tecnológico](#stack-tecnológico)
-3. [Flujo Principal de la Aplicación](#flujo-principal-de-la-aplicación)
-4. [Roles y Permisos](#roles-y-permisos)
-5. [Módulos del Sistema](#módulos-del-sistema)
-6. [Arquitectura del Proyecto](#arquitectura-del-proyecto)
-7. [Base de Datos](#base-de-datos)
-8. [Variables de Entorno](#variables-de-entorno)
-9. [Instalación y Ejecución Local](#instalación-y-ejecución-local)
-10. [Despliegue en Producción](#despliegue-en-producción)
+**Aplicación web full-stack para la gestión integral de una tienda de postres artesanales.**
+Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, mensajería privada y panel administrativo.
 
----
+<br/>
 
-## Descripción General
+<!-- ============================ BADGES ============================ -->
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3.0.3-000000?style=for-the-badge&logo=flask&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-Images-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-Serverless-000000?style=for-the-badge&logo=vercel&logoColor=white)
+
+</div>
+
+<!-- divider -->
+<img src="https://raw.githubusercontent.com/Trilokia/Trilokia/379277808c61ef204768a61bbc5d25bc7798ccf1/bottom_header.svg" width="100%" alt="divider"/>
+
+## 📑 Índice
+
+<table>
+<tr>
+<td>
+
+1. [Descripción General](#-descripción-general)
+2. [Stack Tecnológico](#-stack-tecnológico)
+3. [Flujo Principal de la Aplicación](#-flujo-principal-de-la-aplicación)
+4. [Roles y Permisos](#-roles-y-permisos)
+5. [Módulos del Sistema](#-módulos-del-sistema)
+
+</td>
+<td>
+
+6. [Arquitectura del Proyecto](#-arquitectura-del-proyecto)
+7. [Base de Datos](#-base-de-datos)
+8. [Variables de Entorno](#-variables-de-entorno)
+9. [Instalación y Ejecución Local](#-instalación-y-ejecución-local)
+10. [Despliegue en Producción](#-despliegue-en-producción)
+
+</td>
+</tr>
+</table>
+
+<br/>
+
+## 🍰 Descripción General
 
 **D'Antojitos©** es una plataforma de comercio electrónico especializada en postres artesanales. Está construida con **Python/Flask** en el backend y **Jinja2 + Bootstrap** en el frontend, conectada a **Supabase (PostgreSQL)** como base de datos principal y a **Cloudinary** para el almacenamiento de imágenes.
 
-La aplicación soporta tres perfiles de usuario con flujos completamente diferenciados: cliente, vendedor y administrador. Incluye sistema de internacionalización (ES/EN), modo oscuro, notificaciones en tiempo real, mensajería privada multicanal y generación de facturas en PDF.
+La aplicación soporta tres perfiles de usuario con flujos completamente diferenciados: **cliente, vendedor y administrador**. Incluye sistema de internacionalización (ES/EN), modo oscuro, notificaciones en tiempo real, mensajería privada multicanal y generación de facturas en PDF.
 
----
+<br/>
 
-## Stack Tecnológico
+## 🧱 Stack Tecnológico
+
+<div align="center">
+
+<img src="https://skillicons.dev/icons?i=python,flask,postgres,bootstrap,js,html,css,vercel,docker&theme=dark" alt="stack icons"/>
+
+</div>
 
 | Capa | Tecnología |
 |------|-----------|
@@ -41,99 +82,74 @@ La aplicación soporta tres perfiles de usuario con flujos completamente diferen
 | **Email transaccional** | Resend 2.30.1 |
 | **Despliegue** | Vercel (serverless) |
 
----
+<br/>
 
-## Flujo Principal de la Aplicación
+## 🔄 Flujo Principal de la Aplicación
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        USUARIO VISITANTE                        │
-└────────────────────┬────────────────────────────────────────────┘
-                     │
-                     ▼
-         ┌───────────────────────┐
-         │   /inicio  (Home)     │  Cinta publicitaria · Bienvenida ·
-         │                       │  Catálogo en vista previa
-         └───────────┬───────────┘
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-          ▼                     ▼
-  ┌───────────────┐    ┌─────────────────────┐
-  │  /catalogo    │    │  /login · /registro  │
-  │  Ver productos│    │  Google OAuth2       │
-  └───────┬───────┘    └──────────┬──────────┘
-          │                       │
-          │              ┌────────┴────────┐
-          │              │  SESIÓN ACTIVA  │
-          │              └────────┬────────┘
-          │                       │
-          ▼                       ▼
-  ┌───────────────┐    ┌──────────────────────┐
-  │  /carrito     │◄───│  Agregar al carrito   │
-  │  Ver · Editar │    │  desde catálogo       │
-  └───────┬───────┘    └──────────────────────┘
-          │
-          ▼
-  ┌───────────────────────────────────────┐
-  │           GENERACIÓN DE PEDIDO        │
-  │  Confirmación → Pedido creado en      │
-  │  Supabase con estado "Pendiente"      │
-  └───────────────────┬───────────────────┘
-                      │
-          ┌───────────┴────────────┐
-          │                        │
-          ▼                        ▼
-  ┌──────────────┐        ┌────────────────────┐
-  │   CLIENTE    │        │  VENDEDOR / ADMIN  │
-  │              │        │                    │
-  │ · Ver estado │        │ · Módulo Pedidos   │
-  │   pedido     │        │   (gestión CRUD)   │
-  │ · Historial  │        │ · Cambiar estado   │
-  │   facturas   │        │ · Emitir factura   │
-  │ · Mensajes   │        │ · Módulo Productos │
-  │   privados   │        │ · Mensajería staff │
-  └──────────────┘        └────────────────────┘
-                                    │
-                                    ▼
-                          ┌──────────────────────┐
-                          │     ADMIN EXCLUSIVO  │
-                          │                      │
-                          │ · Módulo Publicidad  │
-                          │ · Módulo Facturación │
-                          │ · Gestión Usuarios   │
-                          │ · Zona de Pagos      │
-                          └──────────────────────┘
+Recorrido completo de un usuario, desde que llega a la tienda hasta la gestión interna del pedido. Cada paso indica **quién** actúa, **dónde** ocurre (ruta) y **qué** sucede en el sistema.
+
+> **1. 🏠 Llegada al Inicio** · `Visitante` · `/inicio`
+> El usuario entra a la **Home**: cinta publicitaria dinámica, sección de bienvenida y una vista previa del catálogo. Desde aquí puede navegar libremente sin necesidad de cuenta.
+
+> **2. 🛍️ Exploración del Catálogo** · `Visitante` · `/catalogo`
+> Recorre los productos con buscador, filtros y monitor de stock en tiempo real. Puede mirar todo el catálogo aunque aún no haya iniciado sesión.
+
+> **3. 🔐 Autenticación** · `Visitante → Usuario` · `/login` · `/registro`
+> Para comprar, se identifica mediante **Google OAuth2** o credenciales propias. Al validarse, se abre una **sesión activa** (24 h) que habilita las acciones de compra.
+
+> **4. 🛒 Carrito de Compras** · `Usuario autenticado` · `/carrito`
+> Agrega ítems desde el catálogo, ajusta cantidades y revisa el total calculado. El carrito queda asociado a su cuenta.
+
+> **5. 📦 Generación del Pedido** · `Usuario autenticado` · `Supabase`
+> Al confirmar, se crea el pedido en la base de datos con estado inicial **`Pendiente`**. A partir de aquí el flujo se bifurca según el rol.
+
+> **6a. 🙋 Seguimiento del Cliente** · `Cliente`
+> Consulta el **estado de su pedido**, su **historial de facturas** y mantiene la **mensajería privada** con el equipo de venta.
+
+> **6b. 🧑‍🍳 Gestión del Staff** · `Vendedor / Admin`
+> Administra el pedido desde el **Módulo de Pedidos** (cambio de estado), gestiona **Productos** y atiende la **mensajería de equipo**.
+
+> **7. ⚙️ Administración Avanzada** · `Admin`
+> Acceso exclusivo a **Publicidad**, **Facturación**, **Gestión de Usuarios** y la **Zona de Pagos** para cerrar el ciclo de negocio.
+
+**Resumen del recorrido:**
+
+`🏠 Inicio` → `🛍️ Catálogo` → `🔐 Login` → `🛒 Carrito` → `📦 Pedido (Pendiente)` → `🙋 Cliente` · `🧑‍🍳 Staff` → `⚙️ Admin`
+
+### 🧾 Ciclo de vida de un pedido
+
+```mermaid
+flowchart LR
+    P([Pendiente]) --> E([Enviado]) --> EN([Entregado]) --> F[["📄 Factura PDF"]]
+    P --> C([Cancelado / Anulado])
+
+    style P fill:#FFB6B9,color:#3d2b1f
+    style E fill:#FFD8A8,color:#3d2b1f
+    style EN fill:#3FCF8E,color:#0d3b2e
+    style C fill:#E5989B,color:#3d2b1f
+    style F fill:#8B5A2B,color:#fff
 ```
 
-### Ciclo de vida de un pedido
+> El estado del pedido es actualizado por el vendedor o administrador desde el **Módulo de Pedidos**. Al marcar como **Emitida**, el sistema genera automáticamente una factura asociada visible para el cliente en su historial.
 
-```
-Pendiente  ──►  Enviado  ──►  Entregado  ──►  [Factura PDF]
-    │
-    └──►  Cancelado / Anulado
-```
+### 💳 Ciclo de pago
 
-El estado del pedido es actualizado por el vendedor o administrador desde el Módulo de Pedidos. Al marcar como **Emitida**, el sistema genera automáticamente una factura asociada visible para el cliente en su historial.
+```mermaid
+flowchart TD
+    A([Pedido pendiente de pago]) --> B[Cliente envía comprobante de pago]
+    B --> C{Vendedor/Admin revisa<br/>Módulo Facturación}
+    C -->|Aprobado| D["✅ Estado: Pagado"]
+    C -->|Rechazado| E["🔔 Notificación al cliente"]
 
-### Ciclo de pago
-
-```
-Pedido pendiente de pago
-        │
-        ▼
-Cliente envía comprobante de pago
-        │
-        ▼
-Vendedor/Admin revisa en Módulo Facturación
-        │
-        ├── Aprobado ──► Estado: Pagado ✓
-        └── Rechazado ──► Notificación al cliente
+    style A fill:#FFB6B9,color:#3d2b1f
+    style C fill:#8B5A2B,color:#fff
+    style D fill:#3FCF8E,color:#0d3b2e
+    style E fill:#E5989B,color:#3d2b1f
 ```
 
----
+<br/>
 
-## Roles y Permisos
+## 👥 Roles y Permisos
 
 | Módulo / Acción | Cliente | Vendedor | Admin |
 |---|:---:|:---:|:---:|
@@ -141,43 +157,77 @@ Vendedor/Admin revisa en Módulo Facturación
 | Agregar al carrito | ✅ | ✅ | ✅ |
 | Ver historial de facturas | ✅ (propias) | ✅ (todas) | ✅ |
 | Muro de sugerencias | ✅ | ✅ | ✅ |
-| Mensajes privados (clientes) | ✅ | ✅ | ✗ |
-| Mensajes staff/equipo | ✗ | ✅ | ✅ |
-| Gestión de pedidos | ✗ | ✅ | ✅ |
-| Gestión de productos | ✗ | ✅ | ✅ |
-| Módulo Publicidad | ✗ | ✗ | ✅ |
-| Módulo Facturación | ✗ | ✗ | ✅ |
-| Gestión de usuarios | ✗ | ✗ | ✅ |
-| Ver manual del sistema | ✗ | ✅ | ✅ |
+| Mensajes privados (clientes) | ✅ | ✅ | ❌ |
+| Mensajes staff/equipo | ❌ | ✅ | ✅ |
+| Gestión de pedidos | ❌ | ✅ | ✅ |
+| Gestión de productos | ❌ | ✅ | ✅ |
+| Módulo Publicidad | ❌ | ❌ | ✅ |
+| Módulo Facturación | ❌ | ❌ | ✅ |
+| Gestión de usuarios | ❌ | ❌ | ✅ |
+| Ver manual del sistema | ❌ | ✅ | ✅ |
 
----
+<br/>
 
-## Módulos del Sistema
+## 🧩 Módulos del Sistema
 
-### Módulos de Usuario (todos los roles)
+<details open>
+<summary><b>👤 Módulos de Usuario (todos los roles)</b></summary>
 
-- **Inicio (`/inicio`)** — Panel principal con cinta publicitaria dinámica, sección de bienvenida configurable y accesos rápidos. Los administradores pueden editar el contenido en modo visual (drag-and-drop).
-- **Catálogo (`/catalogo_page`)** — Vitrina de productos con filtros, buscador y monitor de stock en tiempo real. Soporte multiidioma (ES/EN).
-- **Carrito (`/carrito_page`)** — Gestión de ítems, cálculo de totales y generación del pedido.
-- **Perfil (`/mi_perfil`)** — Edición de datos personales con cooldown de 30 días en campos sensibles (cédula, nombre, apellido, usuario), cambio de contraseña, y eliminación de cuenta.
-- **Historial de Facturas (`/gestionar_facturas_page`)** — Listado de facturas con filtros, vista de detalle, modal de pago con QR, y archivado persistente.
-- **Sugerencias y Mensajes (`/comentarios_page`)** — Muro público de sugerencias con likes, edición y respuesta por rol. Panel privado con mensajería cliente↔vendedor y staff↔staff.
+<br/>
 
-### Módulos de Vendedor
+- **🏠 Inicio (`/inicio`)** — Panel principal con cinta publicitaria dinámica, sección de bienvenida configurable y accesos rápidos. Los administradores pueden editar el contenido en modo visual (drag-and-drop).
+- **🛍️ Catálogo (`/catalogo_page`)** — Vitrina de productos con filtros, buscador y monitor de stock en tiempo real. Soporte multiidioma (ES/EN).
+- **🛒 Carrito (`/carrito_page`)** — Gestión de ítems, cálculo de totales y generación del pedido.
+- **⚙️ Perfil (`/mi_perfil`)** — Edición de datos personales con cooldown de 30 días en campos sensibles (cédula, nombre, apellido, usuario), cambio de contraseña y eliminación de cuenta.
+- **📄 Historial de Facturas (`/gestionar_facturas_page`)** — Listado de facturas con filtros, vista de detalle, modal de pago con QR y archivado persistente.
+- **💬 Sugerencias y Mensajes (`/comentarios_page`)** — Muro público de sugerencias con likes, edición y respuesta por rol. Panel privado con mensajería cliente↔vendedor y staff↔staff.
 
-- **Pedidos (`/pedidos_page`)** — Vista Kanban de todos los pedidos con gestión de estado, diferenciadores visuales por estado (activo/finalizado/anulado) y notificaciones en tiempo real.
-- **Productos (`/gestionar_productos_page`)** — CRUD completo de productos con subida de imágenes a Cloudinary, control de stock y estados.
+</details>
 
-### Módulos Exclusivos de Administrador
+<details>
+<summary><b>🧑‍🍳 Módulos de Vendedor</b></summary>
 
-- **Publicidad (`/publicidad_page`)** — Gestión de la cinta de inicio (Home Ticker) con control de velocidad y previsualización en vivo.
-- **Facturación (`/facturacion_page`)** — Registro de pagos, validación de comprobantes, generación de facturas y reportes.
-- **Gestión de Usuarios (`/gestion_usuarios_page`)** — Alta, edición y gestión de roles de usuarios.
-- **Manual del Sistema (`/manual_page`)** — Documentación interna para vendedores y administradores.
+<br/>
 
----
+- **📦 Pedidos (`/pedidos_page`)** — Vista Kanban de todos los pedidos con gestión de estado, diferenciadores visuales por estado (activo/finalizado/anulado) y notificaciones en tiempo real.
+- **🧁 Productos (`/gestionar_productos_page`)** — CRUD completo de productos con subida de imágenes a Cloudinary, control de stock y estados.
 
-## Arquitectura del Proyecto
+</details>
+
+<details>
+<summary><b>🛡️ Módulos Exclusivos de Administrador</b></summary>
+
+<br/>
+
+- **📢 Publicidad (`/publicidad_page`)** — Gestión de la cinta de inicio (Home Ticker) con control de velocidad y previsualización en vivo.
+- **🧾 Facturación (`/facturacion_page`)** — Registro de pagos, validación de comprobantes, generación de facturas y reportes.
+- **👥 Gestión de Usuarios (`/gestion_usuarios_page`)** — Alta, edición y gestión de roles de usuarios.
+- **📘 Manual del Sistema (`/manual_page`)** — Documentación interna para vendedores y administradores.
+
+</details>
+
+<br/>
+
+## 🏗️ Arquitectura del Proyecto
+
+### Patrón de Capas
+
+```mermaid
+flowchart TD
+    A["🌐 Solicitud HTTP"] --> B["🧩 Flask Blueprint · controllers/<br/>Valida sesión · rol · datos de entrada"]
+    B --> C["🗂️ helpers/models.py<br/>select · insert · update · delete"]
+    C --> D[("🐘 Supabase · PostgreSQL")]
+    D --> E["📤 Respuesta JSON o render_template()"]
+
+    style A fill:#E07A5F,color:#fff
+    style B fill:#8B5A2B,color:#fff
+    style C fill:#FFD8A8,color:#3d2b1f
+    style D fill:#3FCF8E,color:#0d3b2e
+    style E fill:#FFB6B9,color:#3d2b1f
+```
+
+<details>
+<summary><b>📂 Estructura de carpetas</b></summary>
 
 ```
 D'Antojitos - Local/
@@ -226,27 +276,11 @@ D'Antojitos - Local/
     └── uploads/                    # Archivos estáticos locales (logo, íconos)
 ```
 
-### Patrón de Capas
+</details>
 
-```
-Solicitud HTTP
-      │
-      ▼
- Flask Blueprint (controllers/)
-      │   Valida sesión · rol · datos de entrada
-      ▼
- helpers/models.py
-      │   Consultas Supabase (select · insert · update · delete)
-      ▼
- Supabase (PostgreSQL)
-      │
-      ▼
- Respuesta JSON o render_template()
-```
+<br/>
 
----
-
-## Base de Datos
+## 🗄️ Base de Datos
 
 ### Tablas principales
 
@@ -264,7 +298,8 @@ Solicitud HTTP
 | `comentarios` | Muro público de sugerencias con likes |
 | `mensajes_privados` | Mensajería privada con columnas `tipo` (cv/staff) y `cedula_dest` |
 
-### Migraciones requeridas
+<details>
+<summary><b>🛠️ Migraciones requeridas</b></summary>
 
 ```sql
 -- Archivado persistente de facturas
@@ -284,9 +319,11 @@ ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_apellido   TIMESTAMPTZ
 INSERT INTO roles (nombre_role) VALUES ('vendedor') ON CONFLICT DO NOTHING;
 ```
 
----
+</details>
 
-## Variables de Entorno
+<br/>
+
+## 🔐 Variables de Entorno
 
 Crear un archivo `.env` en la raíz del proyecto con las siguientes variables:
 
@@ -308,16 +345,16 @@ GOOGLE_CLIENT_ID=<client_id>.apps.googleusercontent.com
 FLASK_SECRET_KEY=<clave_aleatoria_segura>
 ```
 
----
+<br/>
 
-## Instalación y Ejecución Local
+## 🚀 Instalación y Ejecución Local
 
 ### Requisitos previos
 
-- Python 3.12+
-- Cuenta en [Supabase](https://supabase.com)
-- Cuenta en [Cloudinary](https://cloudinary.com)
-- Credenciales de [Google Cloud Console](https://console.cloud.google.com) para OAuth2
+![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Cuenta-3FCF8E?style=flat-square&logo=supabase&logoColor=white)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-Cuenta-3448C5?style=flat-square&logo=cloudinary&logoColor=white)
+![Google Cloud](https://img.shields.io/badge/Google%20Cloud-OAuth2-4285F4?style=flat-square&logo=googlecloud&logoColor=white)
 
 ### Pasos
 
@@ -350,12 +387,15 @@ python app.py
 ```
 
 El servidor estará disponible en:
-- **Local:** `http://localhost:8000`
-- **Red local:** `http://<IP-local>:8000`
 
----
+| Entorno | URL |
+|---|---|
+| **Local** | `http://localhost:8000` |
+| **Red local** | `http://<IP-local>:8000` |
 
-## Despliegue en Producción
+<br/>
+
+## ☁️ Despliegue en Producción
 
 La aplicación está configurada para desplegarse en **Vercel** en modo serverless con **Gunicorn**.
 
@@ -375,9 +415,9 @@ Configurar las mismas variables del archivo `.env` directamente en el panel de V
 - El campo `MAX_CONTENT_LENGTH` admite hasta **50 MB** por subida (imágenes Cloudinary)
 - CORS está habilitado globalmente con `flask-cors`
 
----
+<br/>
 
-## Sistema de Internacionalización
+## 🌐 Sistema de Internacionalización
 
 La aplicación incluye soporte completo para **Español (ES)** e **Inglés (EN)**.
 
@@ -385,18 +425,27 @@ La aplicación incluye soporte completo para **Español (ES)** e **Inglés (EN)*
 - En JavaScript se usa la función `t('clave')` definida en `static/js/global_js/i18n.js`
 - El idioma se guarda en `localStorage` y se aplica en tiempo real sin recarga de página
 
----
+<br/>
 
-## Características Adicionales
+## ✨ Características Adicionales
 
-- **Modo oscuro** — Tema claro/oscuro persistido en `localStorage`
-- **Monitor de stock en tiempo real** — Polling cada 8 segundos; notificaciones automáticas cuando un producto se agota o se repone
-- **Notificaciones nativas del navegador** — Solicitud de permisos en primera visita
-- **Cinta publicitaria dinámica** — Ticker configurable con control de velocidad (0.5×, 1×, 1.5×, 2×)
-- **Cooldown de 30 días** en campos sensibles del perfil (cédula, usuario, nombre, apellido) con cuenta regresiva en tiempo real
-- **Service Workers** por módulo para caché y experiencia offline básica
-- **Scroll to top** y barra de progreso de lectura global
+| | |
+|---|---|
+| 🌙 **Modo oscuro** | Tema claro/oscuro persistido en `localStorage` |
+| 📡 **Monitor de stock** | Polling cada 8 s; notificaciones automáticas al agotarse o reponerse un producto |
+| 🔔 **Notificaciones nativas** | Solicitud de permisos del navegador en la primera visita |
+| 🎞️ **Cinta publicitaria dinámica** | Ticker configurable con control de velocidad (0.5× · 1× · 1.5× · 2×) |
+| ⏳ **Cooldown de 30 días** | Campos sensibles del perfil (cédula, usuario, nombre, apellido) con cuenta regresiva en tiempo real |
+| ⚡ **Service Workers** | Caché por módulo y experiencia offline básica |
+| 🔝 **Scroll to top** | Barra de progreso de lectura global |
 
----
+<br/>
 
-*D'Antojitos© — Hecho con amor desde casa.*
+<!-- ============================ FOOTER ============================ -->
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:8B5A2B,50:E07A5F,100:FFB6B9&height=140&section=footer&text=Hecho%20con%20%E2%9D%A4%EF%B8%8F%20desde%20casa&fontSize=22&fontColor=ffffff&fontAlignY=72&animation=fadeIn" width="100%" alt="footer"/>
+
+**D'Antojitos© — Hecho con amor desde casa.**
+
+</div>
