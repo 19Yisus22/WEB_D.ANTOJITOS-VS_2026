@@ -704,6 +704,20 @@ html, body {
 .priv-msg--mio .priv-msg-del { color: rgba(255,255,255,0.4); }
 .priv-msg--mio .priv-msg-del:hover { color: #fff; }
 
+.priv-msg-edit {
+    background: transparent;
+    border: none;
+    color: rgba(0,0,0,0.2);
+    padding: 2px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: color 0.2s;
+}
+.priv-msg-edit:hover { color: #d35400; }
+.priv-msg--mio .priv-msg-edit { color: rgba(255,255,255,0.4); }
+.priv-msg--mio .priv-msg-edit:hover { color: #fff; }
+
 [data-theme="dark"] .priv-subtabs-bar { background: var(--dk-card, #1a1826) !important; border-color: var(--dk-border, #2a2838) !important; }
 [data-theme="dark"] .priv-subtab { color: var(--dk-text-subtle, #4a4868) !important; }
 [data-theme="dark"] .priv-subtab.active { color: var(--dk-accent, #f0883e) !important; border-color: var(--dk-accent, #f0883e) !important; background: rgba(240,136,62,0.06) !important; }

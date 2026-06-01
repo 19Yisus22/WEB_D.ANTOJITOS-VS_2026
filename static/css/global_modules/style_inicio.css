@@ -31,7 +31,7 @@ html, body {
 }
 
 /* Inicio tiene su propio mt-4/mt-md-5; neutralizamos el padding-top global */
-main.page-wrapper { padding-top: 0 !important; }
+main.page-wrapper { padding-top: 2rem !important; }
 main { flex-grow: 1; width: 100%; }
 
 .catalog-header { width: 100%; display: block; clear: both; }

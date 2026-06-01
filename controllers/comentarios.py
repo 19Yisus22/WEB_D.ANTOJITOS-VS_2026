@@ -302,6 +302,26 @@ def enviar_mensaje_privado():
         return jsonify({"error": str(e)}), 500
 
 
+@comentarios_bp.route("/mensajes_privados/<id>", methods=["PUT"])
+@login_required
+def editar_mensaje_privado(id):
+    cedula = session.get("user_id")
+    data   = request.get_json() or {}
+    msg    = (data.get("mensaje") or "").strip()
+    if not msg:
+        return jsonify({"error": "Mensaje vacío"}), 400
+    try:
+        registro = db.mp_get_by_id(id)
+        if not registro:
+            return jsonify({"error": "No encontrado"}), 404
+        if registro["cedula_remitente"] != cedula:
+            return jsonify({"error": "Sin permiso"}), 403
+        db.mp_update(id, msg)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @comentarios_bp.route("/mensajes_privados/<id>", methods=["DELETE"])
 @login_required
 def eliminar_mensaje_privado(id):

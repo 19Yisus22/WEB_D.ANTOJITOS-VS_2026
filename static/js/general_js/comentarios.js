@@ -598,6 +598,21 @@ async function enviarMensajeLibreCliente() {
     const msg = (ta?.value || '').trim();
     if (!msg) return;
     try {
+        if (_editandoMsgPrivado) {
+            const r = await fetch(`/mensajes_privados/${_editandoMsgPrivado}`, {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mensaje: msg })
+            });
+            if (r.ok) {
+                ta.value = '';
+                _editandoMsgPrivado = null;
+                const sendBtn = ta.closest('[class*="priv-conv-input"], [class*="priv-client-wrap"]')?.querySelector('.priv-send-btn');
+                if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
+                await _cargarHiloCliente();
+            }
+            return;
+        }
         const r = await fetch('/mensajes_privados/enviar', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -610,7 +625,22 @@ async function enviarMensajeLibreCliente() {
     } catch { showMessage(t('notif.error_conn'), true); }
 }
 
-let _hiloSeleccionado = null;
+let _hiloSeleccionado    = null;
+let _editandoMsgPrivado  = null;
+
+function editarMsgPrivado(id) {
+    const msgEl = document.querySelector(`.priv-msg[data-id="${id}"]`);
+    const texto = msgEl?.dataset.msgTexto || msgEl?.querySelector('.priv-msg-text')?.textContent || '';
+    _editandoMsgPrivado = id;
+    const taIds = ['clienteMensajeLibre', 'privRespuestaInput', 'staffMensajeInput'];
+    const ta = taIds.map(t => document.getElementById(t)).find(el => el && el.closest('[style*="flex"]'));
+    if (!ta) return;
+    ta.value = texto;
+    ta.focus();
+    ta.select();
+    const sendBtn = ta.closest('[class*="priv-conv-input"], [class*="priv-client-wrap"]')?.querySelector('.priv-send-btn');
+    if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-check2"></i>`;
+}
 
 async function _cargarHilosVendedor() {
     const lista = document.getElementById('hilosLista');
@@ -686,6 +716,23 @@ async function enviarRespuestaVendedor() {
     const msg = (textarea?.value || '').trim();
     if (!msg) return;
     try {
+        if (_editandoMsgPrivado) {
+            const r = await fetch(`/mensajes_privados/${_editandoMsgPrivado}`, {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mensaje: msg })
+            });
+            if (r.ok) {
+                textarea.value = '';
+                _editandoMsgPrivado = null;
+                const sendBtn = textarea.closest('.priv-conv-input')?.querySelector('.priv-send-btn');
+                if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
+                await abrirConversacion(_hiloSeleccionado,
+                    document.querySelector('#privConvHeader strong')?.textContent || '',
+                    document.querySelector('#privConvHeader .priv-conv-avatar')?.src || '');
+            }
+            return;
+        }
         const r = await fetch('/mensajes_privados/enviar', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -782,6 +829,24 @@ async function enviarMensajeStaff() {
     const msg = (ta?.value || '').trim();
     if (!msg) return;
     try {
+        if (_editandoMsgPrivado) {
+            const r = await fetch(`/mensajes_privados/${_editandoMsgPrivado}`, {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mensaje: msg })
+            });
+            if (r.ok) {
+                ta.value = '';
+                _editandoMsgPrivado = null;
+                const sendBtn = ta.closest('.priv-conv-input')?.querySelector('.priv-send-btn');
+                if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
+                await abrirConversacionStaff(_staffSeleccionado,
+                    document.querySelector('#staffConvHeader strong')?.textContent || '',
+                    document.querySelector('#staffConvHeader .priv-conv-avatar')?.src || '',
+                    '');
+            }
+            return;
+        }
         const r = await fetch('/mensajes_privados/staff/enviar', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -828,6 +893,7 @@ function _renderMsgPrivado(m, esMio, msgId) {
     const div = document.createElement('div');
     div.className = `priv-msg ${esMio ? 'priv-msg--mio' : 'priv-msg--otro'}`;
     div.dataset.id = msgId || '';
+    div.dataset.msgTexto = m.mensaje || '';
     const hora = new Date(m.created_at).toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
     div.innerHTML = `
         <div class="priv-msg-bubble">
@@ -835,7 +901,10 @@ function _renderMsgPrivado(m, esMio, msgId) {
             <span class="priv-msg-text">${m.mensaje}</span>
             <div class="d-flex justify-content-between align-items-center gap-2 mt-1">
                 <span class="priv-msg-time">${hora}</span>
-                ${esMio || USER_CONFIG.userRol !== 'cliente' ? `<button class="priv-msg-del" onclick="eliminarMsgPrivado('${msgId}', this)" title="${t('btn.delete')}"><i class="bi bi-trash3"></i></button>` : ''}
+                <div class="d-flex gap-1">
+                    ${esMio && !m.es_predeterminado ? `<button class="priv-msg-edit" onclick="editarMsgPrivado('${msgId}')" title="${t('btn.edit')}"><i class="bi bi-pencil"></i></button>` : ''}
+                    ${esMio || USER_CONFIG.userRol !== 'cliente' ? `<button class="priv-msg-del" onclick="eliminarMsgPrivado('${msgId}', this)" title="${t('btn.delete')}"><i class="bi bi-trash3"></i></button>` : ''}
+                </div>
             </div>
         </div>
     `;

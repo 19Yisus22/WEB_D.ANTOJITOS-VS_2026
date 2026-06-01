@@ -636,7 +636,9 @@ function _renderClientNotifs() {
                 <small style="display:block;margin-top:2px;color:#888;">${n.mensaje}</small>
             </div>
             <div class="notif-item-actions">
-                <button class="btn-notif-visto" onclick="event.stopPropagation();_clientNotifRemove(${i})" title="Quitar">
+                <button class="btn-notif-visto"
+                        onclick="event.stopPropagation();${isPrivMsg ? '_dismissPrivClient()' : `_clientNotifRemove(${i})`}"
+                        title="Quitar">
                     <i class="bi bi-x-lg" style="font-size:0.7rem;"></i>
                 </button>
             </div>`;
@@ -1019,16 +1021,61 @@ window._pedidosMarcarTodo = function() {
 
 /* ══════════════════════════════════════════════════════
    NOTIFICACIONES DE MENSAJES PRIVADOS — todos los roles
+   Persisten hasta que el usuario presione "leído".
    ══════════════════════════════════════════════════════ */
+
+const _PRIV_STATE_KEY = '_dantojitos_priv_state';
+function _getPrivState() {
+    try { return JSON.parse(localStorage.getItem(_PRIV_STATE_KEY) || '{}'); } catch { return {}; }
+}
+function _savePrivState(s) { localStorage.setItem(_PRIV_STATE_KEY, JSON.stringify(s)); }
+
+/* Solo muestra si count supera el umbral en que el usuario marcó "leído" */
+function _privShouldShow(tipo, count) {
+    if (count <= 0) return false;
+    return count > ((_getPrivState()[tipo] || {}).dismissedAtCount ?? -1);
+}
+
+/* Cuando count baja a 0 (mensajes leídos en servidor) se resetea el umbral */
+function _privResetIfZero(tipo, prev, curr) {
+    if (curr === 0 && prev > 0) {
+        const state = _getPrivState();
+        state[tipo] = { ...(state[tipo] || {}), dismissedAtCount: -1 };
+        _savePrivState(state);
+    }
+}
+
+window._dismissPrivSistem = function(tipo) {
+    const curr  = tipo === 'cv' ? _lastPrivCv : _lastPrivStaff;
+    const state = _getPrivState();
+    state[tipo] = { ...(state[tipo] || {}), dismissedAtCount: Math.max(curr, 0) };
+    _savePrivState(state);
+    const li = document.querySelector(`#sistemList [data-priv-tipo="${tipo}"]`);
+    if (li) {
+        li.style.transition = 'opacity 0.28s ease, transform 0.28s ease';
+        li.style.opacity    = '0';
+        li.style.transform  = 'translateX(22px)';
+        setTimeout(() => { li.remove(); _updateSistemBadge(); }, 300);
+    }
+};
+
+window._dismissPrivClient = function() {
+    const curr  = _lastPrivCv;
+    const state = _getPrivState();
+    state['client_cv'] = { ...(state['client_cv'] || {}), dismissedAtCount: Math.max(curr, 0) };
+    _savePrivState(state);
+    let arr = _getClientNotifs();
+    arr = arr.filter(n => n.tipo !== 'priv_msg');
+    _saveClientNotifs(arr);
+    _renderClientNotifs();
+};
 
 function _updatePrivNotifSistem(tipo, count) {
     const list = document.getElementById('sistemList');
     if (!list) return;
+    if (!_privShouldShow(tipo, count)) return;
+
     const existing = list.querySelector(`[data-priv-tipo="${tipo}"]`);
-    if (count === 0) {
-        if (existing) { existing.remove(); _updateSistemBadge(); }
-        return;
-    }
     const isCv  = tipo === 'cv';
     const color = isCv ? '#7c3aed' : '#0ea5e9';
     const bg    = isCv ? '#f5f3ff' : '#e0f2fe';
@@ -1036,11 +1083,15 @@ function _updatePrivNotifSistem(tipo, count) {
     const label = isCv
         ? (count === 1 ? '1 mensaje de cliente sin leer' : `${count} mensajes de clientes sin leer`)
         : (count === 1 ? '1 mensaje de equipo sin leer'  : `${count} mensajes de equipo sin leer`);
+
     if (existing) {
         const strong = existing.querySelector('strong');
         if (strong) strong.textContent = label;
+        const prev = isCv ? _lastPrivCv : _lastPrivStaff;
+        if (count > prev && prev >= 0) _animateBadge(document.getElementById('navBellBadge'));
         return;
     }
+
     const empty = document.getElementById('sistemEmpty');
     if (empty) empty.style.display = 'none';
     const li = document.createElement('li');
@@ -1057,33 +1108,32 @@ function _updatePrivNotifSistem(tipo, count) {
             <small style="display:block;margin-top:2px;color:${color};font-weight:600;">Ir a mensajes →</small>
         </div>
         <div class="notif-item-actions">
-            <button class="btn-notif-visto" title="Descartar"
-                    onclick="event.stopPropagation();this.closest('.notif-item').remove();_updateSistemBadge();">
-                <i class="bi bi-x"></i>
+            <button class="btn-notif-visto" title="Marcar como leído"
+                    onclick="event.stopPropagation();_dismissPrivSistem('${tipo}')">
+                <i class="bi bi-check2"></i>
             </button>
         </div>`;
     list.insertBefore(li, list.firstChild);
     _updateSistemBadge();
     const prev = isCv ? _lastPrivCv : _lastPrivStaff;
-    if (count > prev && prev >= 0) _animateBadge(document.getElementById('navBellBadge'));
+    if (prev >= 0) _animateBadge(document.getElementById('navBellBadge'));
 }
 
 function _updatePrivClientNotif(count) {
-    let arr = _getClientNotifs();
+    if (!_privShouldShow('client_cv', count)) return;
+    let arr      = _getClientNotifs();
     const prevEntry = arr.find(n => n.tipo === 'priv_msg');
-    const prevCount = prevEntry ? (prevEntry._count || 0) : 0;
+    const prevCount = prevEntry?._count || 0;
     arr = arr.filter(n => n.tipo !== 'priv_msg');
-    if (count > 0) {
-        arr.unshift({
-            tipo:    'priv_msg',
-            titulo:  count === 1 ? 'Nuevo mensaje privado' : `${count} mensajes sin leer`,
-            mensaje: 'El vendedor te ha respondido. Toca para leer.',
-            imagen:  null,
-            url:     '/comentarios_page',
-            _count:  count,
-            ts:      Date.now(),
-        });
-    }
+    arr.unshift({
+        tipo:    'priv_msg',
+        titulo:  count === 1 ? 'Nuevo mensaje privado' : `${count} mensajes sin leer`,
+        mensaje: 'El vendedor te ha respondido.',
+        imagen:  null,
+        url:     '/comentarios_page',
+        _count:  count,
+        ts:      Date.now(),
+    });
     _saveClientNotifs(arr);
     _renderClientNotifs();
     if (count > prevCount && _lastPrivCv >= 0) {
@@ -1097,9 +1147,14 @@ async function _pollPrivMsgs() {
     try {
         const r = await fetch('/mensajes_privados/no_leidos', { cache: 'no-store' });
         if (!r.ok) return;
-        const d  = await r.json();
+        const d     = await r.json();
         const cv    = d.cv    || 0;
         const staff = d.staff || 0;
+
+        _privResetIfZero('cv',       _lastPrivCv,    cv);
+        _privResetIfZero('staff',    _lastPrivStaff, staff);
+        _privResetIfZero('client_cv',_lastPrivCv,    cv);
+
         if (document.getElementById('navClientBellBadge')) _updatePrivClientNotif(cv);
         if (document.getElementById('navBellBadge')) {
             _updatePrivNotifSistem('cv', cv);

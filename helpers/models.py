@@ -449,6 +449,9 @@ def mp_get_by_id(id: str) -> dict | None:
         supabase.table("mensajes_privados").select(_MP_SELECT).eq("id", id).limit(1)
     ))
 
+def mp_update(id: str, mensaje: str) -> None:
+    _run_safe(supabase.table("mensajes_privados").update({"mensaje": mensaje}).eq("id", id))
+
 def mp_delete(id: str) -> None:
     _run_safe(supabase.table("mensajes_privados").delete().eq("id", id))
 
