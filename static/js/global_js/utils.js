@@ -586,6 +586,7 @@ async function eliminarNotif(id) {
    BANDEJA DE NOTIFICACIONES — CLIENTE (localStorage)
    ══════════════════════════════════════════════════════ */
 const _CLIENT_NOTIF_KEY = '_dantojitos_client_notifs';
+const _CLIENT_SEEN_KEY  = '_dantojitos_client_seen';
 const _CLIENT_NOTIF_MAX = 30;
 
 function _getClientNotifs() {
@@ -594,9 +595,26 @@ function _getClientNotifs() {
 function _saveClientNotifs(arr) {
     localStorage.setItem(_CLIENT_NOTIF_KEY, JSON.stringify(arr.slice(0, _CLIENT_NOTIF_MAX)));
 }
+function _getClientSeen() {
+    try { return JSON.parse(localStorage.getItem(_CLIENT_SEEN_KEY) || '[]'); } catch { return []; }
+}
+function _addClientSeen(sig) {
+    const seen = _getClientSeen();
+    if (!seen.includes(sig)) {
+        seen.unshift(sig);
+        if (seen.length > 200) seen.length = 200;
+        localStorage.setItem(_CLIENT_SEEN_KEY, JSON.stringify(seen));
+    }
+}
+function _notifSig(n) {
+    return (n.tipo || '') + '|' + (n.titulo || '') + '|' + (n.mensaje || '').substring(0, 40);
+}
 function _pushClientNotif(notif) {
+    const sig = _notifSig(notif);
+    if (_getClientSeen().includes(sig)) return;
     const arr = _getClientNotifs();
-    arr.unshift({ ...notif, ts: Date.now() });
+    if (arr.some(x => _notifSig(x) === sig)) return;
+    arr.unshift({ ...notif, ts: Date.now(), _sig: sig });
     _saveClientNotifs(arr);
     _renderClientNotifs();
 }
@@ -626,7 +644,8 @@ function _renderClientNotifs() {
         const bg    = agotado ? '#fee2e2' : isPerfil ? '#fff4ee' : isPrivMsg ? '#f5f3ff' : '#dcfce7';
         const li = document.createElement('li');
         li.className = 'notif-item' + (n.url ? ' notif-item-link' : '');
-        if (n.url) { li.style.cursor = 'pointer'; li.onclick = () => { window.location.href = n.url; }; }
+        li.dataset.notifIdx = i;
+        if (n.url) { li.style.cursor = 'pointer'; li.onclick = (e) => { if (!e.target.closest('.btn-notif-visto')) window.location.href = n.url; }; }
         li.innerHTML = `
             <div class="notif-item-img" style="background:${bg};">
                 ${n.imagen ? `<img src="${n.imagen}" onerror="this.outerHTML='<i class=\\"bi ${icon}\\" style=\\"color:${color};font-size:1rem;\\"></i>'">` : `<i class="bi ${icon}" style="color:${color};font-size:1rem;"></i>`}
@@ -636,22 +655,52 @@ function _renderClientNotifs() {
                 <small style="display:block;margin-top:2px;color:#888;">${n.mensaje}</small>
             </div>
             <div class="notif-item-actions">
-                <button class="btn-notif-visto"
-                        onclick="event.stopPropagation();${isPrivMsg ? '_dismissPrivClient()' : `_clientNotifRemove(${i})`}"
-                        title="Quitar">
-                    <i class="bi bi-x-lg" style="font-size:0.7rem;"></i>
+                <button class="btn-notif-visto" title="Marcar como visto">
+                    <i class="bi bi-check2" style="font-size:0.82rem;"></i>
                 </button>
             </div>`;
+        const vistoBtn = li.querySelector('.btn-notif-visto');
+        vistoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isPrivMsg) { _dismissPrivClient(); return; }
+            _clientNotifRemoveAnimado(li, i, n._sig);
+        });
         list.appendChild(li);
     });
 }
+window._clientNotifRemoveAnimado = function(li, idx, sig) {
+    li.style.transition = 'opacity 0.28s ease, transform 0.28s ease, max-height 0.3s ease, padding 0.3s ease';
+    li.style.opacity    = '0';
+    li.style.transform  = 'translateX(44px)';
+    li.style.overflow   = 'hidden';
+    li.style.pointerEvents = 'none';
+    if (sig) _addClientSeen(sig);
+    setTimeout(() => {
+        li.style.maxHeight = li.offsetHeight + 'px';
+        requestAnimationFrame(() => {
+            li.style.maxHeight  = '0';
+            li.style.paddingTop = '0';
+            li.style.paddingBottom = '0';
+            li.style.borderBottom  = 'none';
+        });
+        setTimeout(() => {
+            const arr = _getClientNotifs();
+            if (idx < arr.length) arr.splice(idx, 1);
+            _saveClientNotifs(arr);
+            _renderClientNotifs();
+        }, 320);
+    }, 290);
+};
 window._clientNotifRemove = function(idx) {
     const arr = _getClientNotifs();
+    if (arr[idx]?._sig) _addClientSeen(arr[idx]._sig);
     arr.splice(idx, 1);
     _saveClientNotifs(arr);
     _renderClientNotifs();
 };
 window._clientNotifClearAll = function() {
+    const arr = _getClientNotifs();
+    arr.forEach(n => { if (n._sig) _addClientSeen(n._sig); });
     _saveClientNotifs([]);
     _renderClientNotifs();
 };

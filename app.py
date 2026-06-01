@@ -89,7 +89,7 @@ if __name__ == "__main__":
     host      = "0.0.0.0"
     port      = 8000
     local_ip  = _get_local_ip()
-    debug_mode = False  # Cambia a True para desarrollo local
+    debug_mode = True  # Cambia a True para desarrollo local
 
     if debug_mode:
         print("Ejecutando en modo DEBUG")

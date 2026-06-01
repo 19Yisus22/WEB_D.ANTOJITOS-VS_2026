@@ -307,8 +307,8 @@ function renderComentario(c) {
                     <i class="bi ${haDadoLike ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="font-size:0.9rem;${haDadoLike ? '' : 'color:#888;'}"></i>
                     <small class="fw-bold" style="font-size:0.72rem;color:#555;">${(c.likes_usuarios || []).length}</small>
                 </div>
-                <!-- Responder individualmente (visible para admin/vendedor, independiente del like) -->
-                ${(USER_CONFIG.userRol === 'admin' || USER_CONFIG.userRol === 'vendedor') && !esMio ? `
+                <!-- Responder individualmente (solo admin, independiente del like) -->
+                ${USER_CONFIG.userRol === 'admin' && !esMio ? `
                 <div class="btn-reply-pub d-flex align-items-center gap-1"
                      onclick="responderPublicamente('${c.id}', \`${(nombre).replace(/`/g,"'")}\`, \`${(c.mensaje || '').replace(/`/g,"'").substring(0,60)}\`)"
                      title="Responder a este mensaje"
@@ -329,10 +329,25 @@ function renderComentario(c) {
             const dd = document.createElement("div");
             dd.className = "dropdown-menu show shadow border-0 comentario-dropdown p-1";
             dd.style.cssText = `position: fixed; top: ${e.clientY}px; left: ${e.clientX - 100}px; z-index: 2000; min-width: 120px; border-radius: 12px;`;
-            dd.innerHTML = `
-                <button class="dropdown-item rounded-2 py-1" onclick="iniciarEdicion('${c.id}', \`${c.mensaje}\`)"><i class="bi bi-pencil me-2"></i>Editar</button>
-                <button class="dropdown-item rounded-2 py-1 text-danger" onclick="abrirConfirmacion('${c.id}')"><i class="bi bi-trash me-2"></i>Eliminar</button>
-            `;
+
+            const btnEditar = document.createElement('button');
+            btnEditar.className = 'dropdown-item rounded-2 py-1';
+            btnEditar.innerHTML = '<i class="bi bi-pencil me-2"></i>Editar';
+            btnEditar.addEventListener('click', () => {
+                dd.remove();
+                iniciarEdicion(c.id, c.mensaje);
+            });
+
+            const btnEliminar = document.createElement('button');
+            btnEliminar.className = 'dropdown-item rounded-2 py-1 text-danger';
+            btnEliminar.innerHTML = '<i class="bi bi-trash me-2"></i>Eliminar';
+            btnEliminar.addEventListener('click', () => {
+                dd.remove();
+                abrirConfirmacion(c.id);
+            });
+
+            dd.appendChild(btnEditar);
+            dd.appendChild(btnEliminar);
             document.body.appendChild(dd);
             setTimeout(() => document.addEventListener("click", () => dd.remove(), {once:true}), 50);
         };
