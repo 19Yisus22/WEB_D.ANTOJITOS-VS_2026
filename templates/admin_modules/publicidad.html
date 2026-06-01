@@ -112,17 +112,19 @@
                     </button>
                 </div>
             </div>
-            <div class="card section-cinta mb-4">
+            <!-- ── CINTA INICIO (mismo estilo que bancos digitales footer) ── -->
+            <div class="card section-inicio-cinta mb-4">
                 <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between gap-2 mb-3 flex-wrap">
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
                         <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-cursor-text fs-4 text-success"></i>
-                            <h4 class="m-0 fw-bold">Cinta Publicitaria</h4>
+                            <i class="bi bi-house-heart-fill fs-4" style="color:#d35400;"></i>
+                            <h4 class="m-0 fw-bold" data-i18n="pub.inicio_ticker">Cinta del Inicio</h4>
+                            <span class="badge bg-warning text-dark ms-1" data-i18n="pub.badge_home">Inicio</span>
                         </div>
                         <!-- Control de velocidad -->
                         <div class="ticker-speed-control d-flex align-items-center gap-2">
                             <span class="text-muted small fw-bold" style="white-space:nowrap;">
-                                <i class="bi bi-speedometer2 me-1"></i>Velocidad
+                                <i class="bi bi-speedometer2 me-1"></i><span data-i18n="pub.speed">Velocidad</span>
                             </span>
                             <div class="ticker-speed-group" role="group">
                                 <button class="ticker-speed-btn" data-speed="1"   onclick="setTickerSpeed(1)">1×</button>
@@ -133,24 +135,10 @@
                             </div>
                         </div>
                     </div>
-                    <div id="cintaContainer" class="row g-4"></div>
-                    <button class="btn btn-outline-success w-100 mt-4 fw-bold" onclick="agregarCinta()">
-                        <i class="bi bi-plus-lg"></i> Agregar a la Cinta
-                    </button>
-                </div>
-            </div>
-            <!-- ── CINTA INICIO (mismo estilo que bancos digitales footer) ── -->
-            <div class="card section-inicio-cinta mb-4">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-house-heart-fill fs-4" style="color:#d35400;"></i>
-                        <h4 class="m-0 fw-bold">Cinta del Inicio</h4>
-                        <span class="badge bg-warning text-dark ms-1">Inicio</span>
-                    </div>
-                    <p class="text-muted small mb-4">Agrega logos e imágenes que se muestran como marquee en la página de inicio (igual que los bancos del footer).</p>
+                    <p class="text-muted small mb-4" data-i18n="pub.inicio_ticker_desc">Agrega logos e imágenes que se muestran como marquee en la página de inicio (igual que los bancos del footer).</p>
                     <div id="inicioCintaContainer" class="row g-3"></div>
                     <button class="btn btn-outline-warning w-100 mt-4 fw-bold" onclick="agregarInicioCinta()">
-                        <i class="bi bi-plus-lg"></i> Agregar a la Cinta del Inicio
+                        <i class="bi bi-plus-lg"></i> <span data-i18n="pub.add_init">Agregar a la Cinta del Inicio</span>
                     </button>
                 </div>
             </div>
@@ -217,11 +205,11 @@
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <div class="d-flex align-items-center gap-2">
                         <i class="bi bi-display fs-4" style="color:#d35400;"></i>
-                        <h5 class="m-0 fw-bold text-uppercase">Vista en Vivo — Inicio</h5>
-                        <span class="badge bg-success ms-1" id="liveStatusBadge">EN VIVO</span>
+                        <h5 class="m-0 fw-bold text-uppercase" data-i18n="pub.live_preview">Vista en Vivo — Inicio</h5>
+                        <span class="badge bg-success ms-1" id="liveStatusBadge" data-i18n="pub.live_badge">EN VIVO</span>
                     </div>
                     <div class="d-flex gap-2 align-items-center">
-                        <span class="text-muted small">Scroll habilitado · Botones desactivados</span>
+                        <span class="text-muted small" data-i18n="pub.scroll_enabled">Scroll habilitado · Botones desactivados</span>
                         <button class="btn btn-sm btn-outline-secondary" onclick="recargarPreviewInicio()" title="Recargar vista">
                             <i class="bi bi-arrow-clockwise"></i>
                         </button>

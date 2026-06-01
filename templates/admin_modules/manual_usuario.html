@@ -153,6 +153,7 @@
                 <div class="nav-item active" onclick="showSection('v-inicio')"><i class="bi bi-grid-1x2"></i> <span>Inicio</span></div>
                 <div class="nav-item" onclick="showSection('v-perfil')"><i class="bi bi-person-circle"></i> <span>Mi Perfil</span></div>
                 <div class="nav-item" onclick="showSection('v-pedidos')"><i class="bi bi-receipt"></i> <span>Pedidos</span></div>
+                <div class="nav-item" onclick="showSection('v-productos')"><i class="bi bi-box-seam"></i> <span>Productos</span></div>
                 <div class="nav-item" onclick="showSection('v-catalogo')"><i class="bi bi-shop"></i> <span>Catálogo</span></div>
             </nav>
         </aside>
@@ -197,6 +198,28 @@
                         <li><i class="bi bi-toggle-on"></i> <strong>Estado de Entrega:</strong> Marca pedidos como entregados una vez se complete la transacción.</li>
                         <li><i class="bi bi-pin-angle"></i> <strong>Pedidos Fijados:</strong> Los pedidos prioritarios aparecen al inicio de la lista para atenderlos primero.</li>
                         <li><i class="bi bi-cash-coin"></i> <strong>Saldo Pendiente:</strong> Identifica los pedidos con pagos incompletos para gestionarlos con el cliente.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="v-productos" class="content-section">
+                <h2><i class="bi bi-box-seam"></i> Gestión de Productos</h2>
+                <div class="card">
+                    <h3>Administración del Inventario</h3>
+                    <p>Como vendedor puedes crear, editar y controlar los productos del catálogo:</p>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-plus-circle"></i> <strong>Agregar Postre:</strong> Usa el botón "Nuevo Postre" para ingresar un producto con nombre, precio, stock, descripción e imagen.</li>
+                        <li><i class="bi bi-pencil-square"></i> <strong>Editar Producto:</strong> Haz clic sobre cualquier tarjeta del catálogo para abrir su ficha y editarla.</li>
+                        <li><i class="bi bi-trash3"></i> <strong>Eliminar:</strong> Desde la ficha del producto puedes eliminarlo de forma permanente. Esta acción no se puede deshacer.</li>
+                        <li><i class="bi bi-boxes"></i> <strong>Control de Stock:</strong> Mantén el stock actualizado; los productos con stock 0 aparecen como agotados en el catálogo.</li>
+                        <li><i class="bi bi-image"></i> <strong>Imágenes:</strong> Las imágenes se comprimen y suben automáticamente a Cloudinary al guardar el producto.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Búsqueda y Filtros</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-search"></i> <strong>Buscador:</strong> Escribe el nombre en la barra de búsqueda para localizar productos al instante.</li>
+                        <li><i class="bi bi-check2-circle"></i> <strong>Disponibles / Agotados:</strong> El módulo separa automáticamente los productos en dos secciones según su stock.</li>
                     </ul>
                 </div>
             </section>

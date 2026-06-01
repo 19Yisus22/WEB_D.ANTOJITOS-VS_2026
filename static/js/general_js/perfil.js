@@ -130,10 +130,9 @@ async function ejecutarAutoeleminacion() {
     }
     setLoading(btn, true, originalText);
     try {
-        const res = await fetch("/eliminar_usuario_admin", {
+        const res = await fetch("/eliminar_mi_cuenta", {
             method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ correo: correoUsuario })
+            headers: { "Content-Type": "application/json" }
         });
         const data = await res.json();
         if (res.ok && data.ok) {
@@ -166,8 +165,10 @@ inputs.forEach(input => {
         let val = this.value;
         if (isCorreo) {
             val = val.replace(/\s/g, '');
-        } else if (isCedula || isTelefono) {
+        } else if (isTelefono) {
             val = val.replace(/[^0-9]/g, '');
+        } else if (isCedula) {
+            val = val.replace(/[^A-Za-z0-9\-]/g, '');
         } else if (isNombre || isApellido) {
             val = val.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
         }
@@ -196,11 +197,68 @@ inputs.forEach(input => {
 });
 
 const btnEditarPerfil = document.getElementById("btnEditarPerfil");
+let _restricciones = {};
+let _countdownInterval = null;
+
+const CAMPO_ID_MAP = {
+    nombre:   "nombrePerfil",
+    apellido: "apellidoPerfil",
+    cedula:   "cedulaPerfil",
+    username: "usernamePerfil",
+};
+
+async function cargarRestricciones() {
+    try {
+        const r = await fetch('/perfil/restricciones');
+        if (!r.ok) return;
+        _restricciones = await r.json();
+        _aplicarCooldowns();
+        _countdownInterval = setInterval(_actualizarCountdowns, 1000);
+    } catch {}
+}
+
+function _aplicarCooldowns() {
+    Object.entries(_restricciones).forEach(([campo, info]) => {
+        const cdEl  = document.getElementById(`cooldown-${campo}`);
+        const input = document.getElementById(CAMPO_ID_MAP[campo]);
+        if (info.bloqueado) {
+            if (cdEl) cdEl.style.display = 'flex';
+            if (input) input.classList.add('cooldown-locked');
+        } else {
+            if (cdEl) cdEl.style.display = 'none';
+            if (input) input.classList.remove('cooldown-locked');
+        }
+    });
+    _actualizarCountdowns();
+}
+
+function _actualizarCountdowns() {
+    Object.entries(_restricciones).forEach(([campo, info]) => {
+        if (!info.bloqueado || !info.disponible_en) return;
+        const timerEl = document.getElementById(`countdown-${campo}`);
+        if (!timerEl) return;
+        const diff = new Date(info.disponible_en) - new Date();
+        if (diff <= 0) {
+            _restricciones[campo].bloqueado = false;
+            _aplicarCooldowns();
+            return;
+        }
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        timerEl.textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    });
+}
+
 const btnActualizarPerfil = document.getElementById("btnActualizarPerfil");
 if (btnEditarPerfil) {
     btnEditarPerfil.addEventListener("click", () => {
         inputs.forEach(i => {
-            if (i.id !== "correoPerfil" && !i.readOnly) i.disabled = false;
+            if (i.id === "correoPerfil" || i.readOnly) return;
+            const campo = Object.entries(CAMPO_ID_MAP).find(([, id]) => id === i.id)?.[0];
+            const bloqueado = campo && _restricciones[campo]?.bloqueado;
+            if (!bloqueado) i.disabled = false;
         });
         const imgInput = document.getElementById("imagen_url");
         if (imgInput) imgInput.disabled = false;
@@ -209,6 +267,8 @@ if (btnEditarPerfil) {
         showMessage("Edición habilitada");
     });
 }
+
+cargarRestricciones();
 
 document.getElementById("formPerfil").addEventListener("submit", async e => {
     e.preventDefault();
@@ -235,12 +295,8 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     const telefonoField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase().includes('telefono'));
     const correoField = Array.from(inputs).find(i => (i.id || i.name || '').toLowerCase().includes('correo'));
 
-    // Sanitizar teléfono y cédula antes de validar (eliminar caracteres no numéricos)
     if (telefonoField && !telefonoField.disabled) {
         telefonoField.value = telefonoField.value.replace(/[^0-9]/g, '');
-    }
-    if (cedulaField && !cedulaField.disabled) {
-        cedulaField.value = cedulaField.value.replace(/[^0-9]/g, '');
     }
 
     if (nombreField) {
@@ -261,8 +317,8 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
     }
     if (cedulaField) {
         const cedulaValue = cedulaField.value.trim();
-        if (cedulaValue !== '' && (!onlyDigitsRegex.test(cedulaValue) || cedulaValue.length < 6)) {
-            showMessage("Cédula inválida", true);
+        if (cedulaValue !== '' && cedulaValue.length < 6) {
+            showMessage("Cédula inválida (mínimo 6 caracteres)", true);
             setLoading(btn, false, originalText);
             return;
         }

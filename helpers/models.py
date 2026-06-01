@@ -442,34 +442,38 @@ def inicio_config_save(data: dict) -> None:
     except Exception as e:
         logger.warning("inicio_config_save error: %s", e)
 
-# MENSAJES PRIVADOS (clientes ↔ vendedores)
-# Tabla Supabase requerida:
-#   CREATE TABLE mensajes_privados (
-#     id           UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-#     cedula_cliente    TEXT NOT NULL,
-#     cedula_remitente  TEXT NOT NULL,
-#     es_vendedor       BOOLEAN DEFAULT false,
-#     mensaje           TEXT NOT NULL,
-#     es_predeterminado BOOLEAN DEFAULT false,
-#     leido             BOOLEAN DEFAULT false,
-#     created_at        TIMESTAMPTZ DEFAULT now()
-#   );
+_MP_SELECT = "id,cedula_cliente,cedula_remitente,cedula_dest,es_vendedor,mensaje,es_predeterminado,leido,created_at,tipo"
 
-_MP_SELECT = "id,cedula_cliente,cedula_remitente,es_vendedor,mensaje,es_predeterminado,leido,created_at"
+def mp_get_by_id(id: str) -> dict | None:
+    return _single(_run(
+        supabase.table("mensajes_privados").select(_MP_SELECT).eq("id", id).limit(1)
+    ))
+
+def mp_delete(id: str) -> None:
+    _run_safe(supabase.table("mensajes_privados").delete().eq("id", id))
+
+def mp_delete_hilo(cedula_hilo: str, tipo: str) -> None:
+    _run_safe(
+        supabase.table("mensajes_privados")
+        .delete()
+        .eq("cedula_cliente", cedula_hilo)
+        .eq("tipo", tipo)
+    )
 
 def mp_get_conversacion(cedula_cliente: str) -> list:
     return _many(_run(
         supabase.table("mensajes_privados")
         .select(_MP_SELECT)
         .eq("cedula_cliente", cedula_cliente)
+        .eq("tipo", "cv")
         .order("created_at", desc=False)
     ))
 
 def mp_get_todos_hilos() -> list:
-    """Devuelve todos los mensajes para que el vendedor pueda agruparlos por cedula_cliente."""
     return _many(_run(
         supabase.table("mensajes_privados")
         .select(_MP_SELECT)
+        .eq("tipo", "cv")
         .order("created_at", desc=True)
     ))
 
@@ -482,39 +486,120 @@ def mp_create(cedula_cliente: str, cedula_remitente: str,
             "es_vendedor":       es_vendedor,
             "mensaje":           mensaje,
             "es_predeterminado": es_predeterminado,
+            "tipo":              "cv",
         })
     ))
 
 def mp_marcar_leidos(cedula_cliente: str, es_vendedor_leyendo: bool) -> None:
-    """Marca como leídos los mensajes del lado opuesto al lector."""
     _run_safe(
         supabase.table("mensajes_privados")
         .update({"leido": True})
         .eq("cedula_cliente", cedula_cliente)
+        .eq("tipo", "cv")
         .eq("es_vendedor", not es_vendedor_leyendo)
         .eq("leido", False)
     )
 
 def mp_no_leidos(cedula_cliente: str, para_vendedor: bool) -> int:
-    """Cuenta mensajes no leídos para el receptor indicado."""
     res = _run(
         supabase.table("mensajes_privados")
         .select("id", count="exact")
         .eq("cedula_cliente", cedula_cliente)
+        .eq("tipo", "cv")
         .eq("es_vendedor", not para_vendedor)
         .eq("leido", False)
     )
     return res.count if res and hasattr(res, "count") and res.count is not None else 0
 
 def mp_total_no_leidos_vendedor() -> int:
-    """Total de mensajes de clientes no leídos por ningún vendedor."""
     res = _run(
         supabase.table("mensajes_privados")
         .select("id", count="exact")
+        .eq("tipo", "cv")
         .eq("es_vendedor", False)
         .eq("leido", False)
     )
     return res.count if res and hasattr(res, "count") and res.count is not None else 0
+
+def _staff_thread_key(a: str, b: str) -> tuple[str, str]:
+    return (min(a, b), max(a, b))
+
+def mp_staff_get_conversacion(cedula_a: str, cedula_b: str) -> list:
+    c1, c2 = _staff_thread_key(cedula_a, cedula_b)
+    return _many(_run(
+        supabase.table("mensajes_privados")
+        .select(_MP_SELECT)
+        .eq("cedula_cliente", c1)
+        .eq("cedula_dest", c2)
+        .eq("tipo", "staff")
+        .order("created_at", desc=False)
+    ))
+
+def mp_staff_get_hilos_de(cedula: str) -> list:
+    r1 = _many(_run(
+        supabase.table("mensajes_privados")
+        .select(_MP_SELECT)
+        .eq("cedula_cliente", cedula)
+        .eq("tipo", "staff")
+        .order("created_at", desc=True)
+    ))
+    r2 = _many(_run(
+        supabase.table("mensajes_privados")
+        .select(_MP_SELECT)
+        .eq("cedula_dest", cedula)
+        .eq("tipo", "staff")
+        .order("created_at", desc=True)
+    ))
+    return r1 + r2
+
+def mp_staff_create(cedula_from: str, cedula_to: str, mensaje: str) -> dict | None:
+    c1, c2 = _staff_thread_key(cedula_from, cedula_to)
+    return _single(_run(
+        supabase.table("mensajes_privados").insert({
+            "cedula_cliente":   c1,
+            "cedula_dest":      c2,
+            "cedula_remitente": cedula_from,
+            "es_vendedor":      False,
+            "mensaje":          mensaje,
+            "tipo":             "staff",
+        })
+    ))
+
+def mp_staff_marcar_leidos(cedula_a: str, cedula_b: str, lector: str) -> None:
+    c1, c2 = _staff_thread_key(cedula_a, cedula_b)
+    _run_safe(
+        supabase.table("mensajes_privados")
+        .update({"leido": True})
+        .eq("cedula_cliente", c1)
+        .eq("cedula_dest", c2)
+        .eq("tipo", "staff")
+        .neq("cedula_remitente", lector)
+        .eq("leido", False)
+    )
+
+def mp_staff_no_leidos(cedula_lector: str) -> int:
+    r1 = _run(
+        supabase.table("mensajes_privados")
+        .select("id", count="exact")
+        .eq("cedula_dest", cedula_lector)
+        .eq("tipo", "staff")
+        .eq("leido", False)
+        .neq("cedula_remitente", cedula_lector)
+    )
+    r2 = _run(
+        supabase.table("mensajes_privados")
+        .select("id", count="exact")
+        .eq("cedula_cliente", cedula_lector)
+        .eq("tipo", "staff")
+        .eq("leido", False)
+        .neq("cedula_remitente", cedula_lector)
+    )
+    c1 = r1.count if r1 and hasattr(r1, "count") and r1.count is not None else 0
+    c2 = r2.count if r2 and hasattr(r2, "count") and r2.count is not None else 0
+    return c1 + c2
+
+def comentario_delete_all() -> None:
+    _run_safe(supabase.table("comentarios").delete().neq("id", "00000000-0000-0000-0000-000000000000"))
 
 
 # TABLA UTILIDADES

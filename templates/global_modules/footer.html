@@ -4,17 +4,17 @@
     <div class="container footer-content d-flex flex-wrap justify-content-between align-items-start">
 
       <div class="footer-section col-12 col-md-6 mb-4 mb-md-0">
-        <h3>Contáctame:</h3>
+        <h3 data-i18n="footer.contact">Contáctame:</h3>
         <div class="info-item"><i class="bi bi-person-fill"></i> <span>Teresa Rubio García</span></div>
         <div class="info-item"><i class="bi bi-telephone-fill"></i> <span>+57 3115699825</span></div>
         <div class="info-item"><i class="bi bi-envelope-fill"></i> <span>terugag@hotmail.com</span></div>
-        <div class="info-item"><i class="bi bi-geo-alt-fill"></i> <span>Cra 4 #14-38 La Catalana - Chinácota N.S</span></div>
-        <div class="info-item"><i class="bi bi-clock-fill"></i> <span>Sábados - Domingos &amp; Festivos | 9:00 AM - 6:00 PM</span></div>
+        <div class="info-item"><i class="bi bi-geo-alt-fill"></i> <span data-i18n="footer.address">Cra 4 #14-38 La Catalana - Chinácota N.S</span></div>
+        <div class="info-item"><i class="bi bi-clock-fill"></i> <span data-i18n="footer.schedule">Sábados - Domingos &amp; Festivos | 9:00 AM - 6:00 PM</span></div>
 
         {% if request.path == '/catalogo_page' or request.path == '/carrito_page' %}
         <div class="info-item mt-4">
           <i class="bi bi-cash-coin"></i>
-          <span><strong>Bancos Digitales:</strong></span>
+          <span><strong data-i18n="footer.banks">Bancos Digitales:</strong></span>
         </div>
         <div class="payment-marquee-container">
           <div class="payment-track" data-base-duration="25">
@@ -32,7 +32,7 @@
       </div>
 
       <div class="footer-section col-12 col-md-2 text-center mb-4 mb-md-0">
-        <h5>Síguenos</h5>
+        <h5 data-i18n="footer.follow">Síguenos</h5>
         <a href="https://www.instagram.com/teresa.rubio.7311" class="social-icon" target="_blank">
           <i class="bi bi-instagram"></i>
         </a>
@@ -48,8 +48,8 @@
     </div>
 
     <div class="container text-center footer-bottom">
-      <div class="copyright-text">2025 D'Antojitos© - Todos los derechos reservados</div>
-      <div class="author-credit">Created By: 2022 Yisus™</div>
+      <div class="copyright-text">2025 D'Antojitos© - <span data-i18n="footer.rights">Todos los derechos reservados</span></div>
+      <div class="author-credit" data-i18n="footer.credit">Creado por: 2022 Yisus™</div>
     </div>
   </footer>
 </div>

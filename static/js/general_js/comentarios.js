@@ -42,14 +42,14 @@ const monitorConexion = {
             if (res.ok) {
                 const data = await res.json();
                 const total = (data && typeof data.total !== 'undefined') ? data.total : 0;
-                indicador.innerHTML = `<i class="bi bi-people-fill me-1"></i> ${total} Usuarios Activos`;
+                indicador.innerHTML = `<i class="bi bi-people-fill me-1"></i> ${total} ${t('chat.active')}`;
             } else {
-                indicador.innerHTML = `<i class="bi bi-people-fill me-1"></i> 0 Usuarios Activos`;
+                indicador.innerHTML = `<i class="bi bi-people-fill me-1"></i> 0 ${t('chat.active')}`;
             }
         } catch (e) {
             const indicador = document.getElementById("statusCounter");
             if (indicador) {
-                indicador.innerHTML = `<i class="bi bi-people-fill me-1"></i> 0 Usuarios Activos`;
+                indicador.innerHTML = `<i class="bi bi-people-fill me-1"></i> 0 ${t('chat.active')}`;
             }
             console.error("Error en la solicitud de conteo:", e);
         }
@@ -511,9 +511,6 @@ async function _pollNoLeidos() {
     } catch {}
 }
 
-/* ══════════════════════════════════════════════════
-   PANEL PRIVADO — inicialización
-   ══════════════════════════════════════════════════ */
 function _iniciarPrivado() {
     _pollNoLeidos();
     if (USER_CONFIG.userRol === 'cliente') {
@@ -524,14 +521,32 @@ function _iniciarPrivado() {
 async function _cargarPanelPrivado() {
     if (USER_CONFIG.userRol === 'cliente') {
         await _cargarHiloCliente();
-    } else {
+    } else if (USER_CONFIG.userRol === 'vendedor') {
         await _cargarHilosVendedor();
+        await _cargarContactosStaff();
+    } else if (USER_CONFIG.userRol === 'admin') {
+        await _cargarContactosStaff();
     }
 }
 
-/* ══════════════════════════════════════════════════
-   VISTA CLIENTE
-   ══════════════════════════════════════════════════ */
+function switchPrivSubtab(tab) {
+    const panelC = document.getElementById('privPanelClientes');
+    const panelE = document.getElementById('privPanelEquipo');
+    const btnC   = document.getElementById('subtabClientes');
+    const btnE   = document.getElementById('subtabEquipo');
+    if (tab === 'clientes') {
+        if (panelC) panelC.style.display = '';
+        if (panelE) panelE.style.display = 'none';
+        btnC?.classList.add('active');
+        btnE?.classList.remove('active');
+    } else {
+        if (panelC) panelC.style.display = 'none';
+        if (panelE) { panelE.style.display = ''; panelE.style.flex = '1'; }
+        btnC?.classList.remove('active');
+        btnE?.classList.add('active');
+    }
+}
+
 async function _cargarMensajesPredeterminados() {
     const cont = document.getElementById('predefinedBtns');
     if (!cont) return;
@@ -556,10 +571,10 @@ async function _cargarHiloCliente() {
         const msgs = await r.json();
         box.innerHTML = '';
         if (!msgs.length) {
-            box.innerHTML = '<div class="priv-hilo-empty"><i class="bi bi-chat-dots"></i><p>Envía un mensaje para iniciar la conversación con nuestro equipo.</p></div>';
+            box.innerHTML = `<div class="priv-hilo-empty"><i class="bi bi-chat-dots"></i><p data-i18n="chat.priv_empty">${t('chat.priv_empty')}</p></div>`;
             return;
         }
-        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.es_vendedor)));
+        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, !m.es_vendedor, m.id)));
         box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -572,15 +587,29 @@ async function enviarMensajePredeterminado(idMsg, texto) {
             body: JSON.stringify({ mensaje: texto, es_predeterminado: true })
         });
         if (r.ok) {
-            showMessage('Mensaje enviado al equipo de vendedores');
+            showMessage(t('notif.order_sent') || 'Mensaje enviado');
             await _cargarHiloCliente();
         }
-    } catch { showMessage('Error al enviar', true); }
+    } catch { showMessage(t('notif.error_conn'), true); }
 }
 
-/* ══════════════════════════════════════════════════
-   VISTA VENDEDOR
-   ══════════════════════════════════════════════════ */
+async function enviarMensajeLibreCliente() {
+    const ta  = document.getElementById('clienteMensajeLibre');
+    const msg = (ta?.value || '').trim();
+    if (!msg) return;
+    try {
+        const r = await fetch('/mensajes_privados/enviar', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mensaje: msg })
+        });
+        if (r.ok) {
+            ta.value = '';
+            await _cargarHiloCliente();
+        }
+    } catch { showMessage(t('notif.error_conn'), true); }
+}
+
 let _hiloSeleccionado = null;
 
 async function _cargarHilosVendedor() {
@@ -590,27 +619,29 @@ async function _cargarHilosVendedor() {
         const r = await fetch('/mensajes_privados/hilos');
         const hilos = await r.json();
         if (!hilos.length) {
-            lista.innerHTML = '<div class="priv-hilo-empty" style="padding:1.5rem;text-align:center;color:#888;font-size:0.85rem;"><i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:8px;"></i>Sin conversaciones</div>';
+            lista.innerHTML = `<div class="priv-hilo-empty" style="padding:1.5rem;text-align:center;"><i class="bi bi-inbox" style="font-size:2rem;display:block;"></i>${t('status.empty')}</div>`;
             return;
         }
         lista.innerHTML = '';
         hilos.forEach(h => {
-            const div = document.createElement('div');
-            div.className = 'priv-hilo-item';
+            const div  = document.createElement('div');
+            div.className  = 'priv-hilo-item';
             div.dataset.cedula = h.cedula_cliente;
             if (h.no_leidos > 0) div.classList.add('has-unread');
-            const foto = h.info_cliente?.imagen || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+            const foto = h.info_cliente?.imagen || '/static/uploads/default_icon_profile.png';
             div.innerHTML = `
-                <div class="priv-hilo-avatar">
-                    <img src="${foto}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
-                </div>
+                <div class="priv-hilo-avatar"><img src="${foto}" onerror="this.src='/static/uploads/default_icon_profile.png'"></div>
                 <div class="priv-hilo-info">
                     <span class="priv-hilo-name">${h.info_cliente?.nombre || h.cedula_cliente}</span>
-                    <span class="priv-hilo-last">${h.ultimo_mensaje?.substring(0, 50) || '...'}</span>
+                    <span class="priv-hilo-last">${(h.ultimo_mensaje || '').substring(0, 50)}</span>
                 </div>
                 ${h.no_leidos > 0 ? `<span class="priv-hilo-badge">${h.no_leidos}</span>` : ''}
+                <button class="priv-hilo-delete" title="Eliminar hilo" onclick="limpiarHiloCV('${h.cedula_cliente}', event)"><i class="bi bi-trash3"></i></button>
             `;
-            div.onclick = () => abrirConversacion(h.cedula_cliente, h.info_cliente?.nombre || h.cedula_cliente, foto);
+            div.onclick = (e) => {
+                if (e.target.closest('.priv-hilo-delete')) return;
+                abrirConversacion(h.cedula_cliente, h.info_cliente?.nombre || h.cedula_cliente, foto);
+            };
             lista.appendChild(div);
         });
     } catch {}
@@ -618,43 +649,33 @@ async function _cargarHilosVendedor() {
 
 async function abrirConversacion(cedulaCliente, nombreCliente, fotoCliente) {
     _hiloSeleccionado = cedulaCliente;
-
-    // UI: mostrar header, box, input
     const empty  = document.getElementById('privConvEmpty');
     const header = document.getElementById('privConvHeader');
     const box    = document.getElementById('privConvBox');
     const input  = document.getElementById('privConvInput');
-    if (empty)  empty.style.display  = 'none';
-    if (header) { header.style.display = 'flex'; header.innerHTML = `
-        <img src="${fotoCliente}" class="priv-conv-avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
-        <div>
-            <strong>${nombreCliente}</strong>
-            <small style="display:block;color:#888;font-size:0.72rem;">Cliente</small>
-        </div>
-    `; }
-    if (box)   box.style.display   = 'block';
+    if (empty)  empty.style.display = 'none';
+    if (header) {
+        header.style.display = 'flex';
+        header.innerHTML = `
+            <img src="${fotoCliente}" class="priv-conv-avatar" onerror="this.src='/static/uploads/default_icon_profile.png'">
+            <div><strong>${nombreCliente}</strong><small style="display:block;color:#888;font-size:0.72rem;">${t('state.cliente')}</small></div>
+            <button class="btn btn-sm btn-outline-danger ms-auto" onclick="limpiarHiloCV('${cedulaCliente}', event)"><i class="bi bi-trash3 me-1"></i>${t('btn.delete')}</button>
+        `;
+    }
+    if (box)   box.style.display = 'block';
     if (input) input.style.display = 'flex';
-
-    // Marcar hilo como activo en sidebar
-    document.querySelectorAll('.priv-hilo-item').forEach(el => {
+    document.querySelectorAll('#hilosLista .priv-hilo-item').forEach(el => {
         el.classList.toggle('active', el.dataset.cedula === cedulaCliente);
         if (el.dataset.cedula === cedulaCliente) {
             el.classList.remove('has-unread');
-            const badge = el.querySelector('.priv-hilo-badge');
-            if (badge) badge.remove();
+            el.querySelector('.priv-hilo-badge')?.remove();
         }
     });
-
-    // Cargar mensajes
     try {
         const r = await fetch(`/mensajes_privados/hilo/${cedulaCliente}`);
         const msgs = await r.json();
         box.innerHTML = '';
-        if (!msgs.length) {
-            box.innerHTML = '<div class="priv-hilo-empty" style="padding:2rem;text-align:center;color:#aaa;"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;"></i><p>Sin mensajes aún</p></div>';
-        } else {
-            msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, !m.es_vendedor)));
-        }
+        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.es_vendedor, m.id)));
         box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -664,8 +685,6 @@ async function enviarRespuestaVendedor() {
     const textarea = document.getElementById('privRespuestaInput');
     const msg = (textarea?.value || '').trim();
     if (!msg) return;
-    const btn = document.getElementById('privEnviarBtn');
-    if (btn) btn.disabled = true;
     try {
         const r = await fetch('/mensajes_privados/enviar', {
             method:  'POST',
@@ -678,38 +697,165 @@ async function enviarRespuestaVendedor() {
                 document.querySelector('#privConvHeader strong')?.textContent || '',
                 document.querySelector('#privConvHeader .priv-conv-avatar')?.src || '');
         }
-    } catch { showMessage('Error al enviar', true); }
-    finally { if (btn) btn.disabled = false; }
+    } catch { showMessage(t('notif.error_conn'), true); }
 }
 
-// Enter en el textarea del vendedor envía (Shift+Enter = salto de línea)
-document.addEventListener('DOMContentLoaded', () => {
-    const ta = document.getElementById('privRespuestaInput');
-    if (ta) {
-        ta.addEventListener('keydown', e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                enviarRespuestaVendedor();
-            }
+async function limpiarHiloCV(cedulaCliente, ev) {
+    ev?.stopPropagation();
+    mostrarConfirmacionApp(t('confirm.title'), t('confirm.delete'), async () => {
+        try {
+            await fetch(`/mensajes_privados/hilo/${cedulaCliente}/limpiar`, { method: 'DELETE' });
+            _hiloSeleccionado = null;
+            await _cargarHilosVendedor();
+            ['privConvEmpty','privConvHeader','privConvBox','privConvInput'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = id === 'privConvEmpty' ? '' : 'none';
+            });
+        } catch { showMessage(t('notif.error_conn'), true); }
+    });
+}
+
+let _staffSeleccionado = null;
+
+async function _cargarContactosStaff() {
+    const lista = document.getElementById('staffContactosLista');
+    if (!lista) return;
+    try {
+        const r = await fetch('/mensajes_privados/staff/contactos');
+        const contactos = await r.json();
+        lista.innerHTML = '';
+        if (!contactos.length) {
+            lista.innerHTML = `<div class="priv-hilo-empty" style="padding:1.5rem;text-align:center;"><i class="bi bi-people" style="font-size:2rem;display:block;"></i>${t('status.empty')}</div>`;
+            return;
+        }
+        contactos.forEach(c => {
+            const div  = document.createElement('div');
+            div.className = 'priv-hilo-item';
+            div.dataset.cedula = c.cedula;
+            const foto = c.imagen || '/static/uploads/default_icon_profile.png';
+            const rolLabel = c.rol === 'admin' ? t('state.admin') : t('state.vendedor');
+            div.innerHTML = `
+                <div class="priv-hilo-avatar"><img src="${foto}" onerror="this.src='/static/uploads/default_icon_profile.png'"></div>
+                <div class="priv-hilo-info">
+                    <span class="priv-hilo-name">${c.nombre}</span>
+                    <span class="priv-hilo-last" style="color:${c.rol==='admin'?'#d35400':'#27ae60'};">${rolLabel}</span>
+                </div>
+            `;
+            div.onclick = () => abrirConversacionStaff(c.cedula, c.nombre, foto, rolLabel);
+            lista.appendChild(div);
         });
+    } catch {}
+}
+
+async function abrirConversacionStaff(cedulaDest, nombre, foto, rolLabel) {
+    _staffSeleccionado = cedulaDest;
+    const empty  = document.getElementById('staffConvEmpty');
+    const header = document.getElementById('staffConvHeader');
+    const box    = document.getElementById('staffConvBox');
+    const input  = document.getElementById('staffConvInput');
+    if (empty)  empty.style.display = 'none';
+    if (header) {
+        header.style.display = 'flex';
+        header.innerHTML = `
+            <img src="${foto}" class="priv-conv-avatar" onerror="this.src='/static/uploads/default_icon_profile.png'">
+            <div><strong>${nombre}</strong><small style="display:block;color:#888;font-size:0.72rem;">${rolLabel}</small></div>
+            <button class="btn btn-sm btn-outline-danger ms-auto" onclick="limpiarHiloStaff('${cedulaDest}')"><i class="bi bi-trash3 me-1"></i>${t('btn.delete')}</button>
+        `;
     }
+    if (box)   box.style.display = 'block';
+    if (input) input.style.display = 'flex';
+    document.querySelectorAll('#staffContactosLista .priv-hilo-item').forEach(el =>
+        el.classList.toggle('active', el.dataset.cedula === cedulaDest)
+    );
+    try {
+        const r = await fetch(`/mensajes_privados/staff/hilo/${cedulaDest}`);
+        const msgs = await r.json();
+        box.innerHTML = '';
+        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_remitente === USER_CONFIG.userId, m.id)));
+        box.scrollTop = box.scrollHeight;
+    } catch {}
+}
+
+async function enviarMensajeStaff() {
+    if (!_staffSeleccionado) return;
+    const ta  = document.getElementById('staffMensajeInput');
+    const msg = (ta?.value || '').trim();
+    if (!msg) return;
+    try {
+        const r = await fetch('/mensajes_privados/staff/enviar', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mensaje: msg, cedula_dest: _staffSeleccionado })
+        });
+        if (r.ok) {
+            ta.value = '';
+            await abrirConversacionStaff(_staffSeleccionado,
+                document.querySelector('#staffConvHeader strong')?.textContent || '',
+                document.querySelector('#staffConvHeader .priv-conv-avatar')?.src || '',
+                '');
+        }
+    } catch { showMessage(t('notif.error_conn'), true); }
+}
+
+async function limpiarHiloStaff(cedulaDest) {
+    mostrarConfirmacionApp(t('confirm.title'), t('confirm.delete'), async () => {
+        try {
+            await fetch(`/mensajes_privados/staff/hilo/${cedulaDest}/limpiar`, { method: 'DELETE' });
+            _staffSeleccionado = null;
+            await _cargarContactosStaff();
+            ['staffConvEmpty','staffConvHeader','staffConvBox','staffConvInput'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = id === 'staffConvEmpty' ? '' : 'none';
+            });
+        } catch { showMessage(t('notif.error_conn'), true); }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    [
+        { id: 'privRespuestaInput',  fn: enviarRespuestaVendedor },
+        { id: 'staffMensajeInput',   fn: enviarMensajeStaff },
+        { id: 'clienteMensajeLibre', fn: enviarMensajeLibreCliente },
+    ].forEach(({ id, fn }) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); fn(); }
+        });
+    });
 });
 
-/* ══════════════════════════════════════════════════
-   Render de un mensaje privado
-   ══════════════════════════════════════════════════ */
-function _renderMsgPrivado(m, esMio) {
+function _renderMsgPrivado(m, esMio, msgId) {
     const div = document.createElement('div');
     div.className = `priv-msg ${esMio ? 'priv-msg--mio' : 'priv-msg--otro'}`;
+    div.dataset.id = msgId || '';
     const hora = new Date(m.created_at).toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
     div.innerHTML = `
         <div class="priv-msg-bubble">
-            ${m.es_predeterminado ? '<span class="priv-pred-tag"><i class="bi bi-list-check me-1"></i>Predeterminado</span>' : ''}
+            ${m.es_predeterminado ? `<span class="priv-pred-tag"><i class="bi bi-list-check me-1"></i>${t('chat.list')}</span>` : ''}
             <span class="priv-msg-text">${m.mensaje}</span>
-            <span class="priv-msg-time">${hora}</span>
+            <div class="d-flex justify-content-between align-items-center gap-2 mt-1">
+                <span class="priv-msg-time">${hora}</span>
+                ${esMio || USER_CONFIG.userRol !== 'cliente' ? `<button class="priv-msg-del" onclick="eliminarMsgPrivado('${msgId}', this)" title="${t('btn.delete')}"><i class="bi bi-trash3"></i></button>` : ''}
+            </div>
         </div>
     `;
     return div;
+}
+
+async function eliminarMsgPrivado(id, btn) {
+    try {
+        const r = await fetch(`/mensajes_privados/${id}`, { method: 'DELETE' });
+        if (r.ok) btn?.closest('.priv-msg')?.remove();
+    } catch { showMessage(t('notif.error_conn'), true); }
+}
+
+async function limpiarTodosMensajes() {
+    mostrarConfirmacionApp(t('confirm.title'), t('confirm.delete'), async () => {
+        try {
+            await fetch('/comentarios/limpiar_todo', { method: 'DELETE' });
+            await cargarComentarios();
+        } catch { showMessage(t('notif.error_conn'), true); }
+    });
 }
 
 (function() {

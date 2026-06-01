@@ -18,58 +18,63 @@
     <main class="page-wrapper py-4">
         <div class="container-fluid px-lg-5">
             <div class="card-title-marketing text-center mb-4">
-                <h3 class="fw-bold m-0"><i class="bi bi-box-seam me-2"></i> Panel de Productos</h3>
-                <p class="text-white-50 mb-0 small ls-1">Administra todos los prodcutos del catálogo de D'Antojitos.</p>
+                <h3 class="fw-bold m-0"><i class="bi bi-box-seam me-2"></i> <span data-i18n="prod.title">Panel de Productos</span></h3>
+                <p class="text-white-50 mb-0 small ls-1" data-i18n="prod.subtitle">Administra el catálogo de postres disponibles.</p>
             </div>
 
             <div class="row g-3 mb-4 align-items-center">
                 <div class="col-12 col-lg-9">
                     <div class="input-group search-group shadow-sm rounded-3">
                         <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                        <input type="text" id="searchProductos" class="form-control border-start-0 shadow-none" placeholder="Buscar por nombre de producto...">
+                        <input type="text" id="searchProductos" class="form-control border-start-0 shadow-none"
+                               data-i18n-placeholder="prod.search" placeholder="Buscar por nombre de producto...">
                     </div>
                 </div>
                 <div class="col-12 col-lg-3 text-lg-end">
                     <button class="btn btn-primary shadow-sm w-100 py-2 fw-bold" id="btnAgregarPostre">
-                        <i class="bi bi-plus-circle-fill me-2"></i>NUEVO POSTRE
+                        <i class="bi bi-plus-circle-fill me-2"></i><span data-i18n="prod.add">NUEVO POSTRE</span>
                     </button>
                 </div>
             </div>
 
             <div id="formAgregarPostre" class="form-panel mb-5 d-none">
                 <div class="p-4 bg-white border rounded-4 shadow-sm animate-in">
-                    <h4 class="mb-4 text-primary fw-bold" id="formPanelTitle">Configuración de Producto</h4>
+                    <h4 class="mb-4 text-primary fw-bold" id="formPanelTitle" data-i18n="prod.new_title">Nuevo Postre</h4>
                     <form id="agregarPostreForm" enctype="multipart/form-data">
                         <div class="row g-4">
                             <div class="col-12 col-md-8">
                                 <div class="row g-3">
                                     <div class="col-12">
-                                        <label class="form-label fw-bold small">Nombre del Postre</label>
-                                        <input type="text" id="nombrePostre" class="form-control shadow-none" placeholder="Ej: Torta de Chocolate" required>
+                                        <label class="form-label fw-bold small" data-i18n="prod.name">Nombre del Postre</label>
+                                        <input type="text" id="nombrePostre" class="form-control shadow-none"
+                                               data-i18n-placeholder="ph.product_name" placeholder="Ej: Torta de Chocolate" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label fw-bold small">Precio (COP)</label>
+                                        <label class="form-label fw-bold small" data-i18n="prod.price">Precio (COP)</label>
                                         <div class="input-group">
                                             <span class="input-group-text">$</span>
-                                            <input type="number" id="precioPostre" class="form-control shadow-none" placeholder="0" min="0" required>
+                                            <input type="number" id="precioPostre" class="form-control shadow-none"
+                                                   data-i18n-placeholder="ph.product_price" placeholder="0" min="0" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label fw-bold small">Stock Inicial</label>
+                                        <label class="form-label fw-bold small" data-i18n="prod.stock">Stock Inicial</label>
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="bi bi-boxes"></i></span>
-                                            <input type="number" id="stockPostre" class="form-control shadow-none" placeholder="0" min="0" required>
+                                            <input type="number" id="stockPostre" class="form-control shadow-none"
+                                                   data-i18n-placeholder="ph.product_stock" placeholder="0" min="0" required>
                                         </div>
                                     </div>
                                     <div class="col-12">
-                                        <label class="form-label fw-bold small">Descripción del Producto</label>
-                                        <textarea id="descripcionPostre" class="form-control shadow-none" rows="4" placeholder="Detalles, ingredientes o porciones..." required></textarea>
+                                        <label class="form-label fw-bold small" data-i18n="prod.desc">Descripción del Producto</label>
+                                        <textarea id="descripcionPostre" class="form-control shadow-none" rows="4"
+                                                  data-i18n-placeholder="ph.product_desc" placeholder="Detalles, ingredientes o porciones..." required></textarea>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="col-12 col-md-4">
-                                <label class="form-label fw-bold small d-block text-center text-md-start">Imagen del Producto</label>
+                                <label class="form-label fw-bold small d-block text-center text-md-start" data-i18n="prod.image">Imagen del Producto</label>
                                 <div id="previewNotificacion" class="preview-img-box mb-3 d-flex align-items-center justify-content-center border rounded-4 bg-light overflow-hidden shadow-sm">
                                     <div id="placeholderNotif" class="text-center text-muted">
                                         <i class="bi bi-image" style="font-size: 3rem; color: #cbd5e0;"></i>
@@ -79,17 +84,17 @@
                                 </div>
                                 <input type="file" id="fotoPostre" class="form-control form-control-sm shadow-none" accept="image/*">
                                 <div class="mt-2 text-center">
-                                    <small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-info-circle me-1"></i>La imagen será comprimida automáticamente para ahorrar espacio.</small>
+                                    <small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-info-circle me-1"></i><span data-i18n="prod.img_compress">La imagen será comprimida automáticamente para ahorrar espacio.</span></small>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="d-flex gap-2 mt-4">
                             <button type="submit" id="btnSubmitForm" class="btn btn-success flex-grow-1 fw-bold py-2">
-                                <i class="bi bi-save2 me-2"></i>Guardar Producto
+                                <i class="bi bi-save2 me-2"></i><span data-i18n="prod.save">Agregar nuevo producto</span>
                             </button>
                             <button type="button" class="btn btn-secondary px-4 fw-bold" id="btnCancelar">
-                                <i class="bi bi-x-circle me-1"></i>Cancelar
+                                <i class="bi bi-x-circle me-1"></i><span data-i18n="btn.cancel">Cancelar</span>
                             </button>
                         </div>
                     </form>
@@ -105,43 +110,43 @@
                 <div class="col-12 col-md-4">
                     <div class="stats-card bg-white shadow-sm">
                         <span class="h3 d-block mb-0 text-primary fw-bold" id="statTotalNum">0</span>
-                        <small class="text-muted text-uppercase fw-bold ls-1">Productos Totales</small>
+                        <small class="text-muted text-uppercase fw-bold ls-1" data-i18n="prod.total_label">Productos Totales</small>
                     </div>
                 </div>
                 <div class="col-12 col-md-4">
                     <div class="stats-card bg-white shadow-sm border-bottom-success">
                         <span class="h3 d-block mb-0 text-success fw-bold" id="statDispNum">0</span>
-                        <small class="text-muted text-uppercase fw-bold ls-1">En Existencia</small>
+                        <small class="text-muted text-uppercase fw-bold ls-1" data-i18n="prod.in_stock">En Existencia</small>
                     </div>
                 </div>
                 <div class="col-12 col-md-4">
                     <div class="stats-card bg-white shadow-sm border-bottom-danger">
                         <span class="h3 d-block mb-0 text-danger fw-bold" id="statAgotNum">0</span>
-                        <small class="text-muted text-uppercase fw-bold ls-1">Sin Stock</small>
+                        <small class="text-muted text-uppercase fw-bold ls-1" data-i18n="prod.no_stock">Sin Stock</small>
                     </div>
                 </div>
             </div>
 
             <section class="mb-5 animate-in" style="animation-delay: 0.1s;">
                 <div class="section-header mb-4">
-                    <h5 class="fw-bold text-dark m-0"><i class="bi bi-check2-circle text-success me-2"></i>Productos Disponibles</h5>
+                    <h5 class="fw-bold text-dark m-0"><i class="bi bi-check2-circle text-success me-2"></i><span data-i18n="prod.available">Postres Disponibles</span></h5>
                     <div class="header-line"></div>
                 </div>
                 <div id="listaPostresDisponibles" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4"></div>
                 <div id="emptyDisponibles" class="text-center py-5 d-none">
                     <i class="bi bi-inbox text-muted display-4"></i>
-                    <p class="text-muted mt-2">No hay productos activos en este momento</p>
+                    <p class="text-muted mt-2" data-i18n="prod.empty_active">No hay productos activos en este momento</p>
                 </div>
             </section>
 
             <section class="mb-5 animate-in" style="animation-delay: 0.2s;">
                 <div class="section-header mb-4 border-danger-soft">
-                    <h5 class="fw-bold text-dark m-0"><i class="bi bi-x-circle text-danger me-2"></i>Productos Agotados</h5>
+                    <h5 class="fw-bold text-dark m-0"><i class="bi bi-x-circle text-danger me-2"></i><span data-i18n="prod.soldout">Postres Agotados</span></h5>
                     <div class="header-line bg-danger"></div>
                 </div>
                 <div id="listaPostresAgotados" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4"></div>
                 <div id="emptyAgotados" class="text-center py-5 d-none">
-                    <p class="text-muted">Inventario de agotados vacío</p>
+                    <p class="text-muted" data-i18n="prod.empty_soldout">Inventario de agotados vacío</p>
                 </div>
             </section>
         </div>

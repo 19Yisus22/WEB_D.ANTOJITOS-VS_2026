@@ -263,7 +263,7 @@ function renderizarLista() {
                 <div class="invoice-preview-meta">
                     <div class="invoice-preview-num">${num}</div>
                     <div class="invoice-preview-date">${fecha}</div>
-                    <span class="invoice-status-badge">EMITIDA</span>
+                    <span class="invoice-status-badge">${(t('state.Emitida') || 'EMITIDA').toUpperCase()}</span>
                 </div>
             </div>
 
@@ -271,35 +271,35 @@ function renderizarLista() {
                 <div class="invoice-product-row">
                     <div>
                         <strong>Producto de muestra</strong>
-                        <small>Cant: 2</small>
+                        <small>${t('cart.qty')}: 2</small>
                     </div>
                     <strong>$25.000</strong>
                 </div>
                 <div class="invoice-product-row">
                     <div>
                         <strong>Otro producto</strong>
-                        <small>Cant: 1</small>
+                        <small>${t('cart.qty')}: 1</small>
                     </div>
                     <strong>$15.000</strong>
                 </div>
             </div>
 
             <div class="invoice-preview-total">
-                <span>TOTAL</span>
+                <span>${t('ord.total').toUpperCase()}</span>
                 <strong>$65.000</strong>
             </div>
 
             <div class="invoice-preview-pay-title">
-                <i class="bi bi-qr-code-scan me-2"></i>Medios de Pago
+                <i class="bi bi-qr-code-scan me-2"></i>${t('pay.official')}
             </div>
 
             <div class="invoice-metodos-grid">
-                ${previewHTML || '<p class="text-center text-muted small py-3">Sin canales de pago configurados</p>'}
+                ${previewHTML || `<p class="text-center text-muted small py-3">${t('pay.unavailable')}</p>`}
             </div>
 
             <div class="invoice-preview-footer">
                 <i class="bi bi-info-circle-fill me-1 text-warning"></i>
-                Envía el comprobante por WhatsApp o correo tras realizar la transferencia.
+                ${t('pay.send_receipt')} WhatsApp ${t('pay.send_or') || 'o'} ${t('state.email') || 'correo'} ${t('pay.after')}.
             </div>
         </div>`;
 }

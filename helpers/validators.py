@@ -28,7 +28,8 @@ def is_valid_password(value: str) -> bool:
 def is_valid_username(value: str) -> bool:
     if not value or not isinstance(value, str):
         return False
-    return bool(re.fullmatch(r"[A-Za-z0-9@#$%&*]{3,30}", value.strip()))
+    stripped = value.strip()
+    return 3 <= len(stripped) <= 30 and bool(re.search(r"[A-Za-z0-9]", stripped))
 
 METODOS_PAGO_VALIDOS = ("Efectivo", "Transferencia")
 ESTADOS_PEDIDO       = ("Pendiente", "Enviado", "Entregado", "Cancelado")

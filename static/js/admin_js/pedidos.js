@@ -221,9 +221,9 @@ async function cargarPedidos(isAutoRefresh = false) {
             card.dataset.todosPagos = todosPagos.toString();
             card.dataset.fijado = esFijado.toString();
 
-            const fechaFormat = pedido.fecha_pedido 
-                ? new Date(pedido.fecha_pedido).toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) 
-                : 'Sin fecha';
+            const fechaFormat = pedido.fecha_pedido
+                ? new Date(pedido.fecha_pedido).toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                : t('ord.no_date');
 
             card.innerHTML = `
                 <div class="card border-0 bg-transparent">
@@ -249,17 +249,17 @@ async function cargarPedidos(isAutoRefresh = false) {
                                     <i class="bi bi-clock-history me-1"></i>${fechaFormat}
                                     &nbsp;·&nbsp;
                                     <span class="badge rounded-pill ${esAnulado ? 'bg-danger' : (esTerminado ? 'bg-success' : 'bg-secondary')}">
-                                        ${pedido.estado}
+                                        ${t('state.' + pedido.estado) || pedido.estado}
                                     </span>
                                 </small>
                             </div>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <div class="text-end me-1" style="line-height:1.2;">
-                                <div class="text-muted fw-semibold" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;">Saldo</div>
+                                <div class="text-muted fw-semibold" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;">${t('ord.balance')}</div>
                                 <span class="saldo-header fw-bolder ${totalPendiente === 0 ? 'text-success' : 'text-danger'}"
                                       style="font-size:0.92rem;">
-                                    <i class="bi bi-wallet2 me-1"></i>${totalPendiente === 0 ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                                    <i class="bi bi-wallet2 me-1"></i>${totalPendiente === 0 ? t('ord.paid') : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
                                 </span>
                             </div>
                             <button class="btn btn-light btn-sm rounded-circle toggle-detalle"
@@ -301,18 +301,18 @@ async function cargarPedidos(isAutoRefresh = false) {
                                 <!-- Columna 1: Identificación -->
                                 <div class="pedido-field-group">
                                     <div class="pedido-field-group-title">
-                                        <i class="bi bi-person-vcard-fill"></i> Identificación
+                                        <i class="bi bi-person-vcard-fill"></i> ${t('ord.field_id')}
                                     </div>
                                     <div class="pedido-field-row">
-                                        <span class="pedido-field-label">Nombre completo</span>
+                                        <span class="pedido-field-label">${t('ord.field_fullname')}</span>
                                         <span class="pedido-field-value">${(user.nombre || '') + ' ' + (user.apellido || '') || '—'}</span>
                                     </div>
                                     <div class="pedido-field-row">
-                                        <span class="pedido-field-label">Cédula / Doc.</span>
+                                        <span class="pedido-field-label">${t('ord.field_doc')}</span>
                                         <span class="pedido-field-value font-monospace">${user.cedula || '—'}</span>
                                     </div>
                                     <div class="pedido-field-row">
-                                        <span class="pedido-field-label">Correo electrónico</span>
+                                        <span class="pedido-field-label">${t('ord.field_email')}</span>
                                         <span class="pedido-field-value">${user.email || user.correo || '—'}</span>
                                     </div>
                                 </div>
@@ -320,33 +320,33 @@ async function cargarPedidos(isAutoRefresh = false) {
                                 <!-- Columna 2: Contacto y destino -->
                                 <div class="pedido-field-group">
                                     <div class="pedido-field-group-title">
-                                        <i class="bi bi-telephone-fill"></i> Contacto &amp; Entrega
+                                        <i class="bi bi-telephone-fill"></i> ${t('ord.field_contact')}
                                     </div>
                                     <div class="pedido-field-row">
-                                        <span class="pedido-field-label">Teléfono</span>
+                                        <span class="pedido-field-label">${t('ord.phone')}</span>
                                         <span class="pedido-field-value">${user.telefono || '—'}</span>
                                     </div>
                                     <div class="pedido-field-row">
-                                        <span class="pedido-field-label">Dirección de entrega</span>
-                                        <span class="pedido-field-value">${pedido.direccion_envio || user.direccion || 'Entrega en local'}</span>
+                                        <span class="pedido-field-label">${t('ord.address')}</span>
+                                        <span class="pedido-field-value">${pedido.direccion_envio || user.direccion || t('ord.local_delivery')}</span>
                                     </div>
                                 </div>
 
                                 <!-- Columna 3: Transacción -->
                                 <div class="pedido-field-group">
                                     <div class="pedido-field-group-title">
-                                        <i class="bi bi-receipt-cutoff"></i> Transacción
+                                        <i class="bi bi-receipt-cutoff"></i> ${t('ord.transaction')}
                                     </div>
                                     <div class="pedido-field-row">
-                                        <span class="pedido-field-label">Método de pago</span>
-                                        <span class="pedido-field-value">${pedido.metodo_pago || 'Efectivo'}</span>
+                                        <span class="pedido-field-label">${t('ord.payment')}</span>
+                                        <span class="pedido-field-value">${t('state.' + (pedido.metodo_pago || 'Efectivo')) || pedido.metodo_pago || t('state.Efectivo')}</span>
                                     </div>
                                     <div class="pedido-field-row">
-                                        <span class="pedido-field-label">Referencia</span>
+                                        <span class="pedido-field-label">${t('ord.ref')}</span>
                                         <span class="pedido-field-value font-monospace">#${pedido.id_pedido}</span>
                                     </div>
                                     <div class="pedido-field-row">
-                                        <span class="pedido-field-label">Factura</span>
+                                        <span class="pedido-field-label">${t('ord.invoice')}</span>
                                         <span class="pedido-field-value font-monospace">${facturaAMostrar}</span>
                                     </div>
                                 </div>
@@ -359,18 +359,18 @@ async function cargarPedidos(isAutoRefresh = false) {
                             <table class="table table-hover text-center mb-0">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th class="text-start ps-3 py-3">Detalles del Producto</th>
-                                        <th class="py-3">Cant.</th>
-                                        <th class="py-3">Precio</th>
-                                        <th class="py-3">¿Pagó?</th>
+                                        <th class="text-start ps-3 py-3">${t('ord.product_detail')}</th>
+                                        <th class="py-3">${t('cart.qty')}</th>
+                                        <th class="py-3">${t('cat.price')}</th>
+                                        <th class="py-3">${t('ord.paid_q')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>${itemsRows}</tbody>
                                 <tfoot class="border-top">
                                     <tr style="height:56px;">
-                                        <td colspan="2" class="text-end align-middle fw-bold fs-6">SALDO PENDIENTE:</td>
+                                        <td colspan="2" class="text-end align-middle fw-bold fs-6">${t('ord.balance_due')}</td>
                                         <td colspan="2" class="text-start align-middle fw-bolder ${totalPendiente === 0 ? 'text-success' : 'text-danger'} fs-5 ps-3 saldo-pendiente-valor">
-                                            ${totalPendiente === 0 ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                                            ${totalPendiente === 0 ? t('ord.paid').toUpperCase() : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -381,16 +381,16 @@ async function cargarPedidos(isAutoRefresh = false) {
                         <div class="d-flex justify-content-between align-items-center mt-3 p-3 rounded-3"
                              style="background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.05);">
                             <div class="d-flex align-items-center gap-2 flex-grow-1">
-                                <label class="fw-bold text-muted small text-uppercase" style="white-space:nowrap;">Cambiar Estado:</label>
+                                <label class="fw-bold text-muted small text-uppercase" style="white-space:nowrap;">${t('ord.change_status')}</label>
                                 <select class="form-select estado-select shadow-none" style="max-width:200px;" ${bloqueado ? 'disabled' : ''}>
-                                    <option value="Pendiente"  ${pedido.estado === 'Pendiente'  ? 'selected' : ''}>Pendiente</option>
-                                    <option value="Enviado"    ${pedido.estado === 'Enviado'    ? 'selected' : ''}>Enviado</option>
-                                    <option value="Entregado"  ${pedido.estado === 'Entregado'  ? 'selected' : ''}>Finalizado</option>
-                                    <option value="Cancelado"  ${pedido.estado === 'Cancelado'  ? 'selected' : ''}>Anular</option>
+                                    <option value="Pendiente"  ${pedido.estado === 'Pendiente'  ? 'selected' : ''}>${t('ord.pending')}</option>
+                                    <option value="Enviado"    ${pedido.estado === 'Enviado'    ? 'selected' : ''}>${t('ord.sent')}</option>
+                                    <option value="Entregado"  ${pedido.estado === 'Entregado'  ? 'selected' : ''}>${t('ord.finalize_opt')}</option>
+                                    <option value="Cancelado"  ${pedido.estado === 'Cancelado'  ? 'selected' : ''}>${t('ord.annul_opt')}</option>
                                 </select>
                             </div>
                             <button class="btn btn-primary actualizar-btn px-4 py-2 rounded-pill fw-bold shadow-sm" ${bloqueado ? 'disabled' : ''}>
-                                <i class="bi bi-arrow-repeat me-2"></i>GUARDAR
+                                <i class="bi bi-arrow-repeat me-2"></i>${t('btn.save').toUpperCase()}
                             </button>
                         </div>
 
@@ -621,13 +621,13 @@ function actualizarTituloTabla() {
     if (!titulo) return;
     const filtro = document.getElementById("filtroEstado").value;
     const titulos = {
-        "Todos": "LISTANDO TODOS LOS PEDIDOS",
-        "FiltroPagoPendiente": "GESTIÓN DE PAGOS PENDIENTES",
-        "Pendiente": "LISTANDO PEDIDOS PENDIENTES",
-        "Entregado": "LISTANDO PEDIDOS FINALIZADOS",
-        "Cancelado": "LISTANDO PEDIDOS ANULADOS"
+        "Todos":               t('ord.title_all'),
+        "FiltroPagoPendiente": t('ord.title_payments'),
+        "Pendiente":           t('ord.title_pending'),
+        "Entregado":           t('ord.title_delivered'),
+        "Cancelado":           t('ord.title_cancelled'),
     };
-    titulo.innerHTML = `<i class="bi bi-journal-text me-2"></i> ${titulos[filtro] || "GESTIÓN DE PEDIDOS"}`;
+    titulo.innerHTML = `<i class="bi bi-journal-text me-2"></i> ${titulos[filtro] || t('ord.title_default')}`;
 }
 
 function actualizarCardLocalmente(card, idPedido, pedidoData, nuevoEstado = null) {
@@ -646,7 +646,7 @@ function actualizarCardLocalmente(card, idPedido, pedidoData, nuevoEstado = null
     });
 
     const estaPagado = totalPendiente <= 0;
-    const textoSaldo = estaPagado ? 'PAGADO' : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+    const textoSaldo = estaPagado ? t('ord.paid').toUpperCase() : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
     const saldoFooter = card.querySelector("tfoot td:nth-child(2)");
     if (saldoFooter) {
@@ -749,10 +749,10 @@ function aplicarFiltros() {
 
     const listaFinal = [];
 
-    if (grupos.urgentes.length) listaFinal.push(crearSeparador("PEDIDOS PRIORITARIOS / FIJADOS", "bg-primary"), ...grupos.urgentes.sort(sortFn));
-    if (grupos.normales.length) listaFinal.push(crearSeparador("PEDIDOS EN PROCESO", "bg-info text-dark"), ...grupos.normales.sort(sortFn));
-    if (grupos.finalizados.length) listaFinal.push(crearSeparador("HISTORIAL DE VENTAS EXITOSAS", "bg-success"), ...grupos.finalizados.sort(sortFn));
-    if (grupos.anulados.length) listaFinal.push(crearSeparador("PEDIDOS DESCARTADOS / ANULADOS", "bg-danger"), ...grupos.anulados.sort(sortFn));
+    if (grupos.urgentes.length) listaFinal.push(crearSeparador(t('ord.sep_priority'), "bg-primary"), ...grupos.urgentes.sort(sortFn));
+    if (grupos.normales.length) listaFinal.push(crearSeparador(t('ord.sep_active'), "bg-info text-dark"), ...grupos.normales.sort(sortFn));
+    if (grupos.finalizados.length) listaFinal.push(crearSeparador(t('ord.sep_done'), "bg-success"), ...grupos.finalizados.sort(sortFn));
+    if (grupos.anulados.length) listaFinal.push(crearSeparador(t('ord.sep_voided'), "bg-danger"), ...grupos.anulados.sort(sortFn));
 
     pedidosFiltrados = listaFinal;
     renderizarPaginacion(pedidosFiltrados);

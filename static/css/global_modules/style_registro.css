@@ -193,8 +193,7 @@
 /* ── Cabecera del card ── */
 .reg-header {
     margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #f0f2f5;
+    padding-bottom: 4px;
 }
 .reg-header h2 {
     font-size: 1.65rem;
@@ -238,6 +237,7 @@
     flex-direction: column;
     gap: 5px;
     margin-bottom: 14px;
+    min-width: 0;
 }
 .reg-field label {
     font-weight: 700;
@@ -262,6 +262,8 @@
     border-radius: var(--rad);
     transition: border-color 0.22s, box-shadow 0.22s, background 0.2s;
     overflow: hidden;
+    width: 100%;
+    min-width: 0;
 }
 .field-wrap:focus-within {
     border-color: var(--pri2);
@@ -517,17 +519,18 @@
 @media (min-width: 768px) and (max-width: 1024px) {
     .reg-left { width: 300px; padding: 40px 28px; }
     .reg-brand h1 { font-size: 1.6rem; }
-    .reg-card { padding: 36px 32px 28px; }
+    .reg-card { padding: 36px 32px 28px; overflow-x: hidden; }
+    .reg-row  { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 767px) {
-    .reg-left { display: none; }
+    .reg-left  { display: none; }
     .reg-right { padding: 24px 14px; align-items: flex-start; }
-    .reg-card  { padding: 28px 20px 22px; border-radius: 20px; max-width: 100%; }
+    .reg-card  { padding: 28px 20px 22px; border-radius: 20px; max-width: 100%; overflow-x: hidden; }
     .reg-row   { grid-template-columns: 1fr; }
     .reg-header h2 { font-size: 1.4rem; }
     .code-digit { width: 46px; height: 58px; font-size: 1.6rem; }
-    .btn-reg  { padding: 13px; font-size: 0.92rem; }
+    .btn-reg   { padding: 13px; font-size: 0.92rem; }
 }
 
 /* ══════════════════════════════════

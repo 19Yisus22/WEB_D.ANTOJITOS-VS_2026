@@ -13,25 +13,17 @@ const FormateadorCosto = new Intl.NumberFormat('es-CO', {
     maximumFractionDigits: 0
 });
 
-function obtenerFacturasArchivadas() {
-    return JSON.parse(localStorage.getItem('facturas_ocultas') || "[]");
-}
-
-function guardarFacturasArchivadas(lista) {
-    localStorage.setItem('facturas_ocultas', JSON.stringify(lista));
-}
-
-function archivarFactura(numeroFactura) {
-    const archivadas = obtenerFacturasArchivadas();
-
-    if (!archivadas.includes(numeroFactura)) {
-        archivadas.push(numeroFactura);
-        guardarFacturasArchivadas(archivadas);
+async function toggleArchivarFactura(numeroFactura) {
+    try {
+        const res  = await fetch(`/archivar_factura_page/${numeroFactura}`, { method: 'PUT' });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const f = facturasActuales.find(x => x.numero_factura === numeroFactura);
+        if (f) f.archivada = data.archivada;
+        mostrarFacturasBuscadas();
+    } catch {
+        showMessage(t('notif.error_conn'), true);
     }
-}
-
-function estaArchivada(numeroFactura) {
-    return obtenerFacturasArchivadas().includes(numeroFactura);
 }
 
 function esFacturaFinalizada(f) {
@@ -64,28 +56,9 @@ function esFacturaEmitida(f) {
 
 function ordenarFacturas(lista) {
     return [...lista].sort((a, b) => {
-
-        const aArchivada = estaArchivada(a.numero_factura);
-        const bArchivada = estaArchivada(b.numero_factura);
-
-        if (aArchivada !== bArchivada) {
-            return aArchivada ? 1 : -1;
-        }
-
-        const aEmitida = esFacturaEmitida(a);
-        const bEmitida = esFacturaEmitida(b);
-
-        if (aEmitida !== bEmitida) {
-            return aEmitida ? -1 : 1;
-        }
-
-        const aFinalizada = esFacturaFinalizada(a);
-        const bFinalizada = esFacturaFinalizada(b);
-
-        if (aFinalizada !== bFinalizada) {
-            return aFinalizada ? 1 : -1;
-        }
-
+        if (a.archivada !== b.archivada) return a.archivada ? 1 : -1;
+        if (esFacturaEmitida(a) !== esFacturaEmitida(b)) return esFacturaEmitida(a) ? -1 : 1;
+        if (esFacturaFinalizada(a) !== esFacturaFinalizada(b)) return esFacturaFinalizada(a) ? 1 : -1;
         return new Date(b.fecha_emision || b.created_at) - new Date(a.fecha_emision || a.created_at);
     });
 }
@@ -328,8 +301,8 @@ function abrirModalPago(facturaNum, total) {
         modalBody.innerHTML = `
             <div class="text-center py-5">
                 <i class="bi bi-bank2 display-4 text-muted opacity-25 d-block mb-3"></i>
-                <h6 class="text-muted fw-bold">Canales de pago no disponibles</h6>
-                <p class="small text-muted">Estamos actualizando nuestras cuentas.</p>
+                <h6 class="text-muted fw-bold">${t('pay.unavailable')}</h6>
+                <p class="small text-muted">${t('pay.updating')}</p>
             </div>`;
     } else {
         const first = metodosPagoCache[0];
@@ -338,10 +311,10 @@ function abrirModalPago(facturaNum, total) {
         modalBody.innerHTML = `
             <div class="payment-modal-header">
                 <div class="payment-secure-badge">
-                    <i class="bi bi-shield-fill-check me-1"></i>Pago 100% Seguro
+                    <i class="bi bi-shield-fill-check me-1"></i>${t('pay.secure')}
                 </div>
                 <div class="payment-ref-box">
-                    <div class="payment-ref-label">Referencia de Pago</div>
+                    <div class="payment-ref-label">${t('pay.ref')}</div>
                     <div class="payment-ref-num font-monospace">${facturaNum}</div>
                     <div class="payment-ref-total">${total}</div>
                 </div>
@@ -350,14 +323,14 @@ function abrirModalPago(facturaNum, total) {
             <div class="payment-qr-area">
                 <div class="payment-qr-box" id="paymentQrBox">
                     ${first.qr_url
-                        ? `<img src="${first.qr_url}" alt="QR ${first.entidad}"
-                                onerror="this.outerHTML='<div class=\\"payment-qr-ph\\"><i class=\\"bi bi-qr-code-scan\\"></i></div>'">`
+                        ? `<img src="${first.qr_url}" alt="QR ${first.entidad}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                           <div class="payment-qr-ph" style="display:none;"><i class="bi bi-qr-code-scan"></i></div>`
                         : `<div class="payment-qr-ph"><i class="bi bi-qr-code-scan"></i></div>`}
                 </div>
             </div>
 
             <div class="payment-bank-subtitle" id="paymentBankSubtitle">
-                <i class="bi bi-building me-1"></i>Pagar con <strong>${first.entidad}</strong>
+                <i class="bi bi-building me-1"></i>${t('pay.with')} <strong>${first.entidad}</strong>
             </div>
 
             ${metodosPagoCache.length > 1 ? `
@@ -381,14 +354,14 @@ function abrirModalPago(facturaNum, total) {
                     <div class="payment-account-panel ${i === 0 ? 'active' : ''}" id="bpanel-${i}">
                         <div class="payment-account-info">
                             <div class="payment-account-row">
-                                <span class="payment-account-label">${m.tipo_cuenta || 'Tipo de cuenta'}</span>
+                                <span class="payment-account-label">${tDB(m.tipo_cuenta) || t('bill.account')}</span>
                                 <span class="payment-account-val">${m.titular}</span>
                             </div>
                             <div class="payment-number-row">
                                 <span class="payment-number font-monospace">${m.numero}</span>
                                 <button class="payment-copy-btn"
-                                        onclick="navigator.clipboard.writeText('${m.numero}').then(()=>showMessage('Número copiado'))">
-                                    <i class="bi bi-copy me-1"></i>Copiar
+                                        onclick="navigator.clipboard.writeText('${m.numero}').then(()=>showMessage(t('notif.copied')))">
+                                    <i class="bi bi-copy me-1"></i>${t('btn.copy')}
                                 </button>
                             </div>
                         </div>
@@ -397,11 +370,11 @@ function abrirModalPago(facturaNum, total) {
 
             <div class="payment-notice">
                 <i class="bi bi-info-circle-fill me-2"></i>
-                Envía tu comprobante por
+                ${t('pay.send_receipt')}
                 <a href="https://wa.me/573115699825" target="_blank">WhatsApp</a>
-                o
-                <a href="mailto:terugag@hotmail.com">correo</a>
-                tras realizar la transferencia.
+                ${t('pay.send_or') || 'o'}
+                <a href="mailto:terugag@hotmail.com">${t('state.email') || 'correo'}</a>
+                ${t('pay.after')}.
             </div>`;
     }
 
@@ -419,15 +392,15 @@ window._selectBanco = function(idx) {
         qrBox.style.transition = 'opacity 0.18s';
         setTimeout(() => {
             qrBox.innerHTML = m.qr_url
-                ? `<img src="${m.qr_url}" alt="QR ${m.entidad}"
-                        onerror="this.outerHTML='<div class=\\"payment-qr-ph\\"><i class=\\"bi bi-qr-code-scan\\"></i></div>'">`
+                ? `<img src="${m.qr_url}" alt="QR ${m.entidad}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                   <div class="payment-qr-ph" style="display:none;"><i class="bi bi-qr-code-scan"></i></div>`
                 : `<div class="payment-qr-ph"><i class="bi bi-qr-code-scan"></i></div>`;
             qrBox.style.opacity = '1';
         }, 180);
     }
 
     const subtitle = document.getElementById('paymentBankSubtitle');
-    if (subtitle) subtitle.innerHTML = `<i class="bi bi-building me-1"></i>Pagar con <strong>${m.entidad}</strong>`;
+    if (subtitle) subtitle.innerHTML = `<i class="bi bi-building me-1"></i>${t('pay.with')} <strong>${m.entidad}</strong>`;
 
     document.querySelectorAll('.payment-pager-btn').forEach((t, i) => {
         t.classList.toggle('active', i === idx);
@@ -694,13 +667,13 @@ async function monitorearCambiosFacturas() {
 
 function _configVisual(estadoLower) {
     if (['anulada','cancelado','cancelada'].includes(estadoLower))
-        return { color: 'danger',  icono: 'bi-x-octagon-fill',      label: 'ANULADA'   };
+        return { color: 'danger',  icono: 'bi-x-octagon-fill',       label: (t('state.Anulada') || 'ANULADA').toUpperCase() };
     if (['pagada','pagado','finalizado','entregado','completada','completado'].includes(estadoLower))
-        return { color: 'success', icono: 'bi-patch-check-fill',     label: 'PAGADA'    };
+        return { color: 'success', icono: 'bi-patch-check-fill',      label: (t('state.Pagada')  || 'PAGADA').toUpperCase() };
     if (estadoLower.includes('emitid'))
-        return { color: 'info',    icono: 'bi-file-earmark-arrow-up', label: 'EMITIDA'  };
+        return { color: 'info',    icono: 'bi-file-earmark-arrow-up', label: (t('state.Emitida') || 'EMITIDA').toUpperCase() };
     if (estadoLower === 'enviado')
-        return { color: 'warning', icono: 'bi-truck-flatbed',         label: 'ENVIADO'  };
+        return { color: 'warning', icono: 'bi-truck-flatbed',         label: (t('state.Enviado') || 'ENVIADO').toUpperCase() };
     return { color: 'primary', icono: 'bi-hourglass-split', label: estadoLower.toUpperCase() };
 }
 
@@ -712,30 +685,12 @@ function mostrarFacturasBuscadas() {
 
     if (!container) return;
 
-    const archivadas = obtenerFacturasArchivadas();
-
     let filtradas = [...facturasActuales];
 
     if (mostrarArchivadas) {
-
-        filtradas = filtradas.filter(f =>
-            archivadas.includes(f.numero_factura)
-        );
-
+        filtradas = filtradas.filter(f => f.archivada);
     } else {
-
-        filtradas = filtradas.filter(f => {
-
-            const archivada = archivadas.includes(f.numero_factura);
-
-            const emitida = esFacturaEmitida(f);
-
-            if (emitida) {
-                return true;
-            }
-
-            return !archivada;
-        });
+        filtradas = filtradas.filter(f => esFacturaEmitida(f) || !f.archivada);
     }
 
     if (filtroEstado && filtroEstado.value !== "todos") {
@@ -791,7 +746,7 @@ function mostrarFacturasBuscadas() {
         if (emptyEl) {
             emptyEl.style.display = 'block';
             const sub = emptyEl.querySelector('.facturas-empty-sub');
-            if (sub) sub.textContent = mostrarArchivadas ? 'No hay facturas archivadas.' : 'No se encontraron facturas con ese criterio de búsqueda.';
+            if (sub) sub.textContent = mostrarArchivadas ? t('inv.no_archived') : t('inv.no_results_q');
         }
         paginar(0);
         return;
@@ -818,7 +773,7 @@ function mostrarFacturasBuscadas() {
             return `<div class="inv-product-row">
                         <div class="inv-product-info">
                             <span class="inv-product-name">${p.nombre_producto}</span>
-                            <span class="inv-product-qty">Cant: ${p.cantidad}</span>
+                            <span class="inv-product-qty">${t('cart.qty')} ${p.cantidad}</span>
                         </div>
                         <span class="inv-product-price">${FormateadorCosto.format(Number(p.subtotal || 0))}</span>
                     </div>`;
@@ -857,7 +812,7 @@ function mostrarFacturasBuscadas() {
             </div>
             <div class="inv-products-box">${productosHtml}</div>
             <div class="inv-total-row">
-                <span class="inv-total-label">TOTAL</span>
+                <span class="inv-total-label">${t('ord.total').toUpperCase()}</span>
                 <span class="inv-total-amount">${FormateadorCosto.format(totalSuma)}</span>
             </div>
 
@@ -865,27 +820,27 @@ function mostrarFacturasBuscadas() {
 
                 <div class="inv-client-section">
                     <div class="inv-client-title">
-                        <i class="bi bi-person-vcard-fill me-1"></i>Datos del Cliente
+                        <i class="bi bi-person-vcard-fill me-1"></i>${t('ord.client_data')}
                     </div>
                     <div class="inv-client-grid">
                         <div class="inv-client-item">
-                            <span class="inv-client-label"><i class="bi bi-person-fill"></i> Nombre</span>
+                            <span class="inv-client-label"><i class="bi bi-person-fill"></i> ${t('prof.name')}</span>
                             <span class="inv-client-val">${clienteNombre}${clienteUser ? ` <span class="inv-client-user">${clienteUser}</span>` : ''}</span>
                         </div>
                         <div class="inv-client-item">
-                            <span class="inv-client-label"><i class="bi bi-card-text"></i> Cédula</span>
+                            <span class="inv-client-label"><i class="bi bi-card-text"></i> ${t('prof.cedula')}</span>
                             <span class="inv-client-val font-monospace">${clienteCedula}</span>
                         </div>
                         <div class="inv-client-item">
-                            <span class="inv-client-label"><i class="bi bi-telephone-fill"></i> Teléfono</span>
+                            <span class="inv-client-label"><i class="bi bi-telephone-fill"></i> ${t('prof.phone')}</span>
                             <span class="inv-client-val">${clienteTel}</span>
                         </div>
                         <div class="inv-client-item">
-                            <span class="inv-client-label"><i class="bi bi-wallet2"></i> Método de Pago</span>
-                            <span class="inv-client-val">${clienteMetodo}</span>
+                            <span class="inv-client-label"><i class="bi bi-wallet2"></i> ${t('ord.payment')}</span>
+                            <span class="inv-client-val">${tDB(clienteMetodo)}</span>
                         </div>
                         <div class="inv-client-item inv-client-full">
-                            <span class="inv-client-label"><i class="bi bi-geo-alt-fill"></i> Dirección de Entrega</span>
+                            <span class="inv-client-label"><i class="bi bi-geo-alt-fill"></i> ${t('prof.address')}</span>
                             <span class="inv-client-val">${clienteDir}</span>
                         </div>
                     </div>
@@ -893,11 +848,11 @@ function mostrarFacturasBuscadas() {
 
                 ${!esFinal ? `
                     <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold inv-btn-pagar">
-                        <i class="bi bi-qr-code-scan me-2"></i>PROCEDER AL PAGO
+                        <i class="bi bi-qr-code-scan me-2"></i>${t('inv.proceed')}
                     </button>` : `
                     <div class="alert alert-${cv.color === 'danger' ? 'secondary' : 'success'} border-0 rounded-pill py-2 text-center small fw-bold mb-0">
                         <i class="bi ${cv.color === 'danger' ? 'bi-slash-circle' : 'bi-shield-fill-check'} me-1"></i>
-                        ${cv.color === 'danger' ? 'ANULADO' : 'COMPLETADO'}
+                        ${cv.color === 'danger' ? t('inv.voided') : t('inv.completed')}
                     </div>`}
                 <div class="inv-actions mt-2">
                     <button class="btn btn-sm btn-outline-dark inv-btn-pdf flex-fill">
@@ -905,10 +860,10 @@ function mostrarFacturasBuscadas() {
                     </button>
                     ${!esFinal ? `
                         <button class="btn btn-sm btn-outline-danger inv-btn-anular flex-fill">
-                            <i class="bi bi-x-circle me-1"></i>Anular
+                            <i class="bi bi-x-circle me-1"></i>${t('inv.annul_btn')}
                         </button>` : `
                         <button class="btn btn-sm btn-outline-secondary inv-btn-archivar flex-fill">
-                            <i class="bi bi-archive me-1"></i>Archivar
+                            <i class="bi bi-archive me-1"></i>${t('inv.archive')}
                         </button>`}
                 </div>
             </div>`;
@@ -920,7 +875,7 @@ function mostrarFacturasBuscadas() {
         if (ba) ba.onclick = () => procesarAnulacion(f.numero_factura);
 
         const bq = item.querySelector('.inv-btn-archivar');
-        if (bq) bq.onclick = () => { archivarFactura(f.numero_factura); mostrarFacturasBuscadas(); };
+        if (bq) bq.onclick = () => toggleArchivarFactura(f.numero_factura);
 
         item.querySelector('.inv-btn-pdf').onclick = () => descargarPDF(f);
 
@@ -952,7 +907,6 @@ window.toggleInvItem = function(idx) {
     const open = body.classList.toggle('open');
     if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
     if (item) item.classList.toggle('expanded', open);
-    // Registrar estado para que sobreviva al auto-refresh
     const facturaNum = item?.dataset.facturaNum;
     if (facturaNum) {
         if (open) expandedFacturas.add(facturaNum);
@@ -1027,8 +981,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             mostrarArchivadas = !mostrarArchivadas;
 
             btnArchivadas.innerHTML = mostrarArchivadas
-                ? `<i class="bi bi-archive-fill"></i><span>Ocultar archivadas</span>`
-                : `<i class="bi bi-archive-fill"></i><span>Mostrar archivadas</span>`;
+                ? `<i class="bi bi-archive-fill"></i><span>${t('inv.hide_archived')}</span>`
+                : `<i class="bi bi-archive-fill"></i><span>${t('inv.show_archived')}</span>`;
 
             btnArchivadas.classList.toggle('active', mostrarArchivadas);
 

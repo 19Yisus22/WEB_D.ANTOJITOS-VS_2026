@@ -89,12 +89,12 @@ a:focus:not(:focus-visible) {
    ══════════════════════════════════════════════════════ */
 
 :root {
-    --theme-bg:          #ffffff;
-    --theme-bg2:         #f6f8fa;
+    --theme-bg:          #f9e8d5;
+    --theme-bg2:         #f5dde8;
     --theme-text:        #24292f;
     --theme-text-muted:  #57606a;
     --theme-card:        #ffffff;
-    --theme-card2:       #f6f8fa;
+    --theme-card2:       #fdf8f4;
     --theme-border:      #d0d7de;
     --theme-input-bg:    #ffffff;
     --theme-input-text:  #24292f;
@@ -112,9 +112,9 @@ a:focus:not(:focus-visible) {
     --theme-bg2:         #12101a;
     --theme-text:        #e4e4ef;
     --theme-text-muted:  #7878a0;
-    --theme-card:        #1a1826;
-    --theme-card2:       #201e2e;
-    --theme-border:      #2a2838;
+    --theme-card:        #221f35;
+    --theme-card2:       #2a2740;
+    --theme-border:      #312d48;
     --theme-input-bg:    #10101a;
     --theme-input-text:  #e4e4ef;
     --theme-input-border:#2a2838;
@@ -134,15 +134,15 @@ a:focus:not(:focus-visible) {
 html {
     min-height: 100%;
     background-image: linear-gradient(160deg,
-        #fefcfa 0%,
-        #fdf5f0 18%,
-        #faf2f5 40%,
-        #f7f0fb 62%,
-        #f5f3ff 80%,
-        #faf4f0 100%
+        #f9e8d5 0%,
+        #f5dde8 22%,
+        #ede8f8 48%,
+        #e6edf8 70%,
+        #f5e8d5 88%,
+        #f9e8d5 100%
     ) !important;
     background-attachment: fixed !important;
-    background-color: #fefcfa !important;
+    background-color: #f9e8d5 !important;
     color: var(--theme-text);
     transition: color 0.25s ease;
 }
@@ -158,6 +158,47 @@ html[data-theme="dark"] {
         #0d0b14 100%
     ) !important;
     background-color: #0d0b14 !important;
+}
+
+/* ── Superficie de contenedores — light mode ──────────────────────────
+   Blanco puro sobre el fondo cálido: contraste claro y sombra naranja.
+   ────────────────────────────────────────────────────────────────── */
+.card,
+.stats-venta-card,
+.stat-box,
+.sidebar-custom,
+.nav-card,
+.seccion-card,
+.pedido-card,
+.metodo-card,
+.product-card,
+.factura-card,
+.list-group,
+.table-card,
+.reg-card,
+.facturas-search-card {
+    background-color: #ffffff !important;
+    border-color: rgba(211, 84, 0, 0.10) !important;
+    box-shadow: 0 2px 14px rgba(211,84,0,0.09), 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+/* Dark mode — superficies más claras para mayor contraste */
+[data-theme="dark"] .card,
+[data-theme="dark"] .stats-venta-card,
+[data-theme="dark"] .stat-box,
+[data-theme="dark"] .sidebar-custom,
+[data-theme="dark"] .nav-card,
+[data-theme="dark"] .seccion-card,
+[data-theme="dark"] .pedido-card,
+[data-theme="dark"] .metodo-card,
+[data-theme="dark"] .product-card,
+[data-theme="dark"] .factura-card,
+[data-theme="dark"] .list-group,
+[data-theme="dark"] .table-card,
+[data-theme="dark"] .facturas-search-card {
+    background-color: #221f35 !important;
+    border-color: #312d48 !important;
+    box-shadow: 0 4px 22px rgba(0,0,0,0.45), 0 1px 4px rgba(0,0,0,0.3) !important;
 }
 
 html, body {
@@ -581,8 +622,8 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
 [data-theme="dark"] .nav-card,
 [data-theme="dark"] .pedido-card,
 [data-theme="dark"] .metodo-card {
-    background: var(--dk-card) !important;
-    border-color: var(--dk-border) !important;
+    background: var(--theme-card) !important;
+    border-color: var(--theme-border) !important;
     color: var(--dk-text) !important;
 }
 

@@ -4,7 +4,6 @@ from flask import Blueprint, request, jsonify, session, redirect, url_for, rende
 import helpers.models as db
 from helpers.auth import sin_cache, login_required
 
-# Mensajes predeterminados que el cliente puede enviar al vendedor
 MENSAJES_PREDETERMINADOS = [
     {"id": 1, "icono": "🚚", "texto": "Mi pedido no ha llegado"},
     {"id": 2, "icono": "❌", "texto": "He cancelado mi pedido"},
@@ -34,7 +33,6 @@ def comentarios_page():
         usuario  = db.usuario_get(user_id)
         if not usuario:
             return redirect(url_for("auth.login"))
-
         comentarios  = db.comentario_get_all()
         usuarios_res = db.usuario_get_all()
         usuarios_dict = {
@@ -49,7 +47,6 @@ def comentarios_page():
             c["usuario_info"] = info
             if not c.get("foto_perfil"):
                 c["foto_perfil"] = info["foto_perfil"]
-
         return render_template("general_modules/comentarios.html",
                                comentarios=comentarios, user_id=user_id)
     except Exception:
@@ -63,11 +60,10 @@ def obtener_comentarios():
         comentarios = db.comentario_get_all()
         usuarios    = db.usuario_get_all()
         ahora       = datetime.now(timezone.utc)
-
         usuarios_dict = {}
         for u in usuarios:
-            conectado     = False
-            ultima_con    = u.get("ultima_conexion")
+            conectado  = False
+            ultima_con = u.get("ultima_conexion")
             if ultima_con:
                 try:
                     fc = datetime.fromisoformat(ultima_con.replace("Z", "+00:00"))
@@ -80,14 +76,12 @@ def obtener_comentarios():
                 "foto_perfil": u.get("imagen_url"),
                 "conectado": conectado,
             }
-
         for c in comentarios:
             c["usuario_info"] = usuarios_dict.get(c["cedula"], {
                 "nombre": "Usuario", "apellido": "", "foto_perfil": None, "conectado": False
             })
             if c.get("likes_usuarios") is None:
                 c["likes_usuarios"] = []
-
         return jsonify(comentarios)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -101,11 +95,9 @@ def crear_comentario():
         mensaje = (data.get("mensaje") or "").strip()
         if not mensaje:
             return jsonify({"error": "Mensaje vacío"}), 400
-
         usuario = db.usuario_get(session["user_id"])
         if not usuario:
             return jsonify({"error": "Usuario no encontrado"}), 404
-
         result = db.comentario_create({
             "cedula":         usuario["cedula"],
             "nombre_usuario": f"{usuario.get('nombre','')} {usuario.get('apellido','')}".strip(),
@@ -127,13 +119,11 @@ def editar_comentario(id):
         mensaje = (data.get("mensaje") or "").strip()
         if not mensaje:
             return jsonify({"error": "Mensaje requerido"}), 400
-
         comentario = db.comentario_get(id)
         if not comentario:
             return jsonify({"error": "Comentario no encontrado"}), 404
         if comentario.get("cedula") != session.get("user_id"):
             return jsonify({"error": "Sin permiso"}), 403
-
         result = db.comentario_update(id, {"mensaje": mensaje})
         return jsonify(result[0] if result else {})
     except Exception as e:
@@ -147,9 +137,22 @@ def eliminar_comentario(id):
         comentario = db.comentario_get(id)
         if not comentario:
             return jsonify({"error": "Comentario no encontrado"}), 404
-        if comentario.get("cedula") != session.get("user_id"):
+        rol = session.get("rol", "")
+        if comentario.get("cedula") != session.get("user_id") and rol != "admin":
             return jsonify({"error": "Sin permiso"}), 403
         db.comentario_delete(id)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@comentarios_bp.route("/comentarios/limpiar_todo", methods=["DELETE"])
+@login_required
+def limpiar_todos_comentarios():
+    if session.get("rol") != "admin":
+        return jsonify({"error": "Sin permiso"}), 403
+    try:
+        db.comentario_delete_all()
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -198,7 +201,7 @@ def actualizar_estado_comentarios():
 
 
 # ════════════════════════════════════════════════════
-#  MENSAJES PRIVADOS  (clientes ↔ vendedores)
+#  MENSAJES PRIVADOS — canal CV (cliente ↔ vendedor)
 # ════════════════════════════════════════════════════
 
 @comentarios_bp.route("/mensajes_privados/predeterminados")
@@ -210,10 +213,9 @@ def mensajes_predeterminados():
 @comentarios_bp.route("/mensajes_privados/mi_hilo")
 @login_required
 def mi_hilo():
-    """Cliente: obtiene su propia conversación y marca mensajes del vendedor como leídos."""
     cedula = session.get("user_id")
     rol    = session.get("rol", "")
-    if rol not in ("cliente",):
+    if rol != "cliente":
         return jsonify({"error": "Solo para clientes"}), 403
     try:
         mensajes = db.mp_get_conversacion(cedula)
@@ -226,33 +228,27 @@ def mi_hilo():
 @comentarios_bp.route("/mensajes_privados/hilos")
 @login_required
 def todos_los_hilos():
-    """Vendedor: obtiene todos los hilos con info del cliente."""
     rol = session.get("rol", "")
-    if rol not in ("vendedor", "admin"):
+    if rol != "vendedor":
         return jsonify({"error": "Sin permiso"}), 403
     try:
         mensajes = db.mp_get_todos_hilos()
-        # Obtener info de clientes
         cedulas  = list({m["cedula_cliente"] for m in mensajes})
         usuarios = db.usuario_get_all()
         info_map = {
-            u["cedula"]: {
-                "nombre":   f"{u.get('nombre','')} {u.get('apellido','')}".strip(),
-                "imagen":   u.get("imagen_url"),
-            }
+            u["cedula"]: {"nombre": f"{u.get('nombre','')} {u.get('apellido','')}".strip(), "imagen": u.get("imagen_url")}
             for u in usuarios if u["cedula"] in cedulas
         }
-        # Agrupa en hilos (último mensaje por cedula_cliente)
         hilos = {}
         for m in mensajes:
             cc = m["cedula_cliente"]
             if cc not in hilos:
                 hilos[cc] = {
-                    "cedula_cliente":   cc,
-                    "info_cliente":     info_map.get(cc, {"nombre": cc, "imagen": None}),
-                    "ultimo_mensaje":   m["mensaje"],
-                    "ultimo_at":        m["created_at"],
-                    "no_leidos":        0,
+                    "cedula_cliente": cc,
+                    "info_cliente":   info_map.get(cc, {"nombre": cc, "imagen": None}),
+                    "ultimo_mensaje": m["mensaje"],
+                    "ultimo_at":      m["created_at"],
+                    "no_leidos":      0,
                 }
             if not m["es_vendedor"] and not m["leido"]:
                 hilos[cc]["no_leidos"] += 1
@@ -264,9 +260,8 @@ def todos_los_hilos():
 @comentarios_bp.route("/mensajes_privados/hilo/<cedula_cliente>")
 @login_required
 def hilo_detalle(cedula_cliente):
-    """Vendedor: obtiene la conversación de un cliente específico y la marca leída."""
     rol = session.get("rol", "")
-    if rol not in ("vendedor", "admin"):
+    if rol != "vendedor":
         return jsonify({"error": "Sin permiso"}), 403
     try:
         mensajes = db.mp_get_conversacion(cedula_cliente)
@@ -283,23 +278,17 @@ def enviar_mensaje_privado():
     cedula = session.get("user_id")
     rol    = session.get("rol", "")
     msg    = (data.get("mensaje") or "").strip()
-
     if not msg:
         return jsonify({"error": "Mensaje vacío"}), 400
-
     es_vendedor = rol in ("vendedor", "admin")
-
     if es_vendedor:
-        # Vendedor responde → cedula_cliente viene del body
         cedula_cliente = (data.get("cedula_cliente") or "").strip()
         if not cedula_cliente:
             return jsonify({"error": "cedula_cliente requerida"}), 400
         es_pred = False
     else:
-        # Cliente → es su propio hilo
         cedula_cliente = cedula
         es_pred = bool(data.get("es_predeterminado", False))
-
     try:
         nuevo = db.mp_create(
             cedula_cliente    = cedula_cliente,
@@ -313,16 +302,130 @@ def enviar_mensaje_privado():
         return jsonify({"error": str(e)}), 500
 
 
+@comentarios_bp.route("/mensajes_privados/<id>", methods=["DELETE"])
+@login_required
+def eliminar_mensaje_privado(id):
+    cedula = session.get("user_id")
+    rol    = session.get("rol", "")
+    try:
+        msg = db.mp_get_by_id(id)
+        if not msg:
+            return jsonify({"error": "No encontrado"}), 404
+        if msg["cedula_remitente"] != cedula and rol not in ("admin", "vendedor"):
+            return jsonify({"error": "Sin permiso"}), 403
+        db.mp_delete(id)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@comentarios_bp.route("/mensajes_privados/hilo/<cedula_hilo>/limpiar", methods=["DELETE"])
+@login_required
+def limpiar_hilo_cv(cedula_hilo):
+    rol = session.get("rol", "")
+    if rol not in ("vendedor", "admin"):
+        return jsonify({"error": "Sin permiso"}), 403
+    try:
+        db.mp_delete_hilo(cedula_hilo, "cv")
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @comentarios_bp.route("/mensajes_privados/no_leidos")
 @login_required
 def no_leidos_count():
     cedula = session.get("user_id")
     rol    = session.get("rol", "")
     try:
+        cv_n    = 0
+        staff_n = 0
         if rol == "cliente":
-            n = db.mp_no_leidos(cedula, para_vendedor=False)
-        else:
-            n = db.mp_total_no_leidos_vendedor()
-        return jsonify({"count": n})
+            cv_n = db.mp_no_leidos(cedula, para_vendedor=False)
+        elif rol == "vendedor":
+            cv_n    = db.mp_total_no_leidos_vendedor()
+            staff_n = db.mp_staff_no_leidos(cedula)
+        elif rol == "admin":
+            staff_n = db.mp_staff_no_leidos(cedula)
+        return jsonify({"count": cv_n + staff_n, "cv": cv_n, "staff": staff_n})
     except Exception:
-        return jsonify({"count": 0})
+        return jsonify({"count": 0, "cv": 0, "staff": 0})
+
+
+# ════════════════════════════════════════════════════
+#  MENSAJES DE EQUIPO — canal STAFF (vendedor ↔ vendedor, vendedor ↔ admin)
+# ════════════════════════════════════════════════════
+
+@comentarios_bp.route("/mensajes_privados/staff/contactos")
+@login_required
+def staff_contactos():
+    rol    = session.get("rol", "")
+    cedula = session.get("user_id")
+    if rol not in ("vendedor", "admin"):
+        return jsonify({"error": "Sin permiso"}), 403
+    try:
+        todos = db.usuario_get_all()
+        contactos = [
+            {
+                "cedula":  u["cedula"],
+                "nombre":  f"{u.get('nombre','')} {u.get('apellido','')}".strip(),
+                "imagen":  u.get("imagen_url"),
+                "rol":     (u.get("roles") or {}).get("nombre_role", "cliente"),
+            }
+            for u in todos
+            if (u.get("roles") or {}).get("nombre_role") in ("vendedor", "admin")
+            and u["cedula"] != cedula
+        ]
+        return jsonify(contactos)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@comentarios_bp.route("/mensajes_privados/staff/hilo/<cedula_otro>")
+@login_required
+def staff_hilo(cedula_otro):
+    rol    = session.get("rol", "")
+    cedula = session.get("user_id")
+    if rol not in ("vendedor", "admin"):
+        return jsonify({"error": "Sin permiso"}), 403
+    try:
+        mensajes = db.mp_staff_get_conversacion(cedula, cedula_otro)
+        db.mp_staff_marcar_leidos(cedula, cedula_otro, lector=cedula)
+        return jsonify(mensajes)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@comentarios_bp.route("/mensajes_privados/staff/enviar", methods=["POST"])
+@login_required
+def staff_enviar():
+    rol    = session.get("rol", "")
+    cedula = session.get("user_id")
+    if rol not in ("vendedor", "admin"):
+        return jsonify({"error": "Sin permiso"}), 403
+    data      = request.get_json() or {}
+    msg       = (data.get("mensaje") or "").strip()
+    cedula_to = (data.get("cedula_dest") or "").strip()
+    if not msg or not cedula_to:
+        return jsonify({"error": "Datos incompletos"}), 400
+    try:
+        nuevo = db.mp_staff_create(cedula_from=cedula, cedula_to=cedula_to, mensaje=msg)
+        return jsonify({"ok": True, "mensaje": nuevo})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@comentarios_bp.route("/mensajes_privados/staff/hilo/<cedula_otro>/limpiar", methods=["DELETE"])
+@login_required
+def limpiar_hilo_staff(cedula_otro):
+    rol    = session.get("rol", "")
+    cedula = session.get("user_id")
+    if rol not in ("vendedor", "admin"):
+        return jsonify({"error": "Sin permiso"}), 403
+    try:
+        from helpers.models import _staff_thread_key
+        c1, c2 = _staff_thread_key(cedula, cedula_otro)
+        db.mp_delete_hilo(c1, "staff")
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

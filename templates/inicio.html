@@ -158,32 +158,32 @@
                             <a href="/catalogo_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
                                 <i class="bi bi-shop fs-3 me-3 text-primary"></i>
                                 <div>
-                                    <span class="d-block fw-bold text-dark">Catálogo de Dulces</span>
-                                    <small class="text-muted">Explora nuestros postres frescos</small>
+                                    <span class="d-block fw-bold text-dark" data-i18n="home.catalog">Catálogo de Dulces</span>
+                                    <small class="text-muted" data-i18n="home.catalog.sub">Explora nuestros postres frescos</small>
                                 </div>
                             </a>
                             {% if session.get('user') %}
                             <a href="/carrito_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
                                 <i class="bi bi-cart3 fs-3 me-3 text-success"></i>
                                 <div>
-                                    <span class="d-block fw-bold text-dark">Mi Carrito</span>
-                                    <small class="text-muted">Revisa tus pedidos seleccionados</small>
+                                    <span class="d-block fw-bold text-dark" data-i18n="home.cart">Mi Carrito</span>
+                                    <small class="text-muted" data-i18n="home.cart.sub">Revisa tus pedidos seleccionados</small>
                                 </div>
                             </a>
                             {% endif %}
                             <a href="/comentarios_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
                                 <i class="bi bi-chat-heart fs-3 me-3 text-danger"></i>
                                 <div>
-                                    <span class="d-block fw-bold text-dark">Tu Opinión</span>
-                                    <small class="text-muted">Comentarios y sugerencias</small>
+                                    <span class="d-block fw-bold text-dark" data-i18n="home.comments">Tu Opinión</span>
+                                    <small class="text-muted" data-i18n="home.comments.sub">Comentarios y sugerencias</small>
                                 </div>
                             </a>
                             {% if is_admin %}
                             <a href="/manual_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3" style="border-color:#0d6efd!important;background:#f8fbff;">
                                 <i class="bi bi-book fs-3 me-3 text-primary"></i>
                                 <div>
-                                    <span class="d-block fw-bold text-dark">Manual Admin</span>
-                                    <small class="text-muted">Guía de uso para administradores</small>
+                                    <span class="d-block fw-bold text-dark" data-i18n="home.manual">Manual Admin</span>
+                                    <small class="text-muted" data-i18n="home.manual.sub">Guía de uso para administradores</small>
                                 </div>
                             </a>
                             <button onclick="toggleModoEdicion()"
@@ -192,8 +192,8 @@
                                     style="background:linear-gradient(135deg,#fff5ee,#fff);border-color:#d35400!important;cursor:pointer;">
                                 <i class="bi bi-pencil-fill fs-3 me-3" style="color:#d35400;"></i>
                                 <div>
-                                    <span class="d-block fw-bold" style="color:#d35400;" id="editBtnLabel">Editar Inicio</span>
-                                    <small class="text-muted">Modo administrador</small>
+                                    <span class="d-block fw-bold" style="color:#d35400;" id="editBtnLabel" data-i18n="home.edit">Editar Inicio</span>
+                                    <small class="text-muted" data-i18n="nav.admin_mode">Modo administrador</small>
                                 </div>
                             </button>
                             {% endif %}

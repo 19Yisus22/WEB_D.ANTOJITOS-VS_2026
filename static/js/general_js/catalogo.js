@@ -216,7 +216,7 @@ function renderProductos(filterText = '') {
         headerDisp.className = "col-12 mt-2 mb-4";
         headerDisp.innerHTML = `
             <div class="seccion-titulo-contenedor">
-                <h3 class="seccion-titulo"><i class="bi bi-check2-circle me-2 color-disponible"></i> Postres Disponibles</h3>
+                <h3 class="seccion-titulo"><i class="bi bi-check2-circle me-2 color-disponible"></i> ${t('cat.available')}</h3>
                 <div class="linea-decorativa linea-disponible"></div>
             </div>
             <div class="row g-4 mt-1" id="gridDisponibles"></div>`;
@@ -229,7 +229,7 @@ function renderProductos(filterText = '') {
         headerAgot.className = "col-12 mt-5 mb-4";
         headerAgot.innerHTML = `
             <div class="seccion-titulo-contenedor">
-                <h3 class="seccion-titulo"><i class="bi bi-x-circle me-2 color-agotado"></i> Postres Agotados</h3>
+                <h3 class="seccion-titulo"><i class="bi bi-x-circle me-2 color-agotado"></i> ${t('cat.soldout')}</h3>
                 <div class="linea-decorativa linea-disponible"></div>
             </div>
             <div class="row g-4 mt-1" id="gridAgotados"></div>`;
@@ -238,7 +238,7 @@ function renderProductos(filterText = '') {
         agotados.forEach(p => gridAgot.appendChild(crearCardProductoHTML(p, "agot")));
     }
     if (baseFiltrada.length === 0) {
-        catalogoContainer.innerHTML = '<div class="col-12 text-center py-5 text-muted">No se encontraron productos</div>';
+        catalogoContainer.innerHTML = `<div class="col-12 text-center py-5 text-muted">${t('cat.no_results')}</div>`;
     }
     agregarEventosProductos();
 }
@@ -253,10 +253,11 @@ function crearCardProductoHTML(p, prefix = "") {
     const uniqueId = `${prefix}-${p.id_producto}`;
     const imgHTML = imgUrl
         ? `<img src="${imgUrl}" alt="${p.nombre}" loading="lazy"
-               style="width:100%;height:100%;object-fit:cover;display:block;"
+               style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s ease;"
+               onload="this.style.opacity='1';this.nextElementSibling&&(this.nextElementSibling.style.display='none')"
                onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')">
-           <div class="img-not-available" style="display:none;"><i class="bi bi-image-slash"></i><span>Sin imagen</span></div>`
-        : `<div class="img-not-available"><i class="bi bi-image-slash"></i><span>Sin imagen</span></div>`;
+           <div class="img-not-available" style="display:flex;position:absolute;inset:0;"><i class="bi bi-image-slash"></i><span>${t('status.no_image')}</span></div>`
+        : `<div class="img-not-available" style="position:absolute;inset:0;"><i class="bi bi-image-slash"></i><span>${t('status.no_image')}</span></div>`;
     col.innerHTML = `
         <div class="card h-100 product-card shadow-sm ${isAgotado ? 'producto-gris' : ''}" style="border-radius: 20px; border: 1px solid rgba(0,0,0,0.05);">
             <div class="img-wrapper position-relative overflow-hidden" style="height: 200px; border-radius: 20px 20px 0 0;">
@@ -264,7 +265,7 @@ function crearCardProductoHTML(p, prefix = "") {
                     <i class="bi ${esFav ? 'bi-heart-fill text-danger' : 'bi-heart text-muted'}"></i>
                 </button>
                 ${imgHTML}
-                ${isAgotado ? '<div class="letrero-agotado">AGOTADO</div>' : ''}
+                ${isAgotado ? `<div class="letrero-agotado">${t('cat.out_stock')}</div>` : ''}
             </div>
             <div class="card-body p-3">
                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -273,7 +274,7 @@ function crearCardProductoHTML(p, prefix = "") {
                 </div>
                 <div class="text-muted small mb-3">${p.description || p.descripcion || ''}</div>
                 <div class="mb-3">
-                    <small class="${p.stock < 5 ? 'text-danger' : 'text-success'} fw-bold">Stock: ${p.stock}</small>
+                    <small class="${p.stock < 5 ? 'text-danger' : 'text-success'} fw-bold">${t('cat.stock')}: ${p.stock}</small>
                 </div>
                 ${!isAgotado ? `
                     <div class="d-flex gap-2 align-items-center">
@@ -282,9 +283,9 @@ function crearCardProductoHTML(p, prefix = "") {
                             <input type="number" readonly value="1" class="cantidad" style="width: 30px; border: none; text-align: center; background: transparent;">
                             <button class="qty-btn btn-aumentar">+</button>
                         </div>
-                        <button class="btn btn-warning flex-grow-1 text-white fw-bold btn-agregar-modern">Añadir <i class="bi bi-cart-plus"></i></button>
+                        <button class="btn btn-warning flex-grow-1 text-white fw-bold btn-agregar-modern">${t('cat.add')} <i class="bi bi-cart-plus"></i></button>
                     </div>
-                ` : `<button class="btn btn-secondary w-100 disabled" disabled>Agotado</button>`}
+                ` : `<button class="btn btn-secondary w-100 disabled" disabled>${t('cat.out_stock')}</button>`}
             </div>
         </div>`;
     col.querySelector(".btn-fav-toggle").onclick = (e) => {

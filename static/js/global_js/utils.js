@@ -618,12 +618,15 @@ function _renderClientNotifs() {
     if (count)  { count.textContent  = notifs.length > 9 ? '9+' : notifs.length; count.style.display = 'inline-flex'; }
     if (badge)  { badge.textContent  = notifs.length > 9 ? '9+' : notifs.length; badge.style.display = 'flex'; }
     notifs.forEach((n, i) => {
-        const agotado = n.tipo === 'agotado';
-        const icon  = agotado ? 'bi-x-circle-fill' : 'bi-check-circle-fill';
-        const color = agotado ? '#dc2626' : '#15803d';
-        const bg    = agotado ? '#fee2e2' : '#dcfce7';
+        const isPerfil  = n.tipo === 'perfil';
+        const agotado   = n.tipo === 'agotado';
+        const isPrivMsg = n.tipo === 'priv_msg';
+        const icon  = agotado ? 'bi-x-circle-fill' : isPerfil ? 'bi-person-fill-exclamation' : isPrivMsg ? 'bi-chat-text-fill' : 'bi-check-circle-fill';
+        const color = agotado ? '#dc2626' : isPerfil ? '#d35400' : isPrivMsg ? '#7c3aed' : '#15803d';
+        const bg    = agotado ? '#fee2e2' : isPerfil ? '#fff4ee' : isPrivMsg ? '#f5f3ff' : '#dcfce7';
         const li = document.createElement('li');
-        li.className = 'notif-item';
+        li.className = 'notif-item' + (n.url ? ' notif-item-link' : '');
+        if (n.url) { li.style.cursor = 'pointer'; li.onclick = () => { window.location.href = n.url; }; }
         li.innerHTML = `
             <div class="notif-item-img" style="background:${bg};">
                 ${n.imagen ? `<img src="${n.imagen}" onerror="this.outerHTML='<i class=\\"bi ${icon}\\" style=\\"color:${color};font-size:1rem;\\"></i>'">` : `<i class="bi ${icon}" style="color:${color};font-size:1rem;"></i>`}
@@ -633,7 +636,7 @@ function _renderClientNotifs() {
                 <small style="display:block;margin-top:2px;color:#888;">${n.mensaje}</small>
             </div>
             <div class="notif-item-actions">
-                <button class="btn-notif-visto" onclick="_clientNotifRemove(${i})" title="Quitar">
+                <button class="btn-notif-visto" onclick="event.stopPropagation();_clientNotifRemove(${i})" title="Quitar">
                     <i class="bi bi-x-lg" style="font-size:0.7rem;"></i>
                 </button>
             </div>`;
@@ -775,6 +778,8 @@ function _animateBadge(badgeEl) {
 
 /* ── Polling de notificaciones del sistema en background ── */
 let _lastBellCount = 0;
+let _lastPrivCv    = -1;
+let _lastPrivStaff = -1;
 
 async function _pollSistemNotif() {
     const badge = document.getElementById('navBellBadge');
@@ -801,6 +806,12 @@ document.addEventListener('DOMContentLoaded', () => {
     /* Cargar bandeja del cliente desde localStorage al iniciar */
     if (document.getElementById('clientNotifList')) {
         _renderClientNotifs();
+    }
+
+    /* Polling mensajes privados: cliente (campana naranja) y admin/vendedor (campana gris) */
+    if (document.getElementById('navClientBellBadge') || document.getElementById('navBellBadge')) {
+        setTimeout(_pollPrivMsgs, 4000);
+        setInterval(_pollPrivMsgs, 20000);
     }
 });
 
@@ -1006,6 +1017,99 @@ window._pedidosMarcarTodo = function() {
     }
 };
 
+/* ══════════════════════════════════════════════════════
+   NOTIFICACIONES DE MENSAJES PRIVADOS — todos los roles
+   ══════════════════════════════════════════════════════ */
+
+function _updatePrivNotifSistem(tipo, count) {
+    const list = document.getElementById('sistemList');
+    if (!list) return;
+    const existing = list.querySelector(`[data-priv-tipo="${tipo}"]`);
+    if (count === 0) {
+        if (existing) { existing.remove(); _updateSistemBadge(); }
+        return;
+    }
+    const isCv  = tipo === 'cv';
+    const color = isCv ? '#7c3aed' : '#0ea5e9';
+    const bg    = isCv ? '#f5f3ff' : '#e0f2fe';
+    const icon  = isCv ? 'bi-people-fill' : 'bi-chat-text-fill';
+    const label = isCv
+        ? (count === 1 ? '1 mensaje de cliente sin leer' : `${count} mensajes de clientes sin leer`)
+        : (count === 1 ? '1 mensaje de equipo sin leer'  : `${count} mensajes de equipo sin leer`);
+    if (existing) {
+        const strong = existing.querySelector('strong');
+        if (strong) strong.textContent = label;
+        return;
+    }
+    const empty = document.getElementById('sistemEmpty');
+    if (empty) empty.style.display = 'none';
+    const li = document.createElement('li');
+    li.className = 'notif-item';
+    li.dataset.pedidoId = `priv-${tipo}`;
+    li.dataset.privTipo = tipo;
+    li.innerHTML = `
+        <div class="notif-item-img" style="background:${bg};">
+            <i class="bi ${icon}" style="color:${color};font-size:1rem;"></i>
+        </div>
+        <div class="notif-item-info" style="flex:1;min-width:0;cursor:pointer;"
+             onclick="window.location.href='/comentarios_page'">
+            <strong style="font-size:0.78rem;">${label}</strong>
+            <small style="display:block;margin-top:2px;color:${color};font-weight:600;">Ir a mensajes →</small>
+        </div>
+        <div class="notif-item-actions">
+            <button class="btn-notif-visto" title="Descartar"
+                    onclick="event.stopPropagation();this.closest('.notif-item').remove();_updateSistemBadge();">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>`;
+    list.insertBefore(li, list.firstChild);
+    _updateSistemBadge();
+    const prev = isCv ? _lastPrivCv : _lastPrivStaff;
+    if (count > prev && prev >= 0) _animateBadge(document.getElementById('navBellBadge'));
+}
+
+function _updatePrivClientNotif(count) {
+    let arr = _getClientNotifs();
+    const prevEntry = arr.find(n => n.tipo === 'priv_msg');
+    const prevCount = prevEntry ? (prevEntry._count || 0) : 0;
+    arr = arr.filter(n => n.tipo !== 'priv_msg');
+    if (count > 0) {
+        arr.unshift({
+            tipo:    'priv_msg',
+            titulo:  count === 1 ? 'Nuevo mensaje privado' : `${count} mensajes sin leer`,
+            mensaje: 'El vendedor te ha respondido. Toca para leer.',
+            imagen:  null,
+            url:     '/comentarios_page',
+            _count:  count,
+            ts:      Date.now(),
+        });
+    }
+    _saveClientNotifs(arr);
+    _renderClientNotifs();
+    if (count > prevCount && _lastPrivCv >= 0) {
+        const bell = document.getElementById('navClientBellBtn');
+        if (bell) { bell.classList.add('ring-anim'); setTimeout(() => bell.classList.remove('ring-anim'), 2500); }
+        _animateBadge(document.getElementById('navClientBellBadge'));
+    }
+}
+
+async function _pollPrivMsgs() {
+    try {
+        const r = await fetch('/mensajes_privados/no_leidos', { cache: 'no-store' });
+        if (!r.ok) return;
+        const d  = await r.json();
+        const cv    = d.cv    || 0;
+        const staff = d.staff || 0;
+        if (document.getElementById('navClientBellBadge')) _updatePrivClientNotif(cv);
+        if (document.getElementById('navBellBadge')) {
+            _updatePrivNotifSistem('cv', cv);
+            _updatePrivNotifSistem('staff', staff);
+        }
+        _lastPrivCv    = cv;
+        _lastPrivStaff = staff;
+    } catch {}
+}
+
 window._publicidadMarcarTodo = async function() {
     const readAllBtn = document.getElementById('notifReadAllBtn');
     if (readAllBtn) {
@@ -1027,3 +1131,31 @@ window._publicidadMarcarTodo = async function() {
     const navPub = document.getElementById('navPubBadge');
     if (navPub) navPub.style.display = 'none';
 };
+
+/* ══════════════════════════════════════════════════════
+   NOTIFICACIÓN AUTOMÁTICA — perfil incompleto
+   Se muestra una vez por sesión si la cédula es generada (G-).
+   ══════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function _checkProfileNotif() {
+    if (!window._PROFILE_INCOMPLETE) return;
+
+    const KEY  = '_dantojitos_profile_notif_ts';
+    const last = parseInt(localStorage.getItem(KEY) || '0', 10);
+    const now  = Date.now();
+    if (now - last < 24 * 60 * 60 * 1000) return;
+
+    localStorage.setItem(KEY, String(now));
+
+    setTimeout(function() {
+        _pushClientNotif({
+            tipo:    'perfil',
+            titulo:  '¡Completa tu perfil!',
+            mensaje: 'Agrega tu cédula real, teléfono y dirección de entrega.',
+            imagen:  '/static/uploads/logo.ico',
+            url:     '/mi_perfil',
+        });
+        const bell = document.getElementById('navClientBellBtn');
+        if (bell) bell.classList.add('ring-anim');
+        setTimeout(() => bell && bell.classList.remove('ring-anim'), 2500);
+    }, 1500);
+});

@@ -32,21 +32,20 @@
                 <div class="facturas-section-info">
                     <h3 class="facturas-section-title">
                         <i class="bi bi-journal-text"></i>
-                        Historial de Facturas
+                        <span data-i18n="inv.title">Historial de Facturas</span>
                     </h3>
-                    <p class="facturas-section-sub">Controla, filtra, archiva y revisa tus facturas con rapidez.</p>
+                    <p class="facturas-section-sub" data-i18n="inv.subtitle_long">Controla, filtra, archiva y revisa tus facturas con rapidez.</p>
                 </div>
                 <button id="btnToggleArchivadas" class="btn-archive-toggle">
                     <i class="bi bi-archive-fill"></i>
-                    <span>Mostrar archivadas</span>
+                    <span id="btnArchivadosLabel" data-i18n="inv.show_archived">Mostrar archivadas</span>
                 </button>
             </div>
 
-            <!-- Panel de búsqueda rediseñado -->
             <div class="facturas-search-card">
                 <div class="facturas-search-hint">
                     <i class="bi bi-info-circle-fill"></i>
-                    <span>Busca por <span class="hint-tag">nombre completo</span>, <span class="hint-tag">usuario @</span> o <span class="hint-tag">cédula</span> para ver las facturas asociadas</span>
+                    <span data-i18n="inv.search_hint_full">Busca por <span class="hint-tag">nombre completo</span>, <span class="hint-tag">usuario @</span> o <span class="hint-tag">cédula</span> para ver las facturas asociadas</span>
                 </div>
                 <div class="facturas-search-row">
                     <div class="facturas-input-wrap">
@@ -54,22 +53,22 @@
                         <input type="text"
                                id="buscarFactura"
                                class="facturas-input"
+                               data-i18n-placeholder="inv.search_placeholder"
                                placeholder="Juan García, @usuario o 1234567890...">
                     </div>
                     <select id="filtroEstadoFactura" class="facturas-select">
-                        <option value="todos">Todos los estados</option>
-                        <option value="emitida">Emitida</option>
-                        <option value="pagado">Pagada / Completada</option>
-                        <option value="anulada">Anulada</option>
+                        <option value="todos" data-i18n="inv.all_states">Todos los estados</option>
+                        <option value="emitida" data-i18n="inv.issued">Emitida</option>
+                        <option value="pagado" data-i18n="inv.paid_completed">Pagada / Completada</option>
+                        <option value="anulada" data-i18n="inv.cancelled">Anulada</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Estado vacío -->
             <div id="facturasEmpty" class="facturas-empty-state" style="display:none;">
                 <div class="facturas-empty-icon"><i class="bi bi-folder2-open"></i></div>
-                <h5 class="facturas-empty-title">Sin resultados</h5>
-                <p class="facturas-empty-sub">No se encontraron facturas con ese criterio de búsqueda.</p>
+                <h5 class="facturas-empty-title" data-i18n="status.empty">Sin resultados</h5>
+                <p class="facturas-empty-sub" data-i18n="inv.no_results_q">No se encontraron facturas con ese criterio de búsqueda.</p>
             </div>
 
             <div id="facturasContainer" class="row g-3 g-md-4"></div>
@@ -86,12 +85,12 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header bg-dark text-white border-0 py-3">
-                <h5 class="modal-title fw-bold"><i class="bi bi-shield-check me-2"></i>Medios de Pago Oficiales</h5>
+                <h5 class="modal-title fw-bold" data-i18n="pay.official"><i class="bi bi-shield-check me-2"></i>Medios de Pago Oficiales</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4" id="modalPagoBody" style="background-color: #f8f9fa;"></div>
             <div class="modal-footer border-0 bg-light justify-content-center">
-                <button type="button" class="btn btn-secondary px-4 fw-bold rounded-pill" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-secondary px-4 fw-bold rounded-pill" data-bs-dismiss="modal" data-i18n="btn.close">Cerrar</button>
             </div>
         </div>
     </div>

@@ -29,6 +29,7 @@ def _enriquecer_factura(f: dict) -> dict:
         "cedula":         str(f.get("cedula") or ""),
         "id_pedido":      str(f.get("id_pedido") or ""),
         "productos":      productos,
+        "archivada":      bool(f.get("archivada", False)),
     }
 
 
@@ -104,6 +105,24 @@ def buscar_facturas_page():
         return jsonify(resultado), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@historial_facturas_bp.route("/archivar_factura_page/<numero_factura>", methods=["PUT"])
+@login_required
+def archivar_factura_page(numero_factura):
+    user_id = session.get("user_id")
+    rol     = session.get("rol")
+    try:
+        factura = db.factura_get_by_numero(numero_factura)
+        if not factura:
+            return jsonify({"message": "Factura no encontrada"}), 404
+        if str(factura["cedula"]) != str(user_id) and rol not in ("admin", "vendedor"):
+            return jsonify({"message": "Sin permiso"}), 403
+        nuevo = not bool(factura.get("archivada", False))
+        db.factura_update(numero_factura, {"archivada": nuevo})
+        return jsonify({"archivada": nuevo}), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
 @historial_facturas_bp.route("/anular_factura_page/<numero_factura>", methods=["PUT"])

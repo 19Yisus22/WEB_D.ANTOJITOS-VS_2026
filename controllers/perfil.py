@@ -1,3 +1,4 @@
+from datetime import datetime, timezone, timedelta
 from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template
 import helpers.models as db
 from helpers.auth import sin_cache, login_required, admin_required, hash_password
@@ -5,6 +6,32 @@ from helpers.validators import is_valid_name, is_valid_numeric, is_valid_email
 from helpers.cloudinary import upload_image, delete_image
 
 perfil_bp = Blueprint("perfil", __name__)
+
+COOLDOWN_DIAS = 30
+
+def _puede_cambiar(usuario: dict, campo: str) -> tuple:
+    key    = f"last_change_{campo}"
+    ultimo = usuario.get(key)
+    if not ultimo:
+        return True, None
+    try:
+        ultimo_dt  = datetime.fromisoformat(str(ultimo).replace("Z", "+00:00"))
+        siguiente  = ultimo_dt + timedelta(days=COOLDOWN_DIAS)
+        if datetime.now(timezone.utc) >= siguiente:
+            return True, None
+        return False, siguiente.isoformat()
+    except Exception:
+        return True, None
+
+def _ahora_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+def _dias_restantes(siguiente_iso: str) -> int:
+    try:
+        sig = datetime.fromisoformat(siguiente_iso.replace("Z", "+00:00"))
+        return max(1, (sig - datetime.now(timezone.utc)).days + 1)
+    except Exception:
+        return 30
 
 
 @perfil_bp.route("/mi_perfil", methods=["GET", "POST"])
@@ -58,25 +85,51 @@ def perfil_usuarios():
     return render_template("general_modules/perfil.html", user=usuario)
 
 
+@perfil_bp.route("/perfil/restricciones")
+@login_required
+def perfil_restricciones():
+    user_id = session.get("user_id")
+    try:
+        usuario = db.usuario_get(user_id)
+        if not usuario:
+            return jsonify({}), 200
+        resultado = {}
+        for campo in ("cedula", "username", "nombre", "apellido"):
+            puede, siguiente = _puede_cambiar(usuario, campo)
+            resultado[campo] = {
+                "bloqueado":      not puede,
+                "disponible_en":  siguiente,
+                "ultimo_cambio":  usuario.get(f"last_change_{campo}"),
+            }
+        return jsonify(resultado)
+    except Exception:
+        return jsonify({}), 200
+
+
 @perfil_bp.route("/actualizar_perfil/<cedula>", methods=["PUT", "POST"])
 @login_required
 def actualizar_perfil(cedula):
     user_id = session.get("user_id")
-    # Siempre usar el user_id de sesión como clave de búsqueda (nunca la URL)
-    lookup_id = str(user_id or "")
+    lookup_id = str(user_id or "").strip()
+
     if not lookup_id:
         return jsonify({"ok": False, "error": "Usuario no identificado"}), 400
 
     usuario_previo = db.usuario_get(lookup_id)
+
     if not usuario_previo:
-        return jsonify({"ok": False, "error": "Usuario no encontrado"}), 404
+        correo_sesion = (session.get("user") or {}).get("correo", "")
+        if correo_sesion:
+            usuario_previo = db.usuario_get_by_correo(correo_sesion)
+        if usuario_previo:
+            lookup_id = str(usuario_previo.get("cedula", lookup_id))
+            session["user_id"] = lookup_id
+            session.modified = True
+        else:
+            return jsonify({"ok": False, "error": "Sesión expirada. Recarga la página e intenta de nuevo."}), 404
 
     data = request.form if request.form else (request.json or {})
 
-    # La cédula es la PK de usuarios y referenciada por FK en carrito, pedidos,
-    # facturas y comentarios. No debe editarse desde el perfil para evitar
-    # violaciones de integridad referencial. Solo se permite cambiar datos
-    # de contacto y preferencias.
     campos = {
         "nombre":      (data.get("nombrePerfil") or "").strip(),
         "apellido":    (data.get("apellidoPerfil") or "").strip(),
@@ -85,8 +138,48 @@ def actualizar_perfil(cedula):
         "direccion":   (data.get("direccionPerfil") or "").strip(),
         "metodo_pago": (data.get("metodoPagoPerfil") or "").strip(),
     }
-
     campos = {k: v for k, v in campos.items() if v}
+
+    nuevo_username = (data.get("usernamePerfil") or "").strip().lower()
+    if nuevo_username and nuevo_username != (usuario_previo.get("username") or ""):
+        from helpers.validators import is_valid_username
+        if not is_valid_username(nuevo_username):
+            return jsonify({"ok": False, "error": "Nombre de usuario inválido (3-30 caracteres, debe incluir al menos una letra o número)."}), 400
+        existente = db.usuario_get_by_username(nuevo_username)
+        if existente and str(existente.get("cedula")) != lookup_id:
+            return jsonify({"ok": False, "error": "El nombre de usuario ya está en uso."}), 409
+        campos["username"] = nuevo_username
+
+    nueva_cedula = (data.get("cedulaPerfil") or "").strip()
+    if nueva_cedula and nueva_cedula != lookup_id:
+        if len(nueva_cedula) < 6:
+            return jsonify({"ok": False, "error": "Cédula inválida (mínimo 6 caracteres)"}), 400
+        campos["cedula"] = nueva_cedula
+
+    ahora = _ahora_iso()
+    for campo in ("nombre", "apellido"):
+        nuevo_val = campos.get(campo, "")
+        actual    = (usuario_previo.get(campo) or "").strip()
+        if nuevo_val and nuevo_val != actual:
+            puede, siguiente = _puede_cambiar(usuario_previo, campo)
+            if not puede:
+                dias = _dias_restantes(siguiente)
+                return jsonify({"ok": False, "error": f"Solo puedes cambiar tu {campo} una vez al mes. Disponible en {dias} día(s).", "campo": campo, "disponible_en": siguiente}), 429
+            campos[f"last_change_{campo}"] = ahora
+
+    if "cedula" in campos:
+        puede, siguiente = _puede_cambiar(usuario_previo, "cedula")
+        if not puede:
+            dias = _dias_restantes(siguiente)
+            return jsonify({"ok": False, "error": f"Solo puedes cambiar tu cédula una vez al mes. Disponible en {dias} día(s).", "campo": "cedula", "disponible_en": siguiente}), 429
+        campos["last_change_cedula"] = ahora
+
+    if "username" in campos:
+        puede, siguiente = _puede_cambiar(usuario_previo, "username")
+        if not puede:
+            dias = _dias_restantes(siguiente)
+            return jsonify({"ok": False, "error": f"Solo puedes cambiar tu usuario una vez al mes. Disponible en {dias} día(s).", "campo": "username", "disponible_en": siguiente}), 429
+        campos["last_change_username"] = ahora
 
     archivo = request.files.get("imagen_url")
     if archivo and archivo.filename:
@@ -114,8 +207,8 @@ def actualizar_perfil(cedula):
     try:
         db.usuario_update(lookup_id, campos)
 
-        # La cédula no cambia nunca desde este endpoint
-        usuario_final = db.usuario_get(lookup_id)
+        nueva_id = campos.get("cedula", lookup_id)
+        usuario_final = db.usuario_get(nueva_id)
 
         if usuario_final is None:
             return jsonify({"ok": False, "error": "No se pudo recuperar el usuario actualizado"}), 500
@@ -125,12 +218,46 @@ def actualizar_perfil(cedula):
             img = "/" + img
         usuario_final["imagen_url"] = img
 
+        if "cedula" in campos:
+            session["user_id"] = nueva_id
+
         s = session.get("user") or {}
-        s.update({k: usuario_final.get(k) for k in ["nombre", "apellido", "telefono", "correo", "direccion", "metodo_pago", "imagen_url", "cedula"]})
+        s.update({k: usuario_final.get(k) for k in ["nombre", "apellido", "telefono", "correo", "direccion", "metodo_pago", "imagen_url", "cedula", "username"]})
         session["user"] = s
         session.modified = True
 
         return jsonify({"ok": True, "usuario": usuario_final})
+    except Exception as e:
+        msg = str(e)
+        if "foreign key" in msg.lower() or "violates" in msg.lower():
+            return jsonify({"ok": False, "error": "No se puede cambiar la cédula porque tienes pedidos o facturas registrados con ella."}), 409
+        return jsonify({"ok": False, "error": msg}), 500
+
+
+@perfil_bp.route("/eliminar_mi_cuenta", methods=["DELETE"])
+@login_required
+def eliminar_mi_cuenta():
+    user_id = session.get("user_id")
+    lookup_id = str(user_id or "").strip()
+    if not lookup_id:
+        return jsonify({"ok": False, "error": "Sesión no válida"}), 400
+
+    try:
+        usuario = db.usuario_get(lookup_id)
+        if not usuario:
+            correo_sesion = (session.get("user") or {}).get("correo", "")
+            if correo_sesion:
+                usuario = db.usuario_get_by_correo(correo_sesion)
+        if not usuario:
+            return jsonify({"ok": False, "error": "Usuario no encontrado"}), 404
+
+        img = usuario.get("imagen_url", "")
+        if img and "default_icon_profile" not in img and "cloudinary" in img:
+            delete_image(img)
+
+        db.usuario_delete(usuario["cedula"])
+        session.clear()
+        return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 

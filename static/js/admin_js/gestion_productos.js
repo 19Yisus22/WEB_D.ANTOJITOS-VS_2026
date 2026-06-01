@@ -126,8 +126,8 @@ function _abrirFormularioEdicion(index) {
     } else {
         resetPrevisualizador();
     }
-    document.getElementById("formPanelTitle").textContent = "Editar Producto";
-    btnSubmitForm.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Actualizar Cambios';
+    document.getElementById("formPanelTitle").textContent = t('prod.edit_title');
+    btnSubmitForm.innerHTML = `<i class="bi bi-pencil-square me-2"></i>${t('prod.update')}`;
     formAgregarPostre.classList.remove("d-none");
     if (modal) modal.hide();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -315,8 +315,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             indexActual = null;
             agregarPostreForm.reset();
             resetPrevisualizador();
-            document.getElementById("formPanelTitle").textContent = "Nuevo Postre";
-            btnSubmitForm.innerHTML = '<i class="bi bi-save2 me-2"></i>Agregar nuevo producto';
+            document.getElementById("formPanelTitle").textContent = t('prod.new_title');
+            btnSubmitForm.innerHTML = `<i class="bi bi-save2 me-2"></i>${t('prod.save')}`;
             formAgregarPostre.classList.remove("d-none");
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
@@ -360,7 +360,7 @@ if (agregarPostreForm) {
     agregarPostreForm.onsubmit = async (e) => {
         e.preventDefault();
         btnSubmitForm.disabled = true;
-        btnSubmitForm.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
+        btnSubmitForm.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${t('status.processing')}`;
         const fileInput = document.getElementById("fotoPostre");
         const file = fileInput.files[0];
         const formData = new FormData();

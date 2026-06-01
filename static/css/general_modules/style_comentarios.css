@@ -644,6 +644,72 @@ html, body {
 [data-theme="dark"] .reply-quote { background: rgba(240,136,62,0.08) !important; }
 [data-theme="dark"] .pub-reply-quote { background: rgba(240,136,62,0.08) !important; }
 
+/* ── Sub-tabs (Clientes / Equipo) para vendedor ── */
+.priv-subtabs-bar {
+    display: flex;
+    border-bottom: 2px solid #eef1f6;
+    background: #fafbfc;
+    flex-shrink: 0;
+}
+.priv-subtab {
+    flex: 1;
+    padding: 12px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    position: relative;
+}
+.priv-subtab:hover { color: var(--primary); background: rgba(211,84,0,0.04); }
+.priv-subtab.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(211,84,0,0.06); }
+
+/* ── Delete buttons on thread items and messages ── */
+.priv-hilo-delete {
+    background: transparent;
+    border: none;
+    color: #cbd5e0;
+    padding: 4px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+.priv-hilo-item:hover .priv-hilo-delete { opacity: 1; }
+.priv-hilo-delete:hover { color: #e53e3e; background: rgba(229,62,62,0.08); }
+
+.priv-msg-del {
+    background: transparent;
+    border: none;
+    color: rgba(0,0,0,0.2);
+    padding: 2px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: color 0.2s;
+}
+.priv-msg-del:hover { color: #e53e3e; }
+.priv-msg--mio .priv-msg-del { color: rgba(255,255,255,0.4); }
+.priv-msg--mio .priv-msg-del:hover { color: #fff; }
+
+[data-theme="dark"] .priv-subtabs-bar { background: var(--dk-card, #1a1826) !important; border-color: var(--dk-border, #2a2838) !important; }
+[data-theme="dark"] .priv-subtab { color: var(--dk-text-subtle, #4a4868) !important; }
+[data-theme="dark"] .priv-subtab.active { color: var(--dk-accent, #f0883e) !important; border-color: var(--dk-accent, #f0883e) !important; background: rgba(240,136,62,0.06) !important; }
+[data-theme="dark"] .priv-hilo-delete { color: var(--dk-border, #2a2838) !important; }
+[data-theme="dark"] .priv-hilo-delete:hover { color: #fc8181 !important; }
+
 /* ═══════════════════════════════════════════════════
    EDITOR WYSIWYG — barra de herramientas + área
    ═══════════════════════════════════════════════════ */

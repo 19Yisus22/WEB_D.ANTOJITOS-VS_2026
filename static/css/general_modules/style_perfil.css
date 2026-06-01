@@ -70,6 +70,35 @@ body {
     box-shadow: 0 0 0 4px rgba(211, 84, 0, 0.1);
 }
 
+.cooldown-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: rgba(255, 190, 0, 0.08);
+    border: 1px solid rgba(255, 190, 0, 0.25);
+    border-radius: 8px;
+}
+.cooldown-timer {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #b7791f;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.3px;
+}
+.custom-input.cooldown-locked {
+    background: repeating-linear-gradient(
+        135deg,
+        #fafafa,
+        #fafafa 8px,
+        #fff8f0 8px,
+        #fff8f0 16px
+    ) !important;
+    border-color: #f6ad55 !important;
+    cursor: not-allowed !important;
+}
+
 .btn-soft {
     border-radius: 14px;
     padding: 14px 32px;
