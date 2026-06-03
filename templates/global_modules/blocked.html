@@ -45,5 +45,12 @@
 
     <script src="{{ url_for('static', filename='js/global_js/i18n.js') }}"></script>
     <script src="{{ url_for('static', filename='js/global_js/blocked.js') }}"></script>
+
+    <script>
+      window.va = window.va || function () { 
+        (window.vaq = window.vaq || []).push(arguments); 
+      };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
