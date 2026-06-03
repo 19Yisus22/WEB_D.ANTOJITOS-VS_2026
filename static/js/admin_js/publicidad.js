@@ -69,8 +69,9 @@ function actualizarPreview() {
         itemsCar.forEach((div, i) => {
             const item = document.createElement("div");
             item.className = "carousel-item" + (i === 0 ? " active" : "");
-            const img = div.querySelector("img").src;
-            const tit = div.querySelector(".t-tit").value;
+            const imgEl = div.querySelector("img");
+            const img = imgEl && !imgEl.classList.contains("d-none") ? imgEl.src : "";
+            const tit = div.querySelector(".t-tit")?.value || "";
             const des = div.querySelector(".t-des")?.value || "";
             item.innerHTML = `
                 <div class="d-block w-100 position-relative overflow-hidden" style="height:450px;">
@@ -226,6 +227,7 @@ function agregarCarrusel(url = "", titulo = "", desc = "", id = "") {
     div.dataset.index = idx;
     div.dataset.dbId = id;
     div.dataset.cambioImagen = "false";
+    div.dataset.urlActual = url;
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
         <div class="section-content row g-3 m-0 w-100 align-items-center">
@@ -265,6 +267,7 @@ function agregarSeccion(url = "", titulo = "", id = "") {
     div.dataset.index = idx;
     div.dataset.dbId = id;
     div.dataset.cambioImagen = "false";
+    div.dataset.urlActual = url;
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
         <div class="section-content d-flex align-items-center gap-4 w-100 p-2">
@@ -296,6 +299,7 @@ function agregarCinta(url = "", titulo = "", id = "") {
     div.dataset.index = idx;
     div.dataset.dbId = id;
     div.dataset.cambioImagen = "false";
+    div.dataset.urlActual = url;
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-4"></i></div>
         <div class="section-content d-flex align-items-center gap-3 w-100 py-2 px-3 border rounded">
@@ -327,6 +331,7 @@ function agregarInicioCinta(url = "", titulo = "", id = "") {
     div.dataset.index = idx;
     div.dataset.dbId = id;
     div.dataset.cambioImagen = "false";
+    div.dataset.urlActual = url;
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-4"></i></div>
         <div class="section-content d-flex align-items-center gap-3 w-100 py-2 px-3 border rounded" style="background:#fff8f0;">
@@ -372,8 +377,12 @@ async function guardarMarketing() {
             const div = items[index];
             const fileInput = div.querySelector("input[type='file']");
             const imgEl = div.querySelector("img");
-            const urlActual = (imgEl && imgEl.src && !imgEl.src.startsWith('data:')) ? imgEl.src : '';
-            if (fileInput.files[0]) {
+            const cambioImg = div.dataset.cambioImagen === "true";
+            let urlActual = div.dataset.urlActual || "";
+            if (!urlActual && imgEl && imgEl.src && !imgEl.src.startsWith('data:') && imgEl.src !== window.location.href) {
+                urlActual = imgEl.src;
+            }
+            if (fileInput && fileInput.files[0]) {
                 totalFiles++;
                 formData.append(filePrefix, await comprimirImagen(fileInput.files[0]));
                 uploadedFiles++;
@@ -382,11 +391,11 @@ async function guardarMarketing() {
             }
             metadata.push({
                 index,
-                titulo: div.querySelector(".t-tit")?.value || "",
+                titulo:      div.querySelector(".t-tit")?.value || "",
                 descripcion: div.querySelector(".t-des")?.value || "",
-                url_actual: urlActual,
-                cambio_img: div.dataset.cambioImagen === "true",
-                db_id: div.dataset.dbId || null
+                url_actual:  urlActual,
+                cambio_img:  cambioImg,
+                db_id:       div.dataset.dbId || null,
             });
         }
         formData.append(metaKey, JSON.stringify(metadata));
@@ -452,7 +461,12 @@ async function cambioImg(input) {
         const comprimido = await comprimirImagen(file);
         const r = new FileReader();
         r.onload = e => {
-            imgElement.src = e.target.result;
+            if (imgElement) {
+                imgElement.src = e.target.result;
+                imgElement.classList.remove("d-none");
+                const placeholder = container.querySelector(".placeholder-icon");
+                if (placeholder) placeholder.classList.add("d-none");
+            }
             container.dataset.cambioImagen = "true";
             actualizarPreview();
         };
@@ -733,9 +747,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const pubBtn = document.getElementById('navPubBtn');
     if (pubBtn) pubBtn.style.display = '';
 
-    /* Marcar el botón de velocidad activo según el valor guardado */
     const currentSpeed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
     document.querySelectorAll('.ticker-speed-btn').forEach(btn => {
         btn.classList.toggle('active', parseFloat(btn.dataset.speed) === currentSpeed);
+        btn.addEventListener('click', () => {
+            const speed = parseFloat(btn.dataset.speed);
+            if (typeof setTickerSpeed === 'function') setTickerSpeed(speed);
+            mostrarAlerta(`Velocidad ajustada a ${speed}× — guardada automáticamente`);
+        });
     });
 });

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "esbuild static/ts/*.ts --bundle=false --format=esm --target=es2020 --outdir=static/js/compiled --sourcemap",
+    "build": "esbuild static/ts/*.ts --bundle=false --format=esm --target=es2020 --outdir=static/js/compiled --sourcemap --minify-whitespace",
     "watch": "esbuild static/ts/*.ts --bundle=false --format=esm --target=es2020 --outdir=static/js/compiled --sourcemap --watch",
     "typecheck": "tsc --noEmit"
   },

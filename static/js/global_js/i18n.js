@@ -1,7 +1,7 @@
 const LANG_DATA = {
   es: {
 
-    'nav.home':          'Home',
+    'nav.home':          'Inicio',
     'nav.catalog':       'Catálogo',
     'nav.cart':          'Carrito',
     'nav.suggest':       'Sugerencias',

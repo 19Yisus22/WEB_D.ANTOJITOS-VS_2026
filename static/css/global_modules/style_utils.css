@@ -25,6 +25,34 @@ body {
     text-rendering: optimizeLegibility;
 }
 
+.avatar-initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    font-weight: 800;
+    color: #fff;
+    user-select: none;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+img[data-profile] {
+    transition: opacity 0.25s ease;
+}
+
+img.prof-img-loading {
+    opacity: 0;
+}
+
+@keyframes profileShimmerUtils {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+}
+
 /* Imágenes y media responsivos por defecto */
 img, video, canvas, svg {
     max-width: 100%;

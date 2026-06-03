@@ -1240,6 +1240,136 @@ window._publicidadMarcarTodo = async function() {
    NOTIFICACIÓN AUTOMÁTICA — perfil incompleto
    Se muestra una vez por sesión si la cédula es generada (G-).
    ══════════════════════════════════════════════════════ */
+const _AVATAR_PALETTES = [
+    ['#d35400','#e67e22'],
+    ['#1a6fa8','#2980b9'],
+    ['#1a8f4c','#27ae60'],
+    ['#6d28d9','#8b5cf6'],
+    ['#b91c1c','#ef4444'],
+    ['#0e7490','#06b6d4'],
+    ['#92400e','#d97706'],
+    ['#1e3a8a','#3b82f6'],
+];
+
+function _avatarPalette(name) {
+    const code = (name || '').split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0);
+    return _AVATAR_PALETTES[Math.abs(code) % _AVATAR_PALETTES.length];
+}
+
+function _buildAvatarDiv(name, fontSize = '1rem') {
+    const initial  = (name || '?').charAt(0).toUpperCase();
+    const [c1, c2] = _avatarPalette(name);
+    const div = document.createElement('div');
+    div.className = 'avatar-initial';
+    div.textContent = initial;
+    div.style.cssText = `
+        width:100%;height:100%;
+        background:linear-gradient(135deg,${c1},${c2});
+        display:flex;align-items:center;justify-content:center;
+        color:#fff;font-weight:800;font-size:${fontSize};
+        font-family:'DM Sans',system-ui,sans-serif;
+        border-radius:inherit;user-select:none;letter-spacing:-0.02em;
+    `;
+    return div;
+}
+
+function _applyAvatarFallback(imgEl, name) {
+    if (!imgEl || !imgEl.parentNode) return;
+    const container = imgEl.parentNode;
+    const size = container.offsetWidth || 40;
+    const fs   = Math.max(10, Math.round(size * 0.4)) + 'px';
+    const div  = _buildAvatarDiv(name, fs);
+    div.style.minWidth  = '100%';
+    div.style.minHeight = '100%';
+    container.replaceChild(div, imgEl);
+}
+
+window._avatarFallback = _applyAvatarFallback;
+
+function _cloudinaryThumb(url, w = 80, h = 80) {
+    if (!url || !url.includes('cloudinary.com') || !url.includes('/upload/')) return url;
+    return url.replace('/upload/', `/upload/w_${w},h_${h},c_fill,g_auto:face,q_auto,f_auto/`);
+}
+
+function _googleThumb(url, size = 80) {
+    if (!url || !url.includes('googleusercontent.com')) return url;
+    return url.replace(/=s\d+-c/, `=s${size}-c`).replace(/\/s\d+-c\//, `/s${size}-c/`) || url;
+}
+
+function loadProfileImg(imgEl, rawUrl, name, thumbSize = 80) {
+    if (!imgEl) return;
+
+    const isDefault = !rawUrl
+        || rawUrl.includes('default_icon_profile')
+        || rawUrl === '/static/uploads/default_icon_profile.png';
+
+    if (isDefault) {
+        _applyAvatarFallback(imgEl, name);
+        return;
+    }
+
+    let optimized = rawUrl;
+    if (rawUrl.includes('cloudinary.com'))       optimized = _cloudinaryThumb(rawUrl, thumbSize, thumbSize);
+    else if (rawUrl.includes('googleusercontent.com')) optimized = _googleThumb(rawUrl, thumbSize);
+
+    imgEl.classList.add('prof-img-loading');
+
+    const tmp    = new Image();
+    tmp.onload   = () => { imgEl.src = optimized; imgEl.classList.remove('prof-img-loading'); };
+    tmp.onerror  = () => { imgEl.classList.remove('prof-img-loading'); _applyAvatarFallback(imgEl, name); };
+    tmp.src      = optimized;
+}
+
+function initAllProfileImages() {
+    document.querySelectorAll('img[data-profile]').forEach(img => {
+        const raw  = img.dataset.profile;
+        const name = img.dataset.profileName || '';
+        const size = parseInt(img.dataset.profileSize || '80', 10);
+        loadProfileImg(img, raw, name, size);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initAllProfileImages);
+
+function _fileIconInfo(nombre) {
+    const ext = (nombre || '').split('.').pop().toLowerCase();
+    const map = {
+        pdf:  { icon: 'bi-file-earmark-pdf-fill',  color: '#e74c3c' },
+        doc:  { icon: 'bi-file-earmark-word-fill',  color: '#2980b9' },
+        docx: { icon: 'bi-file-earmark-word-fill',  color: '#2980b9' },
+        xls:  { icon: 'bi-file-earmark-excel-fill', color: '#27ae60' },
+        xlsx: { icon: 'bi-file-earmark-excel-fill', color: '#27ae60' },
+        ppt:  { icon: 'bi-file-earmark-ppt-fill',   color: '#e67e22' },
+        pptx: { icon: 'bi-file-earmark-ppt-fill',   color: '#e67e22' },
+        zip:  { icon: 'bi-file-earmark-zip-fill',   color: '#8e44ad' },
+        rar:  { icon: 'bi-file-earmark-zip-fill',   color: '#8e44ad' },
+        '7z': { icon: 'bi-file-earmark-zip-fill',   color: '#8e44ad' },
+        jpg:  { icon: 'bi-file-earmark-image-fill', color: '#d35400' },
+        jpeg: { icon: 'bi-file-earmark-image-fill', color: '#d35400' },
+        png:  { icon: 'bi-file-earmark-image-fill', color: '#d35400' },
+        gif:  { icon: 'bi-file-earmark-image-fill', color: '#d35400' },
+        mp4:  { icon: 'bi-file-earmark-play-fill',  color: '#c0392b' },
+        mov:  { icon: 'bi-file-earmark-play-fill',  color: '#c0392b' },
+        txt:  { icon: 'bi-file-earmark-text-fill',  color: '#7f8c8d' },
+        pkt:  { icon: 'bi-diagram-3-fill',          color: '#2471a3' },
+        sql:  { icon: 'bi-database-fill',           color: '#1a5276' },
+    };
+    return map[ext] || { icon: 'bi-file-earmark-fill', color: '#95a5a6' };
+}
+
+function _fmtFileBytes(b) {
+    if (!b || b === 0) return '0 B';
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function _fmtFileDate(iso) {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' }); }
+    catch { return ''; }
+}
+
 document.addEventListener('DOMContentLoaded', function _checkProfileNotif() {
     if (!window._PROFILE_INCOMPLETE) return;
 

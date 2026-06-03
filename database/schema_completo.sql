@@ -47,10 +47,17 @@ CREATE TABLE usuarios (
         CHECK (metodo_pago = ANY (ARRAY['Efectivo','Transferencia'])),
     fecha_creacion  timestamptz DEFAULT now(),
     ultima_conexion timestamptz,
+    block_folder    jsonb       DEFAULT '[]'::jsonb,
+    web_token       text,
+    expires_at      timestamptz,
     CONSTRAINT usuarios_pkey         PRIMARY KEY (cedula),
     CONSTRAINT usuarios_id_role_fkey FOREIGN KEY (id_role)
         REFERENCES roles(id_role)
 );
+
+ALTER TABLE usuarios ADD COLUMN block_folder jsonb      DEFAULT '[]'::jsonb;
+ALTER TABLE usuarios ADD COLUMN web_token    text;
+ALTER TABLE usuarios ADD COLUMN expires_at   timestamptz;
 
 CREATE TABLE gestion_productos (
     id_producto    uuid        NOT NULL DEFAULT gen_random_uuid(),

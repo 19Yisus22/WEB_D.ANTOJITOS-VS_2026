@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_registro.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_login.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
 </head>
 <body class="reg-body">
 
@@ -57,7 +58,7 @@
 
     <!-- Panel derecho — formulario -->
     <div class="reg-right">
-        <div class="reg-card">
+        <div class="reg-card ds-card" data-reveal>
 
             <div class="reg-header">
                 <h2 data-i18n="reg.title">Crear cuenta</h2>
@@ -149,7 +150,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-reg" id="btnRegistrar">
+                <button type="submit" class="btn-reg ds-btn-primary ds-ripple" id="btnRegistrar">
                     <span id="btnRegText">
                         <i class="bi bi-person-check-fill me-2"></i><span data-i18n="reg.create_btn">Crear Cuenta</span>
                     </span>
@@ -201,5 +202,6 @@
     document.addEventListener('langChanged', syncRegLang);
 })();
 </script>
+<script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
 </body>
 </html>

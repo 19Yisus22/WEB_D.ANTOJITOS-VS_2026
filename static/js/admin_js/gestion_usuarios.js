@@ -63,14 +63,24 @@ function sortTabla(col) {
 }
 
 function _avatarHTML(u) {
-    if (u.imagen_url) {
+    const name = (u.nombre_completo || u.nombre || '').trim();
+    if (u.imagen_url && !u.imagen_url.includes('default_icon_profile')) {
         return `<div class="user-avatar-cell">
-                    <img src="${u.imagen_url}" alt="Avatar"
-                         onerror="this.closest('.user-avatar-cell').outerHTML='<div class=\\'user-avatar-broken\\'><i class=\\'bi bi-person-fill\\'></i></div>'">
+                    <img src=""
+                         data-profile="${u.imagen_url}"
+                         data-profile-name="${name}"
+                         data-profile-size="80"
+                         alt="${name}"
+                         style="display:block;width:100%;height:100%;object-fit:cover;border-radius:50%;">
                 </div>`;
     }
-    const initials = ((u.nombre_completo || u.nombre || '') + ' ').charAt(0).toUpperCase();
-    return `<div class="user-avatar-broken" style="font-weight:800;font-size:1rem;color:#d35400;background:rgba(211,84,0,0.1);border-color:rgba(211,84,0,0.2);">${initials || '<i class="bi bi-person-fill"></i>'}</div>`;
+    const initial = name.charAt(0).toUpperCase() || '?';
+    const palettes = [['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],['#6d28d9','#8b5cf6'],['#b91c1c','#ef4444'],['#0e7490','#06b6d4']];
+    const idx = name.split('').reduce((h,c)=>(h<<5)-h+c.charCodeAt(0),0);
+    const [c1,c2] = palettes[Math.abs(idx)%palettes.length];
+    return `<div class="user-avatar-cell" style="background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;">
+                <span style="color:#fff;font-weight:800;font-size:1rem;font-family:'DM Sans',sans-serif;">${initial}</span>
+            </div>`;
 }
 
 function _renderPaginacion(total, pagina) {
@@ -148,6 +158,13 @@ function _renderTabla(lista) {
                             title="Cambiar rol">
                         <i class="bi bi-shield-lock"></i>
                     </button>
+                    <button class="btn btn-outline-warning action-btn btn-archivos-usuario"
+                            title="Archivos privados"
+                            data-cedula="${u.cedula}"
+                            data-nombre="${u.nombre_completo}"
+                            data-imagen="${u.imagen_url || ''}">
+                        <i class="bi bi-folder2-open"></i>
+                    </button>
                     <button class="btn btn-outline-danger action-btn"
                             onclick="eliminarUsuario('${u.correo}','${u.nombre_completo}')"
                             title="Eliminar usuario">
@@ -156,6 +173,7 @@ function _renderTabla(lista) {
                 </div>
             </td>`;
         tr.querySelector('.btn-ver-usuario').onclick = () => mostrarDetalleUsuario(u);
+        tr.querySelector('.btn-archivos-usuario').onclick = () => abrirFilesPanel(u.cedula, u.nombre_completo, u.imagen_url);
         tr.querySelector('.btn-copiar-correo').onclick = async (e) => {
             const btn = e.currentTarget;
             const correo = btn.dataset.correo;
@@ -168,6 +186,7 @@ function _renderTabla(lista) {
         };
         tbody.appendChild(tr);
     });
+    if (typeof initAllProfileImages === 'function') initAllProfileImages();
 }
 
 function abrirModalRol(cedula, nombre, rolActual) {
@@ -330,7 +349,263 @@ function mostrarDetalleUsuario(u) {
         </div>`;
     document.body.appendChild(modal);
     new bootstrap.Modal(modal).show();
+    requestAnimationFrame(() => { if (typeof initAllProfileImages === 'function') initAllProfileImages(); });
     modal.addEventListener('hidden.bs.modal', () => modal.remove());
 }
 
-document.addEventListener('DOMContentLoaded', cargarUsuarios);
+document.addEventListener('DOMContentLoaded', () => {
+    cargarUsuarios();
+    _initFilesPanelDrop();
+});
+
+let _fpCedulaActual = null;
+let _fpArchivosActuales = [];
+
+const _FILE_ICONS = {
+    pdf:  { icon: 'bi-file-earmark-pdf-fill',   color: '#e74c3c' },
+    doc:  { icon: 'bi-file-earmark-word-fill',   color: '#2980b9' },
+    docx: { icon: 'bi-file-earmark-word-fill',   color: '#2980b9' },
+    xls:  { icon: 'bi-file-earmark-excel-fill',  color: '#27ae60' },
+    xlsx: { icon: 'bi-file-earmark-excel-fill',  color: '#27ae60' },
+    ppt:  { icon: 'bi-file-earmark-ppt-fill',    color: '#e67e22' },
+    pptx: { icon: 'bi-file-earmark-ppt-fill',    color: '#e67e22' },
+    zip:  { icon: 'bi-file-earmark-zip-fill',    color: '#8e44ad' },
+    rar:  { icon: 'bi-file-earmark-zip-fill',    color: '#8e44ad' },
+    '7z': { icon: 'bi-file-earmark-zip-fill',    color: '#8e44ad' },
+    jpg:  { icon: 'bi-file-earmark-image-fill',  color: '#d35400' },
+    jpeg: { icon: 'bi-file-earmark-image-fill',  color: '#d35400' },
+    png:  { icon: 'bi-file-earmark-image-fill',  color: '#d35400' },
+    gif:  { icon: 'bi-file-earmark-image-fill',  color: '#d35400' },
+    mp4:  { icon: 'bi-file-earmark-play-fill',   color: '#c0392b' },
+    mov:  { icon: 'bi-file-earmark-play-fill',   color: '#c0392b' },
+    txt:  { icon: 'bi-file-earmark-text-fill',   color: '#7f8c8d' },
+    pkt:  { icon: 'bi-diagram-3-fill',           color: '#2471a3' },
+    sql:  { icon: 'bi-database-fill',            color: '#1a5276' },
+    py:   { icon: 'bi-filetype-py',              color: '#2c9c47' },
+    js:   { icon: 'bi-filetype-js',              color: '#f0c30f' },
+    html: { icon: 'bi-filetype-html',            color: '#e44d26' },
+    css:  { icon: 'bi-filetype-css',             color: '#264de4' },
+};
+
+function _fileInfo(nombre) {
+    const ext = (nombre || '').split('.').pop().toLowerCase();
+    return _FILE_ICONS[ext] || { icon: 'bi-file-earmark-fill', color: '#95a5a6' };
+}
+
+function _formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function _fmtDate(iso) {
+    if (!iso) return '—';
+    try {
+        return new Date(iso).toLocaleDateString('es-CO', {
+            day: '2-digit', month: 'short', year: 'numeric'
+        });
+    } catch { return '—'; }
+}
+
+function _totalBytes(archivos) {
+    return archivos.reduce((acc, a) => acc + (a.tamanio || 0), 0);
+}
+
+function abrirFilesPanel(cedula, nombre, imagen) {
+    _fpCedulaActual = cedula;
+
+    const layout = document.getElementById('guSplitLayout');
+    const panel  = document.getElementById('guFilesPanel');
+    layout?.classList.add('files-open');
+    panel?.classList.add('is-open');
+
+    const nameEl   = document.getElementById('fpHeaderName');
+    const cedEl    = document.getElementById('fpHeaderCedula');
+    const avatarEl = document.getElementById('fpHeaderAvatar');
+    if (nameEl)   nameEl.textContent   = nombre || '—';
+    if (cedEl)    cedEl.textContent    = cedula || '—';
+    if (avatarEl) {
+        if (imagen) {
+            avatarEl.innerHTML = `<img src="${imagen}" onerror="this.outerHTML='<i class=\\'bi bi-person-fill\\'></i>'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        } else {
+            avatarEl.innerHTML = '<i class="bi bi-person-fill"></i>';
+        }
+    }
+
+    document.querySelectorAll('.btn-archivos-usuario').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cedula === cedula);
+    });
+
+    cargarArchivos(cedula);
+}
+
+function cerrarFilesPanel() {
+    _fpCedulaActual = null;
+    _fpArchivosActuales = [];
+    document.getElementById('guSplitLayout')?.classList.remove('files-open');
+    document.getElementById('guFilesPanel')?.classList.remove('is-open');
+    document.querySelectorAll('.btn-archivos-usuario').forEach(btn => btn.classList.remove('active'));
+}
+
+async function cargarArchivos(cedula) {
+    const list  = document.getElementById('fpFileList');
+    const empty = document.getElementById('fpEmpty');
+    const count = document.getElementById('fpFileCount');
+    const stor  = document.getElementById('fpStorageText');
+    if (!list) return;
+
+    list.innerHTML = `<li class="fp-loading"><div class="spinner-border spinner-border-sm me-2" style="color:#d35400;"></div>Cargando...</li>`;
+    if (empty) empty.style.display = 'none';
+
+    try {
+        const res = await fetch(`/api/usuarios/${cedula}/archivos`);
+        if (!res.ok) throw new Error('Error al cargar');
+        const data = await res.json();
+        _fpArchivosActuales = data.archivos || [];
+        _renderArchivos(_fpArchivosActuales);
+    } catch {
+        list.innerHTML = '<li class="fp-loading text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Error al cargar archivos</li>';
+    }
+}
+
+function _renderArchivos(archivos) {
+    const list  = document.getElementById('fpFileList');
+    const empty = document.getElementById('fpEmpty');
+    const count = document.getElementById('fpFileCount');
+    const stor  = document.getElementById('fpStorageText');
+    if (!list) return;
+
+    if (count) count.textContent = `${archivos.length} archivo${archivos.length !== 1 ? 's' : ''}`;
+    if (stor)  stor.textContent  = _formatBytes(_totalBytes(archivos));
+
+    if (archivos.length === 0) {
+        list.innerHTML = '';
+        if (empty) empty.style.display = 'flex';
+        return;
+    }
+
+    if (empty) empty.style.display = 'none';
+    list.innerHTML = '';
+
+    archivos.forEach((a, idx) => {
+        const info = _fileInfo(a.nombre);
+        const li = document.createElement('li');
+        li.className = 'fp-file-item';
+        li.dataset.idx = idx;
+        li.innerHTML = `
+            <div class="fp-file-icon" style="color:${info.color};">
+                <i class="bi ${info.icon}"></i>
+            </div>
+            <div class="fp-file-info">
+                <a href="${a.url}" target="_blank" rel="noopener" class="fp-file-name" title="${a.nombre}">${a.nombre}</a>
+                <div class="fp-file-meta">
+                    <span>${_formatBytes(a.tamanio)}</span>
+                    <span class="fp-meta-sep">·</span>
+                    <span>${_fmtDate(a.subido_en)}</span>
+                </div>
+            </div>
+            <div class="fp-file-actions">
+                <a href="${a.url}" download="${a.nombre}" class="fp-file-btn fp-btn-dl" title="Descargar">
+                    <i class="bi bi-download"></i>
+                </a>
+                <button class="fp-file-btn fp-btn-del" title="Eliminar archivo" onclick="eliminarArchivo('${(a.public_id || '').replace(/'/g, "\\'")}', '${a.nombre.replace(/'/g, "\\'")}')">
+                    <i class="bi bi-trash3-fill"></i>
+                </button>
+            </div>`;
+        list.appendChild(li);
+    });
+}
+
+async function subirArchivos() {
+    if (!_fpCedulaActual) return;
+    const input = document.getElementById('fpFileInput');
+    if (!input || !input.files.length) return;
+
+    const uploading = document.getElementById('fpUploading');
+    const upText    = document.getElementById('fpUploadingText');
+    const label     = document.getElementById('fpUploadLabel');
+
+    if (uploading) uploading.style.display = 'flex';
+    if (label)     label.style.pointerEvents = 'none';
+
+    const archivos = Array.from(input.files);
+    let subidos = 0;
+
+    for (const file of archivos) {
+        if (upText) upText.textContent = `Subiendo ${file.name}... (${subidos + 1}/${archivos.length})`;
+        const fd = new FormData();
+        fd.append('archivo', file);
+        try {
+            const res = await fetch(`/api/usuarios/${_fpCedulaActual}/archivos`, { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.ok) {
+                subidos++;
+                _fpArchivosActuales.push(data.archivo);
+            } else {
+                mostrarAlerta(`Error subiendo ${file.name}: ${data.error || ''}`, true);
+            }
+        } catch {
+            mostrarAlerta(`Error de conexión subiendo ${file.name}`, true);
+        }
+    }
+
+    if (uploading) uploading.style.display = 'none';
+    if (label)     label.style.pointerEvents = '';
+    input.value = '';
+
+    if (subidos > 0) {
+        mostrarAlerta(`${subidos} archivo${subidos !== 1 ? 's' : ''} subido${subidos !== 1 ? 's' : ''} correctamente`);
+        _renderArchivos(_fpArchivosActuales);
+    }
+}
+
+function eliminarArchivo(publicId, nombre) {
+    if (!_fpCedulaActual || !publicId) return;
+    mostrarConfirmacionApp(
+        'Eliminar Archivo',
+        `¿Eliminar <strong>${nombre}</strong>? Esta acción no se puede deshacer.`,
+        async () => {
+            try {
+                const res = await fetch(`/api/usuarios/${_fpCedulaActual}/archivos/${encodeURIComponent(publicId)}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.ok) {
+                    _fpArchivosActuales = _fpArchivosActuales.filter(a => a.public_id !== publicId);
+                    _renderArchivos(_fpArchivosActuales);
+                    mostrarAlerta('Archivo eliminado');
+                } else {
+                    mostrarAlerta(data.error || 'Error al eliminar', true);
+                }
+            } catch { mostrarAlerta('Error de conexión', true); }
+        }
+    );
+}
+
+function _initFilesPanelDrop() {
+    const panel   = document.getElementById('guFilesPanel');
+    const overlay = document.getElementById('fpDropOverlay');
+    if (!panel) return;
+
+    panel.addEventListener('dragover', (e) => {
+        if (!_fpCedulaActual) return;
+        e.preventDefault();
+        overlay?.classList.add('visible');
+    });
+    panel.addEventListener('dragleave', (e) => {
+        if (!panel.contains(e.relatedTarget)) overlay?.classList.remove('visible');
+    });
+    panel.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        overlay?.classList.remove('visible');
+        if (!_fpCedulaActual) return;
+        const files = Array.from(e.dataTransfer?.files || []);
+        if (!files.length) return;
+        const input = document.getElementById('fpFileInput');
+        if (input) {
+            const dt = new DataTransfer();
+            files.forEach(f => dt.items.add(f));
+            input.files = dt.files;
+            await subirArchivos();
+        }
+    });
+}

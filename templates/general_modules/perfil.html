@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/general_modules/style_perfil.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
 </head>
 <body>
     {% include 'global_modules/navbar.html' %}
@@ -23,15 +24,19 @@
                     <div class="divider mx-auto"></div>
                 </div>
 
-                <div class="card p-3 p-md-5 mb-5 shadow-sm fade-in border-0">
+                <div class="card ds-card p-3 p-md-5 mb-5 shadow-sm fade-in border-0" data-reveal>
                     <form id="formPerfil" enctype="multipart/form-data">
 
                         <div class="d-flex flex-column align-items-center mb-5">
                             <div class="profile-img-wrapper">
                                 <label for="imagen_url" class="profile-img-container d-block cursor-pointer">
                                     <img id="previewImagen"
-                                         src="{{ user.imagen_url or url_for('static', filename='uploads/default_icon_profile.png') }}"
-                                         alt="Perfil">
+                                         src=""
+                                         data-profile="{{ user.imagen_url or '' }}"
+                                         data-profile-name="{{ user.nombre or '' }}"
+                                         data-profile-size="200"
+                                         alt="{{ user.nombre or 'Perfil' }}"
+                                         style="display:block;">
                                     <input type="file" id="imagen_url" name="imagen_url" accept="image/*" style="display:none">
                                 </label>
                             </div>
@@ -127,10 +132,10 @@
                         </div>
 
                         <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-5">
-                            <button type="button" class="btn btn-primary px-5 btn-soft" id="btnEditarPerfil">
+                            <button type="button" class="btn btn-primary px-5 btn-soft ds-btn-primary ds-ripple" id="btnEditarPerfil">
                                 <i class="bi bi-pencil-square me-2"></i><span data-i18n="prof.edit">Editar Perfil</span>
                             </button>
-                            <button type="submit" class="btn btn-success px-5 btn-soft" id="btnActualizarPerfil" style="display:none">
+                            <button type="submit" class="btn btn-success px-5 btn-soft ds-btn-primary ds-ripple" id="btnActualizarPerfil" style="display:none">
                                 <i class="bi bi-cloud-arrow-up-fill me-2"></i><span data-i18n="prof.save">Actualizar Ahora</span>
                             </button>
                         </div>
@@ -149,7 +154,7 @@
                                            data-i18n-placeholder="ph.pass_confirm" placeholder="Repita la contraseña">
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-dark w-100 mt-4 fw-bold shadow-sm py-3" id="btnCambiarContrasena" data-i18n="prof.password">RESETEAR CONTRASEÑA</button>
+                            <button type="button" class="btn btn-dark w-100 mt-4 fw-bold shadow-sm py-3 ds-ripple" id="btnCambiarContrasena" data-i18n="prof.password">RESETEAR CONTRASEÑA</button>
                         </div>
 
                         <div class="mt-4 p-4 border border-danger border-opacity-25 rounded-4 bg-danger bg-opacity-10">
@@ -162,6 +167,62 @@
                             </div>
                         </div>
                     </form>
+                </div>
+
+                <div class="card ds-card shadow-sm border-0 mb-4 fade-in" id="seccionArchivosPrivados" data-reveal>
+                    <div class="card-body p-0">
+
+                        <div class="pf-header">
+                            <div class="pf-header-left">
+                                <div class="pf-header-icon">
+                                    <i class="bi bi-folder2-open"></i>
+                                </div>
+                                <div>
+                                    <h5 class="pf-title mb-0">Archivos Privados</h5>
+                                    <small class="pf-subtitle">Sube, descarga, renombra y elimina tus archivos.</small>
+                                </div>
+                            </div>
+                            <div class="pf-header-actions">
+                                <span class="pf-count-badge" id="archivosCount">0 archivos</span>
+                                <label class="pf-upload-btn" id="pfUploadLabel" title="Subir archivo">
+                                    <i class="bi bi-plus-lg"></i> Subir
+                                    <input type="file" id="pfFileInput" multiple style="display:none;" onchange="pfSubirArchivos()">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="pf-drop-zone" id="pfDropZone">
+                            <i class="bi bi-cloud-upload-fill pf-drop-icon"></i>
+                            <span class="pf-drop-text">Arrastra archivos aquí para subirlos</span>
+                            <small class="pf-drop-hint">o usa el botón Subir</small>
+                        </div>
+
+                        <div id="pfUploading" class="pf-uploading" style="display:none;">
+                            <div class="pf-uploading-inner">
+                                <div class="spinner-border spinner-border-sm" style="color:#d35400;"></div>
+                                <span id="pfUploadingText">Subiendo...</span>
+                            </div>
+                            <div class="pf-progress-bar-wrap"><div class="pf-progress-bar" id="pfProgressBar" style="width:0%"></div></div>
+                        </div>
+
+                        <div id="archivosLoading" class="pf-state-msg">
+                            <div class="spinner-border spinner-border-sm me-2" style="color:#d35400;"></div>
+                            <span>Cargando archivos...</span>
+                        </div>
+
+                        <div id="archivosEmpty" class="pf-state-msg pf-empty" style="display:none;">
+                            <i class="bi bi-folder-x"></i>
+                            <p>Sin archivos aún</p>
+                            <small>Sube tu primer archivo con el botón Subir o arrastrando aquí.</small>
+                        </div>
+
+                        <ul class="pf-file-list" id="archivosLista"></ul>
+
+                        <div class="pf-footer" id="pfFooter" style="display:none;">
+                            <i class="bi bi-hdd me-1"></i>
+                            <span id="pfStorageText">0 B usado</span>
+                        </div>
+                    </div>
                 </div>
 
                 {% if user.roles and user.roles.nombre_role == 'admin' %}
@@ -185,11 +246,251 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const USER_ID = "{{ user.cedula or '' }}";
+        const USER_ID   = "{{ user.cedula or '' }}";
         const USER_ROLE = "{{ user.roles.nombre_role if user.roles else 'cliente' }}";
         const USER_AUTH_GOOGLE = ("{{ user.contrasena }}" === "GOOGLE_AUTH_EXTERNAL");
     </script>
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/general_js/perfil.js') }}"></script>
+    <script>
+    (() => {
+        const _pf = {
+            cedula:   USER_ID,
+            archivos: [],
+
+            el(id) { return document.getElementById(id); },
+
+            fmt(b) {
+                if (!b) return '0 B';
+                if (b < 1024) return b + ' B';
+                if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+                return (b/1048576).toFixed(2) + ' MB';
+            },
+
+            fmtDate(iso) {
+                if (!iso) return '';
+                try { return new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}); }
+                catch { return ''; }
+            },
+
+            iconInfo(nombre) {
+                if (typeof _fileIconInfo === 'function') return _fileIconInfo(nombre);
+                return { icon:'bi-file-earmark-fill', color:'#95a5a6' };
+            },
+
+            totalBytes() { return this.archivos.reduce((s,a) => s+(a.tamanio||0), 0); },
+
+            updateHeader() {
+                const n = this.archivos.length;
+                const c = this.el('archivosCount');
+                if (c) c.textContent = n + ' archivo' + (n!==1?'s':'');
+                const st = this.el('pfStorageText');
+                if (st) st.textContent = this.fmt(this.totalBytes()) + ' usado';
+                const ft = this.el('pfFooter');
+                if (ft) ft.style.display = n > 0 ? 'flex' : 'none';
+            },
+
+            render() {
+                const lista   = this.el('archivosLista');
+                const empty   = this.el('archivosEmpty');
+                const loading = this.el('archivosLoading');
+                if (!lista) return;
+                if (loading) loading.style.display = 'none';
+                lista.innerHTML = '';
+                this.updateHeader();
+                if (!this.archivos.length) {
+                    if (empty) empty.style.display = 'flex';
+                    return;
+                }
+                if (empty) empty.style.display = 'none';
+                this.archivos.forEach((a, idx) => {
+                    const info = this.iconInfo(a.nombre);
+                    const li   = document.createElement('li');
+                    li.className = 'pf-file-item';
+                    li.dataset.idx = idx;
+                    li.innerHTML = `
+                        <i class="bi ${info.icon} pf-file-type-icon" style="color:${info.color};"></i>
+                        <div class="pf-file-body">
+                            <div class="pf-file-name-wrap">
+                                <span class="pf-file-name" title="${a.nombre}">${a.nombre}</span>
+                                <input class="pf-file-rename-input" value="${a.nombre}" style="display:none;" maxlength="120">
+                            </div>
+                            <div class="pf-file-meta">${[this.fmt(a.tamanio), this.fmtDate(a.subido_en)].filter(Boolean).join(' · ')}</div>
+                        </div>
+                        <div class="pf-file-actions">
+                            <a href="${a.url}" download="${a.nombre}" class="pf-action-btn pf-btn-dl" title="Descargar">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <button class="pf-action-btn pf-btn-edit" title="Renombrar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="pf-action-btn pf-btn-del" title="Eliminar">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </div>`;
+
+                    const nameSpan   = li.querySelector('.pf-file-name');
+                    const nameInput  = li.querySelector('.pf-file-rename-input');
+                    const btnEdit    = li.querySelector('.pf-btn-edit');
+                    const btnDel     = li.querySelector('.pf-btn-del');
+
+                    btnEdit.addEventListener('click', () => {
+                        const editing = li.classList.contains('pf-editing');
+                        if (editing) {
+                            this.guardarNombre(li, a, nameInput);
+                        } else {
+                            li.classList.add('pf-editing');
+                            nameSpan.style.display   = 'none';
+                            nameInput.style.display  = '';
+                            nameInput.value = a.nombre;
+                            nameInput.focus();
+                            nameInput.select();
+                            btnEdit.innerHTML = '<i class="bi bi-check2-all"></i>';
+                            btnEdit.title = 'Guardar nombre';
+                        }
+                    });
+
+                    nameInput.addEventListener('keydown', e => {
+                        if (e.key === 'Enter')  { e.preventDefault(); this.guardarNombre(li, a, nameInput); }
+                        if (e.key === 'Escape') { this.cancelarEdicion(li, a, nameSpan, nameInput, btnEdit); }
+                    });
+
+                    btnDel.addEventListener('click', () => {
+                        mostrarConfirmacionApp('Eliminar archivo', `¿Eliminar <strong>${a.nombre}</strong>?`, async () => {
+                            await this.eliminar(a.public_id);
+                        });
+                    });
+
+                    lista.appendChild(li);
+                });
+            },
+
+            cancelarEdicion(li, a, span, input, btn) {
+                li.classList.remove('pf-editing');
+                span.style.display  = '';
+                input.style.display = 'none';
+                input.value         = a.nombre;
+                btn.innerHTML = '<i class="bi bi-pencil"></i>';
+                btn.title = 'Renombrar';
+            },
+
+            async guardarNombre(li, a, input) {
+                const nuevoNombre = input.value.trim();
+                if (!nuevoNombre || nuevoNombre === a.nombre) {
+                    const span = li.querySelector('.pf-file-name');
+                    const btn  = li.querySelector('.pf-btn-edit');
+                    this.cancelarEdicion(li, a, span, input, btn);
+                    return;
+                }
+                try {
+                    const res  = await fetch(`/api/usuarios/${this.cedula}/archivos/${encodeURIComponent(a.public_id)}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({ nombre: nuevoNombre }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.ok) throw new Error(data.error || 'Error');
+                    a.nombre = nuevoNombre;
+                    mostrarAlerta('Nombre actualizado');
+                    this.render();
+                } catch(err) {
+                    mostrarAlerta(err.message || 'Error al renombrar', true);
+                }
+            },
+
+            async cargar() {
+                if (!this.cedula) return;
+                try {
+                    const res  = await fetch(`/api/usuarios/${this.cedula}/archivos`);
+                    if (!res.ok) throw new Error();
+                    const data = await res.json();
+                    this.archivos = data.archivos || [];
+                    this.render();
+                } catch {
+                    const loading = this.el('archivosLoading');
+                    const empty   = this.el('archivosEmpty');
+                    if (loading) loading.style.display = 'none';
+                    if (empty)   empty.style.display   = 'flex';
+                }
+            },
+
+            async subir(files) {
+                if (!files || !files.length) return;
+                const up   = this.el('pfUploading');
+                const txt  = this.el('pfUploadingText');
+                const bar  = this.el('pfProgressBar');
+                const lbl  = this.el('pfUploadLabel');
+                if (up)  up.style.display  = 'flex';
+                if (lbl) lbl.style.pointerEvents = 'none';
+
+                const total = files.length;
+                let   done  = 0;
+                for (const file of Array.from(files)) {
+                    if (txt) txt.textContent = `Subiendo ${file.name} (${done+1}/${total})...`;
+                    if (bar) bar.style.width = Math.round((done/total)*100) + '%';
+                    const fd = new FormData();
+                    fd.append('archivo', file);
+                    try {
+                        const res  = await fetch(`/api/usuarios/${this.cedula}/archivos`, {method:'POST', body:fd});
+                        const data = await res.json();
+                        if (data.ok) { this.archivos.push(data.archivo); done++; }
+                        else mostrarAlerta(`No se pudo subir ${file.name}: ${data.error||''}`, true);
+                    } catch { mostrarAlerta(`Error de conexión subiendo ${file.name}`, true); }
+                }
+
+                if (bar) bar.style.width = '100%';
+                setTimeout(() => {
+                    if (up)  up.style.display  = 'none';
+                    if (bar) bar.style.width = '0%';
+                    if (lbl) lbl.style.pointerEvents = '';
+                }, 300);
+
+                if (done) { mostrarAlerta(`${done} archivo${done!==1?'s':''} subido${done!==1?'s':''}`); this.render(); }
+            },
+
+            async eliminar(publicId) {
+                try {
+                    const res  = await fetch(`/api/usuarios/${this.cedula}/archivos/${encodeURIComponent(publicId)}`, {method:'DELETE'});
+                    const data = await res.json();
+                    if (!res.ok || !data.ok) throw new Error(data.error || 'Error');
+                    this.archivos = this.archivos.filter(a => a.public_id !== publicId);
+                    mostrarAlerta('Archivo eliminado');
+                    this.render();
+                } catch(err) {
+                    mostrarAlerta(err.message || 'Error al eliminar', true);
+                }
+            },
+
+            initDrop() {
+                const zone = this.el('pfDropZone');
+                if (!zone) return;
+                ['dragenter','dragover'].forEach(ev => {
+                    zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add('pf-drop-active'); });
+                });
+                zone.addEventListener('dragleave', e => {
+                    if (!zone.contains(e.relatedTarget)) zone.classList.remove('pf-drop-active');
+                });
+                zone.addEventListener('drop', async e => {
+                    e.preventDefault();
+                    zone.classList.remove('pf-drop-active');
+                    await this.subir(e.dataTransfer.files);
+                });
+            },
+        };
+
+        window.pfSubirArchivos = async function() {
+            const input = document.getElementById('pfFileInput');
+            if (!input || !input.files.length) return;
+            await _pf.subir(input.files);
+            input.value = '';
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            _pf.initDrop();
+            _pf.cargar();
+        });
+    })();
+    </script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
 </body>
-</html>X
+</html>

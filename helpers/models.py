@@ -120,8 +120,47 @@ def usuario_buscar_por_nombre(nombre: str) -> dict | None:
 
 def usuario_get_all() -> list:
     return _many(_run(
-        supabase.table("usuarios").select("cedula,username,imagen_url,nombre,apellido,telefono,correo," "id_role,direccion,metodo_pago,fecha_creacion,ultima_conexion," "contrasena,roles(nombre_role)")
+        supabase.table("usuarios").select("cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role)")
     ))
+
+def usuario_get_web_token(cedula: str) -> dict | None:
+    row = _single(_run(
+        supabase.table("usuarios")
+        .select("web_token,expires_at")
+        .eq("cedula", cedula)
+        .limit(1)
+    ))
+    return row
+
+def usuario_set_web_token(cedula: str, token_hash: str, expires_at: str) -> None:
+    _run(supabase.table("usuarios").update({
+        "web_token":  token_hash,
+        "expires_at": expires_at,
+    }).eq("cedula", cedula))
+
+def usuario_clear_web_token(cedula: str) -> None:
+    _run(supabase.table("usuarios").update({
+        "web_token":  None,
+        "expires_at": None,
+    }).eq("cedula", cedula))
+
+def usuario_get_block_folder(cedula: str) -> list:
+    row = _single(_run(supabase.table("usuarios").select("block_folder").eq("cedula", cedula).limit(1)))
+    if not row:
+        return []
+    bf = row.get("block_folder")
+    if not bf:
+        return []
+    if isinstance(bf, list):
+        return bf
+    import json
+    try:
+        return json.loads(bf)
+    except Exception:
+        return []
+
+def usuario_set_block_folder(cedula: str, archivos: list) -> None:
+    _run(supabase.table("usuarios").update({"block_folder": archivos}).eq("cedula", cedula))
 
 def usuario_create(data: dict) -> list:
     return _many(_run(supabase.table("usuarios").insert(data)))

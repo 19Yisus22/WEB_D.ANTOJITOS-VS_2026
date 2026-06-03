@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='/uploads/logo.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
 </head>
 <body class="body-fondo-logo">
 
@@ -41,7 +42,7 @@
                 </button>
             </div>
         </div>
-        <header class="catalog-header text-center mb-5 fade-in">
+        <header class="catalog-header text-center mb-5 fade-in" data-reveal>
             <h1 class="display-4 fw-bold">
                 {% if session.get('user') %}
                     ¡Hola de nuevo, {{ session.user.nombre }}!
@@ -77,7 +78,7 @@
                             </button>
                         </div>
                     </div>
-                    <section id="section-carousel">
+                    <section id="section-carousel" data-reveal>
                         <div class="carousel-container-custom shadow-lg rounded-4 overflow-hidden mb-4">
                             <div class="swiper swiperPromo">
                                 <div class="swiper-wrapper" id="carouselItems">
@@ -105,7 +106,7 @@
                             </button>
                         </div>
                     </div>
-                    <section id="section-historia">
+                    <section id="section-historia" data-reveal>
                         <h3 class="fw-bold h5 text-uppercase text-center"
                             data-config-key="historia_titulo">Nuestra historia y pasión</h3>
                         <div class="divider" style="width:120px;height:3px;margin:5px auto 12px;background:#d6336c;"></div>
@@ -155,7 +156,7 @@
                         <h5 class="mb-4 fw-bold" style="color:#333;border-left:4px solid #d35400;padding-left:12px;"
                             data-config-key="explorar_titulo">Explorar</h5>
                         <nav class="d-flex flex-column gap-2" id="navExplorar">
-                            <a href="/catalogo_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
+                            <a href="/catalogo_page" class="nav-card ds-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
                                 <i class="bi bi-shop fs-3 me-3 text-primary"></i>
                                 <div>
                                     <span class="d-block fw-bold text-dark" data-i18n="home.catalog">Catálogo de Dulces</span>
@@ -163,7 +164,7 @@
                                 </div>
                             </a>
                             {% if session.get('user') %}
-                            <a href="/carrito_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
+                            <a href="/carrito_page" class="nav-card ds-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
                                 <i class="bi bi-cart3 fs-3 me-3 text-success"></i>
                                 <div>
                                     <span class="d-block fw-bold text-dark" data-i18n="home.cart">Mi Carrito</span>
@@ -171,7 +172,7 @@
                                 </div>
                             </a>
                             {% endif %}
-                            <a href="/comentarios_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
+                            <a href="/comentarios_page" class="nav-card ds-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
                                 <i class="bi bi-chat-heart fs-3 me-3 text-danger"></i>
                                 <div>
                                     <span class="d-block fw-bold text-dark" data-i18n="home.comments">Tu Opinión</span>
@@ -179,7 +180,7 @@
                                 </div>
                             </a>
                             {% if is_admin %}
-                            <a href="/manual_page" class="nav-card p-3 d-flex align-items-center text-decoration-none border rounded-3" style="border-color:#0d6efd!important;background:#f8fbff;">
+                            <a href="/manual_page" class="nav-card ds-card p-3 d-flex align-items-center text-decoration-none border rounded-3" style="border-color:#0d6efd!important;background:#f8fbff;">
                                 <i class="bi bi-book fs-3 me-3 text-primary"></i>
                                 <div>
                                     <span class="d-block fw-bold text-dark" data-i18n="home.manual">Manual Admin</span>
@@ -218,7 +219,7 @@
                 </button>
             </div>
         </div>
-        <section class="pb-5">
+        <section class="pb-5" data-reveal>
             <div id="seccionesDebajo" class="row g-4 justify-content-start fade-in"></div>
         </section>
     </div>
@@ -276,5 +277,6 @@
 <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/global_js/widget_system.js') }}"></script>
 <script src="{{ url_for('static', filename='js/global_js/inicio.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
 </body>
 </html>

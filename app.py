@@ -68,12 +68,76 @@ def agregar_cabeceras(response):
     response.headers["Cross-Origin-Opener-Policy"]  = "same-origin-allow-popups"
     response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
     response.headers["Access-Control-Allow-Origin"]  = "*"
+    response.headers["X-Content-Type-Options"]       = "nosniff"
+    response.headers["X-Frame-Options"]              = "SAMEORIGIN"
+    response.headers["Referrer-Policy"]              = "strict-origin-when-cross-origin"
     return response
+
+_RUTAS_PUBLICAS = frozenset({
+    "/login", "/registro", "/registro-google", "/logout",
+    "/refresh", "/obtener-cliente-id",
+})
 
 @app.before_request
 def redirect_root():
     if request.path == "/":
         return redirect("/inicio")
+
+@app.before_request
+def auto_rebuild_session_from_token():
+    from flask import session as _session
+    from helpers.auth import verify_access_token, verify_refresh_token, hash_token, _build_session_data
+    import helpers.models as db
+
+    if request.path.startswith("/static/"):
+        return
+    if any(request.path.startswith(p) for p in _RUTAS_PUBLICAS):
+        return
+    if _session.get("user_id"):
+        return
+
+    at = request.cookies.get("_at")
+    if at:
+        payload = verify_access_token(at)
+        if payload and payload.get("type") == "access":
+            try:
+                user = db.usuario_get(payload["sub"])
+                if user:
+                    _build_session_data(user)
+            except Exception:
+                pass
+        return
+
+    rt = request.cookies.get("_rt")
+    if not rt:
+        return
+
+    rt_payload = verify_refresh_token(rt)
+    if not rt_payload or rt_payload.get("type") != "refresh":
+        return
+
+    cedula = rt_payload.get("sub")
+    if not cedula:
+        return
+
+    try:
+        from datetime import datetime, timezone
+        stored = db.usuario_get_web_token(cedula)
+        if not stored or not stored.get("web_token"):
+            return
+        if stored["web_token"] != hash_token(rt):
+            return
+        exp_str = stored.get("expires_at")
+        if exp_str:
+            exp_dt = datetime.fromisoformat(exp_str.replace("Z", "+00:00"))
+            if exp_dt < datetime.now(timezone.utc):
+                db.usuario_clear_web_token(cedula)
+                return
+        user = db.usuario_get(cedula)
+        if user:
+            _build_session_data(user)
+    except Exception:
+        pass
 
 def _get_local_ip() -> str:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -89,7 +153,7 @@ if __name__ == "__main__":
     host      = "0.0.0.0"
     port      = 8000
     local_ip  = _get_local_ip()
-    debug_mode = True  # Cambia a True para desarrollo local
+    debug_mode = False  # Cambia a True para desarrollo local
 
     if debug_mode:
         print("Ejecutando en modo DEBUG")

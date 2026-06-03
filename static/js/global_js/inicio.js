@@ -91,36 +91,34 @@ async function cargarMarketing() {
 
         notificacionesDisponibles = arr.filter(i => i.tipo === 'notificacion');
         const cintaInicioEl = document.getElementById('cintaInicio');
-        
+
         if (cintaInicioEl) {
-            let cintaItems = arr.filter(i => i.tipo === 'inicio_cinta' && i.estado !== false);
-            if (!cintaItems.length) cintaItems = arr.filter(i => i.tipo === 'cinta' && i.estado !== false);
+            let rawCinta = arr.filter(i => i.tipo === 'inicio_cinta' && i.estado !== false);
+            if (!rawCinta.length) rawCinta = arr.filter(i => i.tipo === 'cinta' && i.estado !== false);
 
-            if (cintaItems.length > 0) {
-                const speed        = window.getTickerSpeed ? window.getTickerSpeed() : 1;
-                const ITEM_W       = 180;
-                const realCount    = cintaItems.length;
-                const baseDuration = Math.max(18, realCount * 4);
-                const duration     = (baseDuration / speed).toFixed(1);
-                const doubled = [...cintaItems, ...cintaItems];
-                const trackW  = doubled.length * ITEM_W;
+            if (rawCinta.length > 0) {
+                const fifoQueue = rawCinta.slice().sort((a, b) =>
+                    new Date(a.created_at || 0) - new Date(b.created_at || 0)
+                );
 
-                const itemsHTML = doubled.map(i => {
+                const ITEM_W = 180;
+                const looped = [...fifoQueue, ...fifoQueue, ...fifoQueue];
+                const trackW = looped.length * ITEM_W;
+                const baseDuration = Math.max(24, fifoQueue.length * 5);
+                const speed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
+                const duration = (baseDuration / speed).toFixed(1);
+
+                const itemsHTML = looped.map((i, idx) => {
                     const validImg = i.imagen_url && i.imagen_url.startsWith('http');
+                    const isLast = (idx + 1) % fifoQueue.length === 0;
                     return `<div class="ci-item">${
                         validImg
-                            ? `<img src="${i.imagen_url}" alt="${i.titulo || ''}" loading="lazy"
-                                    onerror="this.style.display='none'">`
+                            ? `<img src="${i.imagen_url}" alt="${i.titulo || ''}" loading="lazy" onerror="this.style.display='none'">`
                             : `<i class="bi bi-megaphone ci-item-icon"></i>`
-                    }<span class="ci-item-label">${i.titulo || ''}</span></div>`;
+                    }<span class="ci-item-label">${i.titulo || ''}</span></div>${isLast ? '<div class="ci-divider"></div>' : ''}`;
                 }).join('');
 
-                cintaInicioEl.innerHTML = `
-                    <div class="ci-track"
-                         data-base-duration="${baseDuration}"
-                         style="width:${trackW}px;animation-duration:${duration}s;">
-                        ${itemsHTML}
-                    </div>`;
+                cintaInicioEl.innerHTML = `<div class="ci-track" data-base-duration="${baseDuration}" style="width:${trackW}px;animation-duration:${duration}s;">${itemsHTML}</div>`;
                 cintaInicioEl.style.display = 'flex';
             } else {
                 cintaInicioEl.style.display = 'none';

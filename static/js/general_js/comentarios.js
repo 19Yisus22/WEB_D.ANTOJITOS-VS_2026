@@ -263,7 +263,7 @@ function renderComentario(c) {
     const esMio = String(c.cedula) === String(USER_CONFIG.userId);
     const bgGradient = getUserPastelColor(String(c.cedula));
     const info = c.usuario_info || {};
-    const foto = info.foto_perfil || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+    const foto = info.foto_perfil || '';
     const nombre = info.nombre ? `${info.nombre} ${info.apellido || ''}` : 'Usuario';
     const fecha = new Date(c.updated_at || c.created_at).toLocaleString('es-CO', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
     const haDadoLike = (c.likes_usuarios || []).includes(USER_CONFIG.userId);
@@ -278,10 +278,14 @@ function renderComentario(c) {
         .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
         .replace(/_(.*?)_/gs,       '<em>$1</em>');
 
+    const _comentAvatarEl = foto
+        ? `<img src="" data-profile="${foto}" data-profile-name="${nombre}" data-profile-size="80"
+                alt="${nombre}" class="rounded-circle border shadow-sm" width="38" height="38" style="object-fit:cover;display:block;">`
+        : `<div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;color:#fff;background:linear-gradient(135deg,#d35400,#e67e22);">${nombre.charAt(0).toUpperCase()}</div>`;
+
     wrapper.innerHTML = `
         <div class="contenedor-foto-estado">
-            <img src="${foto}" class="rounded-circle border shadow-sm" width="38" height="38"
-                 style="object-fit:cover;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+            ${_comentAvatarEl}
             <span class="punto-estado ${estadoClase}"></span>
         </div>
         <div style="max-width:75%;display:flex;flex-direction:column;${esMio ? 'align-items:flex-end;' : 'align-items:flex-start;'}">
@@ -320,6 +324,8 @@ function renderComentario(c) {
             </div>
         </div>
     `;
+
+    requestAnimationFrame(() => { if (typeof initAllProfileImages === 'function') initAllProfileImages(); });
 
     if(esMio) {
         const btnOpt = wrapper.querySelector(".btn-options");

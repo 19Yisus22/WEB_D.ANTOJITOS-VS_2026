@@ -134,3 +134,37 @@ def list_all_folders_images() -> dict:
         "perfiles":   list_images_by_folder("usuarios/perfiles"),
         "productos":  list_images_by_folder("productos"),
     }
+
+def upload_raw_file(file, folder: str = "archivos_privados") -> dict | None:
+    try:
+        public_id = secrets.token_hex(10)
+        result = cloudinary.uploader.upload(
+            file,
+            folder=folder,
+            public_id=public_id,
+            resource_type="raw",
+            overwrite=True,
+        )
+        _invalidate_cache()
+        url = result.get("secure_url") or result.get("url")
+        if not url:
+            return None
+        return {
+            "url":       url,
+            "public_id": result.get("public_id", f"{folder}/{public_id}"),
+            "bytes":     result.get("bytes", 0),
+        }
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("upload_raw_file error: %s", e)
+        return None
+
+def delete_raw_file(public_id: str) -> bool:
+    if not public_id:
+        return False
+    try:
+        cloudinary.uploader.destroy(public_id, resource_type="raw")
+        _invalidate_cache()
+        return True
+    except Exception:
+        return False

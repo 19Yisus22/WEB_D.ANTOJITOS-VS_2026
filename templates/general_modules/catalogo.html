@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/general_modules/style_catalogo.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
 </head>
 <body>
     {% include 'global_modules/navbar.html' %}
@@ -17,7 +18,7 @@
     <main class="main-content page-wrapper">
         <div class="container py-4 py-md-5">
 
-            <header class="catalog-header text-center mb-4 mb-md-5 fade-in">
+            <header class="catalog-header text-center mb-4 mb-md-5 fade-in" data-reveal>
                 <h1 class="display-5 fw-bold mb-2"
                     id="catalogo-titulo"
                     data-config-key="catalogo_titulo">Catálogo de Productos</h1>
@@ -48,7 +49,7 @@
                 </div>
             </section>
 
-            <section class="products-section">
+            <section class="products-section" data-reveal>
                 <div class="row mb-3">
                     <div class="col-12">
                         <div class="d-flex flex-column align-items-center text-center">
@@ -68,14 +69,14 @@
                     </div>
                 </div>
 
-                <div class="row g-2 g-md-4 d-none justify-content-center" id="catalogoProductos"></div>
+                <div class="row g-2 g-md-4 d-none justify-content-center" id="catalogoProductos" data-reveal></div>
             </section>
         </div>
     </main>
 
     <button id="btnCarrito" class="shadow-lg" aria-label="Ver Carrito">
         <i class="bi bi-cart3"></i>
-        <span id="contadorCarritoBadge" class="badge rounded-pill bg-danger" style="display:none;">0</span>
+        <span id="contadorCarritoBadge" class="badge rounded-pill bg-danger" style="display:none;" data-counter="0">0</span>
     </button>
 
     <div id="toastContainer"></div>
@@ -91,5 +92,6 @@
     <script src="{{ url_for('static', filename='js/global_js/i18n.js') }}"></script>
     <script src="{{ url_for('static', filename='js/global_js/widget_system.js') }}"></script>
     <script src="{{ url_for('static', filename='js/general_js/catalogo.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
 </body>
 </html>

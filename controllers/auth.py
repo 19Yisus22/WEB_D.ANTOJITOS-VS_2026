@@ -1,39 +1,46 @@
-"""controllers/auth.py — Blueprint: /login, /logout, /registro, /registro-google"""
-
 import os
 import uuid
 from datetime import datetime, timezone
 
 from flask import (Blueprint, request, jsonify, session,
-                   redirect, url_for, render_template, make_response)
+                   redirect, render_template, make_response)
 from google.oauth2               import id_token
 from google.auth.transport       import requests as google_requests
 
 import helpers.models as db
-from helpers.auth       import sin_cache, hash_password, verify_password
-from helpers.validators import is_valid_name, is_valid_numeric, is_valid_email, is_valid_password, is_valid_username
+from helpers.auth import (
+    sin_cache, hash_password, verify_password,
+    create_access_token, create_refresh_token,
+    verify_refresh_token, hash_token,
+    set_auth_cookies, clear_auth_cookies,
+    _build_session_data,
+)
+from helpers.validators import (
+    is_valid_name, is_valid_numeric, is_valid_email,
+    is_valid_password, is_valid_username,
+)
 
 auth_bp = Blueprint("auth", __name__)
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-def _build_session(user: dict):
+
+def _emit_tokens_and_session(user: dict, response):
+    cedula = str(user["cedula"])
     rol = "cliente"
     if user.get("roles") and isinstance(user["roles"], dict):
         rol = user["roles"].get("nombre_role", "cliente")
-    img = user.get("imagen_url") or "/static/uploads/default_icon_profile.png"
-    if isinstance(img, str) and img.startswith("static/"):
-        img = "/" + img
-    user["imagen_url"] = img
-    session.permanent = False
-    session["user_id"] = str(user["cedula"])
-    session["rol"]     = rol
-    session["user"]    = user
-    session.modified   = True
 
+    access_token            = create_access_token(cedula, rol)
+    refresh_token, exp_dt   = create_refresh_token(cedula)
+    token_hash              = hash_token(refresh_token)
 
-# ── Routes ───────────────────────────────────────────────────────────
+    db.usuario_set_web_token(cedula, token_hash, exp_dt.isoformat())
+    _build_session_data(user)
+    set_auth_cookies(response, access_token, refresh_token)
+
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -56,7 +63,7 @@ def login():
 
     try:
         user = db.usuario_get_by_identifier(identifier)
-    except Exception as e:
+    except Exception:
         return jsonify({"ok": False, "error": "Error de conexión con la base de datos"}), 500
 
     if not user:
@@ -68,10 +75,11 @@ def login():
     if not verify_password(contrasena, stored_pw):
         return jsonify({"ok": False, "error": "Contraseña incorrecta"}), 401
 
-    _build_session(user)
+    resp = make_response(jsonify({"ok": True, "redirect": "/inicio", "user": user}), 200)
+    _emit_tokens_and_session(user, resp)
     session["just_logged_in"] = True
     db.usuario_touch(user["cedula"], _now())
-    return jsonify({"ok": True, "redirect": "/inicio", "user": user}), 200
+    return resp
 
 
 @auth_bp.route("/registro-google", methods=["POST", "OPTIONS"])
@@ -109,10 +117,67 @@ def registro_google():
             })
             user = db.usuario_get_by_correo(correo)
 
-        _build_session(user)
-        return jsonify({"ok": True, "user": user})
+        resp = make_response(jsonify({"ok": True, "user": user}))
+        _emit_tokens_and_session(user, resp)
+        return resp
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 401
+
+
+@auth_bp.route("/refresh", methods=["POST"])
+def refresh_token():
+    rt = request.cookies.get("_rt")
+    if not rt:
+        return jsonify({"ok": False, "error": "Sin refresh token", "code": "NO_REFRESH_TOKEN"}), 401
+
+    payload = verify_refresh_token(rt)
+    if not payload or payload.get("type") != "refresh":
+        return jsonify({"ok": False, "error": "Refresh token inválido", "code": "INVALID_REFRESH_TOKEN"}), 401
+
+    cedula = payload.get("sub")
+    if not cedula:
+        return jsonify({"ok": False, "error": "Token malformado", "code": "MALFORMED_TOKEN"}), 401
+
+    try:
+        stored = db.usuario_get_web_token(cedula)
+        if not stored or not stored.get("web_token"):
+            return jsonify({"ok": False, "error": "Sesión revocada", "code": "SESSION_REVOKED"}), 401
+
+        if stored["web_token"] != hash_token(rt):
+            return jsonify({"ok": False, "error": "Token no coincide", "code": "TOKEN_MISMATCH"}), 401
+
+        exp_str = stored.get("expires_at")
+        if exp_str:
+            exp_dt = datetime.fromisoformat(exp_str.replace("Z", "+00:00"))
+            if exp_dt < datetime.now(timezone.utc):
+                db.usuario_clear_web_token(cedula)
+                return jsonify({"ok": False, "error": "Sesión expirada", "code": "SESSION_EXPIRED"}), 401
+
+        user = db.usuario_get(cedula)
+        if not user:
+            return jsonify({"ok": False, "error": "Usuario no encontrado", "code": "USER_NOT_FOUND"}), 401
+
+        rol = "cliente"
+        if user.get("roles") and isinstance(user["roles"], dict):
+            rol = user["roles"].get("nombre_role", "cliente")
+
+        new_at = create_access_token(cedula, rol)
+        _build_session_data(user)
+
+        is_secure = not os.getenv("FLASK_DEBUG", "").lower() in ("1", "true", "debug")
+        resp = make_response(jsonify({"ok": True, "message": "Token renovado"}))
+        resp.set_cookie(
+            "_at", new_at,
+            max_age=15 * 60,
+            httponly=True,
+            secure=is_secure,
+            samesite="Strict",
+            path="/"
+        )
+        return resp
+
+    except Exception as e:
+        return jsonify({"ok": False, "error": "Error interno"}), 500
 
 
 @auth_bp.route("/registro", methods=["GET", "POST"])
@@ -129,7 +194,6 @@ def registro():
     username = (p.get("username")   or "").strip()
     password = (p.get("contrasena") or "")
 
-    # Validaciones básicas
     if not nombre or not apellido:
         return jsonify({"ok": False, "error": "Nombre y apellido son obligatorios."}), 400
     if not is_valid_name(nombre):
@@ -147,7 +211,6 @@ def registro():
     if username and not is_valid_username(username):
         return jsonify({"ok": False, "error": "Username inválido (3–30 caracteres, letras/números)."}), 400
 
-    # Verificar duplicados
     if db.usuario_get_by_correo(correo):
         return jsonify({"ok": False, "error": "El correo ya está registrado."}), 400
     if db.usuario_get(cedula):
@@ -180,7 +243,7 @@ def registro():
             if "username" in err: return jsonify({"ok": False, "error": "El username ya está en uso."}), 400
             return jsonify({"ok": False, "error": "El usuario ya existe."}), 400
         if "42501" in err or "row-level security" in err.lower():
-            return jsonify({"ok": False, "error": "Error de permisos en la BD. Verifica SUPABASE_SERVICE_KEY."}), 500
+            return jsonify({"ok": False, "error": "Error de permisos en la BD."}), 500
         return jsonify({"ok": False, "error": "Error interno al crear la cuenta."}), 500
 
 
@@ -211,12 +274,14 @@ def logout():
     user_id = session.get("user_id")
     if user_id:
         try:
+            db.usuario_clear_web_token(user_id)
             db.usuario_touch(user_id, "2000-01-01T00:00:00Z")
         except Exception:
             pass
     session.clear()
     resp = make_response(redirect("/inicio"))
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    clear_auth_cookies(resp)
     return resp
 
 
