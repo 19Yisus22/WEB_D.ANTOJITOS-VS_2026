@@ -360,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let _fpCedulaActual = null;
 let _fpArchivosActuales = [];
+const _FP_LIMITE = 100 * 1024 * 1024;
 
 const _FILE_ICONS = {
     pdf:  { icon: 'bi-file-earmark-pdf-fill',   color: '#e74c3c' },
@@ -410,6 +411,22 @@ function _fmtDate(iso) {
 
 function _totalBytes(archivos) {
     return archivos.reduce((acc, a) => acc + (a.tamanio || 0), 0);
+}
+
+function _fpCheckLimit(archivos) {
+    const total = _totalBytes(archivos);
+    const over  = total >= _FP_LIMITE;
+    const lbl   = document.getElementById('fpUploadLabel');
+    const input = document.getElementById('fpFileInput');
+    const warn  = document.getElementById('fpLimitWarning');
+    if (lbl) {
+        lbl.style.opacity       = over ? '0.4' : '';
+        lbl.style.pointerEvents = over ? 'none' : '';
+        lbl.style.cursor        = over ? 'not-allowed' : '';
+        lbl.title = over ? 'Límite de 100 MB alcanzado. Elimina archivos para subir más.' : 'Subir archivo';
+    }
+    if (input) input.disabled = over;
+    if (warn)  warn.style.display = over ? 'flex' : 'none';
 }
 
 function abrirFilesPanel(cedula, nombre, imagen) {
@@ -477,7 +494,8 @@ function _renderArchivos(archivos) {
     if (!list) return;
 
     if (count) count.textContent = `${archivos.length} archivo${archivos.length !== 1 ? 's' : ''}`;
-    if (stor)  stor.textContent  = _formatBytes(_totalBytes(archivos));
+    if (stor)  stor.textContent  = _formatBytes(_totalBytes(archivos)) + ' / 100 MB';
+    _fpCheckLimit(archivos);
 
     if (archivos.length === 0) {
         list.innerHTML = '';
@@ -506,7 +524,7 @@ function _renderArchivos(archivos) {
                 </div>
             </div>
             <div class="fp-file-actions">
-                <a href="${a.url}" download="${a.nombre}" class="fp-file-btn fp-btn-dl" title="Descargar">
+                <a href="/api/usuarios/${_fpCedulaActual}/archivos/${encodeURIComponent(a.public_id)}/download" class="fp-file-btn fp-btn-dl" title="Descargar">
                     <i class="bi bi-download"></i>
                 </a>
                 <button class="fp-file-btn fp-btn-del" title="Eliminar archivo" onclick="eliminarArchivo('${(a.public_id || '').replace(/'/g, "\\'")}', '${a.nombre.replace(/'/g, "\\'")}')">
@@ -521,6 +539,11 @@ async function subirArchivos() {
     if (!_fpCedulaActual) return;
     const input = document.getElementById('fpFileInput');
     if (!input || !input.files.length) return;
+    if (_totalBytes(_fpArchivosActuales) >= _FP_LIMITE) {
+        mostrarAlerta('El usuario ha alcanzado el límite de 100 MB. Elimina archivos primero.', true);
+        input.value = '';
+        return;
+    }
 
     const uploading = document.getElementById('fpUploading');
     const upText    = document.getElementById('fpUploadingText');

@@ -473,6 +473,19 @@ body {
     border-radius: 0 0 16px 16px;
 }
 
+.pf-limit-warning {
+    display: flex;
+    align-items: center;
+    margin: 0 16px 12px;
+    padding: 10px 14px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    color: #856404;
+    font-weight: 600;
+}
+
 [data-theme="dark"] .pf-title { color: #e4e4ef !important; }
 [data-theme="dark"] .pf-subtitle { color: #4a4868 !important; }
 [data-theme="dark"] .pf-header { border-color: #2a2838 !important; }
@@ -482,6 +495,7 @@ body {
 [data-theme="dark"] .pf-file-name { color: #e4e4ef !important; }
 [data-theme="dark"] .pf-file-meta { color: #4a4868 !important; }
 [data-theme="dark"] .pf-footer { background: #12101a !important; border-color: #2a2838 !important; color: #4a4868 !important; }
+[data-theme="dark"] .pf-limit-warning { background: rgba(255,193,7,0.08) !important; border-color: rgba(255,193,7,0.3) !important; color: #ffc107 !important; }
 [data-theme="dark"] .pf-uploading { background: #1a1826 !important; border-color: #2a2838 !important; }
 [data-theme="dark"] .pf-uploading-inner { color: #e4e4ef !important; }
 [data-theme="dark"] .pf-progress-bar-wrap { background: #2a2838 !important; }

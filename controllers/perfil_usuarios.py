@@ -1,10 +1,13 @@
 from datetime import datetime, timezone
 from functools import wraps
-from flask import Blueprint, request, jsonify, session, render_template
+from flask import Blueprint, request, jsonify, session, render_template, Response
+import requests as http_requests
 
 import helpers.models as db
 from helpers.auth import sin_cache, admin_required, login_required
 from helpers.cloudinary import delete_image, upload_raw_file, delete_raw_file
+
+LIMITE_ALMACENAMIENTO = 100 * 1024 * 1024  # 100 MB por usuario
 
 perfil_usuarios_bp = Blueprint("perfil_usuarios", __name__)
 
@@ -112,11 +115,18 @@ def upload_archivo_usuario(cedula):
     if not nombre_original:
         return jsonify({"error": "Nombre de archivo inválido"}), 400
 
+    raw = file.read()
+    file.seek(0)
+    archivos_actuales = db.usuario_get_block_folder(cedula)
+    total_actual = sum(a.get("tamanio", 0) for a in archivos_actuales)
+    if total_actual + len(raw) > LIMITE_ALMACENAMIENTO:
+        return jsonify({"error": "Límite de almacenamiento de 100 MB alcanzado. Elimina archivos para liberar espacio."}), 413
+
     resultado = upload_raw_file(file, folder=f"archivos_privados/{cedula}")
     if not resultado:
         return jsonify({"error": "Error al subir el archivo"}), 500
 
-    archivos = db.usuario_get_block_folder(cedula)
+    archivos = archivos_actuales
     entrada  = {
         "nombre":    nombre_original,
         "url":       resultado["url"],
@@ -166,6 +176,31 @@ def delete_archivo_usuario(cedula, public_id):
     delete_raw_file(public_id)
     db.usuario_set_block_folder(cedula, [a for a in archivos if a.get("public_id") != public_id])
     return jsonify({"ok": True})
+
+
+@perfil_usuarios_bp.route("/api/usuarios/<cedula>/archivos/<path:public_id>/download", methods=["GET"])
+@login_required
+@_archivo_required
+def download_archivo_usuario(cedula, public_id):
+    if not db.usuario_get(cedula):
+        return jsonify({"error": "Usuario no encontrado"}), 404
+    archivos = db.usuario_get_block_folder(cedula)
+    archivo  = next((a for a in archivos if a.get("public_id") == public_id), None)
+    if not archivo:
+        return jsonify({"error": "Archivo no encontrado"}), 404
+    try:
+        resp  = http_requests.get(archivo["url"], timeout=30, stream=True)
+        resp.raise_for_status()
+        nombre = archivo.get("nombre", "archivo")
+        return Response(
+            resp.content,
+            headers={
+                "Content-Disposition": f'attachment; filename="{nombre}"',
+                "Content-Type": archivo.get("tipo", "application/octet-stream"),
+            }
+        )
+    except Exception:
+        return jsonify({"error": "Error al descargar el archivo"}), 500
 
 
 @perfil_usuarios_bp.route("/eliminar_usuario_admin", methods=["DELETE"])

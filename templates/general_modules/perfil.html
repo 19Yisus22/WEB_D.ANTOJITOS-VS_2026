@@ -24,7 +24,7 @@
                     <div class="divider mx-auto"></div>
                 </div>
 
-                <div class="card ds-card p-3 p-md-5 mb-5 shadow-sm fade-in border-0" data-reveal>
+                <div class="card ds-card p-3 p-md-5 mb-5 shadow-sm fade-in border-0">
                     <form id="formPerfil" enctype="multipart/form-data">
 
                         <div class="d-flex flex-column align-items-center mb-5">
@@ -169,7 +169,7 @@
                     </form>
                 </div>
 
-                <div class="card ds-card shadow-sm border-0 mb-4 fade-in" id="seccionArchivosPrivados" data-reveal>
+                <div class="card ds-card shadow-sm border-0 mb-4" id="seccionArchivosPrivados">
                     <div class="card-body p-0">
 
                         <div class="pf-header">
@@ -218,9 +218,14 @@
 
                         <ul class="pf-file-list" id="archivosLista"></ul>
 
+                        <div id="pfLimitWarning" class="pf-limit-warning" style="display:none;">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <span>Límite de <strong>100 MB</strong> alcanzado. Elimina archivos para poder subir más.</span>
+                        </div>
+
                         <div class="pf-footer" id="pfFooter" style="display:none;">
                             <i class="bi bi-hdd me-1"></i>
-                            <span id="pfStorageText">0 B usado</span>
+                            <span id="pfStorageText">0 B / 100 MB usado</span>
                         </div>
                     </div>
                 </div>
@@ -257,6 +262,7 @@
         const _pf = {
             cedula:   USER_ID,
             archivos: [],
+            LIMITE:   100 * 1024 * 1024,
 
             el(id) { return document.getElementById(id); },
 
@@ -281,13 +287,31 @@
             totalBytes() { return this.archivos.reduce((s,a) => s+(a.tamanio||0), 0); },
 
             updateHeader() {
+                const total = this.totalBytes();
                 const n = this.archivos.length;
                 const c = this.el('archivosCount');
                 if (c) c.textContent = n + ' archivo' + (n!==1?'s':'');
                 const st = this.el('pfStorageText');
-                if (st) st.textContent = this.fmt(this.totalBytes()) + ' usado';
+                if (st) st.textContent = this.fmt(total) + ' / 100 MB usado';
                 const ft = this.el('pfFooter');
-                if (ft) ft.style.display = n > 0 ? 'flex' : 'none';
+                if (ft) ft.style.display = 'flex';
+                this._checkLimit(total);
+            },
+
+            _checkLimit(total) {
+                total = total ?? this.totalBytes();
+                const lbl   = this.el('pfUploadLabel');
+                const input = this.el('pfFileInput');
+                const warn  = this.el('pfLimitWarning');
+                const over  = total >= this.LIMITE;
+                if (lbl) {
+                    lbl.style.opacity        = over ? '0.45' : '';
+                    lbl.style.pointerEvents  = over ? 'none' : '';
+                    lbl.style.cursor         = over ? 'not-allowed' : '';
+                    lbl.title = over ? 'Límite de 100 MB alcanzado. Elimina archivos para subir más.' : 'Subir archivo';
+                }
+                if (input) input.disabled = over;
+                if (warn)  warn.style.display = over ? 'flex' : 'none';
             },
 
             render() {
@@ -318,7 +342,7 @@
                             <div class="pf-file-meta">${[this.fmt(a.tamanio), this.fmtDate(a.subido_en)].filter(Boolean).join(' · ')}</div>
                         </div>
                         <div class="pf-file-actions">
-                            <a href="${a.url}" download="${a.nombre}" class="pf-action-btn pf-btn-dl" title="Descargar">
+                            <a href="/api/usuarios/${this.cedula}/archivos/${encodeURIComponent(a.public_id)}/download" class="pf-action-btn pf-btn-dl" title="Descargar">
                                 <i class="bi bi-download"></i>
                             </a>
                             <button class="pf-action-btn pf-btn-edit" title="Renombrar">
@@ -416,6 +440,10 @@
 
             async subir(files) {
                 if (!files || !files.length) return;
+                if (this.totalBytes() >= this.LIMITE) {
+                    mostrarAlerta('Has alcanzado el límite de 100 MB. Elimina archivos primero.', true);
+                    return;
+                }
                 const up   = this.el('pfUploading');
                 const txt  = this.el('pfUploadingText');
                 const bar  = this.el('pfProgressBar');
