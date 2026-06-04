@@ -259,21 +259,18 @@ function eliminarUsuario(correo, nombre) {
 function mostrarDetalleUsuario(u) {
     const esGoogle = u.auth_method === 'google';
     const rol      = u.rol || 'cliente';
-    const rolClass = ROLES_CLASS[rol] || 'role-cliente';
+    const ROL_ICONS  = { admin:'bi-shield-fill-check', vendedor:'bi-shop', cliente:'bi-person-fill' };
+    const ROL_COLORS = { admin:'#856404', vendedor:'#084298', cliente:'#0a3622' };
+    const ROL_BKGS   = { admin:'#fff3cd', vendedor:'#cfe2ff', cliente:'#d1e7dd' };
     const fmtDate  = iso => iso
         ? new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
         : '—';
-    const ROL_ICONS  = { admin:'bi-shield-fill-check', vendedor:'bi-shop', cliente:'bi-person-fill', visitante:'bi-eye' };
-    const ROL_COLORS = { admin:'#856404', vendedor:'#084298', cliente:'#0a3622' };
-    const ROL_BKGS   = { admin:'#fff3cd', vendedor:'#cfe2ff', cliente:'#d1e7dd' };
-    const metodo = esGoogle
-        ? `<img src="/static/uploads/googlogo.ico" style="width:14px;height:14px;margin-right:4px;">Google`
-        : `<i class="bi bi-envelope-fill" style="margin-right:4px;color:#0277bd;"></i>Correo D'Antojitos`;
-    const infoRow = (icon, label, value, accent='') => `
-        <div class="udet-info-card${accent ? ' udet-'+accent : ''}">
-            <div class="udet-info-label"><i class="bi ${icon}"></i>${label}</div>
-            <div class="udet-info-value">${value || '<span style="opacity:.45">—</span>'}</div>
+    const row = (icon, label, value) => `
+        <div class="udet-row">
+            <span class="udet-row-label"><i class="bi ${icon}"></i>${label}</span>
+            <span class="udet-row-value">${value || '<span class="text-muted">—</span>'}</span>
         </div>`;
+
     const existing = document.getElementById('modalDetalleUsuario');
     if (existing) existing.remove();
     const modal = document.createElement('div');
@@ -281,75 +278,61 @@ function mostrarDetalleUsuario(u) {
     modal.className = 'modal fade';
     modal.setAttribute('tabindex', '-1');
     modal.innerHTML = `
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-md">
             <div class="modal-content udet-content">
-                <div class="udet-hero">
-                    <div class="udet-hero-bg"></div>
-                    <button type="button" class="btn-close btn-close-white udet-close" data-bs-dismiss="modal"></button>
+
+                <div class="udet-header">
                     <div class="udet-avatar-wrap">
-                        <div class="udet-avatar-ring">
-                            <img src="${u.imagen_url || '/static/uploads/default_icon_profile.png'}"
-                                 onerror="this.src='/static/uploads/default_icon_profile.png'"
-                                 class="udet-avatar">
-                        </div>
-                        <div class="udet-auth-badge">
-                            ${esGoogle
-                                ? '<img src="/static/uploads/googlogo.ico" style="width:16px;height:16px;">'
-                                : '<i class="bi bi-envelope-fill" style="color:#d35400;font-size:.85rem;"></i>'}
-                        </div>
+                        ${u.imagen_url
+                            ? `<img src="${u.imagen_url}" class="udet-avatar" onerror="this.outerHTML='<span class=\\'udet-avatar udet-avatar-icon\\'><i class=\\'bi bi-person-fill\\'></i></span>'">`
+                            : `<span class="udet-avatar udet-avatar-icon"><i class="bi bi-person-fill"></i></span>`}
                     </div>
-                    <div class="udet-hero-info">
-                        <h3 class="udet-name">${u.nombre_completo || '—'}</h3>
+                    <div class="udet-header-info">
+                        <div class="udet-name">${u.nombre_completo || '—'}</div>
                         ${u.username ? `<div class="udet-username">@${u.username}</div>` : ''}
-                        <div class="udet-badges">
+                        <div class="d-flex gap-2 flex-wrap mt-1">
                             <span class="udet-rol-badge" style="background:${ROL_BKGS[rol]||'#eee'};color:${ROL_COLORS[rol]||'#555'};">
                                 <i class="bi ${ROL_ICONS[rol]||'bi-person'} me-1"></i>${rol.charAt(0).toUpperCase()+rol.slice(1)}
                             </span>
-                            <span class="udet-method-badge">${metodo}</span>
+                            <span class="udet-method-badge">
+                                ${esGoogle
+                                    ? '<img src="/static/uploads/googlogo.ico" style="width:13px;height:13px;margin-right:4px;">Google'
+                                    : '<i class="bi bi-envelope-fill me-1" style="color:#0277bd;"></i>Correo'}
+                            </span>
                         </div>
                     </div>
+                    <button type="button" class="btn-close udet-close" data-bs-dismiss="modal"></button>
                 </div>
+
                 <div class="udet-body">
-                    <div class="udet-section-title"><i class="bi bi-person-lines-fill"></i>Información Personal</div>
-                    <div class="udet-grid">
-                        ${infoRow('bi-card-text', 'Cédula / ID', `<strong class="font-monospace">${u.cedula||'—'}</strong>`)}
-                        ${infoRow('bi-telephone-fill', 'Teléfono', u.telefono)}
-                        ${infoRow('bi-envelope-fill', 'Correo', `<span style="word-break:break-all;font-size:.88rem;">${u.correo||'—'}</span>`)}
-                        ${infoRow('bi-geo-alt-fill', 'Dirección', `<span style="font-size:.88rem;">${u.direccion||'—'}</span>`)}
-                    </div>
-                    <div class="udet-section-title mt-3"><i class="bi bi-activity"></i>Actividad de Cuenta</div>
-                    <div class="udet-grid">
-                        ${infoRow('bi-calendar-plus-fill', 'Registro', `<span style="font-size:.85rem;">${fmtDate(u.fecha_creacion)}</span>`, 'warm')}
-                        ${infoRow('bi-clock-history', 'Última Conexión', `<span style="font-size:.85rem;">${fmtDate(u.ultima_conexion)}</span>`, 'green')}
-                    </div>
-                    <div class="udet-section-title mt-3"><i class="bi bi-gear-fill"></i>Preferencias</div>
-                    <div class="udet-grid">
-                        ${infoRow('bi-wallet2', 'Método de Pago', u.metodo_pago)}
-                        ${infoRow('bi-shield-lock-fill', 'Autenticación', metodo)}
-                    </div>
+                    ${row('bi-card-text',          'Cédula',          `<span class="font-monospace">${u.cedula||'—'}</span>`)}
+                    ${row('bi-envelope-fill',       'Correo',          `<span style="word-break:break-all;">${u.correo||'—'}</span>`)}
+                    ${row('bi-telephone-fill',      'Teléfono',        u.telefono)}
+                    ${row('bi-geo-alt-fill',        'Dirección',       u.direccion)}
+                    ${row('bi-wallet2',             'Método de Pago',  u.metodo_pago)}
+                    ${row('bi-calendar-plus-fill',  'Registro',        fmtDate(u.fecha_creacion))}
+                    ${row('bi-clock-history',       'Última Conexión', fmtDate(u.ultima_conexion))}
                 </div>
+
                 <div class="udet-footer">
                     <button class="udet-btn udet-btn-ghost"
                             onclick="navigator.clipboard.writeText('${u.correo||''}').then(()=>mostrarAlerta('Correo copiado'))">
-                        <i class="bi bi-clipboard-fill"></i>Copiar Correo
+                        <i class="bi bi-clipboard-fill"></i>Copiar correo
                     </button>
                     <button class="udet-btn udet-btn-warning"
                             onclick="abrirModalRol('${u.cedula}','${u.nombre_completo}','${u.rol}');bootstrap.Modal.getInstance(document.getElementById('modalDetalleUsuario'))?.hide()">
-                        <i class="bi bi-shield-shaded"></i>Cambiar Rol
+                        <i class="bi bi-shield-shaded"></i>Cambiar rol
                     </button>
                     <button class="udet-btn udet-btn-danger"
                             onclick="eliminarUsuario('${u.correo}','${u.nombre_completo}');bootstrap.Modal.getInstance(document.getElementById('modalDetalleUsuario'))?.hide()">
                         <i class="bi bi-trash3-fill"></i>Eliminar
                     </button>
-                    <button type="button" class="udet-btn udet-btn-close" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg"></i>Cerrar
-                    </button>
                 </div>
+
             </div>
         </div>`;
     document.body.appendChild(modal);
     new bootstrap.Modal(modal).show();
-    requestAnimationFrame(() => { if (typeof initAllProfileImages === 'function') initAllProfileImages(); });
     modal.addEventListener('hidden.bs.modal', () => modal.remove());
 }
 
@@ -524,7 +507,7 @@ function _renderArchivos(archivos) {
                 </div>
             </div>
             <div class="fp-file-actions">
-                <a href="/api/usuarios/${_fpCedulaActual}/archivos/${encodeURIComponent(a.public_id)}/download" class="fp-file-btn fp-btn-dl" title="Descargar">
+                <a href="/api/usuarios/${_fpCedulaActual}/descargar?pub=${encodeURIComponent(a.public_id)}" class="fp-file-btn fp-btn-dl" title="Descargar">
                     <i class="bi bi-download"></i>
                 </a>
                 <button class="fp-file-btn fp-btn-del" title="Eliminar archivo" onclick="eliminarArchivo('${(a.public_id || '').replace(/'/g, "\\'")}', '${a.nombre.replace(/'/g, "\\'")}')">

@@ -49,7 +49,6 @@ function updateStrengthBar(password) {
 }
 
 function validarPass() {
-    if (typeof USER_AUTH_GOOGLE !== 'undefined' && USER_AUTH_GOOGLE) return;
     const p = passInput.value;
     const c = confirmInput.value;
     updateStrengthBar(p);
@@ -196,75 +195,86 @@ inputs.forEach(input => {
     });
 });
 
-const btnEditarPerfil = document.getElementById("btnEditarPerfil");
-let _restricciones = {};
-let _countdownInterval = null;
+const btnEditarPerfil    = document.getElementById("btnEditarPerfil");
+const btnActualizarPerfil = document.getElementById("btnActualizarPerfil");
+const btnCancelarEdicion  = document.getElementById("btnCancelarEdicion");
 
-const CAMPO_ID_MAP = {
-    nombre:   "nombrePerfil",
-    apellido: "apellidoPerfil",
-    cedula:   "cedulaPerfil",
-    username: "usernamePerfil",
-};
+let _cooldown = { bloqueado: false, disponible_en: null };
+let _countdownInterval = null;
 
 async function cargarRestricciones() {
     try {
         const r = await fetch('/perfil/restricciones');
         if (!r.ok) return;
-        _restricciones = await r.json();
-        _aplicarCooldowns();
-        _countdownInterval = setInterval(_actualizarCountdowns, 1000);
+        _cooldown = await r.json();
+        _actualizarCooldownUI();
+        if (_cooldown.bloqueado && _cooldown.disponible_en) {
+            _countdownInterval = setInterval(_actualizarCooldownUI, 1000);
+        }
     } catch {}
 }
 
-function _aplicarCooldowns() {
-    Object.entries(_restricciones).forEach(([campo, info]) => {
-        const cdEl  = document.getElementById(`cooldown-${campo}`);
-        const input = document.getElementById(CAMPO_ID_MAP[campo]);
-        if (info.bloqueado) {
-            if (cdEl) cdEl.style.display = 'flex';
-            if (input) input.classList.add('cooldown-locked');
-        } else {
-            if (cdEl) cdEl.style.display = 'none';
-            if (input) input.classList.remove('cooldown-locked');
-        }
-    });
-    _actualizarCountdowns();
+function _actualizarCooldownUI() {
+    const banner = document.getElementById('cooldownBanner');
+    const timer  = document.getElementById('cooldownTimer');
+    const btnEd  = document.getElementById('btnEditarPerfil');
+
+    if (!_cooldown.bloqueado || !_cooldown.disponible_en) {
+        if (banner) banner.style.display = 'none';
+        if (btnEd)  { btnEd.disabled = false; btnEd.title = ''; }
+        clearInterval(_countdownInterval);
+        return;
+    }
+
+    const diff = new Date(_cooldown.disponible_en) - new Date();
+    if (diff <= 0) {
+        _cooldown.bloqueado = false;
+        _actualizarCooldownUI();
+        return;
+    }
+
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    if (timer) timer.textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    if (banner) banner.style.display = 'flex';
+    if (btnEd)  { btnEd.disabled = true; btnEd.title = `Edición bloqueada por ${d} días`; }
 }
 
-function _actualizarCountdowns() {
-    Object.entries(_restricciones).forEach(([campo, info]) => {
-        if (!info.bloqueado || !info.disponible_en) return;
-        const timerEl = document.getElementById(`countdown-${campo}`);
-        if (!timerEl) return;
-        const diff = new Date(info.disponible_en) - new Date();
-        if (diff <= 0) {
-            _restricciones[campo].bloqueado = false;
-            _aplicarCooldowns();
-            return;
-        }
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        timerEl.textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+function _habilitarEdicion() {
+    inputs.forEach(i => {
+        if (i.id === "correoPerfil" || i.readOnly) return;
+        i.disabled = false;
     });
+    const imgInput = document.getElementById("imagen_url");
+    if (imgInput) imgInput.disabled = false;
+    if (btnActualizarPerfil) btnActualizarPerfil.style.display = "inline-block";
+    if (btnEditarPerfil)     btnEditarPerfil.style.display     = "none";
+    if (btnCancelarEdicion)  btnCancelarEdicion.style.display  = "inline-block";
 }
 
-const btnActualizarPerfil = document.getElementById("btnActualizarPerfil");
+function _deshabilitarEdicion() {
+    inputs.forEach(i => { i.disabled = true; });
+    const imgInput = document.getElementById("imagen_url");
+    if (imgInput) imgInput.disabled = true;
+    if (btnActualizarPerfil) btnActualizarPerfil.style.display = "none";
+    if (btnEditarPerfil)     btnEditarPerfil.style.display     = "inline-block";
+    if (btnCancelarEdicion)  btnCancelarEdicion.style.display  = "none";
+}
+
 if (btnEditarPerfil) {
     btnEditarPerfil.addEventListener("click", () => {
-        inputs.forEach(i => {
-            if (i.id === "correoPerfil" || i.readOnly) return;
-            const campo = Object.entries(CAMPO_ID_MAP).find(([, id]) => id === i.id)?.[0];
-            const bloqueado = campo && _restricciones[campo]?.bloqueado;
-            if (!bloqueado) i.disabled = false;
-        });
-        const imgInput = document.getElementById("imagen_url");
-        if (imgInput) imgInput.disabled = false;
-        btnActualizarPerfil.style.display = "inline-block";
-        btnEditarPerfil.style.display = "none";
-        showMessage("Edición habilitada");
+        if (_cooldown.bloqueado) return;
+        _habilitarEdicion();
+        showMessage("Edición habilitada. Recuerda que después de guardar tendrás que esperar 10 días para volver a editar.");
+    });
+}
+
+if (btnCancelarEdicion) {
+    btnCancelarEdicion.addEventListener("click", () => {
+        _deshabilitarEdicion();
+        location.reload();
     });
 }
 

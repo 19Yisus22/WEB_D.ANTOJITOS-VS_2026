@@ -1011,6 +1011,11 @@ main { flex-grow: 1; width: 100%; }
 .widget-bloque {
     position: relative;
     transition: border 0.3s ease, padding 0.2s ease;
+    margin-bottom: 22px;
+}
+
+.widget-bloque:last-child {
+    margin-bottom: 0;
 }
 
 /* Widget bloque en edit mode */
@@ -1308,9 +1313,9 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     align-items: center;
     justify-content: center;
     gap: 10px;
-    width: 180px;
+    width: auto;
     flex-shrink: 0;
-    padding: 0 12px;
+    padding: 0 20px;
     color: rgba(255, 255, 255, 0.90);
     font-size: 0.8rem;
     font-weight: 600;
@@ -1345,9 +1350,6 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     font-weight: 600;
     font-size: 0.8rem;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 115px;
     letter-spacing: 0.4px;
 }
 
@@ -1367,9 +1369,9 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
 
 @media (max-width: 768px) {
     .cinta-inicio-marquee { height: 60px; border-radius: 14px; }
-    .ci-item { width: 150px; gap: 8px; }
+    .ci-item { width: auto; gap: 8px; padding: 0 14px; }
     .ci-item img { width: 28px; height: 28px; }
-    .ci-item-label { font-size: 0.74rem; max-width: 90px; }
+    .ci-item-label { font-size: 0.74rem; }
     .cinta-inicio-marquee::before,
     .cinta-inicio-marquee::after { width: 48px; }
 }

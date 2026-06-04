@@ -75,9 +75,24 @@ html, body {
     white-space: pre-wrap;
     word-wrap: break-word;
     line-height: 1.6;
-    color: #2c3e50;
+    color: #1a1a2e;
     font-size: 0.95rem;
 }
+/* Fuerza color legible en todos los nodos hijo (elimina estilos inline de copypaste) */
+.mensaje-texto *,
+.priv-msg-text * {
+    background-color: transparent !important;
+    background: transparent !important;
+}
+.mensaje-texto span,
+.mensaje-texto div,
+.mensaje-texto p {
+    color: inherit !important;
+}
+[data-theme="dark"] .mensaje-texto { color: var(--dk-text, #e4e4ef) !important; }
+[data-theme="dark"] .mensaje-texto span,
+[data-theme="dark"] .mensaje-texto div,
+[data-theme="dark"] .mensaje-texto p { color: var(--dk-text, #e4e4ef) !important; }
 
 .emoji-item {
     font-size: 1.4rem;
@@ -637,6 +652,9 @@ html, body {
 [data-theme="dark"] .priv-textarea { background: var(--dk-input-bg, #10101a) !important; border-color: var(--dk-border, #2a2838) !important; color: var(--dk-text, #e4e4ef) !important; }
 [data-theme="dark"] .priv-textarea::placeholder { color: var(--dk-text-subtle, #4a4868) !important; }
 [data-theme="dark"] .priv-msg--otro .priv-msg-bubble { background: var(--dk-card2, #201e2e) !important; color: var(--dk-text, #e4e4ef) !important; }
+[data-theme="dark"] .priv-msg--otro .priv-msg-bubble * { color: var(--dk-text, #e4e4ef) !important; }
+[data-theme="dark"] .priv-msg--mio  .priv-msg-bubble,
+[data-theme="dark"] .priv-msg--mio  .priv-msg-bubble * { color: #fff !important; }
 [data-theme="dark"] .priv-predefined-area { background: var(--dk-card, #1a1826) !important; border-color: var(--dk-border, #2a2838) !important; }
 [data-theme="dark"] .priv-predefined-btn { background: var(--dk-card2, #201e2e) !important; border-color: var(--dk-border, #2a2838) !important; color: var(--dk-text, #e4e4ef) !important; }
 [data-theme="dark"] .priv-predefined-btn:hover { background: var(--dk-accent, #f0883e) !important; border-color: var(--dk-accent, #f0883e) !important; color: #fff !important; }
@@ -818,12 +836,23 @@ html, body {
     border-top: none;
     border-radius: 0 0 12px 12px;
     font-size: 0.95rem;
-    color: #2d3436;
+    color: #1a1a2e;
     outline: none;
     line-height: 1.55;
     word-break: break-word;
     cursor: text;
     transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Neutraliza cualquier color/fondo inline que venga de contenido pegado */
+.rich-editor *,
+.rich-editor span,
+.rich-editor p,
+.rich-editor div {
+    color: inherit !important;
+    background-color: transparent !important;
+    background: transparent !important;
+    font-family: inherit !important;
 }
 .rich-editor:focus {
     border-color: rgba(211,84,0,0.4);
@@ -895,6 +924,14 @@ html, body {
     background: var(--dk-input-bg, #10101a) !important;
     border-color: var(--dk-border, #2a2838) !important;
     color: var(--dk-text, #e4e4ef) !important;
+}
+[data-theme="dark"] .rich-editor *,
+[data-theme="dark"] .rich-editor span,
+[data-theme="dark"] .rich-editor p,
+[data-theme="dark"] .rich-editor div {
+    color: var(--dk-text, #e4e4ef) !important;
+    background-color: transparent !important;
+    background: transparent !important;
 }
 [data-theme="dark"] .rich-editor:focus {
     border-color: var(--dk-accent, #f0883e) !important;

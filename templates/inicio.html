@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -56,7 +56,7 @@
                data-config-key="bienvenida_mensaje">
                 Somos una dulcería artesanal hecha con amor desde casa — postres frescos, tortas, galletas y delicias
                 preparadas con ingredientes de calidad para cada antojo especial.
-                🧁 Todo hecho a mano, con el sabor que solo el hogar puede dar.
+                ðŸ§ Todo hecho a mano, con el sabor que solo el hogar puede dar.
             </p>
         </header>
     </div>
@@ -251,7 +251,7 @@
     <div style="background:#fff;width:95%;max-width:540px;border-radius:20px;padding:28px;box-shadow:0 25px 60px rgba(0,0,0,0.4);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <h5 id="modalEditorLabel" style="margin:0;font-weight:800;color:#1e272e;"></h5>
-            <button onclick="cerrarModalEditor()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#747d8c;">×</button>
+            <button onclick="cerrarModalEditor()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#747d8c;">Ã—</button>
         </div>
         <textarea id="modalEditorTextarea" style="width:100%;min-height:120px;border:2px solid #dee2e6;border-radius:12px;padding:12px;font-size:0.95rem;resize:vertical;outline:none;" placeholder="Escribe el contenido aquí..."></textarea>
         <small style="color:#a4b0be;display:block;margin-top:6px;">Puedes usar HTML básico: &lt;strong&gt;, &lt;em&gt;</small>
@@ -278,5 +278,6 @@
 <script src="{{ url_for('static', filename='js/global_js/widget_system.js') }}"></script>
 <script src="{{ url_for('static', filename='js/global_js/inicio.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
 </body>
 </html>

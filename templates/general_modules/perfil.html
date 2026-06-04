@@ -69,10 +69,6 @@
                                        data-i18n-placeholder="{% if es_google_cedula %}prof.cedula_hint{% else %}ph.cedula{% endif %}"
                                        placeholder="{% if es_google_cedula %}Ingresa tu cédula real{% else %}Número de cédula{% endif %}"
                                        disabled>
-                                <div class="cooldown-info" id="cooldown-cedula" style="display:none;">
-                                    <i class="bi bi-clock-history text-warning"></i>
-                                    <span class="cooldown-timer" id="countdown-cedula"></span>
-                                </div>
                                 {% if es_google_cedula %}
                                 <div class="form-text text-warning-emphasis small">
                                     <i class="bi bi-info-circle me-1"></i><span data-i18n="prof.cedula_info">Establece tu cédula real en editar perfil.</span>
@@ -82,18 +78,10 @@
                             <div class="col-md-6">
                                 <label class="form-label" data-i18n="prof.name">Nombre</label>
                                 <input type="text" id="nombrePerfil" name="nombrePerfil" class="form-control custom-input" value="{{ user.nombre or '' }}" disabled>
-                                <div class="cooldown-info" id="cooldown-nombre" style="display:none;">
-                                    <i class="bi bi-clock-history text-warning"></i>
-                                    <span class="cooldown-timer" id="countdown-nombre"></span>
-                                </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" data-i18n="prof.lastname">Apellido</label>
                                 <input type="text" id="apellidoPerfil" name="apellidoPerfil" class="form-control custom-input" value="{{ user.apellido or '' }}" disabled>
-                                <div class="cooldown-info" id="cooldown-apellido" style="display:none;">
-                                    <i class="bi bi-clock-history text-warning"></i>
-                                    <span class="cooldown-timer" id="countdown-apellido"></span>
-                                </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" data-i18n="prof.phone">Teléfono</label>
@@ -104,10 +92,6 @@
                                 <div class="input-group">
                                     <span class="input-group-text">@</span>
                                     <input type="text" id="usernamePerfil" name="usernamePerfil" class="form-control custom-input" value="{{ user.username or '' }}" data-i18n-placeholder="ph.username" placeholder="Nombre de usuario único" disabled>
-                                </div>
-                                <div class="cooldown-info" id="cooldown-username" style="display:none;">
-                                    <i class="bi bi-clock-history text-warning"></i>
-                                    <span class="cooldown-timer" id="countdown-username"></span>
                                 </div>
                             </div>
                             <div class="col-12">
@@ -131,16 +115,28 @@
                             </div>
                         </div>
 
-                        <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-5">
+                        <!-- Banner de cooldown global -->
+                        <div id="cooldownBanner" class="prof-cooldown-banner" style="display:none;">
+                            <i class="bi bi-hourglass-split"></i>
+                            <div>
+                                <span data-i18n="prof.cooldown_msg">Próxima edición disponible en</span>
+                                <strong id="cooldownTimer" class="ms-1 font-monospace"></strong>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-4">
                             <button type="button" class="btn btn-primary px-5 btn-soft ds-btn-primary ds-ripple" id="btnEditarPerfil">
                                 <i class="bi bi-pencil-square me-2"></i><span data-i18n="prof.edit">Editar Perfil</span>
                             </button>
                             <button type="submit" class="btn btn-success px-5 btn-soft ds-btn-primary ds-ripple" id="btnActualizarPerfil" style="display:none">
                                 <i class="bi bi-cloud-arrow-up-fill me-2"></i><span data-i18n="prof.save">Actualizar Ahora</span>
                             </button>
+                            <button type="button" class="btn btn-outline-secondary px-4 ds-ripple" id="btnCancelarEdicion" style="display:none">
+                                <i class="bi bi-x-lg me-2"></i><span data-i18n="prof.cancel">Cancelar</span>
+                            </button>
                         </div>
 
-                        <div class="mt-5 p-4 border rounded-4 bg-light-soft shadow-inner" id="seccionSeguridad" style="{% if user.contrasena == 'GOOGLE_AUTH_EXTERNAL' %}opacity: 0.6; pointer-events: none; grayscale(1);{% endif %}">
+                        <div class="mt-5 p-4 border rounded-4 bg-light-soft shadow-inner" id="seccionSeguridad">
                             <h5 class="mb-4 text-dark fw-bold"><i class="bi bi-shield-lock-fill me-2 text-warning"></i><span data-i18n="prof.security">Seguridad de la Cuenta</span></h5>
                             <div class="row g-3">
                                 <div class="col-md-6">
@@ -342,7 +338,7 @@
                             <div class="pf-file-meta">${[this.fmt(a.tamanio), this.fmtDate(a.subido_en)].filter(Boolean).join(' · ')}</div>
                         </div>
                         <div class="pf-file-actions">
-                            <a href="/api/usuarios/${this.cedula}/archivos/${encodeURIComponent(a.public_id)}/download" class="pf-action-btn pf-btn-dl" title="Descargar">
+                            <a href="/api/usuarios/${this.cedula}/descargar?pub=${encodeURIComponent(a.public_id)}" class="pf-action-btn pf-btn-dl" title="Descargar">
                                 <i class="bi bi-download"></i>
                             </a>
                             <button class="pf-action-btn pf-btn-edit" title="Renombrar">
@@ -520,5 +516,6 @@
     })();
     </script>
     <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
 </body>
 </html>

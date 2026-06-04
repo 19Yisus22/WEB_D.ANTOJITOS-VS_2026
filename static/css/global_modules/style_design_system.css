@@ -1,9 +1,30 @@
 :root {
+    /* ── Brand base ── */
     --ds-primary:        #d35400;
     --ds-primary-light:  #e67e22;
     --ds-primary-dark:   #b34500;
     --ds-primary-soft:   rgba(211,84,0,0.08);
     --ds-primary-mid:    rgba(211,84,0,0.16);
+
+    /* ── Gradientes suaves D'Antojitos ── */
+    --grad-hero:          linear-gradient(135deg, #1a0a02 0%, #3d1602 30%, #d35400 65%, #f0883e 100%);
+    --grad-hero-soft:     linear-gradient(135deg, #fff9f5 0%, #ffecd8 50%, #ffd4b0 100%);
+    --grad-btn-primary:   linear-gradient(135deg, #c04a00, #d35400 50%, #e67e22);
+    --grad-btn-hover:     linear-gradient(135deg, #b84000, #c04a00 50%, #d35400);
+    --grad-card-warm:     linear-gradient(145deg, #fff9f4 0%, #fff3e8 100%);
+    --grad-card-peach:    linear-gradient(145deg, #fff5ee 0%, #ffeadb 100%);
+    --grad-surface-warm:  linear-gradient(180deg, #ffffff 0%, #fdf8f4 100%);
+    --grad-navbar:        linear-gradient(90deg, rgba(255,255,255,0.97), rgba(253,248,244,0.97));
+    --grad-badge-admin:   linear-gradient(135deg, #92400e, #d35400);
+    --grad-badge-vendor:  linear-gradient(135deg, #1e3a5f, #2980b9);
+    --grad-badge-client:  linear-gradient(135deg, #064e3b, #059669);
+    --grad-cinta:         linear-gradient(135deg, #0e0010 0%, #1a0518 25%, #2a0a28 50%, #1a0518 75%, #0e0010 100%);
+    --grad-section-bg:    linear-gradient(180deg, #fff8f4 0%, #fdf3ec 50%, #faf0e8 100%);
+    --grad-focus-ring:    linear-gradient(135deg, rgba(211,84,0,0.18), rgba(240,136,62,0.08));
+    --grad-avatar-default:linear-gradient(135deg, #d35400, #f0883e);
+    --grad-skeleton:      linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+    --grad-overlay-dark:  linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 100%);
+    --grad-orange-glow:   radial-gradient(ellipse at center, rgba(211,84,0,0.18) 0%, transparent 70%);
 
     --ds-success:        #27ae60;
     --ds-success-soft:   rgba(39,174,96,0.10);
@@ -73,6 +94,21 @@
     --ds-shadow-lg:     0 20px 60px rgba(0,0,0,0.70);
     --ds-primary-soft:  rgba(240,136,62,0.10);
     --ds-primary-mid:   rgba(240,136,62,0.18);
+
+    /* Gradientes dark */
+    --grad-hero:          linear-gradient(135deg, #090600 0%, #1a0800 30%, #8a2f00 65%, #b84000 100%);
+    --grad-hero-soft:     linear-gradient(135deg, #1c1000 0%, #2a1500 50%, #3d2200 100%);
+    --grad-btn-primary:   linear-gradient(135deg, #b84000, #d35400 50%, #e67e22);
+    --grad-btn-hover:     linear-gradient(135deg, #a03600, #b84000 50%, #c04a00);
+    --grad-card-warm:     linear-gradient(145deg, #1c1000 0%, #221500 100%);
+    --grad-card-peach:    linear-gradient(145deg, #1a1000 0%, #221200 100%);
+    --grad-surface-warm:  linear-gradient(180deg, #1a1826 0%, #12101a 100%);
+    --grad-navbar:        linear-gradient(90deg, rgba(13,11,20,0.97), rgba(18,16,26,0.97));
+    --grad-section-bg:    linear-gradient(180deg, #0e0c16 0%, #120f1c 50%, #16131f 100%);
+    --grad-focus-ring:    linear-gradient(135deg, rgba(240,136,62,0.25), rgba(211,84,0,0.10));
+    --grad-avatar-default:linear-gradient(135deg, #c04a00, #d35400);
+    --grad-skeleton:      linear-gradient(90deg, #1a1826 25%, #252235 50%, #1a1826 75%);
+    --grad-orange-glow:   radial-gradient(ellipse at center, rgba(211,84,0,0.25) 0%, transparent 70%);
 }
 
 *,
@@ -177,11 +213,14 @@ a:hover { color: var(--ds-primary-light); }
 .ds-btn:active { transform: scale(0.96) translateY(0); }
 
 .ds-btn-primary {
-    background: linear-gradient(135deg, var(--ds-primary), var(--ds-primary-light));
+    background: var(--grad-btn-primary);
     color: #fff;
     box-shadow: 0 4px 16px rgba(211,84,0,0.28);
 }
-.ds-btn-primary:hover { box-shadow: 0 8px 24px rgba(211,84,0,0.40); }
+.ds-btn-primary:hover {
+    background: var(--grad-btn-hover);
+    box-shadow: 0 8px 24px rgba(211,84,0,0.40);
+}
 
 .ds-btn-outline {
     background: transparent;

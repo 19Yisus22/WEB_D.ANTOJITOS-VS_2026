@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from functools import wraps
 from flask import Blueprint, request, jsonify, session, render_template, Response
-import requests as http_requests
 
 import helpers.models as db
 from helpers.auth import sin_cache, admin_required, login_required
@@ -178,10 +177,14 @@ def delete_archivo_usuario(cedula, public_id):
     return jsonify({"ok": True})
 
 
-@perfil_usuarios_bp.route("/api/usuarios/<cedula>/archivos/<path:public_id>/download", methods=["GET"])
+@perfil_usuarios_bp.route("/api/usuarios/<cedula>/descargar", methods=["GET"])
 @login_required
 @_archivo_required
-def download_archivo_usuario(cedula, public_id):
+def download_archivo_usuario(cedula):
+    import requests as _req
+    public_id = (request.args.get("pub") or "").strip()
+    if not public_id:
+        return jsonify({"error": "Parámetro pub requerido"}), 400
     if not db.usuario_get(cedula):
         return jsonify({"error": "Usuario no encontrado"}), 404
     archivos = db.usuario_get_block_folder(cedula)
@@ -189,7 +192,7 @@ def download_archivo_usuario(cedula, public_id):
     if not archivo:
         return jsonify({"error": "Archivo no encontrado"}), 404
     try:
-        resp  = http_requests.get(archivo["url"], timeout=30, stream=True)
+        resp = _req.get(archivo["url"], timeout=30)
         resp.raise_for_status()
         nombre = archivo.get("nombre", "archivo")
         return Response(

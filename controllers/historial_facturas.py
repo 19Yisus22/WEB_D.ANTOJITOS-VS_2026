@@ -63,46 +63,68 @@ def obtener_facturas_page():
 @historial_facturas_bp.route("/buscar_facturas_page")
 @login_required
 def buscar_facturas_page():
-    termino = request.args.get("q", "").strip() or request.args.get("cedula", "").strip()
+    termino   = (request.args.get("q", "") or request.args.get("cedula", "")).strip()
+    user_id   = session.get("user_id")
+    rol       = session.get("rol", "")
+    user_data = session.get("user") or {}
 
     if not termino:
         return jsonify([]), 200
 
+    # Normaliza: quita @ inicial (búsqueda por @username)
+    term_norm = termino.lstrip("@").lower()
+
     try:
-        usuario = None
+        # ── Clientes: solo pueden ver su propio historial ──────────────────
+        if rol not in ("admin", "vendedor"):
+            cedula_s   = str(user_id or "").lower()
+            nombre_s   = f"{user_data.get('nombre', '')} {user_data.get('apellido', '')}".strip().lower()
+            username_s = str(user_data.get("username") or "").lower()
 
-        # 1. Buscar por cédula exacta
+            coincide = (
+                term_norm == cedula_s
+                or (nombre_s   and term_norm in nombre_s)
+                or (username_s and term_norm in username_s)
+            )
+            if not coincide:
+                return jsonify([]), 200
+
+            facturas        = db.factura_get_by_user(str(user_id))
+            nombre_completo = f"{user_data.get('nombre', '')} {user_data.get('apellido', '')}".strip()
+            resultado = []
+            for f in facturas:
+                enr = _enriquecer_factura(f)
+                enr["cliente_nombre"]   = nombre_completo
+                enr["username_cliente"] = str(user_data.get("username") or "")
+                enr["telefono"]         = str(user_data.get("telefono") or "")
+                enr["direccion"]        = str(user_data.get("direccion") or "")
+                resultado.append(enr)
+            return jsonify(resultado), 200
+
+        # ── Admin / Vendedor: pueden buscar cualquier usuario ──────────────
         usuario = db.usuario_get(termino)
-
-        # 2. Buscar por correo
         if not usuario:
             usuario = db.usuario_get_by_correo(termino)
-
-        # 3. Buscar por username
         if not usuario:
-            usuario = db.usuario_get_by_username(termino)
-
-        # 4. Buscar por nombre parcial
+            usuario = db.usuario_get_by_username(term_norm)
         if not usuario:
             usuario = db.usuario_buscar_por_nombre(termino)
 
         if not usuario:
             return jsonify([]), 200
 
-        facturas           = db.factura_get_by_user(usuario["cedula"])
-        nombre_completo    = f"{usuario.get('nombre', '')} {usuario.get('apellido', '')}".strip()
-        username_cliente   = str(usuario.get("username") or "")
-        telefono           = str(usuario.get("telefono") or "")
-        direccion          = str(usuario.get("direccion") or "")
-        resultado          = []
+        facturas        = db.factura_get_by_user(usuario["cedula"])
+        nombre_completo = f"{usuario.get('nombre', '')} {usuario.get('apellido', '')}".strip()
+        resultado = []
         for f in facturas:
-            enriquecida = _enriquecer_factura(f)
-            enriquecida["cliente_nombre"]   = nombre_completo
-            enriquecida["username_cliente"] = username_cliente
-            enriquecida["telefono"]         = telefono
-            enriquecida["direccion"]        = direccion
-            resultado.append(enriquecida)
+            enr = _enriquecer_factura(f)
+            enr["cliente_nombre"]   = nombre_completo
+            enr["username_cliente"] = str(usuario.get("username") or "")
+            enr["telefono"]         = str(usuario.get("telefono") or "")
+            enr["direccion"]        = str(usuario.get("direccion") or "")
+            resultado.append(enr)
         return jsonify(resultado), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

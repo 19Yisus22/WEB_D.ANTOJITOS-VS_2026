@@ -353,10 +353,33 @@ function _playNotifSound(type = 'default') {
     } catch (e) {}
 }
 
+/* ── Helper para enviar mensajes al SW sin bloquear ── */
+function _swPost(data) {
+    try {
+        if (navigator.serviceWorker?.controller) {
+            navigator.serviceWorker.controller.postMessage(data);
+        }
+    } catch (_) {}
+}
+
+/* ── Listener SW: sincroniza tema/idioma desde otras pestañas ── */
+let _swSyncBusy = false;
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', ev => {
+        if (_swSyncBusy) return;
+        _swSyncBusy = true;
+        try {
+            if (ev.data?.type === 'THEME_UPDATED' && ev.data.theme) setTheme(ev.data.theme);
+            if (ev.data?.type === 'LANG_UPDATED'  && ev.data.lang)  { if (typeof setLang === 'function') setLang(ev.data.lang); }
+        } finally { _swSyncBusy = false; }
+    });
+}
+
 // ——— TEMA CLARO / OSCURO ———
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('dantojitos_theme', theme);
+    if (!_swSyncBusy) _swPost({ type: 'CACHE_THEME', theme });
     const lang = (typeof getLang === 'function') ? getLang() : 'es';
 
     const btn = document.getElementById('themeToggleBtn');
@@ -1298,6 +1321,7 @@ function _googleThumb(url, size = 80) {
 
 function loadProfileImg(imgEl, rawUrl, name, thumbSize = 80) {
     if (!imgEl) return;
+    if (imgEl.dataset.profileLoaded) return; // ya procesado, no reprocesar
 
     const isDefault = !rawUrl
         || rawUrl.includes('default_icon_profile')
@@ -1309,15 +1333,24 @@ function loadProfileImg(imgEl, rawUrl, name, thumbSize = 80) {
     }
 
     let optimized = rawUrl;
-    if (rawUrl.includes('cloudinary.com'))       optimized = _cloudinaryThumb(rawUrl, thumbSize, thumbSize);
+    if (rawUrl.includes('cloudinary.com'))            optimized = _cloudinaryThumb(rawUrl, thumbSize, thumbSize);
     else if (rawUrl.includes('googleusercontent.com')) optimized = _googleThumb(rawUrl, thumbSize);
 
     imgEl.classList.add('prof-img-loading');
 
-    const tmp    = new Image();
-    tmp.onload   = () => { imgEl.src = optimized; imgEl.classList.remove('prof-img-loading'); };
-    tmp.onerror  = () => { imgEl.classList.remove('prof-img-loading'); _applyAvatarFallback(imgEl, name); };
-    tmp.src      = optimized;
+    const tmp = new Image();
+    tmp.onload = () => {
+        if (!imgEl.parentNode) return; // fue reemplazado mientras cargaba
+        imgEl.src = optimized;
+        imgEl.dataset.profileLoaded = '1';
+        imgEl.classList.remove('prof-img-loading');
+        imgEl.onerror = () => { if (imgEl.parentNode) _applyAvatarFallback(imgEl, name); };
+    };
+    tmp.onerror = () => {
+        imgEl.classList.remove('prof-img-loading');
+        _applyAvatarFallback(imgEl, name);
+    };
+    tmp.src = optimized;
 }
 
 function initAllProfileImages() {

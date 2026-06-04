@@ -71,7 +71,7 @@ def login():
 
     stored_pw = user.get("contrasena", "")
     if stored_pw == "GOOGLE_AUTH_EXTERNAL":
-        return jsonify({"ok": False, "error": "Esta cuenta usa Google. Ingresa con el botón de Google."}), 401
+        return jsonify({"ok": False, "error": "Esta cuenta aún no tiene contraseña. Ve a tu perfil → Seguridad y establece una para ingresar manualmente."}), 401
     if not verify_password(contrasena, stored_pw):
         return jsonify({"ok": False, "error": "Contraseña incorrecta"}), 401
 
@@ -112,7 +112,7 @@ def registro_google():
                 "correo":           correo,
                 "contrasena":       "GOOGLE_AUTH_EXTERNAL",
                 "metodo_pago":      "Efectivo",
-                "imagen_url":       idinfo.get("picture") or "/static/uploads/default_icon_profile.png",
+                "imagen_url":       idinfo.get("picture") or None,
                 "ultima_conexion":  ahora,
             })
             user = db.usuario_get_by_correo(correo)
@@ -228,7 +228,7 @@ def registro():
             "contrasena":      hash_password(password),
             "direccion":       "N/A",
             "metodo_pago":     "Efectivo",
-            "imagen_url":      "/static/uploads/default_icon_profile.png",
+            "imagen_url":      None,
             "ultima_conexion": _now(),
         }
         if username:

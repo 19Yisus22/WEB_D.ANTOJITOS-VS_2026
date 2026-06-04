@@ -794,6 +794,30 @@ main {
     gap: 10px;
 }
 
+.pedido-avatar-fallback {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #64748b;
+    flex-shrink: 0;
+    border: 2px solid rgba(211,84,0,0.25);
+}
+
+/* fallback en card-header (52px) */
+.card-header .pedido-avatar-fallback,
+span.pedido-avatar-fallback[style*="52px"] {
+    width: 52px;
+    height: 52px;
+    font-size: 1.5rem;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
 .pedido-user-avatar {
     width: 40px;
     height: 40px;

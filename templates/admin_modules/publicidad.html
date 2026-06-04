@@ -203,34 +203,48 @@
                 </button>
             </div>
             <div class="mb-5 pb-4">
-                <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="d-flex align-items-center gap-2">
                         <i class="bi bi-display fs-4" style="color:#d35400;"></i>
                         <h5 class="m-0 fw-bold text-uppercase" data-i18n="pub.live_preview">Vista en Vivo — Inicio</h5>
                         <span class="badge bg-success ms-1" id="liveStatusBadge" data-i18n="pub.live_badge">EN VIVO</span>
                     </div>
                     <div class="d-flex gap-2 align-items-center">
-                        <span class="text-muted small" data-i18n="pub.scroll_enabled">Scroll habilitado · Botones desactivados</span>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="recargarPreviewInicio()" title="Recargar vista">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="recargarPreviewInicio()" id="btnRecargarPreview" title="Recargar vista" style="display:none;">
                             <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary fw-bold" id="btnTogglePreview" onclick="toggleLivePreview()">
+                            <i class="bi bi-eye me-1" id="iconTogglePreview"></i><span id="lblTogglePreview">Ver Vista en Vivo</span>
                         </button>
                     </div>
                 </div>
 
-                <div class="live-preview-wrapper">
-                    <div class="live-preview-overlay"></div>
-                    <iframe id="iframePreviewInicio"
-                            src="/inicio"
-                            class="live-preview-iframe"
-                            title="Vista previa del inicio"
-                            scrolling="yes"
-                            frameborder="0">
-                    </iframe>
+                <div id="livePreviewCollapse" style="display:none;">
+                    <div class="live-preview-wrapper" id="livePreviewWrapper">
+                        <div class="live-preview-overlay"></div>
+                        <iframe id="iframePreviewInicio"
+                                src=""
+                                class="live-preview-iframe"
+                                title="Vista previa del inicio"
+                                frameborder="0">
+                        </iframe>
+                    </div>
+                    <p class="text-center text-muted small mt-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Muestra el estado <strong>publicado</strong> del inicio. Guarda los cambios y recarga para actualizar.
+                    </p>
                 </div>
-                <p class="text-center text-muted small mt-2">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Muestra el estado <strong>publicado</strong> del inicio. Guarda los cambios para actualizar.
-                </p>
+
+                <!-- Contenedores ocultos para actualizarPreview() -->
+                <div style="display:none;">
+                    <div id="previewCarrusel" class="carousel slide"><div class="carousel-inner"></div></div>
+                    <div id="previewCintaTrack"></div>
+                    <div id="previewSecciones"></div>
+                    <div id="prevBlockCinta"></div>
+                    <div id="prevBlockCarrusel"></div>
+                    <div id="prevBlockSecciones"></div>
+                    <div id="prevEmpty"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -239,6 +253,7 @@
     <div id="toastContainer"></div>
     <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
     <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>

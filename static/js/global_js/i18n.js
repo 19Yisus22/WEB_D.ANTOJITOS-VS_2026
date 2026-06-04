@@ -1230,6 +1230,10 @@ function setLang(lang) {
   if (!LANG_DATA[lang]) return;
   localStorage.setItem('dantojitos_lang', lang);
   document.documentElement.setAttribute('lang', lang);
+  /* Persiste en SW y sincroniza otras pestañas si _swPost existe */
+  if (typeof _swPost === 'function' && typeof _swSyncBusy !== 'undefined' && !_swSyncBusy) {
+    _swPost({ type: 'CACHE_LANG', lang });
+  }
 
   const dict = LANG_DATA[lang];
 

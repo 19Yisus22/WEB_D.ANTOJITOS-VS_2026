@@ -56,3 +56,5 @@ static/uploads/*.webp
 # ── Claude Code ─────────────────────────────────────────────────
 .claude/
 SUGERENCIAS.txt
+.gitignore
+.dockerignore

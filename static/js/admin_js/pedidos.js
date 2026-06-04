@@ -237,9 +237,9 @@ async function cargarPedidos(isAutoRefresh = false) {
                                    style="cursor:pointer;transition:0.3s;"></i>
                             </div>
                             <div class="position-relative">
-                                <img src="${user.imagen_url || '/static/uploads/default.png'}"
-                                     class="rounded-circle border border-2 border-white shadow"
-                                     style="width:52px;height:52px;object-fit:cover;">
+                                ${user.imagen_url
+                                    ? `<img src="${user.imagen_url}" class="rounded-circle border border-2 border-white shadow" style="width:52px;height:52px;object-fit:cover;flex-shrink:0;" onerror="this.outerHTML='<span class=\\'pedido-avatar-fallback\\'><i class=\\'bi bi-person-fill\\'></i></span>'">`
+                                    : `<span class="pedido-avatar-fallback"><i class="bi bi-person-fill"></i></span>`}
                                 <span class="position-absolute bottom-0 end-0 bg-success border border-2 border-white rounded-circle"
                                       style="width:13px;height:13px;${pedido.estado === 'Entregado' ? '' : 'display:none'}"></span>
                             </div>
@@ -284,9 +284,9 @@ async function cargarPedidos(isAutoRefresh = false) {
                             <!-- Encabezado del panel -->
                             <div class="pedido-user-panel-head">
                                 <div class="pedido-user-avatar-wrap">
-                                    <img src="${user.imagen_url || '/static/uploads/default.png'}"
-                                         class="pedido-user-avatar"
-                                         onerror="this.src='/static/uploads/default.png'">
+                                    ${user.imagen_url
+                                        ? `<img src="${user.imagen_url}" class="pedido-user-avatar" onerror="this.outerHTML='<span class=\\'pedido-avatar-fallback\\'><i class=\\'bi bi-person-fill\\'></i></span>'">`
+                                        : `<span class="pedido-avatar-fallback"><i class="bi bi-person-fill"></i></span>`}
                                     <div class="pedido-user-avatar-info">
                                         <span class="pedido-user-fullname">${(user.nombre || '') + ' ' + (user.apellido || '') || '—'}</span>
                                         <span class="pedido-user-username">${user.username ? '@' + user.username : ''}</span>

@@ -101,9 +101,7 @@ async function cargarMarketing() {
                     new Date(a.created_at || 0) - new Date(b.created_at || 0)
                 );
 
-                const ITEM_W = 180;
                 const looped = [...fifoQueue, ...fifoQueue, ...fifoQueue];
-                const trackW = looped.length * ITEM_W;
                 const baseDuration = Math.max(24, fifoQueue.length * 5);
                 const speed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
                 const duration = (baseDuration / speed).toFixed(1);
@@ -118,7 +116,7 @@ async function cargarMarketing() {
                     }<span class="ci-item-label">${i.titulo || ''}</span></div>${isLast ? '<div class="ci-divider"></div>' : ''}`;
                 }).join('');
 
-                cintaInicioEl.innerHTML = `<div class="ci-track" data-base-duration="${baseDuration}" style="width:${trackW}px;animation-duration:${duration}s;">${itemsHTML}</div>`;
+                cintaInicioEl.innerHTML = `<div class="ci-track" data-base-duration="${baseDuration}" style="animation-duration:${duration}s;">${itemsHTML}</div>`;
                 cintaInicioEl.style.display = 'flex';
             } else {
                 cintaInicioEl.style.display = 'none';

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -79,7 +79,7 @@
                                 <li>Un pedido se formaliza cuando se genera la factura en estado <strong>"Emitida"</strong> por parte del administrador o vendedor, tras verificar los productos en el carrito.</li>
                                 <li>Cada pedido recibe un número de factura único con formato <em>FAC-AÑO-MES-NÚMERO</em> para su trazabilidad.</li>
                                 <li>El cliente puede consultar el historial completo de sus pedidos y facturas desde su perfil en la sección <strong>"Mis Facturas"</strong>.</li>
-                                <li>Los estados del pedido son: <strong>Pendiente → Enviado → Entregado</strong> (o <strong>Cancelado</strong> en caso de anulación).</li>
+                                <li>Los estados del pedido son: <strong>Pendiente â†’ Enviado â†’ Entregado</strong> (o <strong>Cancelado</strong> en caso de anulación).</li>
                             </ul>
                         </section>
 
@@ -88,7 +88,7 @@
                             <ul class="custom-list">
                                 <li>Aceptamos los métodos de pago digitales habilitados en la plataforma (Nequi, Daviplata, Bancolombia, PSE, entre otros) y efectivo en casos acordados.</li>
                                 <li>El pago debe realizarse a través de los canales oficiales indicados en el módulo de pago de la factura. No nos responsabilizamos por transferencias realizadas a cuentas no oficiales.</li>
-                                <li>Una vez confirmado el pago por el administrador, la factura pasa al estado <strong>"Pagado ✓"</strong> y queda registrada en el historial del cliente.</li>
+                                <li>Una vez confirmado el pago por el administrador, la factura pasa al estado <strong>"Pagado âœ“"</strong> y queda registrada en el historial del cliente.</li>
                                 <li>Los precios se expresan en Pesos Colombianos (COP).</li>
                             </ul>
                         </section>
@@ -192,5 +192,7 @@
         })();
     </script>
     <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
 </body>
 </html>
+

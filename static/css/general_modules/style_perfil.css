@@ -78,34 +78,42 @@ body {
     box-shadow: 0 0 0 4px rgba(211, 84, 0, 0.1);
 }
 
-.cooldown-info {
+.prof-cooldown-banner {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 6px;
-    padding: 6px 10px;
-    background: rgba(255, 190, 0, 0.08);
-    border: 1px solid rgba(255, 190, 0, 0.25);
-    border-radius: 8px;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #fff8ed, #fff3dc);
+    border: 1.5px solid rgba(211, 84, 0, 0.22);
+    border-radius: 14px;
+    font-size: 0.85rem;
+    color: #92400e;
+    font-weight: 600;
 }
-.cooldown-timer {
-    font-size: 0.76rem;
-    font-weight: 700;
-    color: #b7791f;
+.prof-cooldown-banner i {
+    font-size: 1.4rem;
+    color: #d35400;
+    flex-shrink: 0;
+    animation: hourglassSpin 2s ease-in-out infinite;
+}
+@keyframes hourglassSpin {
+    0%, 100% { transform: rotate(0deg); }
+    50%       { transform: rotate(180deg); }
+}
+#cooldownTimer {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #d35400;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
 }
-.custom-input.cooldown-locked {
-    background: repeating-linear-gradient(
-        135deg,
-        #fafafa,
-        #fafafa 8px,
-        #fff8f0 8px,
-        #fff8f0 16px
-    ) !important;
-    border-color: #f6ad55 !important;
-    cursor: not-allowed !important;
+[data-theme="dark"] .prof-cooldown-banner {
+    background: linear-gradient(135deg, #1c1000, #221500) !important;
+    border-color: rgba(240,136,62,0.3) !important;
+    color: #f0883e !important;
 }
+[data-theme="dark"] #cooldownTimer { color: #f0883e !important; }
 
 .btn-soft {
     border-radius: 14px;

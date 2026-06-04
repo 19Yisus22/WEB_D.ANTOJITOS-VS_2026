@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -78,7 +78,7 @@
                                 <div class="stats-venta-num">
                                     <span id="svPorcentaje" class="badge-porcentaje-verde">—</span>
                                 </div>
-                                <div class="stats-venta-lbl" data-i18n="ord.success_rate">Tasa de Éxito</div>
+                                <div class="stats-venta-lbl" data-i18n="ord.success_rate">Tasa de Ã‰xito</div>
                             </div>
                         </div>
                     </div>
@@ -221,6 +221,7 @@
     <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
 
     <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/admin_js/pedidos_notif.js') }}"></script>
@@ -228,3 +229,4 @@
     {% endif %}
 </body>
 </html>
+

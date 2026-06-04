@@ -7,31 +7,39 @@ from helpers.cloudinary import upload_image, delete_image
 
 perfil_bp = Blueprint("perfil", __name__)
 
-COOLDOWN_DIAS = 30
-
-def _puede_cambiar(usuario: dict, campo: str) -> tuple:
-    key    = f"last_change_{campo}"
-    ultimo = usuario.get(key)
-    if not ultimo:
-        return True, None
-    try:
-        ultimo_dt  = datetime.fromisoformat(str(ultimo).replace("Z", "+00:00"))
-        siguiente  = ultimo_dt + timedelta(days=COOLDOWN_DIAS)
-        if datetime.now(timezone.utc) >= siguiente:
-            return True, None
-        return False, siguiente.isoformat()
-    except Exception:
-        return True, None
+COOLDOWN_DIAS = 10
 
 def _ahora_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+def _ultima_edicion(usuario: dict):
+    """Retorna el datetime de la edición de perfil más reciente."""
+    fechas = []
+    for campo in ("nombre", "apellido", "cedula", "username"):
+        v = usuario.get(f"last_change_{campo}")
+        if v:
+            try:
+                fechas.append(datetime.fromisoformat(str(v).replace("Z", "+00:00")))
+            except Exception:
+                pass
+    return max(fechas) if fechas else None
+
+def _puede_editar_perfil(usuario: dict) -> tuple:
+    """Retorna (puede_editar, disponible_en_iso)."""
+    ultima = _ultima_edicion(usuario)
+    if not ultima:
+        return True, None
+    siguiente = ultima + timedelta(days=COOLDOWN_DIAS)
+    if datetime.now(timezone.utc) >= siguiente:
+        return True, None
+    return False, siguiente.isoformat()
 
 def _dias_restantes(siguiente_iso: str) -> int:
     try:
         sig = datetime.fromisoformat(siguiente_iso.replace("Z", "+00:00"))
         return max(1, (sig - datetime.now(timezone.utc)).days + 1)
     except Exception:
-        return 30
+        return COOLDOWN_DIAS
 
 
 @perfil_bp.route("/mi_perfil", methods=["GET", "POST"])
@@ -92,18 +100,11 @@ def perfil_restricciones():
     try:
         usuario = db.usuario_get(user_id)
         if not usuario:
-            return jsonify({}), 200
-        resultado = {}
-        for campo in ("cedula", "username", "nombre", "apellido"):
-            puede, siguiente = _puede_cambiar(usuario, campo)
-            resultado[campo] = {
-                "bloqueado":      not puede,
-                "disponible_en":  siguiente,
-                "ultimo_cambio":  usuario.get(f"last_change_{campo}"),
-            }
-        return jsonify(resultado)
+            return jsonify({"bloqueado": False, "disponible_en": None}), 200
+        puede, siguiente = _puede_editar_perfil(usuario)
+        return jsonify({"bloqueado": not puede, "disponible_en": siguiente})
     except Exception:
-        return jsonify({}), 200
+        return jsonify({"bloqueado": False, "disponible_en": None}), 200
 
 
 @perfil_bp.route("/actualizar_perfil/<cedula>", methods=["PUT", "POST"])
@@ -127,6 +128,12 @@ def actualizar_perfil(cedula):
             session.modified = True
         else:
             return jsonify({"ok": False, "error": "Sesión expirada. Recarga la página e intenta de nuevo."}), 404
+
+    # Cooldown global: un solo check para todo el perfil
+    puede, siguiente = _puede_editar_perfil(usuario_previo)
+    if not puede:
+        dias = _dias_restantes(siguiente)
+        return jsonify({"ok": False, "error": f"Solo puedes editar tu perfil una vez cada {COOLDOWN_DIAS} días. Disponible en {dias} día(s).", "disponible_en": siguiente}), 429
 
     data = request.form if request.form else (request.json or {})
 
@@ -156,30 +163,10 @@ def actualizar_perfil(cedula):
             return jsonify({"ok": False, "error": "Cédula inválida (mínimo 6 caracteres)"}), 400
         campos["cedula"] = nueva_cedula
 
+    # Marcar timestamp en todos los campos de control al guardar
     ahora = _ahora_iso()
-    for campo in ("nombre", "apellido"):
-        nuevo_val = campos.get(campo, "")
-        actual    = (usuario_previo.get(campo) or "").strip()
-        if nuevo_val and nuevo_val != actual:
-            puede, siguiente = _puede_cambiar(usuario_previo, campo)
-            if not puede:
-                dias = _dias_restantes(siguiente)
-                return jsonify({"ok": False, "error": f"Solo puedes cambiar tu {campo} una vez al mes. Disponible en {dias} día(s).", "campo": campo, "disponible_en": siguiente}), 429
-            campos[f"last_change_{campo}"] = ahora
-
-    if "cedula" in campos:
-        puede, siguiente = _puede_cambiar(usuario_previo, "cedula")
-        if not puede:
-            dias = _dias_restantes(siguiente)
-            return jsonify({"ok": False, "error": f"Solo puedes cambiar tu cédula una vez al mes. Disponible en {dias} día(s).", "campo": "cedula", "disponible_en": siguiente}), 429
-        campos["last_change_cedula"] = ahora
-
-    if "username" in campos:
-        puede, siguiente = _puede_cambiar(usuario_previo, "username")
-        if not puede:
-            dias = _dias_restantes(siguiente)
-            return jsonify({"ok": False, "error": f"Solo puedes cambiar tu usuario una vez al mes. Disponible en {dias} día(s).", "campo": "username", "disponible_en": siguiente}), 429
-        campos["last_change_username"] = ahora
+    for c in ("nombre", "apellido", "cedula", "username"):
+        campos[f"last_change_{c}"] = ahora
 
     archivo = request.files.get("imagen_url")
     if archivo and archivo.filename:

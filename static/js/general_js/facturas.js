@@ -645,12 +645,13 @@ async function monitorearCambiosFacturas() {
 
         facturasLocalesCache = JSON.parse(JSON.stringify(facturasServidor));
 
-        const term = criterio.toLowerCase();
+        /* Normaliza: quita @ inicial para comparar usernames con o sin @ */
+        const term = criterio.toLowerCase().replace(/^@/, '');
 
         const filtradas = facturasServidor.filter(f =>
             f.numero_factura.toLowerCase().includes(term) ||
-            (f.cedula && f.cedula.toString().toLowerCase().includes(term)) ||
-            (f.cliente_nombre && f.cliente_nombre.toLowerCase().includes(term)) ||
+            (f.cedula          && f.cedula.toString().toLowerCase().includes(term)) ||
+            (f.cliente_nombre  && f.cliente_nombre.toLowerCase().includes(term))   ||
             (f.username_cliente && f.username_cliente.toLowerCase().includes(term))
         );
 

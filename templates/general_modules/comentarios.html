@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -17,7 +17,7 @@
         <div class="container-fluid px-2 px-md-4">
             <div class="chat-container mx-auto" data-reveal>
 
-                <!-- ── Cabecera ── -->
+                <!-- â”€â”€ Cabecera â”€â”€ -->
                 <header class="chat-header p-3 d-flex align-items-center justify-content-between shadow-sm">
                     <h5 class="mb-0 d-flex align-items-center text-white">
                         <i class="bi bi-chat-heart-fill me-3"></i>
@@ -30,7 +30,7 @@
                     </div>
                 </header>
 
-                <!-- ── Tabs ── -->
+                <!-- â”€â”€ Tabs â”€â”€ -->
                 <div class="chat-tabs">
                     <button class="chat-tab active" id="tabPublico" onclick="switchTab('publico')">
                         <i class="bi bi-megaphone-fill me-1"></i> <span data-i18n="chat.tab_public">Sugerencias</span>
@@ -43,9 +43,9 @@
                     {% endif %}
                 </div>
 
-                <!-- ══════════════════════════════════════
+                <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
                      PANEL 1: Muro público
-                     ══════════════════════════════════════ -->
+                     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
                 <div id="panelPublico">
                     <div id="chatBox" class="p-3 p-md-4"></div>
 
@@ -70,7 +70,7 @@
                                         <span class="emoji-item" onclick="insertEmoji('🍭')">🍭</span>
                                         <span class="emoji-item" onclick="insertEmoji('🧁')">🧁</span>
                                         <span class="emoji-item" onclick="insertEmoji('🎂')">🎂</span>
-                                        <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
+                                        <span class="emoji-item" onclick="insertEmoji('❤')">❤</span>
                                         <span class="emoji-item" onclick="insertEmoji('😋')">😋</span>
                                         <span class="emoji-item" onclick="insertEmoji('🤤')">🤤</span>
                                         <span class="emoji-item" onclick="insertEmoji('😎')">😎</span>
@@ -125,7 +125,7 @@
                     {% set user_rol = session.get('rol', 'cliente') %}
 
                     {% if user_rol == 'vendedor' %}
-                    <!-- ── Vista vendedor: sub-tabs (Clientes | Equipo) ── -->
+                    <!-- â”€â”€ Vista vendedor: sub-tabs (Clientes | Equipo) â”€â”€ -->
                     <div class="priv-subtabs-bar">
                         <button class="priv-subtab active" id="subtabClientes" onclick="switchPrivSubtab('clientes')">
                             <i class="bi bi-people-fill me-1"></i> <span data-i18n="chat.tab_clients">Clientes</span>
@@ -172,7 +172,7 @@
                     </div>
 
                     {% elif user_rol == 'admin' %}
-                    <!-- ── Vista admin: solo mensajes de equipo (vendedores) ── -->
+                    <!-- â”€â”€ Vista admin: solo mensajes de equipo (vendedores) â”€â”€ -->
                     <div class="priv-layout">
                         <div class="priv-sidebar">
                             <div class="priv-sidebar-head"><i class="bi bi-shield-fill me-1"></i> <span data-i18n="chat.tab_team">Equipo</span></div>
@@ -190,11 +190,11 @@
                     </div>
 
                     {% else %}
-                    <!-- ── Vista cliente: su conversación + mensajes predeterminados + texto libre ── -->
+                    <!-- â”€â”€ Vista cliente: su conversación + mensajes predeterminados + texto libre â”€â”€ -->
                     <div class="priv-client-wrap">
                         <div class="priv-client-info">
                             <i class="bi bi-lock-fill me-1" style="color:#d35400;"></i>
-                            <span data-i18n="chat.private_info">Esta conversación es <strong>privada</strong>. Solo los vendedores pueden verla y responder.</span>
+                            <span data-i18n-html="chat.private_info">Esta conversación es <strong>privada</strong>. Solo los vendedores pueden verla y responder.</span>
                         </div>
                         <div id="clienteHiloBox" class="priv-conv-box priv-conv-box--client"></div>
                         <div class="priv-predefined-area">
@@ -232,5 +232,7 @@
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/general_js/comentarios.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
 </body>
 </html>
+
