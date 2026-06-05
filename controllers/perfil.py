@@ -271,6 +271,11 @@ def actualizar_perfil(cedula):
     except Exception as e:
         msg = str(e)
         if "foreign key" in msg.lower() or "violates" in msg.lower():
+<<<<<<< HEAD
+=======
+            # Para cuentas Google esto no debería ocurrir tras el cascade,
+            # pero si aún falla significa que hay pedidos reales con esa cédula.
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
             if lookup_id.startswith("G-"):
                 return jsonify({"ok": False, "error": "No se pudo aplicar el cambio de cédula. Contacta soporte."}), 409
             return jsonify({"ok": False, "error": "No se puede cambiar la cédula porque tienes pedidos o facturas registrados con ella."}), 409

@@ -325,8 +325,11 @@ function _habilitarEdicion() {
         if (i.id === "correoPerfil" || i.readOnly) return;
         i.disabled = false;
     });
+<<<<<<< HEAD
     const fechaNac = document.getElementById("fechaNacimientoPerfil");
     if (fechaNac) fechaNac.disabled = false;
+=======
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
     const imgInput = document.getElementById("imagen_url");
     if (imgInput) imgInput.disabled = false;
     if (btnActualizarPerfil) btnActualizarPerfil.style.display = "inline-block";

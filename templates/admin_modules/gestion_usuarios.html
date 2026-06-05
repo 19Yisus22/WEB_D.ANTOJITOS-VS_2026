@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -15,6 +15,7 @@
     {% include 'global_modules/navbar.html' %}
     <main class="container-fluid px-3 px-md-4 py-4 page-wrapper">
 
+<<<<<<< HEAD
         <div class="card-title-marketing mb-4">
             <div class="ctm-glow"></div>
             <div class="ctm-inner">
@@ -53,11 +54,29 @@
                 <span class="stat-chip-num" id="statGoogle">—</span>
                 <span class="stat-chip-lbl"><i class="bi bi-google"></i>Google</span>
             </div>
+=======
+        <div class="card-title-marketing mb-4 text-center">
+            <h3 class="fw-bold m-0" style="position:relative;z-index:1;">
+                <i class="bi bi-people-fill me-2"></i>Panel de Usuarios
+            </h3>
+            <p class="text-white-50 mb-0 mt-1 small" style="position:relative;z-index:1;">
+                Administra usuarios y archivos privados de D'Antojitos.
+            </p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid" data-reveal>
+            <div class="stat-box"><div class="num" id="statTotal" data-counter>-</div><div class="lbl">Total</div></div>
+            <div class="stat-box"><div class="num" id="statAdmins" data-counter>-</div><div class="lbl">Admins</div></div>
+            <div class="stat-box"><div class="num" id="statVendedores" data-counter>-</div><div class="lbl">Vendedores</div></div>
+            <div class="stat-box"><div class="num" id="statClientes" data-counter>-</div><div class="lbl">Clientes</div></div>
+            <div class="stat-box"><div class="num" id="statGoogle" data-counter>-</div><div class="lbl">Google</div></div>
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
         </div>
 
         <div class="gu-split-layout" id="guSplitLayout">
 
             <div class="gu-table-panel" id="guTablePanel">
+<<<<<<< HEAD
                 <div class="gu-panel-card" data-reveal>
 
                     <div class="gu-toolbar">
@@ -137,11 +156,90 @@
                         <span class="text-muted small" id="conteoResultados"></span>
                     </div>
 
+=======
+                <div class="card ds-card border-0 shadow-sm h-100" data-reveal>
+                    <div class="card-body p-3">
+                        <div class="gu-toolbar">
+                            <div class="gu-search-wrap">
+                                <i class="bi bi-search gu-search-icon"></i>
+                                <input type="text" id="buscarUsuario" class="gu-search-input"
+                                       placeholder="Buscar por nombre, correo o cédula..."
+                                       oninput="filtrarUsuarios()" autocomplete="off">
+                                <button class="gu-search-clear" id="btnClearSearch" style="display:none;"
+                                        onclick="document.getElementById('buscarUsuario').value='';document.getElementById('btnClearSearch').style.display='none';filtrarUsuarios();">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <div class="gu-filters">
+                                <div class="gu-select-wrap">
+                                    <i class="bi bi-shield-fill gu-select-icon"></i>
+                                    <select id="filtroRol" class="gu-select" onchange="filtrarUsuarios()">
+                                        <option value="">Todos los roles</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="vendedor">Vendedor</option>
+                                        <option value="cliente">Cliente</option>
+                                    </select>
+                                    <i class="bi bi-chevron-down gu-select-chevron"></i>
+                                </div>
+                                <div class="gu-select-wrap">
+                                    <i class="bi bi-key-fill gu-select-icon"></i>
+                                    <select id="filtroAuth" class="gu-select" onchange="filtrarUsuarios()">
+                                        <option value="">Todos los métodos</option>
+                                        <option value="google">Google</option>
+                                        <option value="email">Correo</option>
+                                    </select>
+                                    <i class="bi bi-chevron-down gu-select-chevron"></i>
+                                </div>
+                                <button class="gu-refresh-btn" onclick="cargarUsuarios()" title="Actualizar lista">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive table-card">
+                            <table class="table table-hover table-striped align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width:48px;"></th>
+                                        <th class="sortable-col" onclick="sortTabla('nombre_completo')">
+                                            Usuario <i class="bi bi-chevron-expand sort-icon" id="sort-nombre_completo"></i>
+                                        </th>
+                                        <th class="sortable-col" onclick="sortTabla('cedula')">
+                                            Cédula <i class="bi bi-chevron-expand sort-icon" id="sort-cedula"></i>
+                                        </th>
+                                        <th>Correo</th>
+                                        <th class="sortable-col" onclick="sortTabla('rol')">
+                                            Rol <i class="bi bi-chevron-expand sort-icon" id="sort-rol"></i>
+                                        </th>
+                                        <th>Método</th>
+                                        <th class="sortable-col" onclick="sortTabla('fecha_creacion')">
+                                            Registro <i class="bi bi-chevron-expand sort-icon" id="sort-fecha_creacion"></i>
+                                        </th>
+                                        <th class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaUsuarios">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="spinner-border spinner-border-sm me-2" style="color:#d35400;"></div>
+                                            Cargando usuarios...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-2 text-muted small" id="conteoResultados"></div>
+                    </div>
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
                 </div>
             </div>
 
             <div class="gu-files-panel" id="guFilesPanel">
+<<<<<<< HEAD
                 <div class="card border-0 h-100 fp-card" data-reveal>
+=======
+                <div class="card ds-card border-0 shadow-sm h-100 fp-card" data-reveal>
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
 
                     <div class="fp-header" id="fpHeader">
                         <div class="fp-header-user" id="fpHeaderUser">
@@ -160,7 +258,11 @@
 
                     <div class="fp-breadcrumb">
                         <i class="bi bi-folder2-open me-1" style="color:#d35400;"></i>
+<<<<<<< HEAD
                         <span>Archivos privados</span>
+=======
+                        <span>Archivos</span>
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
                         <span class="fp-file-count ms-auto" id="fpFileCount">0 archivos</span>
                     </div>
 
@@ -196,7 +298,11 @@
                     <div class="fp-uploading" id="fpUploading" style="display:none;">
                         <div class="fp-uploading-inner">
                             <div class="spinner-border spinner-border-sm me-2" style="color:#d35400;"></div>
+<<<<<<< HEAD
                             <span id="fpUploadingText">Subiendo…</span>
+=======
+                            <span id="fpUploadingText">Subiendo...</span>
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
                         </div>
                     </div>
                 </div>
@@ -227,16 +333,26 @@
                         <option value="admin">Admin</option>
                     </select>
                     <div id="modalRolError" class="alert alert-danger py-2 px-3 mb-0 small fw-semibold" style="display:none;border-radius:10px;font-size:0.82rem;"></div>
+<<<<<<< HEAD
                     <div class="mt-3 p-2 rounded-3 gu-modal-hint">
+=======
+                    <div class="mt-2 text-muted" style="font-size:0.74rem;line-height:1.4;">
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
                         <i class="bi bi-info-circle me-1"></i>
                         Límites: máx. <strong>2 administradores</strong> y <strong>3 vendedores</strong>.
                     </div>
                 </div>
+<<<<<<< HEAD
                 <div class="modal-footer border-0 pt-0 px-4 pb-3 gap-2">
                     <button type="button" class="btn gu-modal-btn-cancel" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn gu-modal-btn-save" id="btnGuardarRol">
                         <i class="bi bi-check-lg me-1"></i>Guardar
                     </button>
+=======
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary ds-btn-primary btn-sm" id="btnGuardarRol">Guardar</button>
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
                 </div>
             </div>
         </div>
@@ -256,3 +372,4 @@
     </script>
 </body>
 </html>
+

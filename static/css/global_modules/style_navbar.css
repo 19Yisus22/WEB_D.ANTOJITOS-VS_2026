@@ -401,6 +401,7 @@ body { padding-top: 68px; }
 
 .notif-read-all-btn.did-read { animation: notifReadPop 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
 
+<<<<<<< HEAD
 /* ── Botón de silencio ── */
 .notif-mute-btn {
     display: inline-flex;
@@ -446,6 +447,8 @@ body { padding-top: 68px; }
     border-color: rgba(255,255,255,0.1);
 }
 
+=======
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
 .notif-chevron {
     font-size: 0.7rem;
     opacity: 0.75;

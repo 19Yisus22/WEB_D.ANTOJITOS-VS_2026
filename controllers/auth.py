@@ -103,7 +103,10 @@ def login():
     stored_pw = user.get("contrasena", "")
     if stored_pw == "GOOGLE_AUTH_EXTERNAL":
         return jsonify({"ok": False, "error": "Esta cuenta aún no tiene contraseña. Ve a tu perfil → Seguridad y establece una para ingresar manualmente."}), 401
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
     if not verify_password(contrasena, stored_pw):
         result = db.usuario_incrementar_intento(cedula)
         new_intentos    = result["intentos"]
@@ -137,11 +140,18 @@ def login():
 
         return jsonify({"ok": False, "error": "Contraseña incorrecta"}), 401
 
+<<<<<<< HEAD
     db.usuario_reset_intentos(cedula)
     resp = make_response(jsonify({"ok": True, "redirect": "/inicio", "user": user}), 200)
     _emit_tokens_and_session(user, resp)
     session["just_logged_in"] = True
     db.usuario_touch(cedula, _now())
+=======
+    resp = make_response(jsonify({"ok": True, "redirect": "/inicio", "user": user}), 200)
+    _emit_tokens_and_session(user, resp)
+    session["just_logged_in"] = True
+    db.usuario_touch(user["cedula"], _now())
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
     return resp
 
 

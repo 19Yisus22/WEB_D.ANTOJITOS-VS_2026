@@ -62,6 +62,7 @@ def rol_get_id(nombre: str) -> str | None:
 
 # TABLA USUARIOS
 
+<<<<<<< HEAD
 # SQL to run in Supabase before enabling the lockout feature:
 #
 #   ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS intentos_fallidos INTEGER NOT NULL DEFAULT 0;
@@ -72,6 +73,12 @@ _USR_SELECT = (
     "direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role),"
     "last_change_cedula,last_change_username,last_change_nombre,last_change_apellido,"
     "last_change_contrasena,fecha_nacimiento,intentos_fallidos,bloqueado_hasta"
+=======
+_USR_SELECT = (
+    "cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,"
+    "direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role),"
+    "last_change_cedula,last_change_username,last_change_nombre,last_change_apellido"
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
 )
 
 def usuario_get(cedula: str) -> dict | None:

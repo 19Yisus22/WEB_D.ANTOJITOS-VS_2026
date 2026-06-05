@@ -248,6 +248,7 @@ mensajeInput.addEventListener('keyup',   _updateToolbarState);
 mensajeInput.addEventListener('mouseup', _updateToolbarState);
 mensajeInput.addEventListener('input',   ajustarAlturaInput);
 
+<<<<<<< HEAD
 /** Intercepta paste: texto plano O imagen del clipboard */
 mensajeInput.addEventListener('paste', function(e) {
     const clipData = e.clipboardData || window.clipboardData;
@@ -266,6 +267,14 @@ mensajeInput.addEventListener('paste', function(e) {
     // Sin imagen: pegar texto plano
     e.preventDefault();
     let text = clipData.getData('text/plain') || '';
+=======
+/** Intercepta paste: siempre inserta texto plano, sin HTML ni estilos inline */
+mensajeInput.addEventListener('paste', function(e) {
+    e.preventDefault();
+    const clipData = e.clipboardData || window.clipboardData;
+    let text = clipData.getData('text/plain') || '';
+    // Por si el texto pegado contenía etiquetas HTML literales, las quitamos
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
     text = text.replace(/<[^>]*>/g, '');
     document.execCommand('insertText', false, text);
     ajustarAlturaInput();

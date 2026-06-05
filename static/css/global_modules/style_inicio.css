@@ -1299,11 +1299,17 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     will-change: transform;
 }
 
+<<<<<<< HEAD
 @media (hover: hover) and (pointer: fine) {
     .cinta-inicio-marquee:hover .ci-track {
         animation-play-state: paused;
         cursor: default;
     }
+=======
+.cinta-inicio-marquee:hover .ci-track {
+    animation-play-state: paused;
+    cursor: default;
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
 }
 
 /* Con 2 copias idénticas: -50% desplaza exactamente 1 copia → loop sin salto */
