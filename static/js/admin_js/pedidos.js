@@ -41,19 +41,30 @@ function mostrarNotificacionBienvenida() {
     if (yaNotificado) return;
 
     try {
-        if (pedidosDatosRaw.length === 0) {
-            mostrarAlerta("Sistema listo. No hay pedidos pendientes.", false, 3000);
+        if (pedidosDatosRaw.length === 0) return; // sin datos cargados, no marcar y no mostrar alerta engañosa
+
+        const pendientes = pedidosDatosRaw.filter(p => p.estado === 'Pendiente');
+        if (pendientes.length === 0) {
+            mostrarAlerta("Sistema listo. Sin pedidos pendientes activos.", false, 3000);
         } else {
-            const maxIdActual = Math.max(...pedidosDatosRaw.map(p => p.id_pedido));
-            const ultimoPedido = pedidosDatosRaw.find(p => p.id_pedido === maxIdActual);
+            const maxId = Math.max(...pendientes.map(p => p.id_pedido));
+            const ultimoPedido = pendientes.find(p => p.id_pedido === maxId);
             if (ultimoPedido) {
                 const numFactura = generarNumeroFactura(ultimoPedido.id_pedido, ultimoPedido.fecha_pedido);
-                const cliente = `${ultimoPedido.usuarios?.nombre || 'Cliente'} ${ultimoPedido.usuarios?.apellido || ''}`;
-                mostrarAlerta(`✓ Bienvenido. Último pedido: ${numFactura} (${cliente})`, false, 5000);
+                const cliente = `${ultimoPedido.usuarios?.nombre || 'Cliente'} ${ultimoPedido.usuarios?.apellido || ''}`.trim();
+                mostrarAlerta(`✓ Bienvenido. ${pendientes.length} pedido(s) pendiente(s). Último: ${numFactura} (${cliente})`, false, 5000);
             }
         }
         sessionStorage.setItem("notificacionBienvenidaMostrada", "true");
     } catch (e) {}
+}
+
+/* ── IDs ya notificados en esta sesión (persiste en sessionStorage) ── */
+const _pedidosNotifSet = new Set(
+    JSON.parse(sessionStorage.getItem('_pedidosNotifSet') || '[]')
+);
+function _persistNotifSet() {
+    sessionStorage.setItem('_pedidosNotifSet', JSON.stringify([..._pedidosNotifSet]));
 }
 
 function notificarNuevoPedido(pedidos) {
@@ -62,7 +73,10 @@ function notificarNuevoPedido(pedidos) {
     const maxIdActual = Math.max(...pedidos.map(p => p.id_pedido));
     if (maxIdActual > ultimoIdPedidoNotificado) {
         const nuevoP = pedidos.find(p => p.id_pedido === maxIdActual);
-        if (nuevoP) {
+        const notifKey = `nuevo_${maxIdActual}`;
+        if (nuevoP && !_pedidosNotifSet.has(notifKey)) {
+            _pedidosNotifSet.add(notifKey);
+            _persistNotifSet();
             const nombreFull = `${nuevoP.usuarios?.nombre || 'Nuevo'} ${nuevoP.usuarios?.apellido || 'Usuario'}`;
             mostrarAlerta(`🛒 NUEVO PEDIDO: ${nombreFull.toUpperCase()} (#${maxIdActual})`, false, 8000);
             if (typeof addNotifLog === 'function')
@@ -139,9 +153,13 @@ async function iniciarModuloPedidos() {
     }, 7000);
 }
 
+let _cargandoPedidos = false;
+
 async function cargarPedidos(isAutoRefresh = false) {
+    if (_cargandoPedidos) return; /* evita llamadas concurrentes */
     if (isAutoRefresh && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) return;
 
+    _cargandoPedidos = true;
     try {
         const res = await fetch("/obtener_pedidos");
         if (!res.ok) throw new Error("Error de conexión");
@@ -153,15 +171,19 @@ async function cargarPedidos(isAutoRefresh = false) {
         const idsActualesCancelados = pedidos.filter(p => p.estado === 'Cancelado').map(p => String(p.id_pedido));
         if (ultimosIdsCancelados.length > 0) {
             const nuevosBajas = idsActualesCancelados.filter(id => !ultimosIdsCancelados.includes(id));
-            if (nuevosBajas.length > 0) {
-                const pBaja = pedidos.find(p => String(p.id_pedido) === nuevosBajas[0]);
+            nuevosBajas.forEach(id => {
+                const notifKey = `cancel_${id}`;
+                if (_pedidosNotifSet.has(notifKey)) return; /* ya notificado */
+                _pedidosNotifSet.add(notifKey);
+                _persistNotifSet();
+                const pBaja = pedidos.find(p => String(p.id_pedido) === id);
                 if (pBaja) {
                     const cli = `${pBaja.usuarios?.nombre || "CLIENTE"} ${pBaja.usuarios?.apellido || ""}`;
                     mostrarAlerta(`⚠️ PEDIDO ANULADO: ${cli.toUpperCase()} — Ref #${pBaja.id_pedido}`, true, 9000);
                     if (typeof addNotifLog === 'function') addNotifLog('cancelado', `Pedido anulado: ${cli} — Ref #${pBaja.id_pedido}`);
                     sonidoNuevoPedido.play().catch(() => {});
                 }
-            }
+            });
         }
         ultimosIdsCancelados = idsActualesCancelados;
 
@@ -236,13 +258,6 @@ async function cargarPedidos(isAutoRefresh = false) {
                                 <i class="bi ${esFijado ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle text-muted'} fs-4 btn-fijar"
                                    style="cursor:pointer;transition:0.3s;"></i>
                             </div>
-                            <div class="position-relative">
-                                ${user.imagen_url
-                                    ? `<img src="${user.imagen_url}" class="rounded-circle border border-2 border-white shadow" style="width:52px;height:52px;object-fit:cover;flex-shrink:0;" onerror="this.outerHTML='<span class=\\'pedido-avatar-fallback\\'><i class=\\'bi bi-person-fill\\'></i></span>'">`
-                                    : `<span class="pedido-avatar-fallback"><i class="bi bi-person-fill"></i></span>`}
-                                <span class="position-absolute bottom-0 end-0 bg-success border border-2 border-white rounded-circle"
-                                      style="width:13px;height:13px;${pedido.estado === 'Entregado' ? '' : 'display:none'}"></span>
-                            </div>
                             <div style="line-height:1.3;">
                                 <strong class="d-block text-dark" style="font-size:1.05rem;letter-spacing:-0.2px;">${facturaAMostrar}</strong>
                                 <small class="status-info ${esAnulado ? 'text-danger fw-bold' : 'text-muted'}" style="font-size:0.78rem;">
@@ -285,7 +300,11 @@ async function cargarPedidos(isAutoRefresh = false) {
                             <div class="pedido-user-panel-head">
                                 <div class="pedido-user-avatar-wrap">
                                     ${user.imagen_url
-                                        ? `<img src="${user.imagen_url}" class="pedido-user-avatar" onerror="this.outerHTML='<span class=\\'pedido-avatar-fallback\\'><i class=\\'bi bi-person-fill\\'></i></span>'">`
+                                        ? `<img src="${user.imagen_url}" class="pedido-user-avatar pedido-avatar-clickable"
+                                               title="Ver foto de perfil"
+                                               style="cursor:pointer;"
+                                               onclick="_abrirModalFotoPedido('${user.imagen_url.replace(/'/g, "\\'")}','${((user.nombre||'')+ ' '+(user.apellido||'')).trim().replace(/'/g,"\\'")}')"
+                                               onerror="this.outerHTML='<span class=\\'pedido-avatar-fallback\\'><i class=\\'bi bi-person-fill\\'></i></span>'">`
                                         : `<span class="pedido-avatar-fallback"><i class="bi bi-person-fill"></i></span>`}
                                     <div class="pedido-user-avatar-info">
                                         <span class="pedido-user-fullname">${(user.nombre || '') + ' ' + (user.apellido || '') || '—'}</span>
@@ -516,6 +535,8 @@ async function cargarPedidos(isAutoRefresh = false) {
 
     } catch (e) {
         console.error("Fallo en carga de pedidos:", e);
+    } finally {
+        _cargandoPedidos = false; /* libera el lock siempre */
     }
 }
 
@@ -960,3 +981,25 @@ document.addEventListener("DOMContentLoaded", iniciarModuloPedidos);
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-pedidos.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }
+/* ── Modal de foto de perfil del cliente ── */
+window._abrirModalFotoPedido = function(url, nombre) {
+    let modal = document.getElementById('_modalFotoPedido');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = '_modalFotoPedido';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:19000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+        modal.innerHTML = `
+            <div style="background:#fff;border-radius:24px;padding:28px;max-width:340px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.4);position:relative;">
+                <button onclick="document.getElementById('_modalFotoPedido').style.display='none'"
+                        style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6c757d;line-height:1;">&times;</button>
+                <img id="_modalFotoImg" src="" alt=""
+                     style="width:200px;height:200px;border-radius:50%;object-fit:cover;border:4px solid #d35400;box-shadow:0 8px 28px rgba(211,84,0,0.25);display:block;margin:0 auto 14px;">
+                <p id="_modalFotoNombre" style="font-weight:700;font-size:1rem;color:#1a1a2e;margin:0;"></p>
+            </div>`;
+        modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+        document.body.appendChild(modal);
+    }
+    document.getElementById('_modalFotoImg').src = url;
+    document.getElementById('_modalFotoNombre').textContent = nombre;
+    modal.style.display = 'flex';
+};

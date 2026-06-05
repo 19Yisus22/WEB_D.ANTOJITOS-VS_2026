@@ -83,14 +83,21 @@ async function cargarPostres(silent = false) {
         const nuevosPostres = await res.json();
 
         if (JSON.stringify(nuevosPostres) !== JSON.stringify(postres)) {
-            const prevAgotados = new Set(postres.filter(p => parseInt(p.stock) <= 0).map(p => p.id_producto));
+            const prevAgotados  = new Set(postres.filter(p => parseInt(p.stock) <= 0).map(p => p.id_producto));
+            const prevDisponibles = new Set(postres.filter(p => parseInt(p.stock) > 0).map(p => p.id_producto));
             postres = nuevosPostres;
             localStorage.setItem('postresCache', JSON.stringify(postres));
             renderPostres();
             nuevosPostres.forEach(p => {
-                if (parseInt(p.stock) <= 0 && !prevAgotados.has(p.id_producto)) {
-                    mostrarAlerta(`¡Se ha agotado el producto! ${p.nombre.toUpperCase()}`, true, 4000);
+                const ahoraAgotado = parseInt(p.stock) <= 0;
+                if (ahoraAgotado && !prevAgotados.has(p.id_producto)) {
+                    /* Recién se agotó */
+                    mostrarAlerta(`📦 Agotado: ${p.nombre.toUpperCase()}`, true, 5000);
                     playNotificationSound('error');
+                } else if (!ahoraAgotado && prevAgotados.has(p.id_producto)) {
+                    /* Volvió a estar disponible */
+                    mostrarAlerta(`✅ Disponible de nuevo: ${p.nombre}`, false, 5000);
+                    playNotificationSound('default');
                 }
             });
         }

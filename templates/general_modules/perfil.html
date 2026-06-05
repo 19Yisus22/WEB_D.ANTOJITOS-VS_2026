@@ -138,6 +138,16 @@
 
                         <div class="mt-5 p-4 border rounded-4 bg-light-soft shadow-inner" id="seccionSeguridad">
                             <h5 class="mb-4 text-dark fw-bold"><i class="bi bi-shield-lock-fill me-2 text-warning"></i><span data-i18n="prof.security">Seguridad de la Cuenta</span></h5>
+
+                            <!-- Banner cooldown contraseña -->
+                            <div id="passCooldowBanner" class="prof-cooldown-banner mb-3" style="display:none;">
+                                <i class="bi bi-lock-fill"></i>
+                                <div>
+                                    <span>Próximo cambio de contraseña disponible en</span>
+                                    <strong id="passCooldownTimer" class="ms-1 font-monospace"></strong>
+                                </div>
+                            </div>
+
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label small" data-i18n="prof.new_pass">Nueva Contraseña</label>

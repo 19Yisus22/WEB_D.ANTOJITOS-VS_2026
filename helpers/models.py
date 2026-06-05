@@ -62,7 +62,11 @@ def rol_get_id(nombre: str) -> str | None:
 
 # TABLA USUARIOS
 
-_USR_SELECT = "cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role)"
+_USR_SELECT = (
+    "cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,"
+    "direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role),"
+    "last_change_cedula,last_change_username,last_change_nombre,last_change_apellido"
+)
 
 def usuario_get(cedula: str) -> dict | None:
     return _single(_run(supabase.table("usuarios").select(_USR_SELECT).eq("cedula", cedula).limit(1)))
@@ -168,6 +172,35 @@ def usuario_create(data: dict) -> list:
 def usuario_update(cedula: str, data: dict) -> list:
     return _many(_run(supabase.table("usuarios").update(data).eq("cedula", cedula)))
 
+def cedula_cascade_update(old_cedula: str, new_cedula: str) -> None:
+    """Actualiza todas las FK dependientes antes de cambiar la PK cedula.
+    Obligatorio para usuarios Google (G-) donde la cédula original es temporal.
+    Ignora errores por tablas vacías; el UPDATE de usuarios se hace DESPUÉS."""
+    # Tablas con FK directa a cedula
+    for table, col in [
+        ("pedidos",           "cedula"),
+        ("facturas",          "cedula"),
+        ("comentarios",       "cedula"),
+        ("mensajes_privados", "cedula_de"),
+    ]:
+        try:
+            _run(supabase.table(table).update({col: new_cedula}).eq(col, old_cedula))
+        except Exception:
+            pass
+
+    # chats_privados tiene dos columnas FK
+    for col in ("cedula_de", "cedula_para"):
+        try:
+            _run(supabase.table("chats_privados").update({col: new_cedula}).eq(col, old_cedula))
+        except Exception:
+            pass
+
+    # Carrito es estado temporal: limpiar para no arrastrar referencias huérfanas
+    try:
+        _run(supabase.table("carrito").delete().eq("cedula", old_cedula))
+    except Exception:
+        pass
+
 def usuario_delete(cedula: str) -> list:
     return _many(_run(supabase.table("usuarios").delete().eq("cedula", cedula)))
 
@@ -184,6 +217,19 @@ def usuario_count_por_rol(nombre_rol: str, excluir_cedula: str | None = None) ->
         q = q.neq("cedula", str(excluir_cedula))
     res = _run(q)
     return res.count if res and hasattr(res, "count") and res.count is not None else 0
+
+def usuario_get_pass_cooldown(cedula: str) -> str | None:
+    """Retorna el valor de last_change_contrasena o None si la columna no existe."""
+    try:
+        row = _single(_run(
+            supabase.table("usuarios")
+            .select("last_change_contrasena")
+            .eq("cedula", cedula)
+            .limit(1)
+        ))
+        return (row or {}).get("last_change_contrasena")
+    except Exception:
+        return None
 
 def usuario_touch(cedula: str, ts: str) -> None:
     _run_safe(supabase.table("usuarios").update({"ultima_conexion": ts}).eq("cedula", cedula))
@@ -327,6 +373,15 @@ def factura_get_all() -> list:
         supabase.table("facturas")
         .select("*, usuarios(cedula,nombre,apellido)")
         .order("fecha_emision", desc=True)
+    ))
+
+def factura_get_all_enriched(limit: int = 120) -> list:
+    """Devuelve facturas con datos completos del usuario + rol para historial admin/vendedor."""
+    return _many(_run(
+        supabase.table("facturas")
+        .select("*, usuarios(cedula, nombre, apellido, username, telefono, direccion, metodo_pago, roles(nombre_role))")
+        .order("fecha_emision", desc=True)
+        .limit(limit)
     ))
 
 def factura_next_seq(year: str) -> int:

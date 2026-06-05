@@ -887,3 +887,40 @@ body { padding-top: 68px; }
     background: rgba(42,40,56,0.8) !important;
     color: #e4e4ef !important;
 }
+
+/* ── Botones ícono junto al label de versión en el dropdown ── */
+.nav-quick-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 32px;
+    height: 32px;
+    border-radius: 20px;
+    border: none;
+    background: rgba(0,0,0,0.05);
+    color: #555;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+    padding: 0 7px;
+    line-height: 1;
+}
+.nav-quick-icon-btn:hover {
+    background: rgba(211,84,0,0.12);
+    color: #d35400;
+}
+.nav-quick-lang {
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1;
+}
+[data-theme="dark"] .nav-quick-icon-btn {
+    background: rgba(255,255,255,0.07);
+    color: #c8c8e0;
+}
+[data-theme="dark"] .nav-quick-icon-btn:hover {
+    background: rgba(240,136,62,0.18);
+    color: #f0883e;
+}

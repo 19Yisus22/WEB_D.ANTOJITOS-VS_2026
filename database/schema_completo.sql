@@ -1,3 +1,240 @@
+-- ── Extensiones en schema dedicado (evita "Extension in Public") ──────
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS "pg_trgm"   SCHEMA extensions;
+
+-- ── Drop en orden inverso de dependencias ─────────────────────────────
+DROP TABLE IF EXISTS inicio_config        CASCADE;
+DROP TABLE IF EXISTS comentarios          CASCADE;
+DROP TABLE IF EXISTS chats_privados       CASCADE;
+DROP TABLE IF EXISTS mensajes_privados    CASCADE;
+DROP TABLE IF EXISTS carrito              CASCADE;
+DROP TABLE IF EXISTS facturas             CASCADE;
+DROP TABLE IF EXISTS pedido_detalle       CASCADE;
+DROP TABLE IF EXISTS pedidos              CASCADE;
+DROP TABLE IF EXISTS publicidad           CASCADE;
+DROP TABLE IF EXISTS metodos_pago         CASCADE;
+DROP TABLE IF EXISTS gestion_productos    CASCADE;
+DROP TABLE IF EXISTS usuarios             CASCADE;
+DROP TABLE IF EXISTS roles                CASCADE;
+
+DROP FUNCTION IF EXISTS fn_set_usuario_rol()    CASCADE;
+DROP FUNCTION IF EXISTS fn_pedido_sync_total()  CASCADE;
+DROP FUNCTION IF EXISTS fn_factura_autonumero() CASCADE;
+
+-- ================================================================
+--  TABLAS
+-- ================================================================
+
+CREATE TABLE roles (
+    id_role     uuid NOT NULL DEFAULT gen_random_uuid(),
+    nombre_role text NOT NULL UNIQUE
+        CHECK (nombre_role = ANY (ARRAY[
+            'admin','vendedor','cliente','visitante'
+        ])),
+    descripcion text,
+    CONSTRAINT roles_pkey PRIMARY KEY (id_role)
+);
+
+CREATE TABLE usuarios (
+    cedula                text        NOT NULL,
+    username              text        UNIQUE,
+    imagen_url            text        DEFAULT 'static/uploads/default_icon_profile.png',
+    nombre                text        NOT NULL,
+    apellido              text        NOT NULL,
+    telefono              text,
+    correo                text        NOT NULL UNIQUE,
+    contrasena            text,
+    id_role               uuid,
+    direccion             text,
+    metodo_pago           text        DEFAULT 'Efectivo'
+        CHECK (metodo_pago = ANY (ARRAY['Efectivo','Transferencia'])),
+    fecha_creacion        timestamptz DEFAULT now(),
+    ultima_conexion       timestamptz,
+    block_folder          jsonb       DEFAULT '[]'::jsonb,
+    web_token             text,
+    expires_at            timestamptz,
+    last_change_cedula      timestamptz,
+    last_change_username    timestamptz,
+    last_change_nombre      timestamptz,
+    last_change_apellido    timestamptz,
+    last_change_contrasena  timestamptz,
+    CONSTRAINT usuarios_pkey         PRIMARY KEY (cedula),
+    CONSTRAINT usuarios_id_role_fkey FOREIGN KEY (id_role)
+        REFERENCES roles(id_role)
+);
+
+CREATE TABLE gestion_productos (
+    id_producto    uuid        NOT NULL DEFAULT gen_random_uuid(),
+    nombre         text        NOT NULL,
+    descripcion    text,
+    precio         numeric     NOT NULL CHECK (precio >= 0),
+    stock          integer     NOT NULL DEFAULT 0 CHECK (stock >= 0),
+    imagen_url     text,
+    categoria      text        DEFAULT 'Postre',
+    fecha_creacion timestamptz DEFAULT now(),
+    estado         boolean     DEFAULT true,
+    CONSTRAINT gestion_productos_pkey PRIMARY KEY (id_producto)
+);
+
+CREATE TABLE metodos_pago (
+    id_pago        uuid        NOT NULL DEFAULT gen_random_uuid(),
+    entidad        text        NOT NULL
+        CHECK (entidad = ANY (ARRAY[
+            'Nequi','Daviplata','Bancolombia','NuBank'
+        ])),
+    tipo_cuenta    text        NOT NULL
+        CHECK (tipo_cuenta = ANY (ARRAY[
+            'Billetera Digital','Ahorros','Corriente'
+        ])),
+    numero         text        NOT NULL,
+    titular        text        NOT NULL,
+    qr_url         text,
+    estado         boolean     DEFAULT true,
+    fecha_creacion timestamptz DEFAULT now(),
+    CONSTRAINT metodos_pago_pkey PRIMARY KEY (id_pago)
+);
+
+CREATE TABLE pedidos (
+    id_pedido         uuid        NOT NULL DEFAULT gen_random_uuid(),
+    cedula            text,
+    direccion_entrega text        NOT NULL,
+    metodo_pago       text
+        CHECK (metodo_pago = ANY (ARRAY['Efectivo','Transferencia'])),
+    estado            text        NOT NULL DEFAULT 'Pendiente'
+        CHECK (estado = ANY (ARRAY[
+            'Pendiente','Enviado','Entregado','Cancelado'
+        ])),
+    pagado            boolean     DEFAULT false,
+    fecha_pedido      timestamptz DEFAULT now(),
+    total             numeric     DEFAULT 0 CHECK (total >= 0),
+    numero_factura    text        UNIQUE,
+    CONSTRAINT pedidos_pkey        PRIMARY KEY (id_pedido),
+    CONSTRAINT pedidos_cedula_fkey FOREIGN KEY (cedula)
+        REFERENCES usuarios(cedula) ON DELETE SET NULL
+);
+
+CREATE TABLE pedido_detalle (
+    id_detalle      uuid    NOT NULL DEFAULT gen_random_uuid(),
+    id_pedido       uuid,
+    id_producto     uuid,
+    nombre_producto text    NOT NULL,
+    cantidad        integer NOT NULL CHECK (cantidad > 0),
+    precio_unitario numeric NOT NULL CHECK (precio_unitario >= 0),
+    subtotal        numeric GENERATED ALWAYS AS (cantidad * precio_unitario) STORED,
+    CONSTRAINT pedido_detalle_pkey             PRIMARY KEY (id_detalle),
+    CONSTRAINT pedido_detalle_id_pedido_fkey   FOREIGN KEY (id_pedido)
+        REFERENCES pedidos(id_pedido)             ON DELETE CASCADE,
+    CONSTRAINT pedido_detalle_id_producto_fkey FOREIGN KEY (id_producto)
+        REFERENCES gestion_productos(id_producto) ON DELETE SET NULL
+);
+
+CREATE TABLE facturas (
+    id_factura     uuid        NOT NULL DEFAULT gen_random_uuid(),
+    id_pedido      uuid,
+    cedula         text,
+    id_pago        uuid,
+    numero_factura text        UNIQUE,
+    fecha_emision  timestamptz DEFAULT now(),
+    subtotal       numeric     NOT NULL CHECK (subtotal >= 0),
+    total          numeric     NOT NULL CHECK (total >= 0),
+    metodo_pago    text
+        CHECK (metodo_pago = ANY (ARRAY['Efectivo','Transferencia'])),
+    estado         text        DEFAULT 'Emitida'
+        CHECK (estado = ANY (ARRAY['Emitida','Anulada','Pagada'])),
+    archivada      boolean     DEFAULT false,
+    CONSTRAINT facturas_pkey           PRIMARY KEY (id_factura),
+    CONSTRAINT facturas_id_pedido_fkey FOREIGN KEY (id_pedido)
+        REFERENCES pedidos(id_pedido)    ON DELETE SET NULL,
+    CONSTRAINT facturas_cedula_fkey    FOREIGN KEY (cedula)
+        REFERENCES usuarios(cedula)      ON DELETE SET NULL,
+    CONSTRAINT facturas_id_pago_fkey   FOREIGN KEY (id_pago)
+        REFERENCES metodos_pago(id_pago) ON DELETE SET NULL
+);
+
+CREATE TABLE carrito (
+    id_carrito      uuid        NOT NULL DEFAULT gen_random_uuid(),
+    cedula          text,
+    id_producto     uuid,
+    nombre_producto text,
+    cantidad        integer     NOT NULL CHECK (cantidad > 0),
+    precio_unitario numeric     NOT NULL CHECK (precio_unitario >= 0),
+    total           numeric     GENERATED ALWAYS AS (cantidad * precio_unitario) STORED,
+    fecha_creacion  timestamptz DEFAULT now(),
+    CONSTRAINT carrito_pkey             PRIMARY KEY (id_carrito),
+    CONSTRAINT carrito_cedula_fkey      FOREIGN KEY (cedula)
+        REFERENCES usuarios(cedula)       ON DELETE CASCADE,
+    CONSTRAINT carrito_id_producto_fkey FOREIGN KEY (id_producto)
+        REFERENCES gestion_productos(id_producto) ON DELETE CASCADE
+);
+
+CREATE TABLE comentarios (
+    id             uuid        NOT NULL DEFAULT gen_random_uuid(),
+    cedula         text,
+    nombre_usuario text        NOT NULL,
+    correo_usuario text        NOT NULL,
+    foto_perfil    text,
+    mensaje        text        NOT NULL,
+    likes_usuarios jsonb       DEFAULT '[]'::jsonb,
+    created_at     timestamptz DEFAULT now(),
+    CONSTRAINT comentarios_pkey        PRIMARY KEY (id),
+    CONSTRAINT comentarios_cedula_fkey FOREIGN KEY (cedula)
+        REFERENCES usuarios(cedula)    ON DELETE SET NULL
+);
+
+CREATE TABLE chats_privados (
+    id          uuid        NOT NULL DEFAULT gen_random_uuid(),
+    cedula_de   text        NOT NULL,
+    cedula_para text        NOT NULL,
+    mensaje     text        NOT NULL,
+    leido       boolean     DEFAULT false,
+    created_at  timestamptz DEFAULT now(),
+    CONSTRAINT chats_privados_pkey             PRIMARY KEY (id),
+    CONSTRAINT chats_privados_cedula_de_fkey   FOREIGN KEY (cedula_de)
+        REFERENCES usuarios(cedula)            ON DELETE CASCADE,
+    CONSTRAINT chats_privados_cedula_para_fkey FOREIGN KEY (cedula_para)
+        REFERENCES usuarios(cedula)            ON DELETE CASCADE
+);
+
+CREATE TABLE mensajes_privados (
+    id          uuid        NOT NULL DEFAULT gen_random_uuid(),
+    cedula_de   text        NOT NULL,
+    cedula_para text,
+    cedula_dest text,
+    mensaje     text        NOT NULL,
+    tipo        text        DEFAULT 'cv',
+    leido       boolean     DEFAULT false,
+    created_at  timestamptz DEFAULT now(),
+    CONSTRAINT mensajes_privados_pkey           PRIMARY KEY (id),
+    CONSTRAINT mensajes_privados_cedula_de_fkey FOREIGN KEY (cedula_de)
+        REFERENCES usuarios(cedula)             ON DELETE CASCADE
+);
+
+CREATE TABLE publicidad (
+    id_publicidad  uuid        NOT NULL DEFAULT gen_random_uuid(),
+    tipo           text        NOT NULL
+        CHECK (tipo = ANY (ARRAY[
+            'carrusel','seccion','notificacion',
+            'cinta','login_slide','inicio_cinta'
+        ])),
+    titulo         text,
+    descripcion    text,
+    imagen_url     text,
+    estado         boolean     DEFAULT true,
+    fecha_creacion timestamptz DEFAULT now(),
+    CONSTRAINT publicidad_pkey PRIMARY KEY (id_publicidad)
+);
+
+CREATE TABLE inicio_config (
+    clave text NOT NULL,
+    valor text,
+    CONSTRAINT inicio_config_pkey PRIMARY KEY (clave)
+);
+
+-- ================================================================
+--  ÍNDICES
+-- ================================================================
+
 CREATE INDEX idx_usuarios_id_role        ON usuarios(id_role);
 CREATE INDEX idx_usuarios_correo_lower   ON usuarios(lower(correo));
 CREATE INDEX idx_usuarios_username_lower ON usuarios(lower(username))
@@ -285,6 +522,46 @@ BEGIN
     END LOOP;
 END;
 $$;
+
+DO $$
+BEGIN
+  -- pedidos
+  ALTER TABLE public.pedidos      DROP CONSTRAINT IF EXISTS pedidos_cedula_fkey;
+  ALTER TABLE public.pedidos      ADD  CONSTRAINT pedidos_cedula_fkey
+      FOREIGN KEY (cedula) REFERENCES public.usuarios(cedula) ON DELETE SET NULL ON UPDATE CASCADE;
+
+  -- facturas
+  ALTER TABLE public.facturas     DROP CONSTRAINT IF EXISTS facturas_cedula_fkey;
+  ALTER TABLE public.facturas     ADD  CONSTRAINT facturas_cedula_fkey
+      FOREIGN KEY (cedula) REFERENCES public.usuarios(cedula) ON DELETE SET NULL ON UPDATE CASCADE;
+
+  -- carrito
+  ALTER TABLE public.carrito      DROP CONSTRAINT IF EXISTS carrito_cedula_fkey;
+  ALTER TABLE public.carrito      ADD  CONSTRAINT carrito_cedula_fkey
+      FOREIGN KEY (cedula) REFERENCES public.usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE;
+
+  -- comentarios
+  ALTER TABLE public.comentarios  DROP CONSTRAINT IF EXISTS comentarios_cedula_fkey;
+  ALTER TABLE public.comentarios  ADD  CONSTRAINT comentarios_cedula_fkey
+      FOREIGN KEY (cedula) REFERENCES public.usuarios(cedula) ON DELETE SET NULL ON UPDATE CASCADE;
+
+  -- chats_privados (dos columnas)
+  ALTER TABLE public.chats_privados DROP CONSTRAINT IF EXISTS chats_privados_cedula_de_fkey;
+  ALTER TABLE public.chats_privados ADD  CONSTRAINT chats_privados_cedula_de_fkey
+      FOREIGN KEY (cedula_de) REFERENCES public.usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE;
+
+  ALTER TABLE public.chats_privados DROP CONSTRAINT IF EXISTS chats_privados_cedula_para_fkey;
+  ALTER TABLE public.chats_privados ADD  CONSTRAINT chats_privados_cedula_para_fkey
+      FOREIGN KEY (cedula_para) REFERENCES public.usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE;
+
+  -- mensajes_privados
+  ALTER TABLE public.mensajes_privados DROP CONSTRAINT IF EXISTS mensajes_privados_cedula_de_fkey;
+  ALTER TABLE public.mensajes_privados ADD  CONSTRAINT mensajes_privados_cedula_de_fkey
+      FOREIGN KEY (cedula_de) REFERENCES public.usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE;
+END;
+$$;
+
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_contrasena timestamptz;
 
 -- ================================================================
 --  DATOS INICIALES

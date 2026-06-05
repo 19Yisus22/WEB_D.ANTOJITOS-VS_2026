@@ -6,6 +6,13 @@ import socket
 import secrets
 import logging
 import cloudinary
+
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+try:
+    import flask.cli
+    flask.cli.show_server_banner = lambda *a, **kw: None
+except Exception:
+    pass
 from dotenv import load_dotenv
 from waitress import serve
 from flask import Flask, redirect, request
@@ -148,20 +155,17 @@ def _get_local_ip() -> str:
         return "127.0.0.1"
     finally:
         s.close()
-
+        
 if __name__ == "__main__":
-    host      = "0.0.0.0"
-    port      = 8000
-    local_ip  = _get_local_ip()
-    debug_mode = False  # Cambia a True para desarrollo local
+    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), False # Cambia a True para modo desarrollo con debug
 
     if debug_mode:
-        print("Ejecutando en modo DEBUG")
-        print(f"  Local : http://localhost:{port}")
-        print(f"  Red   : http://{local_ip}:{port}")
+        print("\033[93m" + "MODE DEVELOPMENT - DEBUG" + "\033[0m")
+        print("\033[36m" + f"Local : http://localhost:{port}" + "\033[0m")
+        print("\033[92m" + f"Red   : http://{local_ip}:{port}" + "\033[0m")
         app.run(host=host, port=port, debug=True, threaded=True)
     else:
-        print("Servidor en produccion con Waitress")
-        print(f"  Local : http://localhost:{port}")
-        print(f"  Red   : http://{local_ip}:{port}")
+        print("\033[92m" + "PRODUCTION MODE" + "\033[0m")
+        print("\033[36m" + f"Local : http://localhost:{port}" + "\033[0m")
+        print("\033[92m" + f"Red   : http://{local_ip}:{port}" + "\033[0m")
         serve(app, host=host, port=port, threads=10)

@@ -41,5 +41,5 @@ SUGERENCIAS.txt
 RLS_ANON_POLICIES.sql
 tsconfig.json
 package.json
-
+.gitignore
 .dockerignore

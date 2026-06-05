@@ -160,11 +160,71 @@ body {
 }
 
 @media (max-width: 768px) {
-    .card { padding: 18px !important; border-radius: 16px !important; }
-    .profile-img-container { width: 110px; height: 110px; }
-    #previewImagen { width: 110px; height: 110px; }
-    .btn-soft { padding: 12px 20px; font-size: .85rem; }
+    /* Layout principal */
+    main.page-wrapper { padding-top: 1.5rem !important; padding-bottom: 2rem !important; }
+
+    /* Encabezado de sección */
+    .section-header h2 { font-size: 1.65rem !important; }
+    .section-header p { font-size: 0.85rem; }
+    .section-header .divider { margin-top: 10px; }
+
+    /* Tarjeta principal */
+    .card { padding: 18px !important; border-radius: 18px !important; }
+
+    /* Foto de perfil */
+    .profile-img-wrapper { padding: 7px; }
+    .profile-img-container { width: 105px; height: 105px; }
+    #previewImagen { width: 105px; height: 105px; }
+
+    /* Inputs */
+    .custom-input { padding: 10px 13px; font-size: 0.9rem; }
+    .form-label { font-size: 0.82rem; margin-bottom: 4px; }
+    .input-group-text { font-size: 0.88rem; padding: 10px 12px; }
+
+    /* Botones de acción del formulario */
+    .btn-soft { padding: 11px 18px; font-size: 0.84rem; }
+    #btnEditarPerfil, #btnActualizarPerfil, #btnCancelarEdicion {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Sección seguridad */
+    #seccionSeguridad { padding: 1rem !important; border-radius: 14px !important; }
+    #seccionSeguridad h5 { font-size: 0.95rem; }
+    #btnCambiarContrasena { font-size: 0.85rem; padding: 12px; }
+
+    /* Zona de peligro */
+    .border-danger.rounded-4 { padding: 1rem !important; border-radius: 14px !important; }
+    .border-danger.rounded-4 h5 { font-size: 0.95rem; }
+    #btnEliminarMiCuenta { width: 100%; margin-top: 0.25rem; }
+
+    /* Archivos privados */
+    .pf-file-name { max-width: 180px; }
+    .pf-file-rename-input { max-width: 180px; }
+
+    /* Banner de cooldown */
+    .prof-cooldown-banner { padding: 11px 14px; font-size: 0.8rem; gap: 9px; }
+
+    /* Util */
     .min-w-600 { min-width: 100% !important; overflow-x: auto; }
+    .row.g-4 { --bs-gutter-y: 0.85rem; }
+}
+
+@media (max-width: 480px) {
+    .section-header h2 { font-size: 1.35rem !important; }
+    .card { padding: 14px !important; border-radius: 16px !important; }
+    .profile-img-wrapper { padding: 5px; }
+    .profile-img-container { width: 90px; height: 90px; }
+    #previewImagen { width: 90px; height: 90px; }
+    .custom-input { padding: 9px 11px; font-size: 0.85rem; }
+    .btn-soft { padding: 10px 14px; font-size: 0.82rem; }
+    #seccionSeguridad { padding: 0.85rem !important; }
+    .border-danger.rounded-4 { padding: 0.85rem !important; }
+    .pf-file-name { max-width: 130px; }
+    .pf-file-rename-input { max-width: 140px; }
+    .pf-header { padding: 14px 14px 10px; }
+    .pf-drop-zone { margin: 0 12px 12px; padding: 16px; }
+    .pf-file-list { padding: 0 6px; }
 }
 
 .shadow-inner { box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }

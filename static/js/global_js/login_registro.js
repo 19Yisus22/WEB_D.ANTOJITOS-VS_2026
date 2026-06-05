@@ -301,3 +301,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initRegistroForm();
     initStep2();
 });
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        const swFile = location.pathname.includes('registro')
+            ? '/static/js/workers/service-worker-registro.js'
+            : '/static/js/workers/service-worker-login.js';
+        navigator.serviceWorker.register(swFile).catch(() => {});
+    });
+}

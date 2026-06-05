@@ -1,4 +1,4 @@
-﻿@import url('[https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap)');
+﻿@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -1282,19 +1282,20 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
 }
 .cinta-inicio-marquee::before {
     left: 0;
-    background: linear-gradient(to right, #0e0010 0%, transparent 100%);
+    background: linear-gradient(to right, #0e0010 0%, rgba(14,0,16,0) 100%);
 }
 .cinta-inicio-marquee::after {
     right: 0;
-    background: linear-gradient(to left, #0e0308 0%, transparent 100%);
+    background: linear-gradient(to left, #0e0010 0%, rgba(14,0,16,0) 100%);
 }
 
-/* ── ci-track: pista animada — lógica idéntica a .payment-track del footer ── */
+/* ── ci-track: pista animada — 2 copias exactas, -50% loop perfecto ── */
 .ci-track {
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    animation: ciScroll 25s linear infinite;
+    /* duration se sobreescribe inline desde JS */
+    animation: ciScroll 28s linear infinite;
     will-change: transform;
 }
 
@@ -1303,9 +1304,10 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     cursor: default;
 }
 
+/* Con 2 copias idénticas: -50% desplaza exactamente 1 copia → loop sin salto */
 @keyframes ciScroll {
     from { transform: translateX(0); }
-    to   { transform: translateX(-33.3333%); }
+    to   { transform: translateX(-50%); }
 }
 
 .ci-item {

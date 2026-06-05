@@ -257,7 +257,7 @@ body { background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%); }
 .sortable-col:hover { color: #d35400; }
 .sort-icon { font-size: 0.65rem; margin-left: 4px; opacity: 0.5; }
 .sort-asc .sort-icon, .sort-desc .sort-icon { opacity: 1; color: #d35400; }
-.table-card { border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+.table-card { border-radius: 16px; overflow-x: auto; overflow-y: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
 .table thead th {
     background: #1a1a1a; color: #fff; border: none;
     font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.6px;
@@ -271,13 +271,59 @@ body { background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%); }
 .action-btn { padding: 5px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 600; }
 
 @media (max-width: 768px) {
-    .table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .table-card .table { min-width: 700px; }
-    .action-btn { padding: 4px 8px; font-size: 0.72rem; }
+    /* Scroll táctil suave en iOS */
+    .table-card { -webkit-overflow-scrolling: touch; }
+    .table-card .table { min-width: 490px; }
+
+    /* Ocultar solo columnas menos importantes: Correo (4), Método (6), Registro (7) */
+    .table-card table thead th:nth-child(4),
+    .table-card table thead th:nth-child(6),
+    .table-card table thead th:nth-child(7),
+    .table-card table tbody td:nth-child(4),
+    .table-card table tbody td:nth-child(6),
+    .table-card table tbody td:nth-child(7) { display: none !important; }
+
+    /* Avatar compacto */
+    .table-card table thead th:nth-child(1),
+    .table-card table tbody td:nth-child(1) {
+        width: 44px !important;
+        padding: 8px 4px 8px 8px !important;
+    }
+    .user-avatar-cell, .user-avatar-broken { width: 38px !important; height: 38px !important; }
+
+    /* Nombre: texto un poco más pequeño, username oculto */
+    .table-card table tbody td:nth-child(2) .fw-semibold { font-size: 0.84rem !important; }
+    .table-card table tbody td:nth-child(2) small { display: none; }
+
+    /* Cédula compacta */
+    .table-card table tbody td:nth-child(3) { white-space: nowrap; }
+
+    /* Rol: badge compacto */
+    .role-badge { font-size: 0.68rem; padding: 3px 8px; }
+
+    /* Acciones: botones ajustados en fila */
+    .action-btn { padding: 5px 8px; font-size: 0.74rem; }
+    .table-card table tbody td:nth-child(8) .d-flex { gap: 3px !important; flex-wrap: nowrap; }
+
+    /* Toolbar responsive */
     .gu-search-wrap { max-width: 100%; }
     .gu-toolbar { flex-direction: column; align-items: stretch; }
     .gu-filters { flex-wrap: wrap; }
     .gu-select-wrap { min-width: 140px; flex: 1; }
+}
+
+@media (max-width: 480px) {
+    /* Pantallas muy pequeñas: también ocultar Cédula */
+    .table-card .table { min-width: 380px; }
+    .table-card table thead th:nth-child(3),
+    .table-card table tbody td:nth-child(3) { display: none !important; }
+
+    /* Rol: badge más pequeño */
+    .role-badge { font-size: 0.63rem; padding: 3px 6px; }
+
+    /* Botones de acción: ícono solo */
+    .action-btn { padding: 5px 7px; font-size: 0; }
+    .action-btn .bi { font-size: 0.82rem !important; display: inline-block; }
 }
 
 /* ══════════════════════════════════════════════
@@ -385,13 +431,50 @@ body { background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%); }
     border-bottom: 1px solid #edf0f5;
     position: relative;
 }
+/* Header centrado (modal de detalle) */
+.udet-header-centered {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 28px 24px 22px;
+    gap: 12px;
+    width: 100%;
+}
 .udet-avatar-wrap { flex-shrink: 0; }
+.udet-avatar-wrap-centered {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 .udet-avatar {
     width: 54px; height: 54px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid rgba(211,84,0,0.25);
     display: block;
+}
+/* Avatar grande para el modal de detalle */
+.udet-avatar-lg {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    border: 3px solid rgba(211,84,0,0.35);
+    display: block;
+    object-fit: cover;
+    box-shadow: 0 4px 16px rgba(211,84,0,0.15);
+    margin: 0 auto;
+    flex-shrink: 0;
+}
+.udet-avatar-initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #d35400, #e67e22);
+    color: #fff;
+    font-size: 2.6rem;
+    font-weight: 800;
+    font-family: 'DM Sans', sans-serif;
 }
 .udet-avatar-icon {
     width: 54px; height: 54px;
@@ -402,6 +485,7 @@ body { background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%); }
     border: 2px solid rgba(211,84,0,0.2);
 }
 .udet-header-info { flex: 1; min-width: 0; }
+.udet-header-centered .udet-header-info { flex: none; width: 100%; }
 .udet-name {
     font-size: 1.05rem;
     font-weight: 800;

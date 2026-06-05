@@ -1,4 +1,16 @@
-﻿function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
+﻿/* ── Mapa de deduplicación: clave → timestamp de expiración ── */
+const _alertaDedup = new Map();
+
+function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
+    /* Deduplicación global: el mismo mensaje no se muestra de nuevo
+       hasta que el toast anterior haya desaparecido + 300ms de margen.
+       Evita duplicados por polls concurrentes, foco, y eventos de storage. */
+    const ahora = Date.now();
+    const expira = _alertaDedup.get(mensaje);
+    if (expira && ahora < expira) return;
+    _alertaDedup.set(mensaje, ahora + duracionMs + 300);
+    setTimeout(() => _alertaDedup.delete(mensaje), duracionMs + 400);
+
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement('div');
@@ -385,7 +397,10 @@ function setTheme(theme) {
     const btn = document.getElementById('themeToggleBtn');
     if (btn) {
         const icon = btn.querySelector('i');
-        if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill me-2' : 'bi bi-moon-fill me-2';
+        const hasLabel = !!btn.querySelector('[data-i18n="nav.theme"]');
+        if (icon) icon.className = theme === 'dark'
+            ? (hasLabel ? 'bi bi-sun-fill me-2' : 'bi bi-sun-fill')
+            : (hasLabel ? 'bi bi-moon-fill me-2' : 'bi bi-moon-fill');
         const label = btn.querySelector('[data-i18n="nav.theme"]');
         if (label) {
             label.textContent = theme === 'dark'
@@ -441,19 +456,25 @@ function toggleSistemPanel() {
     }
 }
 
-/* ── Persistencia de vistos en pedidos (localStorage, sobrevive sesión) ── */
+/* ── Persistencia de vistos en pedidos (localStorage, sobrevive sesión) ──
+   Clave compuesta "id_pedido|estado" para que un cambio de estado
+   vuelva a mostrar la notificación aunque el pedido ya fue visto antes.
+── */
 const _PEDIDOS_VISTOS_KEY = '_dantojitos_pedidos_vistos';
 function _getPedidosVistos() {
     try { return JSON.parse(localStorage.getItem(_PEDIDOS_VISTOS_KEY) || '[]'); }
     catch { return []; }
 }
-function _savePedidoVisto(id) {
-    const list = _getPedidosVistos();
-    if (!list.includes(String(id))) { list.push(String(id)); localStorage.setItem(_PEDIDOS_VISTOS_KEY, JSON.stringify(list)); }
+function _makePedidoKey(id, estado) {
+    return String(id) + '|' + String(estado || '');
 }
-function _saveAllPedidosVistos(ids) {
+function _savePedidoVisto(key) {
+    const list = _getPedidosVistos();
+    if (!list.includes(key)) { list.push(key); localStorage.setItem(_PEDIDOS_VISTOS_KEY, JSON.stringify(list)); }
+}
+function _saveAllPedidosVistos(keys) {
     const existing = _getPedidosVistos();
-    ids.forEach(id => { if (!existing.includes(String(id))) existing.push(String(id)); });
+    keys.forEach(k => { if (!existing.includes(k)) existing.push(k); });
     localStorage.setItem(_PEDIDOS_VISTOS_KEY, JSON.stringify(existing));
 }
 
@@ -480,9 +501,9 @@ async function cargarNotificacionesSistema() {
         list.innerHTML = '';
 
         const vistos = _getPedidosVistos();
-        /* Sólo mostramos los NO vistos */
+        /* Sólo mostramos los NO vistos (clave compuesta id|estado) */
         const pendientes = (Array.isArray(data) ? data : [])
-            .filter((n, i) => !vistos.includes(String(n.id_pedido ?? i)));
+            .filter((n, i) => !vistos.includes(_makePedidoKey(n.id_pedido ?? i, n.estado)));
 
         const total   = pendientes.length;
         const activos = pendientes.filter(p => ['Pendiente','Emitida','Emitido'].includes(p.estado)).length;
@@ -503,11 +524,13 @@ async function cargarNotificacionesSistema() {
         };
 
         pendientes.forEach((n, i) => {
-            const id  = String(n.id_pedido ?? i);
-            const cfg = ESTADO_CFG[n.estado] || { color:'#888', bg:'#f0f0f0', icon:'bi-bell' };
-            const li  = document.createElement('li');
+            const id    = String(n.id_pedido ?? i);
+            const clave = _makePedidoKey(id, n.estado);
+            const cfg   = ESTADO_CFG[n.estado] || { color:'#888', bg:'#f0f0f0', icon:'bi-bell' };
+            const li    = document.createElement('li');
             li.className = 'notif-item';
-            li.dataset.pedidoId = id;
+            li.dataset.pedidoId    = id;
+            li.dataset.pedidoClave = clave;
             li.innerHTML = `
                 <div class="notif-item-img" style="background:${cfg.bg};">
                     <i class="bi ${cfg.icon}" style="color:${cfg.color};font-size:1rem;"></i>
@@ -523,7 +546,7 @@ async function cargarNotificacionesSistema() {
                 </div>
                 <div class="notif-item-actions">
                     <button class="btn-notif-visto"
-                            onclick="event.stopPropagation();_marcarVistoPedido(this,'${id}')"
+                            onclick="event.stopPropagation();_marcarVistoPedido(this,'${clave}')"
                             title="Marcar como visto">
                         <i class="bi bi-check2"></i>
                     </button>
@@ -765,7 +788,7 @@ function _pushStockToSistemPanel(p, tipo) {
             </small>
         </div>
         <div class="notif-item-actions">
-            <button class="btn-notif-visto" onclick="_marcarVistoPedido(this,'stock-${p.id_producto}')" title="Marcar como visto">
+            <button class="btn-notif-visto" onclick="_marcarVistoPedido(this,'stock-${p.id_producto}|stock')" title="Marcar como visto">
                 <i class="bi bi-check2"></i>
             </button>
         </div>`;
@@ -1062,10 +1085,10 @@ window._marcarVistoPedido = function(btn, id) {
 };
 
 window._pedidosMarcarTodo = function() {
-    /* Persistir todos los IDs visibles como vistos */
+    /* Persistir todas las claves visibles (id|estado) como vistos */
     const items = [...document.querySelectorAll('#sistemList .notif-item')];
-    const ids   = items.map(li => li.dataset.pedidoId).filter(Boolean);
-    _saveAllPedidosVistos(ids);
+    const claves = items.map(li => li.dataset.pedidoClave || li.dataset.pedidoId).filter(Boolean);
+    _saveAllPedidosVistos(claves);
 
     /* Animar salida en cascada */
     items.forEach((li, i) => {

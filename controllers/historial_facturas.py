@@ -33,11 +33,53 @@ def _enriquecer_factura(f: dict) -> dict:
     }
 
 
+def _rol_de_usuario(usuario: dict) -> str:
+    """Extrae el nombre_role del usuario, sea dict plano o con join."""
+    roles_obj = usuario.get("roles") or {}
+    if isinstance(roles_obj, dict):
+        return str(roles_obj.get("nombre_role") or "").lower()
+    return ""
+
+
 @historial_facturas_bp.route("/gestionar_facturas_page")
 @sin_cache
 @login_required
 def gestionar_facturas_page():
     return render_template("general_modules/facturas.html")
+
+
+@historial_facturas_bp.route("/todas_facturas_page")
+@login_required
+def todas_facturas_page():
+    """Carga todas las facturas para admin/vendedor.
+    Vendedor ve todas excepto las de usuarios con rol admin.
+    Admin ve todas sin excepción."""
+    rol = session.get("rol", "")
+    if rol not in ("admin", "vendedor"):
+        return jsonify({"error": "Sin permisos"}), 403
+
+    try:
+        facturas_raw = db.factura_get_all_enriched(limit=150)
+        resultado    = []
+
+        for f in facturas_raw:
+            usr       = f.get("usuarios") or {}
+            rol_usr   = _rol_de_usuario(usr)
+
+            # Vendedor no puede ver facturas de admins
+            if rol == "vendedor" and rol_usr == "admin":
+                continue
+
+            enr = _enriquecer_factura(f)
+            enr["cliente_nombre"]   = f"{usr.get('nombre','')} {usr.get('apellido','')}".strip()
+            enr["username_cliente"] = str(usr.get("username") or "")
+            enr["telefono"]         = str(usr.get("telefono") or "")
+            enr["direccion"]        = str(usr.get("direccion") or "")
+            resultado.append(enr)
+
+        return jsonify(resultado), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @historial_facturas_bp.route("/obtener_facturas_page")
@@ -112,6 +154,16 @@ def buscar_facturas_page():
 
         if not usuario:
             return jsonify([]), 200
+
+        # Vendedor no puede ver las facturas de usuarios con rol admin
+        if rol == "vendedor":
+            rol_encontrado = _rol_de_usuario(usuario)
+            if not rol_encontrado:
+                # Consulta completa para obtener el rol si no viene en el dict básico
+                u_full = db.usuario_get(usuario["cedula"])
+                rol_encontrado = _rol_de_usuario(u_full or {})
+            if rol_encontrado == "admin":
+                return jsonify([]), 200
 
         facturas        = db.factura_get_by_user(usuario["cedula"])
         nombre_completo = f"{usuario.get('nombre', '')} {usuario.get('apellido', '')}".strip()

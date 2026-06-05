@@ -281,16 +281,24 @@ function mostrarDetalleUsuario(u) {
         <div class="modal-dialog modal-dialog-centered modal-md">
             <div class="modal-content udet-content">
 
-                <div class="udet-header">
-                    <div class="udet-avatar-wrap">
-                        ${u.imagen_url
-                            ? `<img src="${u.imagen_url}" class="udet-avatar" onerror="this.outerHTML='<span class=\\'udet-avatar udet-avatar-icon\\'><i class=\\'bi bi-person-fill\\'></i></span>'">`
-                            : `<span class="udet-avatar udet-avatar-icon"><i class="bi bi-person-fill"></i></span>`}
+                <div class="udet-header udet-header-centered">
+                    <button type="button" class="btn-close udet-close" data-bs-dismiss="modal"></button>
+                    <div class="udet-avatar-wrap udet-avatar-wrap-centered">
+                        ${u.imagen_url && !u.imagen_url.includes('default_icon_profile')
+                            ? `<img src=""
+                                    data-profile="${u.imagen_url}"
+                                    data-profile-name="${u.nombre_completo || ''}"
+                                    data-profile-size="160"
+                                    alt="${u.nombre_completo || ''}"
+                                    class="udet-avatar udet-avatar-lg"
+                                    style="display:block;object-fit:cover;border-radius:50%;"
+                                    onerror="this.style.display='none'">`
+                            : `<div class="udet-avatar-lg udet-avatar-initial">${(u.nombre_completo||'?').charAt(0).toUpperCase()}</div>`}
                     </div>
-                    <div class="udet-header-info">
+                    <div class="udet-header-info text-center">
                         <div class="udet-name">${u.nombre_completo || '—'}</div>
                         ${u.username ? `<div class="udet-username">@${u.username}</div>` : ''}
-                        <div class="d-flex gap-2 flex-wrap mt-1">
+                        <div class="d-flex gap-2 flex-wrap mt-1 justify-content-center">
                             <span class="udet-rol-badge" style="background:${ROL_BKGS[rol]||'#eee'};color:${ROL_COLORS[rol]||'#555'};">
                                 <i class="bi ${ROL_ICONS[rol]||'bi-person'} me-1"></i>${rol.charAt(0).toUpperCase()+rol.slice(1)}
                             </span>
@@ -301,7 +309,6 @@ function mostrarDetalleUsuario(u) {
                             </span>
                         </div>
                     </div>
-                    <button type="button" class="btn-close udet-close" data-bs-dismiss="modal"></button>
                 </div>
 
                 <div class="udet-body">
@@ -333,6 +340,9 @@ function mostrarDetalleUsuario(u) {
         </div>`;
     document.body.appendChild(modal);
     new bootstrap.Modal(modal).show();
+    modal.addEventListener('shown.bs.modal', () => {
+        if (typeof initAllProfileImages === 'function') initAllProfileImages();
+    });
     modal.addEventListener('hidden.bs.modal', () => modal.remove());
 }
 

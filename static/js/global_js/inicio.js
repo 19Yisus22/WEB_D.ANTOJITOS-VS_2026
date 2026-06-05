@@ -101,20 +101,26 @@ async function cargarMarketing() {
                     new Date(a.created_at || 0) - new Date(b.created_at || 0)
                 );
 
-                const looped = [...fifoQueue, ...fifoQueue, ...fifoQueue];
-                const baseDuration = Math.max(24, fifoQueue.length * 5);
+                /* 2 copias exactas → -50% en CSS es loop perfecto sin saltos */
+                const looped = [...fifoQueue, ...fifoQueue];
+                const baseDuration = Math.max(28, fifoQueue.length * 6);
                 const speed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
                 const duration = (baseDuration / speed).toFixed(1);
 
-                const itemsHTML = looped.map((i, idx) => {
+                const buildItem = (i, showDivider) => {
                     const validImg = i.imagen_url && i.imagen_url.startsWith('http');
-                    const isLast = (idx + 1) % fifoQueue.length === 0;
                     return `<div class="ci-item">${
                         validImg
                             ? `<img src="${i.imagen_url}" alt="${i.titulo || ''}" loading="lazy" onerror="this.style.display='none'">`
                             : `<i class="bi bi-megaphone ci-item-icon"></i>`
-                    }<span class="ci-item-label">${i.titulo || ''}</span></div>${isLast ? '<div class="ci-divider"></div>' : ''}`;
-                }).join('');
+                    }<span class="ci-item-label">${i.titulo || ''}</span></div>${showDivider ? '<div class="ci-divider"></div>' : ''}`;
+                };
+
+                /* Coloca divisor solo al final de cada copia, no entre ítems */
+                const half = looped.length / 2;
+                const itemsHTML = looped.map((i, idx) =>
+                    buildItem(i, (idx + 1) === half || (idx + 1) === looped.length)
+                ).join('');
 
                 cintaInicioEl.innerHTML = `<div class="ci-track" data-base-duration="${baseDuration}" style="animation-duration:${duration}s;">${itemsHTML}</div>`;
                 cintaInicioEl.style.display = 'flex';
