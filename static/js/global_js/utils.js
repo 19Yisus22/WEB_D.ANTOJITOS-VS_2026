@@ -397,28 +397,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-/* ── Helper para enviar mensajes al SW sin bloquear ── */
-function _swPost(data) {
-    try {
-        if (navigator.serviceWorker?.controller) {
-            navigator.serviceWorker.controller.postMessage(data);
-        }
-    } catch (_) {}
-}
-
-/* ── Listener SW: sincroniza tema/idioma desde otras pestañas ── */
-let _swSyncBusy = false;
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('message', ev => {
-        if (_swSyncBusy) return;
-        _swSyncBusy = true;
-        try {
-            if (ev.data?.type === 'THEME_UPDATED' && ev.data.theme) setTheme(ev.data.theme);
-            if (ev.data?.type === 'LANG_UPDATED'  && ev.data.lang)  { if (typeof setLang === 'function') setLang(ev.data.lang); }
-        } finally { _swSyncBusy = false; }
-    });
-}
-
 // ——— TEMA CLARO / OSCURO ———
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);

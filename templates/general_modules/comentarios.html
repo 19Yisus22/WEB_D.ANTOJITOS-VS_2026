@@ -13,15 +13,9 @@
 </head>
 <body>
     {% include 'global_modules/navbar.html' %}
-<<<<<<< HEAD
     <main class="page-wrapper d-flex align-items-stretch justify-content-center" style="min-height:calc(100dvh - 60px);padding:0;">
         <div class="container-fluid px-2 px-md-4 d-flex flex-column" style="flex:1;">
             <div class="chat-container mx-auto" style="flex:1;" data-reveal>
-=======
-    <main class="page-wrapper d-flex align-items-center justify-content-center py-2 py-md-4">
-        <div class="container-fluid px-2 px-md-4">
-            <div class="chat-container mx-auto" data-reveal>
->>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
 
                 <!-- â”€â”€ Cabecera â”€â”€ -->
                 <header class="chat-header p-3 d-flex align-items-center justify-content-between shadow-sm">
@@ -63,7 +57,6 @@
                                 <button type="button" class="fmt-btn emoji-trigger" id="btnToggleEmojis"
                                         onclick="toggleEmojiPanel()" title="Emojis">🎂</button>
                                 <div id="emojiPanel" class="emoji-panel-container" style="display:none;">
-<<<<<<< HEAD
                                     <div class="emoji-panel-categories">
                                         <button class="ep-cat-btn active" onclick="showEmojiCat('caras',this)">😊</button>
                                         <button class="ep-cat-btn" onclick="showEmojiCat('postres',this)">🍰</button>
@@ -100,25 +93,6 @@
                                         {% for e in ['🌸','🌺','💐','🦋','🌙','☀️','🌻','🌷','🌹','🌼','🍀','🌿','🍃','🌱','🪴','🌊','❄️','⛅','🌤️','🌦️','🐝','🐱','🐶','🐰','🦊','🐻','🐼','🦁','🐯','🦄'] %}
                                         <span class="emoji-item" onclick="insertEmoji('{{ e }}')">{{ e }}</span>
                                         {% endfor %}
-=======
-                                    <div class="emoji-panel-grid">
-                                        <span class="emoji-item" onclick="insertEmoji('😊')">😊</span>
-                                        <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
-                                        <span class="emoji-item" onclick="insertEmoji('😍')">😍</span>
-                                        <span class="emoji-item" onclick="insertEmoji('🙌')">🙌</span>
-                                        <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
-                                        <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
-                                        <span class="emoji-item" onclick="insertEmoji('🍰')">🍰</span>
-                                        <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
-                                        <span class="emoji-item" onclick="insertEmoji('🍫')">🍫</span>
-                                        <span class="emoji-item" onclick="insertEmoji('🍭')">🍭</span>
-                                        <span class="emoji-item" onclick="insertEmoji('🧁')">🧁</span>
-                                        <span class="emoji-item" onclick="insertEmoji('🎂')">🎂</span>
-                                        <span class="emoji-item" onclick="insertEmoji('❤')">❤</span>
-                                        <span class="emoji-item" onclick="insertEmoji('😋')">😋</span>
-                                        <span class="emoji-item" onclick="insertEmoji('🤤')">🤤</span>
-                                        <span class="emoji-item" onclick="insertEmoji('😎')">😎</span>
->>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
                                     </div>
                                 </div>
                             </div>
