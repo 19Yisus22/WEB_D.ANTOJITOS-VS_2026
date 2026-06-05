@@ -29,7 +29,6 @@ def publicidad_page():
                 f_idx    = 0
                 for item in metadata:
                     url = item.get("url_actual", "") or ""
-                    # Rechazar data URLs (preview del cliente, no subidas aún)
                     if url.startswith("data:"):
                         url = ""
                     if item.get("cambio_img") and f_idx < len(archivos):
@@ -37,14 +36,16 @@ def publicidad_page():
                             delete_image(url)
                         url = upload_image(archivos[f_idx], folder="publicidad_DAntojitos") or ""
                         f_idx += 1
+                    titulo = (item.get("titulo") or "").strip()
                     if url:
                         en_uso.append(url)
+                    if titulo or url:
                         nuevos.append({
-                            "tipo":       tipo_db,
-                            "titulo":     item.get("titulo"),
-                            "descripcion": item.get("descripcion", ""),
-                            "imagen_url": url,
-                            "estado":     True,
+                            "tipo":        tipo_db,
+                            "titulo":      titulo,
+                            "descripcion": (item.get("descripcion") or "").strip(),
+                            "imagen_url":  url or None,
+                            "estado":      True,
                         })
 
             _procesar("metadata_carrusel", "imagenes_carrusel", "carrusel")

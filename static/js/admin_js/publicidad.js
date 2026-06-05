@@ -62,18 +62,23 @@ async function comprimirImagen(file) {
 }
 
 function actualizarPreview() {
+    let anyContent = false;
+
+    /* ── Carrusel ── */
     const pCar = document.querySelector("#previewCarrusel .carousel-inner");
+    const blockCar = document.getElementById("prevBlockCarrusel");
     if (pCar) {
         pCar.innerHTML = "";
         const itemsCar = document.querySelectorAll("#carruselContainer .section-preview");
         itemsCar.forEach((div, i) => {
             const item = document.createElement("div");
             item.className = "carousel-item" + (i === 0 ? " active" : "");
-            const img = div.querySelector("img").src;
-            const tit = div.querySelector(".t-tit").value;
+            const imgEl = div.querySelector("img");
+            const img = imgEl && !imgEl.classList.contains("d-none") ? imgEl.src : "";
+            const tit = div.querySelector(".t-tit")?.value || "";
             const des = div.querySelector(".t-des")?.value || "";
             item.innerHTML = `
-                <div class="d-block w-100 position-relative overflow-hidden" style="height:450px;">
+                <div class="d-block w-100 position-relative overflow-hidden" style="height:320px;">
                     <div class="position-absolute w-100 h-100" style="background:url('${img}') center/cover;filter:blur(20px);transform:scale(1.1);z-index:1;"></div>
                     <img src="${img}" class="position-relative d-block h-100 mx-auto shadow-lg" style="object-fit:contain;z-index:2;">
                 </div>
@@ -83,47 +88,66 @@ function actualizarPreview() {
                 </div>`;
             pCar.appendChild(item);
         });
-        if (itemsCar.length > 0) {
+        const hasCar = itemsCar.length > 0;
+        if (blockCar) blockCar.style.display = hasCar ? '' : 'none';
+        if (hasCar) {
+            anyContent = true;
             bootstrap.Carousel.getOrCreateInstance(document.querySelector("#previewCarrusel")).to(0);
         }
     }
 
-    const pCinta = document.getElementById("previewCintaMarquee");
-    if (pCinta) {
-        pCinta.innerHTML = "";
-        let trackContent = "";
-        document.querySelectorAll("#cintaContainer .section-preview").forEach(div => {
-            const img = div.querySelector("img").src;
-            const tit = div.querySelector(".t-tit").value;
-            trackContent += `
-                <div class="promo-item">
-                    <div class="promo-item-image"><img src="${img}" alt="${tit}"></div>
-                    <span class="promo-item-text">${tit}</span>
-                    <div class="promo-item-separator"></div>
-                </div>`;
-        });
-        if (trackContent) {
-            pCinta.innerHTML = trackContent + trackContent + trackContent;
-            pCinta.classList.remove("paused");
+    /* ── Cinta del Inicio ── */
+    const pCintaTrack = document.getElementById("previewCintaTrack");
+    const blockCinta  = document.getElementById("prevBlockCinta");
+    if (pCintaTrack) {
+        const cintaItems = document.querySelectorAll("#inicioCintaContainer .section-preview");
+        if (cintaItems.length > 0) {
+            const buildItem = div => {
+                const imgEl   = div.querySelector("img");
+                const img     = imgEl && !imgEl.classList.contains("d-none") ? imgEl.src : "";
+                const tit     = div.querySelector(".t-tit")?.value || "";
+                return `<div class="ci-item">${img
+                    ? `<img src="${img}" alt="${tit}" style="width:28px;height:28px;object-fit:cover;border-radius:6px;">`
+                    : `<i class="bi bi-megaphone ci-item-icon"></i>`
+                }<span class="ci-item-label">${tit}</span></div>`;
+            };
+            const html = [...cintaItems].map(buildItem).join('');
+            pCintaTrack.innerHTML = html + html + html;
+            if (blockCinta) blockCinta.style.display = '';
+            anyContent = true;
+        } else {
+            pCintaTrack.innerHTML = '';
+            if (blockCinta) blockCinta.style.display = 'none';
         }
     }
 
-    const pSec = document.getElementById("previewSecciones");
+    /* ── Tarjetas Informativas ── */
+    const pSec     = document.getElementById("previewSecciones");
+    const blockSec = document.getElementById("prevBlockSecciones");
     if (pSec) {
         pSec.innerHTML = "";
-        document.querySelectorAll("#seccionesContainer .section-preview").forEach(div => {
+        const secItems = document.querySelectorAll("#seccionesContainer .section-preview");
+        secItems.forEach(div => {
             const d = document.createElement("div");
-            d.className = "col-4 col-md-2 text-center mb-4";
-            const img = div.querySelector("img").src;
-            const tit = div.querySelector(".t-tit").value;
+            d.className = "col-6 col-sm-4 col-md-3 col-lg-2 text-center";
+            const imgEl = div.querySelector("img");
+            const img   = imgEl && !imgEl.classList.contains("d-none") ? imgEl.src : "";
+            const tit   = div.querySelector(".t-tit")?.value || "";
             d.innerHTML = `
-                <div style="width:65px;height:65px;margin:0 auto;background:#f8f9fa;" class="rounded-circle overflow-hidden shadow-sm mb-2 border">
-                    <img src="${img}" class="w-100 h-100" style="object-fit:contain;">
+                <div style="width:60px;height:60px;margin:0 auto;background:#f8f9fa;" class="rounded-circle overflow-hidden shadow-sm mb-2 border">
+                    ${img ? `<img src="${img}" class="w-100 h-100" style="object-fit:contain;">` : `<i class="bi bi-image text-muted fs-4 d-flex align-items-center justify-content-center h-100"></i>`}
                 </div>
-                <div class="small fw-bold text-dark text-truncate px-1">${tit}</div>`;
+                <div class="small fw-bold text-dark" style="word-break:break-word;font-size:0.72rem;">${tit}</div>`;
             pSec.appendChild(d);
         });
+        const hasSec = secItems.length > 0;
+        if (blockSec) blockSec.style.display = hasSec ? '' : 'none';
+        if (hasSec) anyContent = true;
     }
+
+    /* ── Estado vacío ── */
+    const emptyEl = document.getElementById("prevEmpty");
+    if (emptyEl) emptyEl.style.display = anyContent ? 'none' : 'flex';
 }
 
 async function crearNotificacion() {
@@ -226,6 +250,7 @@ function agregarCarrusel(url = "", titulo = "", desc = "", id = "") {
     div.dataset.index = idx;
     div.dataset.dbId = id;
     div.dataset.cambioImagen = "false";
+    div.dataset.urlActual = url;
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
         <div class="section-content row g-3 m-0 w-100 align-items-center">
@@ -265,6 +290,7 @@ function agregarSeccion(url = "", titulo = "", id = "") {
     div.dataset.index = idx;
     div.dataset.dbId = id;
     div.dataset.cambioImagen = "false";
+    div.dataset.urlActual = url;
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
         <div class="section-content d-flex align-items-center gap-4 w-100 p-2">
@@ -296,6 +322,7 @@ function agregarCinta(url = "", titulo = "", id = "") {
     div.dataset.index = idx;
     div.dataset.dbId = id;
     div.dataset.cambioImagen = "false";
+    div.dataset.urlActual = url;
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-4"></i></div>
         <div class="section-content d-flex align-items-center gap-3 w-100 py-2 px-3 border rounded">
@@ -327,6 +354,7 @@ function agregarInicioCinta(url = "", titulo = "", id = "") {
     div.dataset.index = idx;
     div.dataset.dbId = id;
     div.dataset.cambioImagen = "false";
+    div.dataset.urlActual = url;
     div.innerHTML = `
         <div class="drag-handle"><i class="bi bi-grip-vertical fs-4"></i></div>
         <div class="section-content d-flex align-items-center gap-3 w-100 py-2 px-3 border rounded" style="background:#fff8f0;">
@@ -372,8 +400,12 @@ async function guardarMarketing() {
             const div = items[index];
             const fileInput = div.querySelector("input[type='file']");
             const imgEl = div.querySelector("img");
-            const urlActual = (imgEl && imgEl.src && !imgEl.src.startsWith('data:')) ? imgEl.src : '';
-            if (fileInput.files[0]) {
+            const cambioImg = div.dataset.cambioImagen === "true";
+            let urlActual = div.dataset.urlActual || "";
+            if (!urlActual && imgEl && imgEl.src && !imgEl.src.startsWith('data:') && imgEl.src !== window.location.href) {
+                urlActual = imgEl.src;
+            }
+            if (fileInput && fileInput.files[0]) {
                 totalFiles++;
                 formData.append(filePrefix, await comprimirImagen(fileInput.files[0]));
                 uploadedFiles++;
@@ -382,11 +414,11 @@ async function guardarMarketing() {
             }
             metadata.push({
                 index,
-                titulo: div.querySelector(".t-tit")?.value || "",
+                titulo:      div.querySelector(".t-tit")?.value || "",
                 descripcion: div.querySelector(".t-des")?.value || "",
-                url_actual: urlActual,
-                cambio_img: div.dataset.cambioImagen === "true",
-                db_id: div.dataset.dbId || null
+                url_actual:  urlActual,
+                cambio_img:  cambioImg,
+                db_id:       div.dataset.dbId || null,
             });
         }
         formData.append(metaKey, JSON.stringify(metadata));
@@ -406,6 +438,7 @@ async function guardarMarketing() {
         if (data.ok) {
             toast("📢 Publicidad guardada y publicada en el sitio");
             actualizarAlmacenamiento();
+            if (typeof verificarLogros === 'function') verificarLogros({ tipo: 'accion', accion: 'crear_publicidad' });
             setTimeout(() => location.reload(), 1000);
         } else {
             toast(data.error || "Error al guardar", "danger");
@@ -452,7 +485,12 @@ async function cambioImg(input) {
         const comprimido = await comprimirImagen(file);
         const r = new FileReader();
         r.onload = e => {
-            imgElement.src = e.target.result;
+            if (imgElement) {
+                imgElement.src = e.target.result;
+                imgElement.classList.remove("d-none");
+                const placeholder = container.querySelector(".placeholder-icon");
+                if (placeholder) placeholder.classList.add("d-none");
+            }
             container.dataset.cambioImagen = "true";
             actualizarPreview();
         };
@@ -523,57 +561,69 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
+/* ── Toggle de la sección Vista en Vivo ── */
+let _previewLoaded = false;
+
+function toggleLivePreview() {
+    const collapse  = document.getElementById('livePreviewCollapse');
+    const btnLabel  = document.getElementById('lblTogglePreview');
+    const btnIcon   = document.getElementById('iconTogglePreview');
+    const btnReload = document.getElementById('btnRecargarPreview');
+    if (!collapse) return;
+
+    const open = collapse.style.display !== 'none';
+
+    if (open) {
+        collapse.style.display = 'none';
+        if (btnLabel) btnLabel.textContent = 'Ver Vista en Vivo';
+        if (btnIcon)  { btnIcon.className = 'bi bi-eye me-1'; }
+        if (btnReload) btnReload.style.display = 'none';
+    } else {
+        collapse.style.display = 'block';
+        if (btnLabel) btnLabel.textContent = 'Ocultar Vista en Vivo';
+        if (btnIcon)  { btnIcon.className = 'bi bi-eye-slash me-1'; }
+        if (btnReload) btnReload.style.display = '';
+
+        if (!_previewLoaded) {
+            const iframe = document.getElementById('iframePreviewInicio');
+            if (iframe) {
+                iframe.src = '/inicio';
+                _previewLoaded = true;
+                iframe.onload = () => {
+                    _applyPreviewScale();
+                    _initLivePreviewScroll();
+                };
+            }
+        } else {
+            _applyPreviewScale();
+        }
+    }
+}
+
+function _applyPreviewScale() {
+    const iframe = document.getElementById('iframePreviewInicio');
+    if (!iframe) return;
+    iframe.style.width     = '100%';
+    iframe.style.height    = '5400px';
+    iframe.style.transform = 'none';
+}
+
 function recargarPreviewInicio() {
     const iframe = document.getElementById('iframePreviewInicio');
     const badge  = document.getElementById('liveStatusBadge');
     if (!iframe) return;
+    _previewLoaded = false;
     if (badge) { badge.textContent = 'ACTUALIZANDO...'; badge.className = 'badge bg-warning ms-1'; }
-    iframe.src = iframe.src;
+    iframe.src = '/inicio';
+    _previewLoaded = true;
     iframe.onload = () => {
         if (badge) { badge.textContent = 'EN VIVO'; badge.className = 'badge bg-success ms-1'; }
     };
 }
 
 function _initLivePreviewScroll() {
-    const wrapper = document.querySelector('.live-preview-wrapper');
-    const overlay = document.querySelector('.live-preview-overlay');
-    const iframe  = document.getElementById('iframePreviewInicio');
-    if (!wrapper || !overlay || !iframe) return;
-
-    const MAX_SCROLL = 2800;
-    let scrollTop = 0;
-
-    function applyScroll() {
-        iframe.style.transform = `translateY(-${scrollTop}px)`;
-    }
-
-    wrapper.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        scrollTop = Math.max(0, Math.min(MAX_SCROLL, scrollTop + e.deltaY));
-        applyScroll();
-    }, { passive: false });
-
-    let touchStartY = 0;
-    overlay.addEventListener('touchstart', (e) => {
-        touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    overlay.addEventListener('touchmove', (e) => {
-        const dy = touchStartY - e.touches[0].clientY;
-        touchStartY = e.touches[0].clientY;
-        scrollTop = Math.max(0, Math.min(MAX_SCROLL, scrollTop + dy));
-        applyScroll();
-    }, { passive: true });
-
-    let isDragging = false, dragStartY = 0, dragStartScroll = 0;
-    overlay.addEventListener('mousedown', (e) => { isDragging = true; dragStartY = e.clientY; dragStartScroll = scrollTop; });
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        const dy = dragStartY - e.clientY;
-        scrollTop = Math.max(0, Math.min(MAX_SCROLL, dragStartScroll + dy));
-        applyScroll();
-    });
-    document.addEventListener('mouseup', () => { isDragging = false; });
+    // El wrapper tiene overflow-y:auto y el iframe pointer-events:none
+    // El scroll nativo del wrapper ya funciona — nada adicional necesario
 }
 
 //  GESTOR DE IMÁGENES CLOUDINARY
@@ -733,9 +783,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const pubBtn = document.getElementById('navPubBtn');
     if (pubBtn) pubBtn.style.display = '';
 
-    /* Marcar el botón de velocidad activo según el valor guardado */
     const currentSpeed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
     document.querySelectorAll('.ticker-speed-btn').forEach(btn => {
         btn.classList.toggle('active', parseFloat(btn.dataset.speed) === currentSpeed);
+        btn.addEventListener('click', () => {
+            const speed = parseFloat(btn.dataset.speed);
+            if (typeof setTickerSpeed === 'function') setTickerSpeed(speed);
+            mostrarAlerta(`Velocidad ajustada a ${speed}× — guardada automáticamente`);
+        });
     });
 });

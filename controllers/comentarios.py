@@ -91,10 +91,15 @@ def obtener_comentarios():
 @login_required
 def crear_comentario():
     try:
-        data    = request.get_json() or {}
-        mensaje = (data.get("mensaje") or "").strip()
-        if not mensaje:
+        data      = request.get_json() or {}
+        mensaje   = (data.get("mensaje") or "").strip()
+        adjuntos  = data.get("adjuntos") or []
+        if not mensaje and not adjuntos:
             return jsonify({"error": "Mensaje vacío"}), 400
+        if not isinstance(adjuntos, list):
+            adjuntos = []
+        # Validar tamaño máximo de cada adjunto (2 MB en base64 ≈ ~2.7MB de string)
+        adjuntos = [a for a in adjuntos if isinstance(a, dict) and len(str(a.get("data","")))<= 3_000_000]
         usuario = db.usuario_get(session["user_id"])
         if not usuario:
             return jsonify({"error": "Usuario no encontrado"}), 404
@@ -103,10 +108,22 @@ def crear_comentario():
             "nombre_usuario": f"{usuario.get('nombre','')} {usuario.get('apellido','')}".strip(),
             "correo_usuario": usuario.get("correo", ""),
             "foto_perfil":    usuario.get("imagen_url"),
-            "mensaje":        mensaje,
+            "mensaje":        mensaje or "",
             "likes_usuarios": [],
+            "adjuntos":       adjuntos,
         })
-        return jsonify(result[0] if result else {})
+        # Verificar logros de comentarios
+        try:
+            from helpers.logros_utils import verificar_y_otorgar
+            ctx = {"tipo": "comentario"}
+            if adjuntos:
+                ctx["foto_chat"] = True
+            nuevos = verificar_y_otorgar(usuario["cedula"], ctx)
+        except Exception:
+            nuevos = []
+        resp = result[0] if result else {}
+        resp["logros_nuevos"] = nuevos
+        return jsonify(resp)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -278,7 +295,11 @@ def enviar_mensaje_privado():
     cedula = session.get("user_id")
     rol    = session.get("rol", "")
     msg    = (data.get("mensaje") or "").strip()
-    if not msg:
+    adjuntos = data.get("adjuntos") or []
+    if not isinstance(adjuntos, list):
+        adjuntos = []
+    adjuntos = [a for a in adjuntos if isinstance(a, dict) and len(str(a.get("data","")))<= 3_000_000]
+    if not msg and not adjuntos:
         return jsonify({"error": "Mensaje vacío"}), 400
     es_vendedor = rol in ("vendedor", "admin")
     if es_vendedor:
@@ -294,10 +315,20 @@ def enviar_mensaje_privado():
             cedula_cliente    = cedula_cliente,
             cedula_remitente  = cedula,
             es_vendedor       = es_vendedor,
-            mensaje           = msg,
+            mensaje           = msg or "",
             es_predeterminado = es_pred,
+            adjuntos          = adjuntos,
         )
-        return jsonify({"ok": True, "mensaje": nuevo})
+        # Verificar logros
+        try:
+            from helpers.logros_utils import verificar_y_otorgar
+            ctx = {"tipo": "mensaje_privado"}
+            if adjuntos:
+                ctx["foto_chat"] = True
+            nuevos = verificar_y_otorgar(cedula, ctx)
+        except Exception:
+            nuevos = []
+        return jsonify({"ok": True, "mensaje": nuevo, "logros_nuevos": nuevos})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -426,11 +457,25 @@ def staff_enviar():
     data      = request.get_json() or {}
     msg       = (data.get("mensaje") or "").strip()
     cedula_to = (data.get("cedula_dest") or "").strip()
-    if not msg or not cedula_to:
+    adjuntos  = data.get("adjuntos") or []
+    if not isinstance(adjuntos, list):
+        adjuntos = []
+    adjuntos = [a for a in adjuntos if isinstance(a, dict) and len(str(a.get("data", ""))) <= 3_000_000]
+    if not msg and not adjuntos:
+        return jsonify({"error": "Datos incompletos"}), 400
+    if not cedula_to:
         return jsonify({"error": "Datos incompletos"}), 400
     try:
-        nuevo = db.mp_staff_create(cedula_from=cedula, cedula_to=cedula_to, mensaje=msg)
-        return jsonify({"ok": True, "mensaje": nuevo})
+        nuevo = db.mp_staff_create(cedula_from=cedula, cedula_to=cedula_to, mensaje=msg or "", adjuntos=adjuntos or None)
+        try:
+            from helpers.logros_utils import verificar_y_otorgar
+            ctx = {"tipo": "mensaje_privado"}
+            if adjuntos:
+                ctx["foto_chat"] = True
+            nuevos = verificar_y_otorgar(cedula, ctx)
+        except Exception:
+            nuevos = []
+        return jsonify({"ok": True, "mensaje": nuevo, "logros_nuevos": nuevos})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

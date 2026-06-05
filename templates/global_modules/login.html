@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_login.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="login-body">
@@ -88,11 +89,22 @@
     </div>
 
     <div class="login-right">
-        <div class="login-card">
+        <div class="login-card ds-card" data-reveal>
 
             <div class="login-header">
                 <h2 data-i18n="login.title">Iniciar Sesión</h2>
                 <p data-i18n="login.subtitle">Ingresa con tu correo, usuario o cédula</p>
+            </div>
+
+            <div id="lockoutBanner"
+                 class="alert alert-danger d-flex align-items-start gap-2 py-2 px-3 mb-3 rounded-3"
+                 style="display:none">
+                <i class="bi bi-lock-fill flex-shrink-0 mt-1"></i>
+                <div>
+                    <strong id="lockoutTitle">Cuenta bloqueada</strong>
+                    <div id="lockoutMsg" class="small"></div>
+                    <div id="lockoutCountdown" class="small fw-semibold mt-1"></div>
+                </div>
             </div>
 
             <div id="buttonDiv" class="google-btn-area">
@@ -112,7 +124,7 @@
                         <input type="text" id="identifier" name="identifier"
                                maxlength="150" autocomplete="username"
                                data-i18n-placeholder="ph.search_user"
-                               placeholder="correo@gmail.com · usuario · 123456789" required>
+                               placeholder="correo@gmail.com Â· usuario Â· 123456789" required>
                     </div>
                 </div>
 
@@ -130,7 +142,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-login" id="btnLogin">
+                <button type="submit" class="btn-login ds-btn-primary ds-ripple" id="btnLogin">
                     <span id="btnLoginText"><i class="bi bi-box-arrow-in-right me-2"></i><span data-i18n="login.btn">Entrar</span></span>
                     <span id="btnLoginLoader" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span><span data-i18n="status.loading">Verificando...</span></span>
                 </button>
@@ -239,5 +251,7 @@ new Swiper('.loginSwiper', {
     document.addEventListener('langChanged', syncLangLabel);
 })();
 </script>
+<script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
 </body>
 </html>

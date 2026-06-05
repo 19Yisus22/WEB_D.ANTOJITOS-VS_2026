@@ -1,4 +1,4 @@
-﻿@import url('[https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap)');
+﻿@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -1011,6 +1011,11 @@ main { flex-grow: 1; width: 100%; }
 .widget-bloque {
     position: relative;
     transition: border 0.3s ease, padding 0.2s ease;
+    margin-bottom: 22px;
+}
+
+.widget-bloque:last-child {
+    margin-bottom: 0;
 }
 
 /* Widget bloque en edit mode */
@@ -1244,119 +1249,135 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
 
 .cinta-inicio-marquee {
     overflow: hidden;
-    background: linear-gradient(145deg,
-        #130212 0%,
-        #220b1c 22%,
-        #2e1018 45%,
-        #261414 65%,
-        #180a0a 82%,
+    background: linear-gradient(135deg,
+        #0e0010 0%,
+        #1a0518 25%,
+        #260c14 50%,
+        #1a0810 75%,
         #0e0308 100%
     );
-    border-radius: 18px;
+    border-radius: 20px;
     padding: 0;
     margin: 24px 0 8px;
-    border: 1px solid rgba(200, 75, 120, 0.22);
+    border: 1px solid rgba(211, 84, 0, 0.20);
     box-shadow:
-        0 8px 32px rgba(180, 55, 100, 0.16),
-        0 2px 8px rgba(0, 0, 0, 0.28),
-        inset 0 1px 0 rgba(255,255,255,0.04);
+        0 8px 32px rgba(0, 0, 0, 0.35),
+        0 2px 8px rgba(211, 84, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
     display: flex;
     align-items: center;
-    height: 68px;
+    height: 72px;
     position: relative;
 }
 
-/* máscaras de desvanecimiento laterales */
 .cinta-inicio-marquee::before,
 .cinta-inicio-marquee::after {
     content: '';
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 60px;
+    width: 80px;
     z-index: 2;
     pointer-events: none;
 }
 .cinta-inicio-marquee::before {
     left: 0;
-    background: linear-gradient(to right, #130212 0%, transparent 100%);
+    background: linear-gradient(to right, #0e0010 0%, rgba(14,0,16,0) 100%);
 }
 .cinta-inicio-marquee::after {
     right: 0;
-    background: linear-gradient(to left, #0e0308 0%, transparent 100%);
+    background: linear-gradient(to left, #0e0010 0%, rgba(14,0,16,0) 100%);
 }
 
-/* ── ci-track: pista animada — lógica idéntica a .payment-track del footer ── */
+/* ── ci-track: pista animada — 2 copias exactas, -50% loop perfecto ── */
 .ci-track {
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    animation: ciScroll 25s linear infinite;
+    /* duration se sobreescribe inline desde JS */
+    animation: ciScroll 28s linear infinite;
     will-change: transform;
 }
 
-/* Pausa en hover — igual que el footer */
-.cinta-inicio-marquee:hover .ci-track {
-    animation-play-state: paused;
-    cursor: default;
+@media (hover: hover) and (pointer: fine) {
+    .cinta-inicio-marquee:hover .ci-track {
+        animation-play-state: paused;
+        cursor: default;
+    }
 }
 
+/* Con 2 copias idénticas: -50% desplaza exactamente 1 copia → loop sin salto */
 @keyframes ciScroll {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
 }
 
-/* ── ci-item: cada elemento (igual al .payment-item del footer) ── */
 .ci-item {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    width: 180px;
+    width: auto;
     flex-shrink: 0;
-    padding: 0 10px;
-    color: rgba(255,255,255,0.88);
+    padding: 0 20px;
+    color: rgba(255, 255, 255, 0.90);
     font-size: 0.8rem;
     font-weight: 600;
+    transition: transform 0.2s ease;
 }
 
-/* imagen dentro del ítem: misma lógica que .payment-item img del footer */
+.ci-item:hover { transform: scale(1.04); }
+
 .ci-item img {
-    width: 30px;
-    height: 30px;
-    object-fit: contain;
-    border-radius: 6px;
-    background: #fff;
-    padding: 2px;
+    width: 34px;
+    height: 34px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 3px;
     flex-shrink: 0;
-    filter: drop-shadow(0 0 5px rgba(241,167,185,0.4));
-    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        0 0 10px rgba(211, 84, 0, 0.3),
+        0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: box-shadow 0.3s ease;
 }
 
-.ci-item:hover img { filter: drop-shadow(0 0 10px rgba(211,84,0,0.7)); }
+.ci-item:hover img {
+    box-shadow:
+        0 0 18px rgba(211, 84, 0, 0.6),
+        0 4px 12px rgba(0, 0, 0, 0.5);
+}
 
 .ci-item-label {
-    color: rgba(255,255,255,0.88);
+    color: rgba(255, 255, 255, 0.90);
     font-weight: 600;
     font-size: 0.8rem;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 110px;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
 }
 
 .ci-item-icon {
-    color: rgba(220, 110, 150, 0.85);
-    font-size: 1.1rem;
+    color: rgba(240, 136, 62, 0.85);
+    font-size: 1.2rem;
     flex-shrink: 0;
 }
 
+.ci-divider {
+    width: 1px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+    margin: 0 4px;
+}
+
 @media (max-width: 768px) {
-    .cinta-inicio-marquee { height: 56px; }
-    .ci-item { width: 150px; gap: 8px; }
-    .ci-item img { width: 26px; height: 26px; }
-    .ci-item-label { font-size: 0.74rem; max-width: 90px; }
+    .cinta-inicio-marquee { height: 60px; border-radius: 14px; }
+    .ci-item { width: auto; gap: 8px; padding: 0 14px; }
+    .ci-item img { width: 28px; height: 28px; }
+    .ci-item-label { font-size: 0.74rem; }
+    .cinta-inicio-marquee::before,
+    .cinta-inicio-marquee::after { width: 48px; }
 }
 
 #btnCampanaNotif {

@@ -83,14 +83,21 @@ async function cargarPostres(silent = false) {
         const nuevosPostres = await res.json();
 
         if (JSON.stringify(nuevosPostres) !== JSON.stringify(postres)) {
-            const prevAgotados = new Set(postres.filter(p => parseInt(p.stock) <= 0).map(p => p.id_producto));
+            const prevAgotados  = new Set(postres.filter(p => parseInt(p.stock) <= 0).map(p => p.id_producto));
+            const prevDisponibles = new Set(postres.filter(p => parseInt(p.stock) > 0).map(p => p.id_producto));
             postres = nuevosPostres;
             localStorage.setItem('postresCache', JSON.stringify(postres));
             renderPostres();
             nuevosPostres.forEach(p => {
-                if (parseInt(p.stock) <= 0 && !prevAgotados.has(p.id_producto)) {
-                    mostrarAlerta(`¡Se ha agotado el producto! ${p.nombre.toUpperCase()}`, true, 4000);
+                const ahoraAgotado = parseInt(p.stock) <= 0;
+                if (ahoraAgotado && !prevAgotados.has(p.id_producto)) {
+                    /* Recién se agotó */
+                    mostrarAlerta(`📦 Agotado: ${p.nombre.toUpperCase()}`, true, 5000);
                     playNotificationSound('error');
+                } else if (!ahoraAgotado && prevAgotados.has(p.id_producto)) {
+                    /* Volvió a estar disponible */
+                    mostrarAlerta(`✅ Disponible de nuevo: ${p.nombre}`, false, 5000);
+                    playNotificationSound('default');
                 }
             });
         }
@@ -279,7 +286,53 @@ function resetPrevisualizador() {
     }
 }
 
+async function cargarDescuentoCumple() {
+    try {
+        const res  = await fetch('/api/config/descuento_cumpleanos');
+        const data = await res.json();
+        const inp  = document.getElementById('inputDescuentoCumple');
+        if (inp) inp.value = data.pct ?? 5;
+    } catch (_) {}
+}
+
+async function guardarDescuentoCumple() {
+    const inp = document.getElementById('inputDescuentoCumple');
+    const fb  = document.getElementById('descuentoFeedback');
+    if (!inp) return;
+    const pct = parseFloat(inp.value);
+    if (isNaN(pct) || pct < 0 || pct > 100) {
+        fb.textContent = 'Valor inválido (0–100)';
+        fb.className   = 'small text-danger';
+        fb.classList.remove('d-none');
+        return;
+    }
+    try {
+        const res  = await fetch('/api/config/descuento_cumpleanos', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pct }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+            fb.textContent = `✓ Guardado: ${data.pct}%`;
+            fb.className   = 'small text-success';
+        } else {
+            fb.textContent = data.error || 'Error al guardar';
+            fb.className   = 'small text-danger';
+        }
+    } catch (_) {
+        fb.textContent = 'Error de red';
+        fb.className   = 'small text-danger';
+    }
+    fb.classList.remove('d-none');
+    setTimeout(() => fb.classList.add('d-none'), 3000);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
+    cargarDescuentoCumple();
+    const btnDesc = document.getElementById('btnGuardarDescuento');
+    if (btnDesc) btnDesc.addEventListener('click', guardarDescuentoCumple);
+
     await actualizarAlmacenamiento();
     const cached = localStorage.getItem('postresCache');
     if (cached) {
@@ -422,9 +475,11 @@ async function enviarFormulario(formData) {
             const nombre = formData.get('nombre') || 'Producto';
             if (esEdicion) {
                 mostrarAlerta(`✏️ "${nombre}" actualizado correctamente en el catálogo`);
+                if (typeof verificarLogros === 'function') verificarLogros({ tipo: 'accion', accion: 'editar_producto' });
             } else {
                 mostrarAlerta(`🎂 "${nombre}" agregado al catálogo con éxito`);
                 playNotificationSound('default');
+                if (typeof verificarLogros === 'function') verificarLogros({ tipo: 'accion', accion: 'crear_producto' });
             }
             if (stockNuevo <= 0) {
                 mostrarAlerta(`⚠️ "${nombre}" registrado como AGOTADO`, true, 6000);

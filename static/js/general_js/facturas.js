@@ -606,7 +606,13 @@ async function procesarAnulacion(numFactura) {
     });
 }
 
+/* ── Lock + dedup de estados para evitar notificaciones duplicadas ── */
+let _monitorFacturaLock = false;
+const _facturaEstadosNotif = new Map(); /* "numFactura__estado" → true */
+
 async function monitorearCambiosFacturas() {
+    if (_monitorFacturaLock) return;
+    _monitorFacturaLock = true;
 
     const inputBuscar = document.getElementById("buscarFactura");
 
@@ -614,7 +620,7 @@ async function monitorearCambiosFacturas() {
         ? inputBuscar.value.trim()
         : "";
 
-    if (!criterio) return;
+    if (!criterio) { _monitorFacturaLock = false; return; }
 
     try {
 
@@ -638,19 +644,25 @@ async function monitorearCambiosFacturas() {
                 );
 
                 if (fLocal && fLocal.estado !== fServ.estado) {
-                    lanzarNotificacionMultidispositivo(fServ, fServ.estado);
+                    /* Notificar solo UNA vez por transición de estado */
+                    const key = `${fServ.numero_factura}__${fServ.estado}`;
+                    if (!_facturaEstadosNotif.has(key)) {
+                        _facturaEstadosNotif.set(key, true);
+                        lanzarNotificacionMultidispositivo(fServ, fServ.estado);
+                    }
                 }
             });
         }
 
         facturasLocalesCache = JSON.parse(JSON.stringify(facturasServidor));
 
-        const term = criterio.toLowerCase();
+        /* Normaliza: quita @ inicial para comparar usernames con o sin @ */
+        const term = criterio.toLowerCase().replace(/^@/, '');
 
         const filtradas = facturasServidor.filter(f =>
             f.numero_factura.toLowerCase().includes(term) ||
-            (f.cedula && f.cedula.toString().toLowerCase().includes(term)) ||
-            (f.cliente_nombre && f.cliente_nombre.toLowerCase().includes(term)) ||
+            (f.cedula          && f.cedula.toString().toLowerCase().includes(term)) ||
+            (f.cliente_nombre  && f.cliente_nombre.toLowerCase().includes(term))   ||
             (f.username_cliente && f.username_cliente.toLowerCase().includes(term))
         );
 
@@ -662,6 +674,8 @@ async function monitorearCambiosFacturas() {
 
     } catch (e) {
         console.error(e);
+    } finally {
+        _monitorFacturaLock = false;
     }
 }
 
@@ -846,26 +860,50 @@ function mostrarFacturasBuscadas() {
                     </div>
                 </div>
 
-                ${!esFinal ? `
-                    <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold inv-btn-pagar">
-                        <i class="bi bi-qr-code-scan me-2"></i>${t('inv.proceed')}
-                    </button>` : `
-                    <div class="alert alert-${cv.color === 'danger' ? 'secondary' : 'success'} border-0 rounded-pill py-2 text-center small fw-bold mb-0">
-                        <i class="bi ${cv.color === 'danger' ? 'bi-slash-circle' : 'bi-shield-fill-check'} me-1"></i>
-                        ${cv.color === 'danger' ? t('inv.voided') : t('inv.completed')}
-                    </div>`}
-                <div class="inv-actions mt-2">
-                    <button class="btn btn-sm btn-outline-dark inv-btn-pdf flex-fill">
-                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
-                    </button>
-                    ${!esFinal ? `
-                        <button class="btn btn-sm btn-outline-danger inv-btn-anular flex-fill">
-                            <i class="bi bi-x-circle me-1"></i>${t('inv.annul_btn')}
-                        </button>` : `
-                        <button class="btn btn-sm btn-outline-secondary inv-btn-archivar flex-fill">
-                            <i class="bi bi-archive me-1"></i>${t('inv.archive')}
-                        </button>`}
-                </div>
+                ${(() => {
+                    const role = (window.FACTURA_ROLE || 'cliente').toLowerCase();
+                    const esVendedor = role === 'vendedor';
+                    const esAdmin    = role === 'admin';
+                    const esCliente  = !esVendedor && !esAdmin;
+
+                    /* Botón pagar: visible para cliente y admin en facturas activas */
+                    const btnPagar = (!esFinal && !esVendedor)
+                        ? `<button class="btn btn-primary w-100 rounded-pill py-2 fw-bold inv-btn-pagar">
+                               <i class="bi bi-qr-code-scan me-2"></i>${t('inv.proceed')}
+                           </button>`
+                        : esFinal
+                            ? `<div class="alert alert-${cv.color === 'danger' ? 'secondary' : 'success'} border-0 rounded-pill py-2 text-center small fw-bold mb-0">
+                                   <i class="bi ${cv.color === 'danger' ? 'bi-slash-circle' : 'bi-shield-fill-check'} me-1"></i>
+                                   ${cv.color === 'danger' ? t('inv.voided') : t('inv.completed')}
+                               </div>`
+                            : '';
+
+                    /* Botón anular: cliente (no final) y admin (no final) — vendedor NO */
+                    /* Vendedor: botón anular visible pero DESACTIVADO */
+                    const btnAnularArchivo = esVendedor
+                        ? (!esFinal
+                            ? `<button class="btn btn-sm btn-outline-danger inv-btn-anular flex-fill"
+                                       disabled title="El vendedor no puede anular desde aquí. Usa el módulo de Pedidos."
+                                       style="opacity:0.45;cursor:not-allowed;">
+                                   <i class="bi bi-x-circle me-1"></i>${t('inv.annul_btn')}
+                               </button>`
+                            : '')
+                        : (!esFinal
+                            ? `<button class="btn btn-sm btn-outline-danger inv-btn-anular flex-fill">
+                                   <i class="bi bi-x-circle me-1"></i>${t('inv.annul_btn')}
+                               </button>`
+                            : `<button class="btn btn-sm btn-outline-secondary inv-btn-archivar flex-fill">
+                                   <i class="bi bi-archive me-1"></i>${t('inv.archive')}
+                               </button>`);
+
+                    return `${btnPagar}
+                    <div class="inv-actions mt-2">
+                        <button class="btn btn-sm inv-btn-pdf flex-fill">
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF
+                        </button>
+                        ${btnAnularArchivo}
+                    </div>`;
+                })()}
             </div>`;
 
         const bp = item.querySelector('.inv-btn-pagar');
@@ -964,9 +1002,30 @@ function paginar(totalItems) {
     nav.appendChild(frag);
 }
 
+/* ── Carga todas las facturas para vendedor/admin (sin búsqueda requerida) ── */
+async function cargarTodasFacturasPage() {
+    try {
+        const res = await fetch('/todas_facturas_page');
+        if (res.status === 401) { window.location.reload(); return; }
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!Array.isArray(data) || !data.length) return;
+        facturasLocalesCache = JSON.parse(JSON.stringify(data));
+        facturasActuales     = ordenarFacturas(data);
+        paginaActual         = 1;
+        mostrarFacturasBuscadas();
+    } catch (e) { console.error(e); }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
 
     await cargarMetodosPago();
+
+    /* Auto-carga inicial para vendedor y admin */
+    const _roleInit = (window.FACTURA_ROLE || 'cliente').toLowerCase();
+    if (_roleInit === 'vendedor' || _roleInit === 'admin') {
+        cargarTodasFacturasPage();
+    }
 
     const inputInput = document.getElementById("buscarFactura");
 
@@ -1014,11 +1073,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             else if (val.length === 0) {
-
-                facturasActuales = [];
-                facturasLocalesCache = [];
-
-                mostrarFacturasBuscadas();
+                const _roleClear = (window.FACTURA_ROLE || 'cliente').toLowerCase();
+                if (_roleClear === 'vendedor' || _roleClear === 'admin') {
+                    /* Vendedor/Admin: al borrar la búsqueda vuelven a ver todas */
+                    cargarTodasFacturasPage();
+                } else {
+                    facturasActuales     = [];
+                    facturasLocalesCache = [];
+                    mostrarFacturasBuscadas();
+                }
             }
         });
     }
@@ -1041,3 +1104,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     }, 12000);
 });
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/js/workers/service-worker-zona_pagos.js')
+            .catch(() => {});
+    });
+}

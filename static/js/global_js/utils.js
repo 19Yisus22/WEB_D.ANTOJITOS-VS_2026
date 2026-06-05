@@ -1,4 +1,16 @@
-﻿function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
+﻿/* ── Mapa de deduplicación: clave → timestamp de expiración ── */
+const _alertaDedup = new Map();
+
+function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
+    /* Deduplicación global: el mismo mensaje no se muestra de nuevo
+       hasta que el toast anterior haya desaparecido + 300ms de margen.
+       Evita duplicados por polls concurrentes, foco, y eventos de storage. */
+    const ahora = Date.now();
+    const expira = _alertaDedup.get(mensaje);
+    if (expira && ahora < expira) return;
+    _alertaDedup.set(mensaje, ahora + duracionMs + 300);
+    setTimeout(() => _alertaDedup.delete(mensaje), duracionMs + 400);
+
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement('div');
@@ -324,45 +336,81 @@ function lanzarNotificacionNativa(titulo, cuerpo, icono = '/static/uploads/logo.
     } catch (e) { console.warn('Notificación nativa no disponible'); }
 }
 
-// ——— AUDIO INTERNO (no expuesto globalmente) ———
+// ——— AUDIO INTERNO ———
 function _playNotifSound(type = 'default') {
+    if (_isNotifMuted()) return;
     try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
-        const ctx  = new AudioCtx();
-        const osc  = ctx.createOscillator();
-        const gain = ctx.createGain();
+        const ctx = new AudioCtx();
 
+        /* Toca una nota: sine + triángulo para timbre cálido */
+        const _nota = (freq, start, dur, vol = 0.07) => {
+            [['sine', 1.0], ['triangle', 0.35]].forEach(([type, amp]) => {
+                const osc  = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, start);
+                gain.gain.setValueAtTime(0, start);
+                gain.gain.linearRampToValueAtTime(vol * amp, start + 0.009);
+                gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(start);
+                osc.stop(start + dur);
+            });
+        };
+
+        const t = ctx.currentTime;
         if (type === 'error') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(330, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.3);
-            gain.gain.setValueAtTime(0.03, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-            osc.start(); osc.stop(ctx.currentTime + 0.4);
+            /* Dos notas descendentes suaves */
+            _nota(440, t,        0.22, 0.045); // A4
+            _nota(311, t + 0.13, 0.28, 0.04);  // Eb4
         } else {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.05, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-            osc.start(); osc.stop(ctx.currentTime + 0.2);
+            /* Campanita ascendente: C5 → G5 → C6 */
+            _nota(523.25, t,        0.28, 0.07);  // C5
+            _nota(783.99, t + 0.13, 0.30, 0.06);  // G5
+            _nota(1046.5, t + 0.25, 0.22, 0.04);  // C6
         }
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-    } catch (e) {}
+    } catch (_) {}
+}
+
+/* ── Helper para enviar mensajes al SW sin bloquear ── */
+function _swPost(data) {
+    try {
+        if (navigator.serviceWorker?.controller) {
+            navigator.serviceWorker.controller.postMessage(data);
+        }
+    } catch (_) {}
+}
+
+/* ── Listener SW: sincroniza tema/idioma desde otras pestañas ── */
+let _swSyncBusy = false;
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', ev => {
+        if (_swSyncBusy) return;
+        _swSyncBusy = true;
+        try {
+            if (ev.data?.type === 'THEME_UPDATED' && ev.data.theme) setTheme(ev.data.theme);
+            if (ev.data?.type === 'LANG_UPDATED'  && ev.data.lang)  { if (typeof setLang === 'function') setLang(ev.data.lang); }
+        } finally { _swSyncBusy = false; }
+    });
 }
 
 // ——— TEMA CLARO / OSCURO ———
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('dantojitos_theme', theme);
+    if (!_swSyncBusy) _swPost({ type: 'CACHE_THEME', theme });
     const lang = (typeof getLang === 'function') ? getLang() : 'es';
 
     const btn = document.getElementById('themeToggleBtn');
     if (btn) {
         const icon = btn.querySelector('i');
-        if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill me-2' : 'bi bi-moon-fill me-2';
+        const hasLabel = !!btn.querySelector('[data-i18n="nav.theme"]');
+        if (icon) icon.className = theme === 'dark'
+            ? (hasLabel ? 'bi bi-sun-fill me-2' : 'bi bi-sun-fill')
+            : (hasLabel ? 'bi bi-moon-fill me-2' : 'bi bi-moon-fill');
         const label = btn.querySelector('[data-i18n="nav.theme"]');
         if (label) {
             label.textContent = theme === 'dark'
@@ -418,19 +466,25 @@ function toggleSistemPanel() {
     }
 }
 
-/* ── Persistencia de vistos en pedidos (localStorage, sobrevive sesión) ── */
+/* ── Persistencia de vistos en pedidos (localStorage, sobrevive sesión) ──
+   Clave compuesta "id_pedido|estado" para que un cambio de estado
+   vuelva a mostrar la notificación aunque el pedido ya fue visto antes.
+── */
 const _PEDIDOS_VISTOS_KEY = '_dantojitos_pedidos_vistos';
 function _getPedidosVistos() {
     try { return JSON.parse(localStorage.getItem(_PEDIDOS_VISTOS_KEY) || '[]'); }
     catch { return []; }
 }
-function _savePedidoVisto(id) {
-    const list = _getPedidosVistos();
-    if (!list.includes(String(id))) { list.push(String(id)); localStorage.setItem(_PEDIDOS_VISTOS_KEY, JSON.stringify(list)); }
+function _makePedidoKey(id, estado) {
+    return String(id) + '|' + String(estado || '');
 }
-function _saveAllPedidosVistos(ids) {
+function _savePedidoVisto(key) {
+    const list = _getPedidosVistos();
+    if (!list.includes(key)) { list.push(key); localStorage.setItem(_PEDIDOS_VISTOS_KEY, JSON.stringify(list)); }
+}
+function _saveAllPedidosVistos(keys) {
     const existing = _getPedidosVistos();
-    ids.forEach(id => { if (!existing.includes(String(id))) existing.push(String(id)); });
+    keys.forEach(k => { if (!existing.includes(k)) existing.push(k); });
     localStorage.setItem(_PEDIDOS_VISTOS_KEY, JSON.stringify(existing));
 }
 
@@ -439,8 +493,9 @@ function _updateSistemBadge() {
     const badge = document.getElementById('navBellBadge');
     const count = document.getElementById('sistemCount');
     const empty = document.getElementById('sistemEmpty');
-    if (badge) { badge.textContent = remaining > 9 ? '9+' : remaining; badge.style.display = remaining > 0 ? 'flex' : 'none'; }
-    if (count) { count.textContent = remaining || ''; count.style.display = remaining > 0 ? 'inline-flex' : 'none'; }
+    const muted = _isNotifMuted();
+    if (badge) { badge.textContent = remaining > 9 ? '9+' : remaining; badge.style.display = (!muted && remaining > 0) ? 'flex' : 'none'; }
+    if (count) { count.textContent = remaining || ''; count.style.display = (!muted && remaining > 0) ? 'inline-flex' : 'none'; }
     if (empty) empty.style.display = remaining === 0 ? 'flex' : 'none';
 }
 
@@ -457,16 +512,17 @@ async function cargarNotificacionesSistema() {
         list.innerHTML = '';
 
         const vistos = _getPedidosVistos();
-        /* Sólo mostramos los NO vistos */
+        /* Sólo mostramos los NO vistos (clave compuesta id|estado) */
         const pendientes = (Array.isArray(data) ? data : [])
-            .filter((n, i) => !vistos.includes(String(n.id_pedido ?? i)));
+            .filter((n, i) => !vistos.includes(_makePedidoKey(n.id_pedido ?? i, n.estado)));
 
         const total   = pendientes.length;
         const activos = pendientes.filter(p => ['Pendiente','Emitida','Emitido'].includes(p.estado)).length;
+        const muted   = _isNotifMuted();
 
-        if (count) { count.textContent = total || ''; count.style.display = total > 0 ? 'inline-flex' : 'none'; }
+        if (count) { count.textContent = total || ''; count.style.display = (!muted && total > 0) ? 'inline-flex' : 'none'; }
         if (empty) empty.style.display = total === 0 ? 'flex' : 'none';
-        if (badge) { badge.textContent = activos > 9 ? '9+' : activos; badge.style.display = activos > 0 ? 'flex' : 'none'; }
+        if (badge) { badge.textContent = activos > 9 ? '9+' : activos; badge.style.display = (!muted && activos > 0) ? 'flex' : 'none'; }
 
         const ESTADO_CFG = {
             'Pendiente': { color:'#b45309', bg:'#fef3c7', icon:'bi-hourglass-split'        },
@@ -480,11 +536,13 @@ async function cargarNotificacionesSistema() {
         };
 
         pendientes.forEach((n, i) => {
-            const id  = String(n.id_pedido ?? i);
-            const cfg = ESTADO_CFG[n.estado] || { color:'#888', bg:'#f0f0f0', icon:'bi-bell' };
-            const li  = document.createElement('li');
+            const id    = String(n.id_pedido ?? i);
+            const clave = _makePedidoKey(id, n.estado);
+            const cfg   = ESTADO_CFG[n.estado] || { color:'#888', bg:'#f0f0f0', icon:'bi-bell' };
+            const li    = document.createElement('li');
             li.className = 'notif-item';
-            li.dataset.pedidoId = id;
+            li.dataset.pedidoId    = id;
+            li.dataset.pedidoClave = clave;
             li.innerHTML = `
                 <div class="notif-item-img" style="background:${cfg.bg};">
                     <i class="bi ${cfg.icon}" style="color:${cfg.color};font-size:1rem;"></i>
@@ -500,7 +558,7 @@ async function cargarNotificacionesSistema() {
                 </div>
                 <div class="notif-item-actions">
                     <button class="btn-notif-visto"
-                            onclick="event.stopPropagation();_marcarVistoPedido(this,'${id}')"
+                            onclick="event.stopPropagation();_marcarVistoPedido(this,'${clave}')"
                             title="Marcar como visto">
                         <i class="bi bi-check2"></i>
                     </button>
@@ -528,8 +586,9 @@ async function cargarNotificacionesAdmin() {
         const pubCount = document.getElementById('notifCount');
         const pubBadge = document.getElementById('navPubBadge');
         const activas  = Array.isArray(data) ? data.filter(n => n.estado).length : 0;
-        if (pubCount) { pubCount.textContent = activas || ''; pubCount.style.display = activas > 0 ? 'inline-flex' : 'none'; }
-        if (pubBadge) { pubBadge.textContent = activas > 9 ? '9+' : activas; pubBadge.style.display = activas > 0 ? 'flex' : 'none'; }
+        const _pubMuted = _isNotifMuted();
+        if (pubCount) { pubCount.textContent = activas || ''; pubCount.style.display = (!_pubMuted && activas > 0) ? 'inline-flex' : 'none'; }
+        if (pubBadge) { pubBadge.textContent = activas > 9 ? '9+' : activas; pubBadge.style.display = (!_pubMuted && activas > 0) ? 'flex' : 'none'; }
 
         (Array.isArray(data) ? data : []).forEach(n => {
             const li = document.createElement('li');
@@ -582,12 +641,63 @@ async function eliminarNotif(id) {
     });
 }
 
+/* Helper global para fallback de imágenes en bandejas (evita comillas rotas en onerror+innerHTML) */
+function _notifImgFallback(img, icon, color) {
+    if (!img || !img.parentNode) return;
+    const i = document.createElement('i');
+    i.className = `bi ${icon}`;
+    i.style.cssText = `color:${color};font-size:1rem;`;
+    img.parentNode.replaceChild(i, img);
+}
+function _notifImgFallbackCover(img, icon, color) {
+    if (!img || !img.parentNode) return;
+    const i = document.createElement('i');
+    i.className = `bi ${icon}`;
+    i.style.cssText = `color:${color};font-size:1rem;width:100%;height:100%;display:flex;align-items:center;justify-content:center;`;
+    img.parentNode.replaceChild(i, img);
+}
+
 /* ══════════════════════════════════════════════════════
    BANDEJA DE NOTIFICACIONES — CLIENTE (localStorage)
    ══════════════════════════════════════════════════════ */
 const _CLIENT_NOTIF_KEY = '_dantojitos_client_notifs';
 const _CLIENT_SEEN_KEY  = '_dantojitos_client_seen';
 const _CLIENT_NOTIF_MAX = 30;
+const _NOTIF_MUTED_KEY  = '_dantojitos_notif_muted';
+
+function _isNotifMuted() {
+    return localStorage.getItem(_NOTIF_MUTED_KEY) === '1';
+}
+
+function _syncMuteUI() {
+    const muted = _isNotifMuted();
+    document.querySelectorAll('.notif-mute-btn').forEach(btn => {
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = muted ? 'bi bi-bell-slash-fill' : 'bi bi-bell-fill';
+        btn.title  = muted ? 'Activar notificaciones' : 'Silenciar notificaciones';
+        btn.classList.toggle('muted', muted);
+    });
+    /* Icono de la campana principal */
+    ['navClientBellBtn','navBellBtn'].forEach(id => {
+        const icon = document.querySelector(`#${id} i`);
+        if (icon) icon.className = muted ? 'bi bi-bell-slash-fill' : 'bi bi-bell-fill';
+    });
+    /* Si se silencia, ocultar todos los badges numéricos */
+    if (muted) {
+        ['navClientBellBadge','navBellBadge','clientNotifCount','sistemCount','navPubBadge','notifCount']
+            .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    } else {
+        /* Restaurar conteos reales */
+        _renderClientNotifs();
+        if (document.getElementById('navBellBadge'))    cargarNotificacionesSistema();
+        if (document.getElementById('notifAdminPanel')) cargarNotificacionesAdmin();
+    }
+}
+
+window.toggleNotifMute = function() {
+    localStorage.setItem(_NOTIF_MUTED_KEY, _isNotifMuted() ? '0' : '1');
+    _syncMuteUI();
+};
 
 function _getClientNotifs() {
     try { return JSON.parse(localStorage.getItem(_CLIENT_NOTIF_KEY) || '[]'); } catch { return []; }
@@ -633,8 +743,9 @@ function _renderClientNotifs() {
         return;
     }
     if (empty)  empty.style.display  = 'none';
-    if (count)  { count.textContent  = notifs.length > 9 ? '9+' : notifs.length; count.style.display = 'inline-flex'; }
-    if (badge)  { badge.textContent  = notifs.length > 9 ? '9+' : notifs.length; badge.style.display = 'flex'; }
+    const _muted = _isNotifMuted();
+    if (count)  { count.textContent  = notifs.length > 9 ? '9+' : notifs.length; count.style.display = _muted ? 'none' : 'inline-flex'; }
+    if (badge)  { badge.textContent  = notifs.length > 9 ? '9+' : notifs.length; badge.style.display = _muted ? 'none' : 'flex'; }
     notifs.forEach((n, i) => {
         const isPerfil  = n.tipo === 'perfil';
         const agotado   = n.tipo === 'agotado';
@@ -648,7 +759,7 @@ function _renderClientNotifs() {
         if (n.url) { li.style.cursor = 'pointer'; li.onclick = (e) => { if (!e.target.closest('.btn-notif-visto')) window.location.href = n.url; }; }
         li.innerHTML = `
             <div class="notif-item-img" style="background:${bg};">
-                ${n.imagen ? `<img src="${n.imagen}" onerror="this.outerHTML='<i class=\\"bi ${icon}\\" style=\\"color:${color};font-size:1rem;\\"></i>'">` : `<i class="bi ${icon}" style="color:${color};font-size:1rem;"></i>`}
+                ${n.imagen ? `<img src="${n.imagen}" onerror="_notifImgFallback(this,'${icon}','${color}')" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : `<i class="bi ${icon}" style="color:${color};font-size:1rem;"></i>`}
             </div>
             <div class="notif-item-info" style="flex:1;min-width:0;">
                 <strong style="font-size:0.78rem;">${n.titulo}</strong>
@@ -732,7 +843,7 @@ function _pushStockToSistemPanel(p, tipo) {
     li.dataset.pedidoId = `stock-${p.id_producto}`;
     li.innerHTML = `
         <div class="notif-item-img" style="background:${bg};">
-            ${p.imagen_url ? `<img src="${p.imagen_url}" onerror="this.outerHTML='<i class=\\"bi ${icon}\\" style=\\"color:${color};font-size:1rem;\\"></i>'" style="width:100%;height:100%;object-fit:cover;">` : `<i class="bi ${icon}" style="color:${color};font-size:1rem;"></i>`}
+            ${p.imagen_url ? `<img src="${p.imagen_url}" onerror="_notifImgFallbackCover(this,'${icon}','${color}')" style="width:100%;height:100%;object-fit:cover;">` : `<i class="bi ${icon}" style="color:${color};font-size:1rem;"></i>`}
         </div>
         <div class="notif-item-info" style="flex:1;min-width:0;">
             <strong style="font-size:0.78rem;">${titulo}</strong>
@@ -742,7 +853,7 @@ function _pushStockToSistemPanel(p, tipo) {
             </small>
         </div>
         <div class="notif-item-actions">
-            <button class="btn-notif-visto" onclick="_marcarVistoPedido(this,'stock-${p.id_producto}')" title="Marcar como visto">
+            <button class="btn-notif-visto" onclick="_marcarVistoPedido(this,'stock-${p.id_producto}|stock')" title="Marcar como visto">
                 <i class="bi bi-check2"></i>
             </button>
         </div>`;
@@ -817,7 +928,7 @@ function _pushStockToSistemPanel(p, tipo) {
 
 /* ── Animación de badge cuando llega una nueva notificación ── */
 function _animateBadge(badgeEl) {
-    if (!badgeEl) return;
+    if (!badgeEl || _isNotifMuted()) return;
     badgeEl.style.transition = 'none';
     badgeEl.style.transform  = 'scale(1.7)';
     badgeEl.style.background = '#e74c3c';
@@ -846,6 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrollProgressBar();
     solicitarPermisosNotificacion();
     setTheme(localStorage.getItem('dantojitos_theme') || 'light');
+    _syncMuteUI();   /* Restaurar estado de silencio persistido */
     if (document.getElementById('notifAdminPanel')) cargarNotificacionesAdmin();
 
     /* Polling: cada 12 s para admin/vendedor que tienen la campana */
@@ -1039,10 +1151,10 @@ window._marcarVistoPedido = function(btn, id) {
 };
 
 window._pedidosMarcarTodo = function() {
-    /* Persistir todos los IDs visibles como vistos */
+    /* Persistir todas las claves visibles (id|estado) como vistos */
     const items = [...document.querySelectorAll('#sistemList .notif-item')];
-    const ids   = items.map(li => li.dataset.pedidoId).filter(Boolean);
-    _saveAllPedidosVistos(ids);
+    const claves = items.map(li => li.dataset.pedidoClave || li.dataset.pedidoId).filter(Boolean);
+    _saveAllPedidosVistos(claves);
 
     /* Animar salida en cascada */
     items.forEach((li, i) => {
@@ -1185,7 +1297,7 @@ function _updatePrivClientNotif(count) {
     });
     _saveClientNotifs(arr);
     _renderClientNotifs();
-    if (count > prevCount && _lastPrivCv >= 0) {
+    if (count > prevCount && _lastPrivCv >= 0 && !_isNotifMuted()) {
         const bell = document.getElementById('navClientBellBtn');
         if (bell) { bell.classList.add('ring-anim'); setTimeout(() => bell.classList.remove('ring-anim'), 2500); }
         _animateBadge(document.getElementById('navClientBellBadge'));
@@ -1240,6 +1352,146 @@ window._publicidadMarcarTodo = async function() {
    NOTIFICACIÓN AUTOMÁTICA — perfil incompleto
    Se muestra una vez por sesión si la cédula es generada (G-).
    ══════════════════════════════════════════════════════ */
+const _AVATAR_PALETTES = [
+    ['#d35400','#e67e22'],
+    ['#1a6fa8','#2980b9'],
+    ['#1a8f4c','#27ae60'],
+    ['#6d28d9','#8b5cf6'],
+    ['#b91c1c','#ef4444'],
+    ['#0e7490','#06b6d4'],
+    ['#92400e','#d97706'],
+    ['#1e3a8a','#3b82f6'],
+];
+
+function _avatarPalette(name) {
+    const code = (name || '').split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0);
+    return _AVATAR_PALETTES[Math.abs(code) % _AVATAR_PALETTES.length];
+}
+
+function _buildAvatarDiv(name, fontSize = '1rem') {
+    const initial  = (name || '?').charAt(0).toUpperCase();
+    const [c1, c2] = _avatarPalette(name);
+    const div = document.createElement('div');
+    div.className = 'avatar-initial';
+    div.textContent = initial;
+    div.style.cssText = `
+        width:100%;height:100%;
+        background:linear-gradient(135deg,${c1},${c2});
+        display:flex;align-items:center;justify-content:center;
+        color:#fff;font-weight:800;font-size:${fontSize};
+        font-family:'DM Sans',system-ui,sans-serif;
+        border-radius:inherit;user-select:none;letter-spacing:-0.02em;
+    `;
+    return div;
+}
+
+function _applyAvatarFallback(imgEl, name) {
+    if (!imgEl || !imgEl.parentNode) return;
+    const container = imgEl.parentNode;
+    const size = container.offsetWidth || 40;
+    const fs   = Math.max(10, Math.round(size * 0.4)) + 'px';
+    const div  = _buildAvatarDiv(name, fs);
+    div.style.minWidth  = '100%';
+    div.style.minHeight = '100%';
+    container.replaceChild(div, imgEl);
+}
+
+window._avatarFallback = _applyAvatarFallback;
+
+function _cloudinaryThumb(url, w = 80, h = 80) {
+    if (!url || !url.includes('cloudinary.com') || !url.includes('/upload/')) return url;
+    return url.replace('/upload/', `/upload/w_${w},h_${h},c_fill,g_auto:face,q_auto,f_auto/`);
+}
+
+function _googleThumb(url, size = 80) {
+    if (!url || !url.includes('googleusercontent.com')) return url;
+    return url.replace(/=s\d+-c/, `=s${size}-c`).replace(/\/s\d+-c\//, `/s${size}-c/`) || url;
+}
+
+function loadProfileImg(imgEl, rawUrl, name, thumbSize = 80) {
+    if (!imgEl) return;
+    if (imgEl.dataset.profileLoaded) return; // ya procesado, no reprocesar
+
+    const isDefault = !rawUrl
+        || rawUrl.includes('default_icon_profile')
+        || rawUrl === '/static/uploads/default_icon_profile.png';
+
+    if (isDefault) {
+        _applyAvatarFallback(imgEl, name);
+        return;
+    }
+
+    let optimized = rawUrl;
+    if (rawUrl.includes('cloudinary.com'))            optimized = _cloudinaryThumb(rawUrl, thumbSize, thumbSize);
+    else if (rawUrl.includes('googleusercontent.com')) optimized = _googleThumb(rawUrl, thumbSize);
+
+    imgEl.classList.add('prof-img-loading');
+
+    const tmp = new Image();
+    tmp.onload = () => {
+        if (!imgEl.parentNode) return; // fue reemplazado mientras cargaba
+        imgEl.src = optimized;
+        imgEl.dataset.profileLoaded = '1';
+        imgEl.classList.remove('prof-img-loading');
+        imgEl.onerror = () => { if (imgEl.parentNode) _applyAvatarFallback(imgEl, name); };
+    };
+    tmp.onerror = () => {
+        imgEl.classList.remove('prof-img-loading');
+        _applyAvatarFallback(imgEl, name);
+    };
+    tmp.src = optimized;
+}
+
+function initAllProfileImages() {
+    document.querySelectorAll('img[data-profile]').forEach(img => {
+        const raw  = img.dataset.profile;
+        const name = img.dataset.profileName || '';
+        const size = parseInt(img.dataset.profileSize || '80', 10);
+        loadProfileImg(img, raw, name, size);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initAllProfileImages);
+
+function _fileIconInfo(nombre) {
+    const ext = (nombre || '').split('.').pop().toLowerCase();
+    const map = {
+        pdf:  { icon: 'bi-file-earmark-pdf-fill',  color: '#e74c3c' },
+        doc:  { icon: 'bi-file-earmark-word-fill',  color: '#2980b9' },
+        docx: { icon: 'bi-file-earmark-word-fill',  color: '#2980b9' },
+        xls:  { icon: 'bi-file-earmark-excel-fill', color: '#27ae60' },
+        xlsx: { icon: 'bi-file-earmark-excel-fill', color: '#27ae60' },
+        ppt:  { icon: 'bi-file-earmark-ppt-fill',   color: '#e67e22' },
+        pptx: { icon: 'bi-file-earmark-ppt-fill',   color: '#e67e22' },
+        zip:  { icon: 'bi-file-earmark-zip-fill',   color: '#8e44ad' },
+        rar:  { icon: 'bi-file-earmark-zip-fill',   color: '#8e44ad' },
+        '7z': { icon: 'bi-file-earmark-zip-fill',   color: '#8e44ad' },
+        jpg:  { icon: 'bi-file-earmark-image-fill', color: '#d35400' },
+        jpeg: { icon: 'bi-file-earmark-image-fill', color: '#d35400' },
+        png:  { icon: 'bi-file-earmark-image-fill', color: '#d35400' },
+        gif:  { icon: 'bi-file-earmark-image-fill', color: '#d35400' },
+        mp4:  { icon: 'bi-file-earmark-play-fill',  color: '#c0392b' },
+        mov:  { icon: 'bi-file-earmark-play-fill',  color: '#c0392b' },
+        txt:  { icon: 'bi-file-earmark-text-fill',  color: '#7f8c8d' },
+        pkt:  { icon: 'bi-diagram-3-fill',          color: '#2471a3' },
+        sql:  { icon: 'bi-database-fill',           color: '#1a5276' },
+    };
+    return map[ext] || { icon: 'bi-file-earmark-fill', color: '#95a5a6' };
+}
+
+function _fmtFileBytes(b) {
+    if (!b || b === 0) return '0 B';
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function _fmtFileDate(iso) {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' }); }
+    catch { return ''; }
+}
+
 document.addEventListener('DOMContentLoaded', function _checkProfileNotif() {
     if (!window._PROFILE_INCOMPLETE) return;
 
@@ -1259,7 +1511,7 @@ document.addEventListener('DOMContentLoaded', function _checkProfileNotif() {
             url:     '/mi_perfil',
         });
         const bell = document.getElementById('navClientBellBtn');
-        if (bell) bell.classList.add('ring-anim');
+        if (bell && !_isNotifMuted()) bell.classList.add('ring-anim');
         setTimeout(() => bell && bell.classList.remove('ring-anim'), 2500);
     }, 1500);
 });

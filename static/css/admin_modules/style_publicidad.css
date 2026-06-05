@@ -250,47 +250,94 @@ body {
     min-height: 400px;
 }
 
+/* ── Panel de vista previa de cambios ── */
+.pub-preview-panel {
+    background: #f8fafc;
+    border: 1.5px solid #edf0f5;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 120px;
+}
+
+.pub-prev-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pub-prev-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #d35400;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(211,84,0,0.15);
+    padding-bottom: 6px;
+}
+
+.pub-prev-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    color: #94a3b8;
+    text-align: center;
+    font-size: 0.85rem;
+    gap: 8px;
+}
+
+[data-theme="dark"] .pub-preview-panel {
+    background: var(--dk-card2, #2a2740) !important;
+    border-color: var(--dk-border, #312d48) !important;
+}
+[data-theme="dark"] .pub-prev-label { color: var(--dk-accent, #f0883e) !important; border-color: rgba(240,136,62,0.2) !important; }
+[data-theme="dark"] .pub-prev-empty { color: var(--dk-text-subtle, #4a4868) !important; }
+
+/* ── Vista en Vivo (iframe inicio) ── */
 .live-preview-wrapper {
     position: relative;
     width: 100%;
-    height: 700px;
+    height: calc(100vh - 80px);
+    min-height: 750px;
     border-radius: 16px;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     box-shadow: 0 20px 60px rgba(0,0,0,0.15);
     border: 2px solid rgba(211,84,0,0.15);
     background: #f8f9fa;
-    cursor: ns-resize;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(211,84,0,0.35) transparent;
 }
 
+.live-preview-wrapper::-webkit-scrollbar { width: 6px; }
+.live-preview-wrapper::-webkit-scrollbar-track { background: transparent; }
+.live-preview-wrapper::-webkit-scrollbar-thumb { background: rgba(211,84,0,0.35); border-radius: 6px; }
+
+/* Iframe en flujo normal — el wrapper scrollea sobre él */
 .live-preview-iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 3500px;
-    border: none;
     display: block;
+    width: 100%;
+    height: 5400px;
+    border: none;
     pointer-events: none;
-    transform-origin: top left;
-    transition: transform 0.05s linear;
 }
 
+/* Overlay solo como indicador visual — no interfiere con scroll */
 .live-preview-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    cursor: ns-resize;
-    background: transparent;
-    user-select: none;
-}
-
-@media (max-width: 768px) {
-    .live-preview-wrapper { height: 420px; }
+    display: none;
 }
 
 [data-theme="dark"] .live-preview-wrapper {
     border-color: rgba(240,136,62,0.25) !important;
     box-shadow: 0 20px 60px rgba(0,0,0,0.4) !important;
+    background: #0d0d0d !important;
+    scrollbar-color: rgba(240,136,62,0.35) transparent !important;
 }
 
 .promo-banner-wrapper {

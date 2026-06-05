@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_modules/style_pedidos.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -34,14 +35,14 @@
 
         <div class="widget-panel" data-panel="stats">
             <div class="widget-content">
-                <div class="row g-3 mb-2" id="statsVentasRow">
+                <div class="row g-3 mb-2" id="statsVentasRow" data-reveal>
                     <div class="col-6 col-md-3">
                         <div class="stats-venta-card">
                             <div class="stats-venta-icon" style="background:rgba(211,84,0,0.12);color:#d35400;">
                                 <i class="bi bi-receipt-cutoff"></i>
                             </div>
                             <div>
-                                <div class="stats-venta-num" id="svTotalPedidos">—</div>
+                                <div class="stats-venta-num" id="svTotalPedidos" data-counter>—</div>
                                 <div class="stats-venta-lbl" data-i18n="ord.total_orders">Total Pedidos</div>
                             </div>
                         </div>
@@ -52,7 +53,7 @@
                                 <i class="bi bi-cash-coin"></i>
                             </div>
                             <div>
-                                <div class="stats-venta-num" id="svTotalVentas">—</div>
+                                <div class="stats-venta-num" id="svTotalVentas" data-counter>—</div>
                                 <div class="stats-venta-lbl" data-i18n="ord.total_sales">Ventas Totales</div>
                             </div>
                         </div>
@@ -63,7 +64,7 @@
                                 <i class="bi bi-check2-all"></i>
                             </div>
                             <div>
-                                <div class="stats-venta-num" id="svEntregados">—</div>
+                                <div class="stats-venta-num" id="svEntregados" data-counter>—</div>
                                 <div class="stats-venta-lbl" data-i18n="ord.delivered_cnt">Entregados</div>
                             </div>
                         </div>
@@ -77,7 +78,7 @@
                                 <div class="stats-venta-num">
                                     <span id="svPorcentaje" class="badge-porcentaje-verde">—</span>
                                 </div>
-                                <div class="stats-venta-lbl" data-i18n="ord.success_rate">Tasa de Éxito</div>
+                                <div class="stats-venta-lbl" data-i18n="ord.success_rate">Tasa de Ã‰xito</div>
                             </div>
                         </div>
                     </div>
@@ -87,7 +88,7 @@
 
         <div class="widget-panel" data-panel="filtros">
             <div class="widget-content">
-                <div class="card p-0 mb-3">
+                <div class="card ds-card p-0 mb-3" data-reveal>
                     <div class="card-body" style="padding: 1.5rem;">
                         <div class="row g-3 align-items-end">
                             <div class="col-md-4">
@@ -207,7 +208,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="btn.close">Cerrar</button>
-                    <button type="button" id="btnGenerarPDF" class="btn btn-primary px-4">
+                    <button type="button" id="btnGenerarPDF" class="btn btn-primary ds-btn-primary px-4">
                         <i class="bi bi-file-earmark-pdf-fill"></i> <span data-i18n="btn.download">Descargar PDF</span>
                     </button>
                 </div>
@@ -219,6 +220,8 @@
     {% include 'global_modules/footer.html' %}
     <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
 
+    <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/admin_js/pedidos_notif.js') }}"></script>
@@ -226,3 +229,4 @@
     {% endif %}
 </body>
 </html>
+

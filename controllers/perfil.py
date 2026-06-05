@@ -7,31 +7,57 @@ from helpers.cloudinary import upload_image, delete_image
 
 perfil_bp = Blueprint("perfil", __name__)
 
-COOLDOWN_DIAS = 30
-
-def _puede_cambiar(usuario: dict, campo: str) -> tuple:
-    key    = f"last_change_{campo}"
-    ultimo = usuario.get(key)
-    if not ultimo:
-        return True, None
-    try:
-        ultimo_dt  = datetime.fromisoformat(str(ultimo).replace("Z", "+00:00"))
-        siguiente  = ultimo_dt + timedelta(days=COOLDOWN_DIAS)
-        if datetime.now(timezone.utc) >= siguiente:
-            return True, None
-        return False, siguiente.isoformat()
-    except Exception:
-        return True, None
+COOLDOWN_DIAS = 10
 
 def _ahora_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+def _ultima_edicion(usuario: dict):
+    """Retorna el datetime de la edición de perfil más reciente."""
+    fechas = []
+    for campo in ("nombre", "apellido", "cedula", "username"):
+        v = usuario.get(f"last_change_{campo}")
+        if v:
+            try:
+                fechas.append(datetime.fromisoformat(str(v).replace("Z", "+00:00")))
+            except Exception:
+                pass
+    return max(fechas) if fechas else None
+
+def _puede_editar_perfil(usuario: dict) -> tuple:
+    """Retorna (puede_editar, disponible_en_iso)."""
+    cedula = str(usuario.get("cedula") or "")
+    if cedula.startswith("G-"):
+        return True, None
+
+    ultima = _ultima_edicion(usuario)
+    if not ultima:
+        return True, None
+    siguiente = ultima + timedelta(days=COOLDOWN_DIAS)
+    if datetime.now(timezone.utc) >= siguiente:
+        return True, None
+    return False, siguiente.isoformat()
+
+def _puede_cambiar_contrasena(cedula: str) -> tuple:
+    """Retorna (puede_cambiar, disponible_en_iso) para el cooldown de contraseña."""
+    v = db.usuario_get_pass_cooldown(str(cedula))
+    if not v:
+        return True, None
+    try:
+        ultima = datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+    except Exception:
+        return True, None
+    siguiente = ultima + timedelta(days=COOLDOWN_DIAS)
+    if datetime.now(timezone.utc) >= siguiente:
+        return True, None
+    return False, siguiente.isoformat()
 
 def _dias_restantes(siguiente_iso: str) -> int:
     try:
         sig = datetime.fromisoformat(siguiente_iso.replace("Z", "+00:00"))
         return max(1, (sig - datetime.now(timezone.utc)).days + 1)
     except Exception:
-        return 30
+        return COOLDOWN_DIAS
 
 
 @perfil_bp.route("/mi_perfil", methods=["GET", "POST"])
@@ -92,18 +118,17 @@ def perfil_restricciones():
     try:
         usuario = db.usuario_get(user_id)
         if not usuario:
-            return jsonify({}), 200
-        resultado = {}
-        for campo in ("cedula", "username", "nombre", "apellido"):
-            puede, siguiente = _puede_cambiar(usuario, campo)
-            resultado[campo] = {
-                "bloqueado":      not puede,
-                "disponible_en":  siguiente,
-                "ultimo_cambio":  usuario.get(f"last_change_{campo}"),
-            }
-        return jsonify(resultado)
+            return jsonify({"bloqueado": False, "disponible_en": None, "pass_bloqueado": False, "pass_disponible_en": None}), 200
+        puede, siguiente           = _puede_editar_perfil(usuario)
+        puede_pass, siguiente_pass = _puede_cambiar_contrasena(usuario.get("cedula", user_id))
+        return jsonify({
+            "bloqueado":       not puede,
+            "disponible_en":   siguiente,
+            "pass_bloqueado":  not puede_pass,
+            "pass_disponible_en": siguiente_pass,
+        })
     except Exception:
-        return jsonify({}), 200
+        return jsonify({"bloqueado": False, "disponible_en": None, "pass_bloqueado": False, "pass_disponible_en": None}), 200
 
 
 @perfil_bp.route("/actualizar_perfil/<cedula>", methods=["PUT", "POST"])
@@ -128,6 +153,12 @@ def actualizar_perfil(cedula):
         else:
             return jsonify({"ok": False, "error": "Sesión expirada. Recarga la página e intenta de nuevo."}), 404
 
+    # Cooldown global: un solo check para todo el perfil
+    puede, siguiente = _puede_editar_perfil(usuario_previo)
+    if not puede:
+        dias = _dias_restantes(siguiente)
+        return jsonify({"ok": False, "error": f"Solo puedes editar tu perfil una vez cada {COOLDOWN_DIAS} días. Disponible en {dias} día(s).", "disponible_en": siguiente}), 429
+
     data = request.form if request.form else (request.json or {})
 
     campos = {
@@ -139,6 +170,19 @@ def actualizar_perfil(cedula):
         "metodo_pago": (data.get("metodoPagoPerfil") or "").strip(),
     }
     campos = {k: v for k, v in campos.items() if v}
+
+    # Fecha de cumpleaños (no sujeta a cooldown, se puede editar siempre)
+    fecha_nacimiento_raw = (data.get("fechaNacimientoPerfil") or "").strip()
+    if fecha_nacimiento_raw:
+        try:
+            from datetime import date
+            fn = date.fromisoformat(fecha_nacimiento_raw)
+            # Validar rango razonable
+            hoy = date.today()
+            if date(1900, 1, 1) <= fn <= hoy:
+                campos["fecha_nacimiento"] = fn.isoformat()
+        except Exception:
+            pass
 
     nuevo_username = (data.get("usernamePerfil") or "").strip().lower()
     if nuevo_username and nuevo_username != (usuario_previo.get("username") or ""):
@@ -152,34 +196,16 @@ def actualizar_perfil(cedula):
 
     nueva_cedula = (data.get("cedulaPerfil") or "").strip()
     if nueva_cedula and nueva_cedula != lookup_id:
+        if not nueva_cedula.isdigit():
+            return jsonify({"ok": False, "error": "La cédula debe contener únicamente números (sin letras ni guiones)."}), 400
         if len(nueva_cedula) < 6:
-            return jsonify({"ok": False, "error": "Cédula inválida (mínimo 6 caracteres)"}), 400
+            return jsonify({"ok": False, "error": "Cédula inválida (mínimo 6 dígitos)."}), 400
         campos["cedula"] = nueva_cedula
 
+    # Marcar timestamp en todos los campos de control al guardar
     ahora = _ahora_iso()
-    for campo in ("nombre", "apellido"):
-        nuevo_val = campos.get(campo, "")
-        actual    = (usuario_previo.get(campo) or "").strip()
-        if nuevo_val and nuevo_val != actual:
-            puede, siguiente = _puede_cambiar(usuario_previo, campo)
-            if not puede:
-                dias = _dias_restantes(siguiente)
-                return jsonify({"ok": False, "error": f"Solo puedes cambiar tu {campo} una vez al mes. Disponible en {dias} día(s).", "campo": campo, "disponible_en": siguiente}), 429
-            campos[f"last_change_{campo}"] = ahora
-
-    if "cedula" in campos:
-        puede, siguiente = _puede_cambiar(usuario_previo, "cedula")
-        if not puede:
-            dias = _dias_restantes(siguiente)
-            return jsonify({"ok": False, "error": f"Solo puedes cambiar tu cédula una vez al mes. Disponible en {dias} día(s).", "campo": "cedula", "disponible_en": siguiente}), 429
-        campos["last_change_cedula"] = ahora
-
-    if "username" in campos:
-        puede, siguiente = _puede_cambiar(usuario_previo, "username")
-        if not puede:
-            dias = _dias_restantes(siguiente)
-            return jsonify({"ok": False, "error": f"Solo puedes cambiar tu usuario una vez al mes. Disponible en {dias} día(s).", "campo": "username", "disponible_en": siguiente}), 429
-        campos["last_change_username"] = ahora
+    for c in ("nombre", "apellido", "cedula", "username"):
+        campos[f"last_change_{c}"] = ahora
 
     archivo = request.files.get("imagen_url")
     if archivo and archivo.filename:
@@ -205,6 +231,14 @@ def actualizar_perfil(cedula):
         return jsonify({"ok": False, "error": "Sin datos válidos"}), 400
 
     try:
+        # ── Cascade para cambio de cédula ─────────────────────────────────
+        # Cuando un usuario Google (G-) establece su cédula real, las FK de
+        # las tablas dependientes apuntan a la cédula temporal.
+        # Debemos actualizar esas referencias ANTES de cambiar la PK.
+        nueva_cedula = campos.get("cedula")
+        if nueva_cedula and lookup_id.startswith("G-"):
+            db.cedula_cascade_update(lookup_id, nueva_cedula)
+
         db.usuario_update(lookup_id, campos)
 
         nueva_id = campos.get("cedula", lookup_id)
@@ -213,7 +247,7 @@ def actualizar_perfil(cedula):
         if usuario_final is None:
             return jsonify({"ok": False, "error": "No se pudo recuperar el usuario actualizado"}), 500
 
-        img = usuario_final.get("imagen_url") or "/static/uploads/default_icon_profile.png"
+        img = usuario_final.get("imagen_url") or None
         if isinstance(img, str) and img.startswith("static/"):
             img = "/" + img
         usuario_final["imagen_url"] = img
@@ -226,10 +260,19 @@ def actualizar_perfil(cedula):
         session["user"] = s
         session.modified = True
 
-        return jsonify({"ok": True, "usuario": usuario_final})
+        # Verificar logros de perfil
+        try:
+            from helpers.logros_utils import verificar_y_otorgar
+            nuevos_logros = verificar_y_otorgar(nueva_id, {"tipo": "perfil"})
+        except Exception:
+            nuevos_logros = []
+
+        return jsonify({"ok": True, "usuario": usuario_final, "logros_nuevos": nuevos_logros})
     except Exception as e:
         msg = str(e)
         if "foreign key" in msg.lower() or "violates" in msg.lower():
+            if lookup_id.startswith("G-"):
+                return jsonify({"ok": False, "error": "No se pudo aplicar el cambio de cédula. Contacta soporte."}), 409
             return jsonify({"ok": False, "error": "No se puede cambiar la cédula porque tienes pedidos o facturas registrados con ella."}), 409
         return jsonify({"ok": False, "error": msg}), 500
 
@@ -271,7 +314,20 @@ def cambiar_contrasena():
     if not nueva:
         return jsonify({"ok": False, "error": "Contraseña requerida"}), 400
     try:
-        db.usuario_update(user_id, {"contrasena": hash_password(nueva)})
+        usuario = db.usuario_get(str(user_id))
+        if usuario:
+            puede_pass, siguiente_pass = _puede_cambiar_contrasena(usuario.get("cedula", str(user_id)))
+            if not puede_pass:
+                dias = _dias_restantes(siguiente_pass)
+                return jsonify({
+                    "ok": False,
+                    "error": f"Solo puedes cambiar tu contraseña una vez cada {COOLDOWN_DIAS} días. Disponible en {dias} día(s).",
+                    "pass_disponible_en": siguiente_pass,
+                }), 429
+        db.usuario_update(str(user_id), {
+            "contrasena":           hash_password(nueva),
+            "last_change_contrasena": _ahora_iso(),
+        })
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500

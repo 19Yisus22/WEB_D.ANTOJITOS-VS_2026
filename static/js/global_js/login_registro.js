@@ -158,6 +158,67 @@ async function loadGoogleButton() {
     document.addEventListener('langChanged', _refreshGoogleButton);
 }
 
+let _lockoutTimer = null;
+
+function _formatSeconds(secs) {
+    if (secs >= 86400) return `${Math.ceil(secs / 86400)} día(s)`;
+    if (secs >= 3600)  return `${Math.ceil(secs / 3600)} hora(s)`;
+    if (secs >= 60)    return `${Math.ceil(secs / 60)} minuto(s)`;
+    return `${secs} segundo(s)`;
+}
+
+function _showLockoutBanner(segundos, bloqueadoHasta) {
+    const banner    = document.getElementById('lockoutBanner');
+    const msgEl     = document.getElementById('lockoutMsg');
+    const countdown = document.getElementById('lockoutCountdown');
+    const titleEl   = document.getElementById('lockoutTitle');
+    const btn       = document.getElementById('btnLogin');
+    if (!banner) return;
+
+    banner.style.display = '';
+    if (btn) btn.disabled = true;
+    if (titleEl) titleEl.textContent = 'Cuenta bloqueada temporalmente';
+
+    if (msgEl && bloqueadoHasta) {
+        try {
+            const dt   = new Date(bloqueadoHasta);
+            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            msgEl.textContent = `Se desbloqueará el ${dt.toLocaleDateString('es-ES', opts)}`;
+        } catch {
+            msgEl.textContent = 'Cuenta bloqueada temporalmente.';
+        }
+    } else if (msgEl) {
+        msgEl.textContent = 'Cuenta bloqueada temporalmente.';
+    }
+
+    let remaining = Math.max(0, Math.round(segundos));
+
+    function tick() {
+        if (remaining <= 0) {
+            if (countdown) countdown.textContent = 'Ya puedes intentar de nuevo.';
+            if (btn) btn.disabled = false;
+            clearInterval(_lockoutTimer);
+            _lockoutTimer = null;
+            return;
+        }
+        if (countdown) countdown.textContent = `Tiempo restante: ${_formatSeconds(remaining)}`;
+        remaining--;
+    }
+
+    tick();
+    clearInterval(_lockoutTimer);
+    _lockoutTimer = setInterval(tick, 1000);
+}
+
+function _hideLockoutBanner() {
+    const banner = document.getElementById('lockoutBanner');
+    if (banner) banner.style.display = 'none';
+    clearInterval(_lockoutTimer);
+    _lockoutTimer = null;
+    const btn = document.getElementById('btnLogin');
+    if (btn) btn.disabled = false;
+}
+
 function initLoginForm() {
     const form = document.getElementById('loginForm');
     if (!form) return;
@@ -165,7 +226,6 @@ function initLoginForm() {
     initTogglePw('togglePwLogin', 'contrasena');
     initCapsLock('contrasena', 'capsWarn');
 
-    // Detección visual del tipo de identificador
     const identInput = document.getElementById('identifier');
     const identIcon  = document.getElementById('identifierIcon');
     if (identInput && identIcon) {
@@ -192,9 +252,12 @@ function initLoginForm() {
             return;
         }
 
-        document.getElementById('btnLogin').disabled = true;
+        _hideLockoutBanner();
+
+        const btn    = document.getElementById('btnLogin');
         const textEl = document.getElementById('btnLoginText');
         const loadEl = document.getElementById('btnLoginLoader');
+        if (btn)    btn.disabled = true;
         if (textEl) textEl.style.display = 'none';
         if (loadEl) loadEl.style.display = 'inline-flex';
 
@@ -204,18 +267,25 @@ function initLoginForm() {
                 body: JSON.stringify({ identifier, contrasena })
             });
             const data = await res.json();
+
             if (data.ok) {
-                showMessage('¡Bienvenido!', `Sesión iniciada correctamente`, true);
+                showMessage('¡Bienvenido!', 'Sesión iniciada correctamente', true);
                 setTimeout(() => { window.location.href = data.redirect || '/inicio'; }, 1000);
+                return;
+            }
+
+            if (textEl) textEl.style.display = '';
+            if (loadEl) loadEl.style.display = 'none';
+
+            if (data.bloqueado_hasta && data.segundos) {
+                _showLockoutBanner(data.segundos, data.bloqueado_hasta);
             } else {
+                if (btn) btn.disabled = false;
                 showMessage('Error', data.error || 'Credenciales incorrectas', false);
-                document.getElementById('btnLogin').disabled = false;
-                if (textEl) textEl.style.display = '';
-                if (loadEl) loadEl.style.display = 'none';
             }
         } catch {
             showMessage('Error', 'Error de conexión', false);
-            document.getElementById('btnLogin').disabled = false;
+            if (btn)    btn.disabled = false;
             if (textEl) textEl.style.display = '';
             if (loadEl) loadEl.style.display = 'none';
         }
@@ -301,3 +371,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initRegistroForm();
     initStep2();
 });
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        const swFile = location.pathname.includes('registro')
+            ? '/static/js/workers/service-worker-registro.js'
+            : '/static/js/workers/service-worker-login.js';
+        navigator.serviceWorker.register(swFile).catch(() => {});
+    });
+}

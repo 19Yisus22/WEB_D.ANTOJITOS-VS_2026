@@ -146,6 +146,12 @@ async function cargarCarrito() {
             </div>`;
         wrap.appendChild(footer);
         container.appendChild(wrap);
+
+        if (typeof verificarLogros === 'function') {
+            let cantTotal = 0;
+            productos.forEach(p => { cantTotal += (p.cantidad || 0); });
+            verificarLogros({ tipo: 'carrito', num_productos_carrito: cantTotal, valor_carrito: totalGeneral });
+        }
     } catch(e) {}
 }
 
@@ -187,7 +193,15 @@ async function finalizarCompra() {
             btn.innerHTML = originalText;
             return;
         }
-        showMessage("🎉 ¡Pedido enviado con éxito! Pronto te contactaremos.");
+        let msg = "🎉 ¡Pedido enviado con éxito! Pronto te contactaremos.";
+        if (data.descuento_cumpleanos && data.descuento_monto > 0) {
+            const fmt = n => n.toLocaleString('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});
+            msg += ` Se aplicó descuento de cumpleaños de ${fmt(data.descuento_monto)}.`;
+        }
+        showMessage(msg);
+        if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) {
+            window.mostrarLogros(data.logros_nuevos);
+        }
         actualizarContadorBadge(0);
         const modal = bootstrap.Modal.getInstance(document.getElementById('modalCarrito'));
         if (modal) modal.hide();
@@ -202,6 +216,23 @@ async function finalizarCompra() {
     }
 }
 
+async function verificarCumpleanos() {
+    try {
+        const res = await fetch('/carrito/cumpleanos');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.es_cumpleanos) {
+            const banner = document.getElementById('bannerCumpleanos');
+            const texto  = document.getElementById('bannerCumpleanosTexto');
+            if (banner && texto) {
+                const pct = data.descuento_pct || 5;
+                texto.textContent = `¡Feliz cumpleaños! Tienes un ${pct}% de descuento en tu pedido de hoy 🎂`;
+                banner.classList.remove('d-none');
+            }
+        }
+    } catch (_) {}
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const btnFinalizar = document.getElementById("btnFinalizarCompra");
     if (btnFinalizar) {
@@ -211,6 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedCount = localStorage.getItem('cant_carrito');
     if (savedCount) actualizarContadorBadge(savedCount);
     cargarCarrito();
+    verificarCumpleanos();
 });
 
 (function() {

@@ -6,6 +6,13 @@ import socket
 import secrets
 import logging
 import cloudinary
+
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+try:
+    import flask.cli
+    flask.cli.show_server_banner = lambda *a, **kw: None
+except Exception:
+    pass
 from dotenv import load_dotenv
 from waitress import serve
 from flask import Flask, redirect, request
@@ -48,6 +55,7 @@ from controllers.inicio             import inicio_bp
 from controllers.facturacion        import facturacion_bp
 from controllers.comentarios        import comentarios_bp
 from controllers.paginas_estaticas  import paginas_estaticas_bp
+from controllers.logros             import logros_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(perfil_bp)
@@ -62,18 +70,83 @@ app.register_blueprint(inicio_bp)
 app.register_blueprint(facturacion_bp)
 app.register_blueprint(comentarios_bp)
 app.register_blueprint(paginas_estaticas_bp)
+app.register_blueprint(logros_bp)
 
 @app.after_request
 def agregar_cabeceras(response):
     response.headers["Cross-Origin-Opener-Policy"]  = "same-origin-allow-popups"
     response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
     response.headers["Access-Control-Allow-Origin"]  = "*"
+    response.headers["X-Content-Type-Options"]       = "nosniff"
+    response.headers["X-Frame-Options"]              = "SAMEORIGIN"
+    response.headers["Referrer-Policy"]              = "strict-origin-when-cross-origin"
     return response
+
+_RUTAS_PUBLICAS = frozenset({
+    "/login", "/registro", "/registro-google", "/logout",
+    "/refresh", "/obtener-cliente-id",
+})
 
 @app.before_request
 def redirect_root():
     if request.path == "/":
         return redirect("/inicio")
+
+@app.before_request
+def auto_rebuild_session_from_token():
+    from flask import session as _session
+    from helpers.auth import verify_access_token, verify_refresh_token, hash_token, _build_session_data
+    import helpers.models as db
+
+    if request.path.startswith("/static/"):
+        return
+    if any(request.path.startswith(p) for p in _RUTAS_PUBLICAS):
+        return
+    if _session.get("user_id"):
+        return
+
+    at = request.cookies.get("_at")
+    if at:
+        payload = verify_access_token(at)
+        if payload and payload.get("type") == "access":
+            try:
+                user = db.usuario_get(payload["sub"])
+                if user:
+                    _build_session_data(user)
+            except Exception:
+                pass
+        return
+
+    rt = request.cookies.get("_rt")
+    if not rt:
+        return
+
+    rt_payload = verify_refresh_token(rt)
+    if not rt_payload or rt_payload.get("type") != "refresh":
+        return
+
+    cedula = rt_payload.get("sub")
+    if not cedula:
+        return
+
+    try:
+        from datetime import datetime, timezone
+        stored = db.usuario_get_web_token(cedula)
+        if not stored or not stored.get("web_token"):
+            return
+        if stored["web_token"] != hash_token(rt):
+            return
+        exp_str = stored.get("expires_at")
+        if exp_str:
+            exp_dt = datetime.fromisoformat(exp_str.replace("Z", "+00:00"))
+            if exp_dt < datetime.now(timezone.utc):
+                db.usuario_clear_web_token(cedula)
+                return
+        user = db.usuario_get(cedula)
+        if user:
+            _build_session_data(user)
+    except Exception:
+        pass
 
 def _get_local_ip() -> str:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -84,20 +157,17 @@ def _get_local_ip() -> str:
         return "127.0.0.1"
     finally:
         s.close()
-
+        
 if __name__ == "__main__":
-    host      = "0.0.0.0"
-    port      = 8000
-    local_ip  = _get_local_ip()
-    debug_mode = True  # Cambia a True para desarrollo local
+    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), True # Cambia a True para modo desarrollo con debug
 
     if debug_mode:
-        print("Ejecutando en modo DEBUG")
-        print(f"  Local : http://localhost:{port}")
-        print(f"  Red   : http://{local_ip}:{port}")
+        print("\033[93m" + "MODE DEVELOPMENT - DEBUG" + "\033[0m")
+        print("\033[36m" + f"Local : http://localhost:{port}" + "\033[0m")
+        print("\033[92m" + f"Red   : http://{local_ip}:{port}" + "\033[0m")
         app.run(host=host, port=port, debug=True, threaded=True)
     else:
-        print("Servidor en produccion con Waitress")
-        print(f"  Local : http://localhost:{port}")
-        print(f"  Red   : http://{local_ip}:{port}")
+        print("\033[92m" + "PRODUCTION MODE" + "\033[0m")
+        print("\033[36m" + f"Local : http://localhost:{port}" + "\033[0m")
+        print("\033[92m" + f"Red   : http://{local_ip}:{port}" + "\033[0m")
         serve(app, host=host, port=port, threads=10)

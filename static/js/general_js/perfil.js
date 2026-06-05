@@ -49,7 +49,6 @@ function updateStrengthBar(password) {
 }
 
 function validarPass() {
-    if (typeof USER_AUTH_GOOGLE !== 'undefined' && USER_AUTH_GOOGLE) return;
     const p = passInput.value;
     const c = confirmInput.value;
     updateStrengthBar(p);
@@ -98,8 +97,23 @@ if (btnCambiarContrasena) {
                 confirmInput.style.borderColor = "#ddd";
                 confirmInput.style.boxShadow = "none";
                 updateStrengthBar("");
+                /* Activar cooldown inmediatamente en el frontend */
+                const ahora = new Date();
+                ahora.setDate(ahora.getDate() + 10);
+                _cooldown.pass_bloqueado    = true;
+                _cooldown.pass_disponible_en = ahora.toISOString();
+                _actualizarPassCooldownUI();
+                _passCountdownInterval = setInterval(_actualizarPassCooldownUI, 1000);
             } else {
                 showMessage(data.error || "Error al cambiar contraseña", true);
+                if (data.pass_disponible_en) {
+                    _cooldown.pass_bloqueado    = true;
+                    _cooldown.pass_disponible_en = data.pass_disponible_en;
+                    _actualizarPassCooldownUI();
+                    if (!_passCountdownInterval) {
+                        _passCountdownInterval = setInterval(_actualizarPassCooldownUI, 1000);
+                    }
+                }
             }
         } catch (e) {
             showMessage("Error de conexión", true);
@@ -196,79 +210,190 @@ inputs.forEach(input => {
     });
 });
 
-const btnEditarPerfil = document.getElementById("btnEditarPerfil");
-let _restricciones = {};
-let _countdownInterval = null;
+const btnEditarPerfil    = document.getElementById("btnEditarPerfil");
+const btnActualizarPerfil = document.getElementById("btnActualizarPerfil");
+const btnCancelarEdicion  = document.getElementById("btnCancelarEdicion");
 
-const CAMPO_ID_MAP = {
-    nombre:   "nombrePerfil",
-    apellido: "apellidoPerfil",
-    cedula:   "cedulaPerfil",
-    username: "usernamePerfil",
-};
+let _cooldown = { bloqueado: false, disponible_en: null, pass_bloqueado: false, pass_disponible_en: null };
+let _countdownInterval     = null;
+let _passCountdownInterval = null;
 
 async function cargarRestricciones() {
     try {
         const r = await fetch('/perfil/restricciones');
         if (!r.ok) return;
-        _restricciones = await r.json();
-        _aplicarCooldowns();
-        _countdownInterval = setInterval(_actualizarCountdowns, 1000);
+        _cooldown = await r.json();
+        _actualizarCooldownUI();
+        _actualizarPassCooldownUI();
+        if (_cooldown.bloqueado && _cooldown.disponible_en) {
+            _countdownInterval = setInterval(_actualizarCooldownUI, 1000);
+        }
+        if (_cooldown.pass_bloqueado && _cooldown.pass_disponible_en) {
+            _passCountdownInterval = setInterval(_actualizarPassCooldownUI, 1000);
+        }
     } catch {}
 }
 
-function _aplicarCooldowns() {
-    Object.entries(_restricciones).forEach(([campo, info]) => {
-        const cdEl  = document.getElementById(`cooldown-${campo}`);
-        const input = document.getElementById(CAMPO_ID_MAP[campo]);
-        if (info.bloqueado) {
-            if (cdEl) cdEl.style.display = 'flex';
-            if (input) input.classList.add('cooldown-locked');
-        } else {
-            if (cdEl) cdEl.style.display = 'none';
-            if (input) input.classList.remove('cooldown-locked');
-        }
-    });
-    _actualizarCountdowns();
+function _fmtFechaDisponible(isoStr) {
+    const dt  = new Date(isoStr);
+    const dd  = String(dt.getDate()).padStart(2, '0');
+    const mm  = String(dt.getMonth() + 1).padStart(2, '0');
+    const aa  = String(dt.getFullYear()).slice(2);
+    const hh  = String(dt.getHours()).padStart(2, '0');
+    const min = String(dt.getMinutes()).padStart(2, '0');
+    return `${dd}/${mm}/${aa} ${hh}:${min}`;
 }
 
-function _actualizarCountdowns() {
-    Object.entries(_restricciones).forEach(([campo, info]) => {
-        if (!info.bloqueado || !info.disponible_en) return;
-        const timerEl = document.getElementById(`countdown-${campo}`);
-        if (!timerEl) return;
-        const diff = new Date(info.disponible_en) - new Date();
-        if (diff <= 0) {
-            _restricciones[campo].bloqueado = false;
-            _aplicarCooldowns();
-            return;
+function _actualizarCooldownUI() {
+    const banner = document.getElementById('cooldownBanner');
+    const timer  = document.getElementById('cooldownTimer');
+    const btnEd  = document.getElementById('btnEditarPerfil');
+
+    if (!_cooldown.bloqueado || !_cooldown.disponible_en) {
+        if (banner) banner.style.display = 'none';
+        if (btnEd)  {
+            btnEd.disabled = false;
+            btnEd.title    = '';
+            btnEd.innerHTML = '<i class="bi bi-pencil-square me-2"></i><span data-i18n="prof.edit">Editar Perfil</span>';
         }
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        timerEl.textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
-    });
+        clearInterval(_countdownInterval);
+        return;
+    }
+
+    const diff = new Date(_cooldown.disponible_en) - new Date();
+    if (diff <= 0) {
+        _cooldown.bloqueado = false;
+        _actualizarCooldownUI();
+        return;
+    }
+
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    if (timer) timer.textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    if (banner) banner.style.display = 'flex';
+
+    const fechaStr = _fmtFechaDisponible(_cooldown.disponible_en);
+    if (btnEd) {
+        btnEd.disabled = true;
+        btnEd.title    = `Edición disponible el ${fechaStr}`;
+        btnEd.innerHTML = `<i class="bi bi-calendar-lock me-2"></i><span>${fechaStr}</span>`;
+    }
 }
 
-const btnActualizarPerfil = document.getElementById("btnActualizarPerfil");
+function _actualizarPassCooldownUI() {
+    const banner = document.getElementById('passCooldowBanner');
+    const timer  = document.getElementById('passCooldownTimer');
+    const btnPass = document.getElementById('btnCambiarContrasena');
+
+    if (!_cooldown.pass_bloqueado || !_cooldown.pass_disponible_en) {
+        if (banner)  banner.style.display = 'none';
+        if (btnPass) {
+            btnPass.disabled = false;
+            btnPass.title    = '';
+            btnPass.innerHTML = '<span data-i18n="prof.password">RESETEAR CONTRASEÑA</span>';
+        }
+        clearInterval(_passCountdownInterval);
+        return;
+    }
+
+    const diff = new Date(_cooldown.pass_disponible_en) - new Date();
+    if (diff <= 0) {
+        _cooldown.pass_bloqueado = false;
+        _actualizarPassCooldownUI();
+        return;
+    }
+
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    if (timer) timer.textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    if (banner) banner.style.display = 'flex';
+
+    const fechaStr = _fmtFechaDisponible(_cooldown.pass_disponible_en);
+    if (btnPass) {
+        btnPass.disabled = true;
+        btnPass.title    = `Cambio de contraseña disponible el ${fechaStr}`;
+        btnPass.innerHTML = `<i class="bi bi-calendar-lock me-2"></i><span>${fechaStr}</span>`;
+    }
+}
+
+function _habilitarEdicion() {
+    inputs.forEach(i => {
+        if (i.id === "correoPerfil" || i.readOnly) return;
+        i.disabled = false;
+    });
+    const fechaNac = document.getElementById("fechaNacimientoPerfil");
+    if (fechaNac) fechaNac.disabled = false;
+    const imgInput = document.getElementById("imagen_url");
+    if (imgInput) imgInput.disabled = false;
+    if (btnActualizarPerfil) btnActualizarPerfil.style.display = "inline-block";
+    if (btnEditarPerfil)     btnEditarPerfil.style.display     = "none";
+    if (btnCancelarEdicion)  btnCancelarEdicion.style.display  = "inline-block";
+}
+
+function _deshabilitarEdicion() {
+    inputs.forEach(i => { i.disabled = true; });
+    const imgInput = document.getElementById("imagen_url");
+    if (imgInput) imgInput.disabled = true;
+    if (btnActualizarPerfil) btnActualizarPerfil.style.display = "none";
+    if (btnEditarPerfil)     btnEditarPerfil.style.display     = "inline-block";
+    if (btnCancelarEdicion)  btnCancelarEdicion.style.display  = "none";
+}
+
 if (btnEditarPerfil) {
     btnEditarPerfil.addEventListener("click", () => {
-        inputs.forEach(i => {
-            if (i.id === "correoPerfil" || i.readOnly) return;
-            const campo = Object.entries(CAMPO_ID_MAP).find(([, id]) => id === i.id)?.[0];
-            const bloqueado = campo && _restricciones[campo]?.bloqueado;
-            if (!bloqueado) i.disabled = false;
-        });
-        const imgInput = document.getElementById("imagen_url");
-        if (imgInput) imgInput.disabled = false;
-        btnActualizarPerfil.style.display = "inline-block";
-        btnEditarPerfil.style.display = "none";
-        showMessage("Edición habilitada");
+        if (_cooldown.bloqueado) return;
+        _habilitarEdicion();
+        showMessage("Edición habilitada. Recuerda que después de guardar tendrás que esperar 10 días para volver a editar.");
     });
 }
 
-cargarRestricciones();
+if (btnCancelarEdicion) {
+    btnCancelarEdicion.addEventListener("click", () => {
+        _deshabilitarEdicion();
+        location.reload();
+    });
+}
+
+cargarRestricciones().then(() => {
+    /* Si el usuario es de Google y aún tiene cédula temporal G-,
+       abrir edición automáticamente y resaltar el campo cédula */
+    const esGoogleSinCedula = typeof USER_AUTH_GOOGLE !== 'undefined'
+        && USER_AUTH_GOOGLE
+        && (typeof USER_ID === 'undefined' || String(USER_ID).startsWith('G-'));
+
+    if (esGoogleSinCedula) {
+        _habilitarEdicion();
+        const cedInput = document.getElementById('cedulaPerfil');
+        if (cedInput) {
+            cedInput.disabled = false;
+            cedInput.required = true;
+            cedInput.focus();
+            cedInput.classList.add('border-warning');
+            cedInput.setAttribute('placeholder', 'Ingresa tu número de cédula (solo dígitos)');
+        }
+        showMessage('Tu cuenta Google requiere una cédula real (solo números) para poder realizar pedidos.', true);
+    }
+});
+
+/* Validación en tiempo real: la cédula debe ser solo dígitos */
+(function () {
+    const cedInput = document.getElementById('cedulaPerfil');
+    if (!cedInput) return;
+    cedInput.addEventListener('input', () => {
+        const val = cedInput.value.trim();
+        if (val && !/^\d+$/.test(val)) {
+            cedInput.setCustomValidity('Solo se permiten números en la cédula.');
+            cedInput.classList.add('is-invalid');
+        } else {
+            cedInput.setCustomValidity('');
+            cedInput.classList.remove('is-invalid');
+        }
+    });
+})();
 
 document.getElementById("formPerfil").addEventListener("submit", async e => {
     e.preventDefault();
@@ -350,7 +475,10 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
         const data = await res.json();
         if (res.ok && data.ok) {
             showMessage("Perfil actualizado");
-            setTimeout(() => location.reload(), 1000);
+            if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) {
+                window.mostrarLogros(data.logros_nuevos);
+            }
+            setTimeout(() => location.reload(), 1800);
         } else {
             let errorMsg = data.error || "Error al guardar cambios";
             if (errorMsg.includes("23505")) {
@@ -406,16 +534,18 @@ function mostrarModalDetalles(u) {
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
-                    <div class="position-relative d-inline-block mb-3">
-                        <img src="${u.imagen_url || '/static/uploads/default_icon_profile.png'}" 
-                             class="rounded-circle border shadow" 
-                             width="120" height="120" 
-                             style="object-fit:cover; border: 4px solid #fff !important;">
-                        <div class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow d-flex align-items-center justify-content-center border" 
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="position-relative" style="width:120px;height:120px;flex-shrink:0;">
+                        <img src="${u.imagen_url || '/static/uploads/default_icon_profile.png'}"
+                             class="rounded-circle border shadow"
+                             width="120" height="120"
+                             style="object-fit:cover; border: 4px solid #fff !important; display:block;">
+                        <div class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow d-flex align-items-center justify-content-center border"
                              style="width:35px; height:35px; transform: translate(-5px, -5px);">
-                            ${esGoogle ? 
-                                '<img src="/static/uploads/googlogo.ico" style="width:20px; height:20px; object-fit:contain;">' : 
+                            ${esGoogle ?
+                                '<img src="/static/uploads/googlogo.ico" style="width:20px; height:20px; object-fit:contain;">' :
                                 '<i class="bi bi-envelope-at-fill text-primary" style="font-size: 1.1rem;"></i>'}
+                        </div>
                         </div>
                     </div>
                     
@@ -631,6 +761,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 reader.readAsDataURL(file);
             }
         });
+    }
+    if (window.renderizarLogrosUsuario) {
+        window.renderizarLogrosUsuario('logrosContenedor');
     }
     if (typeof USER_ROLE !== 'undefined' && USER_ROLE === 'admin') {
         const searchInput = document.getElementById('userSearch');

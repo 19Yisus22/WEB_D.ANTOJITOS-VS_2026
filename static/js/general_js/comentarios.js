@@ -66,6 +66,14 @@ function toggleEmojiPanel() {
     panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 }
 
+function showEmojiCat(cat, btn) {
+    document.querySelectorAll('.ep-cat-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.ep-cat-btn').forEach(b => b.classList.remove('active'));
+    const panel = document.getElementById('ep-' + cat);
+    if (panel) panel.style.display = 'grid';
+    if (btn) btn.classList.add('active');
+}
+
 document.addEventListener('click', (e) => {
     const panel = document.getElementById('emojiPanel');
     const btn = document.getElementById('btnToggleEmojis');
@@ -73,6 +81,67 @@ document.addEventListener('click', (e) => {
         panel.style.display = 'none';
     }
 });
+
+/* ── Sistema de adjuntos (imágenes) ── */
+
+let _pendingImages = []; // [{data: 'data:...', nombre: '...', size: n}]
+
+function _actualizarPreviewImagenes() {
+    const area = document.getElementById('imagenesPreview');
+    if (!area) return;
+    if (_pendingImages.length === 0) {
+        area.style.display = 'none';
+        area.innerHTML = '';
+        return;
+    }
+    area.style.display = 'flex';
+    area.innerHTML = _pendingImages.map((img, i) => `
+        <div class="chat-img-thumb">
+            <img src="${img.data}" alt="imagen">
+            <button class="chat-img-thumb-remove" onclick="_removerImagenPendiente(${i})" title="Quitar">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>`).join('');
+}
+
+function _removerImagenPendiente(idx) {
+    _pendingImages.splice(idx, 1);
+    _actualizarPreviewImagenes();
+}
+
+function _agregarImagenAlChat(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    if (file.size > 2 * 1024 * 1024) {
+        showMessage('La imagen supera el límite de 2 MB', true);
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        _pendingImages.push({ data: ev.target.result, nombre: file.name, size: file.size });
+        _actualizarPreviewImagenes();
+    };
+    reader.readAsDataURL(file);
+}
+
+function adjuntarImagenDesdeArchivo(input) {
+    if (input.files && input.files[0]) {
+        _agregarImagenAlChat(input.files[0]);
+        input.value = ''; // reset para poder subir la misma imagen de nuevo
+    }
+}
+
+function _abrirImagenAmpliada(src) {
+    let modal = document.getElementById('chatImgModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'chatImgModal';
+        modal.innerHTML = '<img src="" alt="imagen">';
+        modal.onclick = () => modal.style.display = 'none';
+        document.body.appendChild(modal);
+    }
+    modal.querySelector('img').src = src;
+    modal.style.display = 'flex';
+}
 
 /* ── Helpers del editor WYSIWYG ── */
 
@@ -179,6 +248,29 @@ mensajeInput.addEventListener('keyup',   _updateToolbarState);
 mensajeInput.addEventListener('mouseup', _updateToolbarState);
 mensajeInput.addEventListener('input',   ajustarAlturaInput);
 
+/** Intercepta paste: texto plano O imagen del clipboard */
+mensajeInput.addEventListener('paste', function(e) {
+    const clipData = e.clipboardData || window.clipboardData;
+
+    // Detectar si hay imagen en el clipboard
+    const items = clipData.items || [];
+    for (const item of items) {
+        if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            if (file) _agregarImagenAlChat(file);
+            return;
+        }
+    }
+
+    // Sin imagen: pegar texto plano
+    e.preventDefault();
+    let text = clipData.getData('text/plain') || '';
+    text = text.replace(/<[^>]*>/g, '');
+    document.execCommand('insertText', false, text);
+    ajustarAlturaInput();
+});
+
 /** Inserta emoji en la posición del cursor */
 function insertEmoji(emoji) {
     mensajeInput.focus();
@@ -263,7 +355,7 @@ function renderComentario(c) {
     const esMio = String(c.cedula) === String(USER_CONFIG.userId);
     const bgGradient = getUserPastelColor(String(c.cedula));
     const info = c.usuario_info || {};
-    const foto = info.foto_perfil || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+    const foto = info.foto_perfil || '';
     const nombre = info.nombre ? `${info.nombre} ${info.apellido || ''}` : 'Usuario';
     const fecha = new Date(c.updated_at || c.created_at).toLocaleString('es-CO', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
     const haDadoLike = (c.likes_usuarios || []).includes(USER_CONFIG.userId);
@@ -278,10 +370,14 @@ function renderComentario(c) {
         .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
         .replace(/_(.*?)_/gs,       '<em>$1</em>');
 
+    const _comentAvatarEl = foto
+        ? `<img src="" data-profile="${foto}" data-profile-name="${nombre}" data-profile-size="80"
+                alt="${nombre}" class="rounded-circle border shadow-sm" width="38" height="38" style="object-fit:cover;display:block;">`
+        : `<div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;color:#fff;background:linear-gradient(135deg,#d35400,#e67e22);">${nombre.charAt(0).toUpperCase()}</div>`;
+
     wrapper.innerHTML = `
         <div class="contenedor-foto-estado">
-            <img src="${foto}" class="rounded-circle border shadow-sm" width="38" height="38"
-                 style="object-fit:cover;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+            ${_comentAvatarEl}
             <span class="punto-estado ${estadoClase}"></span>
         </div>
         <div style="max-width:75%;display:flex;flex-direction:column;${esMio ? 'align-items:flex-end;' : 'align-items:flex-start;'}">
@@ -294,7 +390,12 @@ function renderComentario(c) {
                     </div>
                     ${esMio ? `<i class="bi bi-three-dots-vertical btn-options text-muted" style="cursor:pointer;font-size:0.8rem;"></i>` : ''}
                 </div>
-                <div class="mensaje-texto">${mensajeFormateado}</div>
+                ${mensajeFormateado ? `<div class="mensaje-texto">${mensajeFormateado}</div>` : ''}
+                ${(c.adjuntos && c.adjuntos.length > 0)
+                    ? `<div class="chat-bubble-images">${c.adjuntos.map(a =>
+                        `<img src="${a.data}" class="chat-bubble-img" alt="${a.nombre||'imagen'}" onclick="_abrirImagenAmpliada('${a.data}')">`
+                      ).join('')}</div>`
+                    : ''}
                 ${c.updated_at ? '<span class="text-muted" style="font-size:0.6rem;">(editado)</span>' : ''}
             </div>
             <!-- Acciones bajo la burbuja: corazón + responder (independientes) -->
@@ -320,6 +421,8 @@ function renderComentario(c) {
             </div>
         </div>
     `;
+
+    requestAnimationFrame(() => { if (typeof initAllProfileImages === 'function') initAllProfileImages(); });
 
     if(esMio) {
         const btnOpt = wrapper.querySelector(".btn-options");
@@ -397,22 +500,33 @@ function iniciarEdicion(id, msg) {
 
 sendBtn.onclick = async () => {
     const mensaje = _getEditorContent();
-    // Considera vacío si solo tiene un <br> o está realmente vacío
-    if (!mensaje || mensaje === '<br>' || mensaje === '&nbsp;' || mensaje === '&#8203;') return;
+    const sinTexto = !mensaje || mensaje === '<br>' || mensaje === '&nbsp;' || mensaje === '&#8203;';
+    if (sinTexto && _pendingImages.length === 0) return;
     sendBtn.disabled = true;
     try {
         let url = "/comentarios", method = "POST";
         if (editandoComentario) {
-            url  = `/comentarios/${editandoComentario}`;
+            url    = `/comentarios/${editandoComentario}`;
             method = "PUT";
+        }
+        const body = { mensaje: sinTexto ? '' : mensaje };
+        if (!editandoComentario && _pendingImages.length > 0) {
+            body.adjuntos = _pendingImages.map(i => ({data: i.data, nombre: i.nombre, size: i.size}));
         }
         const res = await fetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mensaje })
+            body: JSON.stringify(body)
         });
         if (res.ok) {
+            const data = await res.json();
+            // Mostrar logros desbloqueados
+            if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) {
+                window.mostrarLogros(data.logros_nuevos);
+            }
             _clearEditor();
+            _pendingImages = [];
+            _actualizarPreviewImagenes();
             editandoComentario = null;
             sendBtn.innerHTML = `<span>Enviar Sugerencia</span><i class="bi bi-send-fill ms-2"></i>`;
             await cargarComentarios();
@@ -460,18 +574,24 @@ sendBtn.onclick = async function() {
     if (_replyTargetId) {
         const quoteText = document.getElementById('replyQuoteText')?.textContent || '';
         const contenido = _getEditorContent();
-        if (!contenido || contenido === '<br>') return;
-        // Arma el mensaje con la cita (HTML)
-        const withQuote = `<div class="pub-reply-quote">${quoteText}</div>${contenido}`;
+        const sinTexto = !contenido || contenido === '<br>';
+        if (sinTexto && _pendingImages.length === 0) return;
+        const withQuote = sinTexto ? '' : `<div class="pub-reply-quote">${quoteText}</div>${contenido}`;
         sendBtn.disabled = true;
         try {
+            const body = { mensaje: withQuote };
+            if (_pendingImages.length > 0) body.adjuntos = _pendingImages.map(i => ({data:i.data, nombre:i.nombre, size:i.size}));
             const res = await fetch('/comentarios', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mensaje: withQuote })
+                body: JSON.stringify(body)
             });
             if (res.ok) {
+                const data = await res.json().catch(() => ({}));
+                if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
                 _clearEditor();
+                _pendingImages = [];
+                _actualizarPreviewImagenes();
                 cancelarRespuesta();
                 await cargarComentarios();
             }
@@ -611,7 +731,7 @@ async function enviarMensajePredeterminado(idMsg, texto) {
 async function enviarMensajeLibreCliente() {
     const ta  = document.getElementById('clienteMensajeLibre');
     const msg = (ta?.value || '').trim();
-    if (!msg) return;
+    if (!msg && _pendingImages.length === 0) return;
     try {
         if (_editandoMsgPrivado) {
             const r = await fetch(`/mensajes_privados/${_editandoMsgPrivado}`, {
@@ -628,13 +748,19 @@ async function enviarMensajeLibreCliente() {
             }
             return;
         }
+        const body = { mensaje: msg };
+        if (_pendingImages.length > 0) body.adjuntos = _pendingImages.map(i => ({data:i.data, nombre:i.nombre, size:i.size}));
         const r = await fetch('/mensajes_privados/enviar', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mensaje: msg })
+            body: JSON.stringify(body)
         });
         if (r.ok) {
+            const data = await r.json().catch(() => ({}));
             ta.value = '';
+            _pendingImages = [];
+            _actualizarPreviewImagenes();
+            if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
             await _cargarHiloCliente();
         }
     } catch { showMessage(t('notif.error_conn'), true); }
@@ -729,7 +855,7 @@ async function enviarRespuestaVendedor() {
     if (!_hiloSeleccionado) return;
     const textarea = document.getElementById('privRespuestaInput');
     const msg = (textarea?.value || '').trim();
-    if (!msg) return;
+    if (!msg && _pendingImages.length === 0) return;
     try {
         if (_editandoMsgPrivado) {
             const r = await fetch(`/mensajes_privados/${_editandoMsgPrivado}`, {
@@ -748,13 +874,19 @@ async function enviarRespuestaVendedor() {
             }
             return;
         }
+        const body = { mensaje: msg, cedula_cliente: _hiloSeleccionado };
+        if (_pendingImages.length > 0) body.adjuntos = _pendingImages.map(i => ({data:i.data, nombre:i.nombre, size:i.size}));
         const r = await fetch('/mensajes_privados/enviar', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mensaje: msg, cedula_cliente: _hiloSeleccionado })
+            body: JSON.stringify(body)
         });
         if (r.ok) {
+            const data = await r.json().catch(() => ({}));
             textarea.value = '';
+            _pendingImages = [];
+            _actualizarPreviewImagenes();
+            if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
             await abrirConversacion(_hiloSeleccionado,
                 document.querySelector('#privConvHeader strong')?.textContent || '',
                 document.querySelector('#privConvHeader .priv-conv-avatar')?.src || '');
@@ -842,7 +974,7 @@ async function enviarMensajeStaff() {
     if (!_staffSeleccionado) return;
     const ta  = document.getElementById('staffMensajeInput');
     const msg = (ta?.value || '').trim();
-    if (!msg) return;
+    if (!msg && _pendingImages.length === 0) return;
     try {
         if (_editandoMsgPrivado) {
             const r = await fetch(`/mensajes_privados/${_editandoMsgPrivado}`, {
@@ -862,13 +994,19 @@ async function enviarMensajeStaff() {
             }
             return;
         }
+        const body = { mensaje: msg, cedula_dest: _staffSeleccionado };
+        if (_pendingImages.length > 0) body.adjuntos = _pendingImages.map(i => ({data:i.data, nombre:i.nombre, size:i.size}));
         const r = await fetch('/mensajes_privados/staff/enviar', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mensaje: msg, cedula_dest: _staffSeleccionado })
+            body: JSON.stringify(body)
         });
         if (r.ok) {
+            const data = await r.json().catch(() => ({}));
             ta.value = '';
+            _pendingImages = [];
+            _actualizarPreviewImagenes();
+            if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
             await abrirConversacionStaff(_staffSeleccionado,
                 document.querySelector('#staffConvHeader strong')?.textContent || '',
                 document.querySelector('#staffConvHeader .priv-conv-avatar')?.src || '',
@@ -910,10 +1048,16 @@ function _renderMsgPrivado(m, esMio, msgId) {
     div.dataset.id = msgId || '';
     div.dataset.msgTexto = m.mensaje || '';
     const hora = new Date(m.created_at).toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
+    const adjuntosHtml = (m.adjuntos && m.adjuntos.length > 0)
+        ? `<div class="chat-bubble-images">${m.adjuntos.map(a =>
+            `<img src="${a.data}" class="chat-bubble-img" alt="${a.nombre||'imagen'}" onclick="_abrirImagenAmpliada('${a.data}')">`
+          ).join('')}</div>`
+        : '';
     div.innerHTML = `
         <div class="priv-msg-bubble">
             ${m.es_predeterminado ? `<span class="priv-pred-tag"><i class="bi bi-list-check me-1"></i>${t('chat.list')}</span>` : ''}
-            <span class="priv-msg-text">${m.mensaje}</span>
+            ${m.mensaje ? `<span class="priv-msg-text">${m.mensaje}</span>` : ''}
+            ${adjuntosHtml}
             <div class="d-flex justify-content-between align-items-center gap-2 mt-1">
                 <span class="priv-msg-time">${hora}</span>
                 <div class="d-flex gap-1">

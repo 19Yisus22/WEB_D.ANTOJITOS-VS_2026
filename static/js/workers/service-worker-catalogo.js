@@ -1,96 +1,87 @@
-const CACHE_NAME = 'dantojitos-catalogo-v5';
-const STATIC_ASSETS = [
+/**
+ * D'Antojitos — Service Worker: CATÁLOGO v4
+ * Cubre: /catalogo_page, productos, carrito, búsquedas,
+ *        imágenes Cloudinary, tema e idioma sin errores.
+ */
+importScripts('/static/js/workers/sw-core.js');
+
+const CACHE_NAME = 'dantojitos-catalogo-v4';
+
+const PRECACHE = [
+    /* Páginas */
+    '/catalogo_page',
+    /* CSS módulo */
     '/static/css/general_modules/style_catalogo.css',
+    /* CSS compartido */
+    '/static/css/global_modules/style_utils.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_footer.css',
-    '/static/css/global_modules/style_utils.css',
+    '/static/css/global_modules/style_design_system.css',
+    /* JS módulo */
     '/static/js/general_js/catalogo.js',
+    /* JS compartido */
     '/static/js/global_js/utils.js',
+    '/static/js/global_js/i18n.js',
+    '/static/js/compiled/design-system.js',
+    '/static/js/compiled/theme.js',
+    /* Assets */
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
-    '/static/uploads/default.png',
+    /* CDN */
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+    'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,700&display=swap',
 ];
 
-const NETWORK_ONLY_ROUTES = [
+const NETWORK_FIRST_PATHS = [
     '/obtener_catalogo',
-    '/agregar_al_carrito',
-    '/guardar_catalogo',
-    '/obtener_carrito',
-    '/api/publicidad/activa'
+    '/api/carrito',
+    '/obtener-cliente-id',
+    '/api/carrito/cantidad',
+    '/api/productos',
+    '/api/categorias',
+    '/buscar_productos',
+    '/filtrar_productos',
 ];
 
-self.addEventListener('install', event => {
+const CDN_RE = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com)/;
+const IMG_RE = /^https:\/\/res\.cloudinary\.com\//;
+
+self.addEventListener('install', e => {
     self.skipWaiting();
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache =>
-            Promise.allSettled(
-                STATIC_ASSETS.map(url =>
-                    fetch(url).then(res => { if (res.ok) cache.put(url, res); }).catch(() => {})
-                )
-            )
-        )
-    );
+    e.waitUntil(precacheAssets(CACHE_NAME, PRECACHE));
 });
 
-self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-        ).then(() => self.clients.claim())
-    );
+self.addEventListener('activate', e => {
+    e.waitUntil(cleanOldCaches(CACHE_NAME).then(() => self.clients.claim()));
 });
 
-self.addEventListener('fetch', event => {
-    if (event.request.method !== 'GET') return;
+self.addEventListener('fetch', e => {
+    const { request } = e;
+    if (request.method !== 'GET') return;
+    const url = new URL(request.url);
 
-    const url = new URL(event.request.url);
-
-    if (NETWORK_ONLY_ROUTES.some(r => url.pathname.startsWith(r))) {
-        event.respondWith(
-            fetch(event.request).catch(() =>
-                new Response(
-                    JSON.stringify({ error: true, productos: [], message: 'Sin conexión al servidor.' }),
-                    { headers: { 'Content-Type': 'application/json' } }
-                )
-            )
-        );
-        return;
+    if (CDN_RE.test(request.url)) {
+        e.respondWith(cacheFirst(request, CACHE_NAME)); return;
     }
 
-    event.respondWith(staleWhileRevalidate(event.request));
-});
-
-async function staleWhileRevalidate(request) {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(request);
-    const fetchPromise = fetch(request).then(res => {
-        if (res && res.status === 200) cache.put(request, res.clone());
-        return res;
-    }).catch(() => {
-        if (request.mode === 'navigate') return cached || caches.match('/catalogo_page');
-        return cached;
-    });
-    return cached || fetchPromise;
-}
-
-self.addEventListener('sync', event => {
-    if (event.tag === 'sync-carrito') {
-        event.waitUntil(sincronizarCarritoPendiente());
+    /* Imágenes de productos desde Cloudinary — caché con revalidación */
+    if (IMG_RE.test(request.url)) {
+        e.respondWith(cacheFirstWithUpdate(request, CACHE_NAME)); return;
     }
-});
 
-async function sincronizarCarritoPendiente() {
-    const cache = await caches.open('offline-requests');
-    const requests = await cache.keys();
-    return Promise.all(
-        requests.map(async req => {
-            try {
-                const res = await fetch(req.clone());
-                if (res.ok) await cache.delete(req);
-            } catch {}
-        })
-    );
-}
+    if (url.pathname.startsWith('/static/')) {
+        e.respondWith(cacheFirst(request, CACHE_NAME)); return;
+    }
+
+    if (NETWORK_FIRST_PATHS.some(p => url.pathname.startsWith(p))) {
+        e.respondWith(networkFirst(request, CACHE_NAME, FAST_TIMEOUT_MS)); return;
+    }
+
+    if (url.pathname === '/catalogo_page') {
+        e.respondWith(staleWhileRevalidate(request, CACHE_NAME)); return;
+    }
+
+    e.respondWith(networkFirst(request, CACHE_NAME));
+});

@@ -91,36 +91,38 @@ async function cargarMarketing() {
 
         notificacionesDisponibles = arr.filter(i => i.tipo === 'notificacion');
         const cintaInicioEl = document.getElementById('cintaInicio');
-        
+
         if (cintaInicioEl) {
-            let cintaItems = arr.filter(i => i.tipo === 'inicio_cinta' && i.estado !== false);
-            if (!cintaItems.length) cintaItems = arr.filter(i => i.tipo === 'cinta' && i.estado !== false);
+            let rawCinta = arr.filter(i => i.tipo === 'inicio_cinta' && i.estado !== false);
+            if (!rawCinta.length) rawCinta = arr.filter(i => i.tipo === 'cinta' && i.estado !== false);
 
-            if (cintaItems.length > 0) {
-                const speed        = window.getTickerSpeed ? window.getTickerSpeed() : 1;
-                const ITEM_W       = 180;
-                const realCount    = cintaItems.length;
-                const baseDuration = Math.max(18, realCount * 4);
-                const duration     = (baseDuration / speed).toFixed(1);
-                const doubled = [...cintaItems, ...cintaItems];
-                const trackW  = doubled.length * ITEM_W;
+            if (rawCinta.length > 0) {
+                const fifoQueue = rawCinta.slice().sort((a, b) =>
+                    new Date(a.created_at || 0) - new Date(b.created_at || 0)
+                );
 
-                const itemsHTML = doubled.map(i => {
+                /* 2 copias exactas → -50% en CSS es loop perfecto sin saltos */
+                const looped = [...fifoQueue, ...fifoQueue];
+                const baseDuration = Math.max(28, fifoQueue.length * 6);
+                const speed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
+                const duration = (baseDuration / speed).toFixed(1);
+
+                const buildItem = (i, showDivider) => {
                     const validImg = i.imagen_url && i.imagen_url.startsWith('http');
                     return `<div class="ci-item">${
                         validImg
-                            ? `<img src="${i.imagen_url}" alt="${i.titulo || ''}" loading="lazy"
-                                    onerror="this.style.display='none'">`
+                            ? `<img src="${i.imagen_url}" alt="${i.titulo || ''}" loading="lazy" onerror="this.style.display='none'">`
                             : `<i class="bi bi-megaphone ci-item-icon"></i>`
-                    }<span class="ci-item-label">${i.titulo || ''}</span></div>`;
-                }).join('');
+                    }<span class="ci-item-label">${i.titulo || ''}</span></div>${showDivider ? '<div class="ci-divider"></div>' : ''}`;
+                };
 
-                cintaInicioEl.innerHTML = `
-                    <div class="ci-track"
-                         data-base-duration="${baseDuration}"
-                         style="width:${trackW}px;animation-duration:${duration}s;">
-                        ${itemsHTML}
-                    </div>`;
+                /* Coloca divisor solo al final de cada copia, no entre ítems */
+                const half = looped.length / 2;
+                const itemsHTML = looped.map((i, idx) =>
+                    buildItem(i, (idx + 1) === half || (idx + 1) === looped.length)
+                ).join('');
+
+                cintaInicioEl.innerHTML = `<div class="ci-track" data-base-duration="${baseDuration}" style="animation-duration:${duration}s;">${itemsHTML}</div>`;
                 cintaInicioEl.style.display = 'flex';
             } else {
                 cintaInicioEl.style.display = 'none';

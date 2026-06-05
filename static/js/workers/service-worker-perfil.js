@@ -1,79 +1,89 @@
-const CACHE_NAME = 'dantojitos-perfil-v5';
-const STATIC_ASSETS = [
+/**
+ * D'Antojitos — Service Worker: PERFIL v4
+ * Cubre: /mi_perfil, datos del usuario, historial de pedidos,
+ *        avatar desde Cloudinary, preferencias y restricciones.
+ */
+importScripts('/static/js/workers/sw-core.js');
+
+const CACHE_NAME = 'dantojitos-perfil-v4';
+
+const PRECACHE = [
+    /* Páginas */
+    '/mi_perfil',
+    /* CSS módulo */
     '/static/css/general_modules/style_perfil.css',
-    '/static/css/global_modules/style_navbar.css',
+    '/static/css/general_modules/style_mi_perfil.css',
+    /* CSS compartido */
     '/static/css/global_modules/style_utils.css',
+    '/static/css/global_modules/style_navbar.css',
+    '/static/css/global_modules/style_footer.css',
+    '/static/css/global_modules/style_design_system.css',
+    /* JS módulo */
     '/static/js/general_js/perfil.js',
+    /* JS compartido */
     '/static/js/global_js/utils.js',
+    '/static/js/global_js/i18n.js',
+    '/static/js/compiled/design-system.js',
+    '/static/js/compiled/theme.js',
+    /* Assets */
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
-    '/static/uploads/default_icon_profile.png',
+    /* CDN */
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+    'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,700&display=swap',
 ];
 
-const NETWORK_FIRST_ROUTES = [
-    '/mi_perfil',
-    '/actualizar_perfil/',
+const NETWORK_FIRST_PATHS = [
+    '/perfil/restricciones',
     '/listar_usuarios',
-    '/actualizar_rol_usuario',
-    '/cambiar_contrasena',
-    '/eliminar_usuario_admin',
-    '/cloudinary_storage_info'
+    '/api/usuarios',
+    '/api/perfil',
+    '/api/historial_pedidos',
+    '/obtener_perfil',
+    '/actualizar_perfil',
+    '/api/mensajes_privados',
+    '/mensajes_privados',
 ];
 
-self.addEventListener('install', event => {
+const CDN_RE = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com)/;
+const IMG_RE = /^https:\/\/res\.cloudinary\.com\//;
+
+self.addEventListener('install', e => {
     self.skipWaiting();
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache =>
-            Promise.allSettled(
-                STATIC_ASSETS.map(url =>
-                    fetch(url).then(res => { if (res.ok) cache.put(url, res); }).catch(() => {})
-                )
-            )
-        )
-    );
+    e.waitUntil(precacheAssets(CACHE_NAME, PRECACHE));
 });
 
-self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-        ).then(() => self.clients.claim())
-    );
+self.addEventListener('activate', e => {
+    e.waitUntil(cleanOldCaches(CACHE_NAME).then(() => self.clients.claim()));
 });
 
-self.addEventListener('fetch', event => {
-    if (event.request.method !== 'GET') return;
+self.addEventListener('fetch', e => {
+    const { request } = e;
+    if (request.method !== 'GET') return;
+    const url = new URL(request.url);
 
-    const url = new URL(event.request.url);
-
-    if (NETWORK_FIRST_ROUTES.some(r => url.pathname.startsWith(r))) {
-        event.respondWith(networkFirst(event.request));
-        return;
+    if (CDN_RE.test(request.url)) {
+        e.respondWith(cacheFirst(request, CACHE_NAME)); return;
     }
 
-    event.respondWith(staleWhileRevalidate(event.request));
-});
-
-async function networkFirst(request) {
-    const cache = await caches.open(CACHE_NAME);
-    try {
-        const res = await fetch(request);
-        if (res.ok) cache.put(request, res.clone());
-        return res;
-    } catch {
-        return await cache.match(request);
+    /* Avatar del usuario — caché con actualización en background */
+    if (IMG_RE.test(request.url)) {
+        e.respondWith(cacheFirstWithUpdate(request, CACHE_NAME)); return;
     }
-}
 
-async function staleWhileRevalidate(request) {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(request);
-    const fetchPromise = fetch(request).then(res => {
-        if (res && res.status === 200) cache.put(request, res.clone());
-        return res;
-    }).catch(() => cached);
-    return cached || fetchPromise;
-}
+    if (url.pathname.startsWith('/static/')) {
+        e.respondWith(cacheFirst(request, CACHE_NAME)); return;
+    }
+
+    if (NETWORK_FIRST_PATHS.some(p => url.pathname.startsWith(p))) {
+        e.respondWith(networkFirst(request, CACHE_NAME, API_TIMEOUT_MS)); return;
+    }
+
+    if (url.pathname === '/mi_perfil') {
+        e.respondWith(staleWhileRevalidate(request, CACHE_NAME)); return;
+    }
+
+    e.respondWith(networkFirst(request, CACHE_NAME));
+});
