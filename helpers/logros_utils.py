@@ -8,10 +8,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# ══════════════════════════════════════════════════════
-# HELPERS DE CONSTRUCCIÓN
-# ══════════════════════════════════════════════════════
-
 def _l(modulo, codigo, nombre, desc, icono, rareza, puntos, roles):
     return {
         "codigo": codigo, "nombre": nombre, "descripcion": desc,
@@ -23,12 +19,8 @@ C = ["cliente"]
 V = ["vendedor"]
 A = ["admin"]
 
-
-# ══════════════════════════════════════════════════════
-# 1 · INICIO (ini_)  — 21 logros
-# ══════════════════════════════════════════════════════
 _INICIO = [
-    # Clientes
+
     _l("inicio","ini_c1","¡Bienvenido!","Iniciaste sesión por primera vez","🌟","comun",5,C),
     _l("inicio","ini_c2","Noctámbulo digital","Iniciaste sesión después de las 11 PM","🌙","comun",10,C),
     _l("inicio","ini_c3","Madrugador de postres","Iniciaste sesión antes de las 6 AM","☀️","comun",10,C),
@@ -36,7 +28,7 @@ _INICIO = [
     _l("inicio","ini_c5","Cumpleaños en línea","Iniciaste sesión en tu propio cumpleaños","🎂","legendario",150,C),
     _l("inicio","ini_c6","Lunes a tope","Iniciaste sesión un lunes","😊","comun",8,C),
     _l("inicio","ini_c7","Visitante habitual","7 visitas a la página de inicio","🗓️","raro",20,C),
-    # Vendedores
+
     _l("inicio","ini_v1","A trabajar","Primera sesión como vendedor","💼","comun",5,V),
     _l("inicio","ini_v2","Madrugador laboral","Iniciaste sesión antes de las 7 AM","☕","comun",10,V),
     _l("inicio","ini_v3","Noche de trabajo","Iniciaste sesión después de las 10 PM","🌙","comun",10,V),
@@ -44,8 +36,8 @@ _INICIO = [
     _l("inicio","ini_v5","Lunes productivo","Iniciaste sesión un lunes","📋","comun",8,V),
     _l("inicio","ini_v6","Constancia laboral","7 visitas a la página de inicio","⏰","raro",20,V),
     _l("inicio","ini_v7","Empleado comprometido","30 visitas a la página de inicio","🔥","epico",50,V),
-    # Admins
-    _l("inicio","ini_a1","Al mando","Primera sesión como administrador","🎖️","comun",10,A),
+  
+      _l("inicio","ini_a1","Al mando","Primera sesión como administrador","🎖️","comun",10,A),
     _l("inicio","ini_a2","Supervisor nocturno","Sesión después de las 11 PM como administrador","🦉","raro",20,A),
     _l("inicio","ini_a3","Control madrugador","Sesión antes de las 6 AM como administrador","🌅","raro",20,A),
     _l("inicio","ini_a4","Presencia constante","7 visitas a la página de inicio","📊","raro",25,A),
@@ -54,11 +46,8 @@ _INICIO = [
     _l("inicio","ini_a7","Maestro del inicio","100 visitas a la página de inicio","👑","legendario",150,A),
 ]
 
-# ══════════════════════════════════════════════════════
-# 2 · CATÁLOGO (cat_)  — 21 logros
-# ══════════════════════════════════════════════════════
 _CATALOGO = [
-    # Clientes
+
     _l("catalogo","cat_c1","Explorador goloso","Primera visita al catálogo","🔍","comun",5,C),
     _l("catalogo","cat_c2","Curioso digital","5 visitas al catálogo","👀","comun",10,C),
     _l("catalogo","cat_c3","Cazador de postres","15 visitas al catálogo","🎯","comun",15,C),
@@ -66,7 +55,7 @@ _CATALOGO = [
     _l("catalogo","cat_c5","Compra variada","Compraste productos de 3 categorías distintas","🌈","raro",30,C),
     _l("catalogo","cat_c6","Explorador total","Compraste de 5 categorías distintas","🗺️","epico",60,C),
     _l("catalogo","cat_c7","Sibarita","Compraste 10+ productos distintos","🏅","legendario",100,C),
-    # Vendedores
+
     _l("catalogo","cat_v1","Vigilante del catálogo","Primera visita al catálogo como vendedor","📋","comun",5,V),
     _l("catalogo","cat_v2","Conocedor del menú","5 visitas al catálogo","📝","comun",10,V),
     _l("catalogo","cat_v3","Analista de productos","15 visitas al catálogo","📊","comun",15,V),
@@ -74,7 +63,7 @@ _CATALOGO = [
     _l("catalogo","cat_v5","Experto del menú","60 visitas al catálogo","🌟","raro",35,V),
     _l("catalogo","cat_v6","Maestro del catálogo","100 visitas al catálogo","🏆","epico",70,V),
     _l("catalogo","cat_v7","Enciclopedia del sabor","200 visitas al catálogo","📚","legendario",120,V),
-    # Admins
+  
     _l("catalogo","cat_a1","Primer vistazo","Primera visita al catálogo como administrador","👁️","comun",5,A),
     _l("catalogo","cat_a2","Evaluador activo","5 visitas al catálogo","📋","comun",10,A),
     _l("catalogo","cat_a3","Inspector","15 visitas al catálogo","🔎","comun",15,A),
@@ -84,11 +73,8 @@ _CATALOGO = [
     _l("catalogo","cat_a7","Megatienda","100 o más productos activos en el sistema","🌟","legendario",120,A),
 ]
 
-# ══════════════════════════════════════════════════════
-# 3 · CARRITO (cart_)  — 21 logros
-# ══════════════════════════════════════════════════════
 _CARRITO = [
-    # Clientes
+  
     _l("carrito","cart_c1","Primer artículo","Añadiste algo al carrito por primera vez","🛒","comun",5,C),
     _l("carrito","cart_c2","Llenando el carrito","Carrito con 3 o más productos","📦","comun",10,C),
     _l("carrito","cart_c3","Comprador voraz","Carrito con 7 o más productos","🛍️","comun",15,C),
@@ -96,7 +82,7 @@ _CARRITO = [
     _l("carrito","cart_c5","Inversión dulce","Carrito superó $50,000 COP","💰","raro",30,C),
     _l("carrito","cart_c6","Festín de postres","Carrito superó $150,000 COP","💎","epico",60,C),
     _l("carrito","cart_c7","El gran banquete","Carrito superó $300,000 COP","🤑","legendario",100,C),
-    # Vendedores
+
     _l("carrito","cart_v1","Vendiendo en el sitio","Primera visita al módulo de carrito","🛒","comun",5,V),
     _l("carrito","cart_v2","Monitor de pedidos","5 visitas al módulo de carrito","👁️","comun",10,V),
     _l("carrito","cart_v3","Seguimiento activo","15 visitas al módulo de carrito","📊","comun",15,V),
@@ -104,7 +90,7 @@ _CARRITO = [
     _l("carrito","cart_v5","100 ventas del sistema","100 pedidos totales en la plataforma","💹","raro",30,V),
     _l("carrito","cart_v6","500 ventas del sistema","500 pedidos totales en la plataforma","🌟","epico",60,V),
     _l("carrito","cart_v7","Plataforma productiva","1000 pedidos totales en la plataforma","🏆","legendario",120,V),
-    # Admins
+    
     _l("carrito","cart_a1","Administrador de ventas","Primera visita al módulo de carrito","📊","comun",5,A),
     _l("carrito","cart_a2","Analista de ventas","5 visitas al módulo de carrito","📈","comun",10,A),
     _l("carrito","cart_a3","Monitor de comercio","15 visitas al módulo de carrito","📋","comun",15,A),
@@ -114,11 +100,8 @@ _CARRITO = [
     _l("carrito","cart_a7","Ecosistema próspero","1000 pedidos totales en la plataforma","🏆","legendario",120,A),
 ]
 
-# ══════════════════════════════════════════════════════
-# 4 · ZONA DE PAGOS (pago_)  — 21 logros
-# ══════════════════════════════════════════════════════
 _PAGOS = [
-    # Clientes
+   
     _l("pagos","pago_c1","¡Primer bocado!","Realizaste tu primera compra","🛒","comun",20,C),
     _l("pagos","pago_c2","Ya le agarré el gusto","3 pedidos realizados","🎁","comun",20,C),
     _l("pagos","pago_c3","Asiduo","5 pedidos realizados","🏅","raro",35,C),
@@ -126,7 +109,7 @@ _PAGOS = [
     _l("pagos","pago_c5","Superfan","20 pedidos realizados","👑","epico",80,C),
     _l("pagos","pago_c6","Leyenda del postre","50 pedidos realizados","🏆","legendario",150,C),
     _l("pagos","pago_c7","Incontenible","100 pedidos realizados","💎","legendario",200,C),
-    # Vendedores
+
     _l("pagos","pago_v1","Primera transacción","Primera visita a la zona de pagos","💳","comun",5,V),
     _l("pagos","pago_v2","Seguimiento financiero","5 visitas a la zona de pagos","📊","comun",10,V),
     _l("pagos","pago_v3","Contador activo","15 visitas a la zona de pagos","💰","comun",15,V),
@@ -134,7 +117,7 @@ _PAGOS = [
     _l("pagos","pago_v5","500K en el sistema","$500,000 COP en ventas totales del sistema","💎","raro",35,V),
     _l("pagos","pago_v6","2M en ventas","$2,000,000 COP en ventas totales del sistema","🏆","epico",70,V),
     _l("pagos","pago_v7","10M en ventas","$10,000,000 COP en ventas totales del sistema","👑","legendario",150,V),
-    # Admins
+
     _l("pagos","pago_a1","Control de pagos","Primera visita a la zona de pagos","💳","comun",5,A),
     _l("pagos","pago_a2","Supervisor financiero","5 visitas a la zona de pagos","📊","comun",10,A),
     _l("pagos","pago_a3","Analista de ingresos","15 visitas a la zona de pagos","💰","comun",15,A),
@@ -144,11 +127,8 @@ _PAGOS = [
     _l("pagos","pago_a7","Fanático de postres","Gastaste más de $100,000 COP en total","💎","raro",40,A),
 ]
 
-# ══════════════════════════════════════════════════════
-# 5 · SUGERENCIAS (sug_)  — 21 logros
-# ══════════════════════════════════════════════════════
 _SUGERENCIAS = [
-    # Clientes
+    
     _l("sugerencias","sug_c1","Voz propia","Publicaste tu primera sugerencia","💬","comun",15,C),
     _l("sugerencias","sug_c2","Siempre con ideas","5 sugerencias publicadas","📢","comun",20,C),
     _l("sugerencias","sug_c3","El vocero","10 sugerencias publicadas","📣","raro",35,C),
@@ -156,7 +136,7 @@ _SUGERENCIAS = [
     _l("sugerencias","sug_c5","Me dieron like","Tu sugerencia recibió 5 likes","❤️","comun",20,C),
     _l("sugerencias","sug_c6","¡Viral!","Tu sugerencia recibió 20 likes","🔥","epico",80,C),
     _l("sugerencias","sug_c7","Fenómeno social","Tu sugerencia recibió 50 likes","💥","legendario",150,C),
-    # Vendedores
+    
     _l("sugerencias","sug_v1","Escuchando al cliente","Primera visita al módulo de sugerencias","👂","comun",5,V),
     _l("sugerencias","sug_v2","Atento al feedback","5 visitas al módulo de sugerencias","📋","comun",10,V),
     _l("sugerencias","sug_v3","Procesando ideas","15 visitas al módulo de sugerencias","💡","comun",15,V),
@@ -164,7 +144,7 @@ _SUGERENCIAS = [
     _l("sugerencias","sug_v5","Mi primera sugerencia","Publicaste tu primera sugerencia","💬","comun",15,V),
     _l("sugerencias","sug_v6","Voz vendedora","5 sugerencias publicadas como vendedor","📢","raro",30,V),
     _l("sugerencias","sug_v7","Maestro del feedback","10 sugerencias publicadas como vendedor","🏆","epico",60,V),
-    # Admins
+    
     _l("sugerencias","sug_a1","Gestor de sugerencias","Primera visita al módulo de sugerencias","📊","comun",5,A),
     _l("sugerencias","sug_a2","Moderador activo","5 visitas al módulo de sugerencias","🔧","comun",10,A),
     _l("sugerencias","sug_a3","Control de contenido","15 visitas al módulo de sugerencias","🛡️","comun",15,A),
@@ -174,9 +154,6 @@ _SUGERENCIAS = [
     _l("sugerencias","sug_a7","Foro vibrante","500 sugerencias totales en el sistema","🏆","legendario",120,A),
 ]
 
-# ══════════════════════════════════════════════════════
-# 6 · MENSAJES PRIVADOS (msg_)  — 21 logros
-# ══════════════════════════════════════════════════════
 _MENSAJES = [
     # Clientes
     _l("mensajes","msg_c1","Hola equipo","Enviaste tu primer mensaje privado","📩","comun",10,C),
