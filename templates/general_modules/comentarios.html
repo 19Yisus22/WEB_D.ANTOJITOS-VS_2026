@@ -1,0 +1,286 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Muro de Sugerencias | D'Antojitos©</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/general_modules/style_comentarios.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
+</head>
+<body>
+    {% include 'global_modules/navbar.html' %}
+<<<<<<< HEAD
+    <main class="page-wrapper d-flex align-items-stretch justify-content-center" style="min-height:calc(100dvh - 60px);padding:0;">
+        <div class="container-fluid px-2 px-md-4 d-flex flex-column" style="flex:1;">
+            <div class="chat-container mx-auto" style="flex:1;" data-reveal>
+=======
+    <main class="page-wrapper d-flex align-items-center justify-content-center py-2 py-md-4">
+        <div class="container-fluid px-2 px-md-4">
+            <div class="chat-container mx-auto" data-reveal>
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
+
+                <!-- â”€â”€ Cabecera â”€â”€ -->
+                <header class="chat-header p-3 d-flex align-items-center justify-content-between shadow-sm">
+                    <h5 class="mb-0 d-flex align-items-center text-white">
+                        <i class="bi bi-chat-heart-fill me-3"></i>
+                        <span id="chatTitleLabel" data-i18n="chat.title">Muro de Sugerencias</span>
+                    </h5>
+                    <div class="header-status d-flex align-items-center bg-white bg-opacity-25 px-3 py-1 rounded-pill">
+                        <small id="statusCounter" class="fw-bold text-white">
+                            <i class="bi bi-people-fill me-1"></i> Cargando...
+                        </small>
+                    </div>
+                </header>
+
+                <!-- â”€â”€ Tabs â”€â”€ -->
+                <div class="chat-tabs">
+                    <button class="chat-tab active" id="tabPublico" onclick="switchTab('publico')">
+                        <i class="bi bi-megaphone-fill me-1"></i> <span data-i18n="chat.tab_public">Sugerencias</span>
+                    </button>
+                    {% if session.get('user_id') %}
+                    <button class="chat-tab" id="tabPrivado" onclick="switchTab('privado')">
+                        <i class="bi bi-lock-fill me-1"></i> <span data-i18n="chat.tab_private">Mensajes</span>
+                        <span class="tab-badge" id="tabPrivadoBadge" style="display:none;">0</span>
+                    </button>
+                    {% endif %}
+                </div>
+
+                <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                     PANEL 1: Muro público
+                     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+                <div id="panelPublico">
+                    <div id="chatBox" class="p-3 p-md-4"></div>
+
+                    <div class="chat-input-area p-3 border-top">
+
+                        <!-- Barra de herramientas de formato -->
+                        <div class="editor-toolbar">
+                            <div class="position-relative">
+                                <button type="button" class="fmt-btn emoji-trigger" id="btnToggleEmojis"
+                                        onclick="toggleEmojiPanel()" title="Emojis">🎂</button>
+                                <div id="emojiPanel" class="emoji-panel-container" style="display:none;">
+<<<<<<< HEAD
+                                    <div class="emoji-panel-categories">
+                                        <button class="ep-cat-btn active" onclick="showEmojiCat('caras',this)">😊</button>
+                                        <button class="ep-cat-btn" onclick="showEmojiCat('postres',this)">🍰</button>
+                                        <button class="ep-cat-btn" onclick="showEmojiCat('manos',this)">👍</button>
+                                        <button class="ep-cat-btn" onclick="showEmojiCat('simbolos',this)">✨</button>
+                                        <button class="ep-cat-btn" onclick="showEmojiCat('naturaleza',this)">🌸</button>
+                                    </div>
+                                    <!-- Caras -->
+                                    <div class="emoji-panel-grid ep-cat-panel" id="ep-caras">
+                                        {% for e in ['😊','😂','😍','😎','🥰','😋','🤤','😄','😆','🤣','🥳','😏','😢','😤','😡','😱','🤩','🥺','😴','🤔','😇','🤗','😅','😬','🤭','😐','😶','🤫','😌','🙄','🤪','😜','🤑','😷','🤒'] %}
+                                        <span class="emoji-item" onclick="insertEmoji('{{ e }}')">{{ e }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    <!-- Postres & comida -->
+                                    <div class="emoji-panel-grid ep-cat-panel" id="ep-postres" style="display:none;">
+                                        {% for e in ['🍰','🧁','🎂','🍫','🍭','🍪','🍩','🍮','🍯','🍦','🍨','🍿','🥧','🧇','🥞','🧆','🍬','🍡','🍧','🍚','🍜','🍝','🥘','🫕','🍱','🧋','☕','🍵','🥤','🫖','🍺','🥂','🍷'] %}
+                                        <span class="emoji-item" onclick="insertEmoji('{{ e }}')">{{ e }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    <!-- Manos & gestos -->
+                                    <div class="emoji-panel-grid ep-cat-panel" id="ep-manos" style="display:none;">
+                                        {% for e in ['👍','👎','👏','🙌','🤝','💪','🤞','✌️','🤟','🙏','🫶','❤️‍🔥','🫡','🤜','🤛','🫰','✋','🤚','👋','🤙','☝️','👆','👇','👉','👈','🤌','💅','🖐️','🫴','🫳'] %}
+                                        <span class="emoji-item" onclick="insertEmoji('{{ e }}')">{{ e }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    <!-- Símbolos -->
+                                    <div class="emoji-panel-grid ep-cat-panel" id="ep-simbolos" style="display:none;">
+                                        {% for e in ['✨','🔥','❤️','💕','💯','⭐','🌟','💥','🎉','🎊','🏆','🎁','🎈','🎀','🪄','💫','⚡','🌈','🎶','🎵','🎤','📸','💡','🚀','💎','🔑','🏅','🥇','🎯','🎲'] %}
+                                        <span class="emoji-item" onclick="insertEmoji('{{ e }}')">{{ e }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    <!-- Naturaleza -->
+                                    <div class="emoji-panel-grid ep-cat-panel" id="ep-naturaleza" style="display:none;">
+                                        {% for e in ['🌸','🌺','💐','🦋','🌙','☀️','🌻','🌷','🌹','🌼','🍀','🌿','🍃','🌱','🪴','🌊','❄️','⛅','🌤️','🌦️','🐝','🐱','🐶','🐰','🦊','🐻','🐼','🦁','🐯','🦄'] %}
+                                        <span class="emoji-item" onclick="insertEmoji('{{ e }}')">{{ e }}</span>
+                                        {% endfor %}
+=======
+                                    <div class="emoji-panel-grid">
+                                        <span class="emoji-item" onclick="insertEmoji('😊')">😊</span>
+                                        <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
+                                        <span class="emoji-item" onclick="insertEmoji('😍')">😍</span>
+                                        <span class="emoji-item" onclick="insertEmoji('🙌')">🙌</span>
+                                        <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
+                                        <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
+                                        <span class="emoji-item" onclick="insertEmoji('🍰')">🍰</span>
+                                        <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
+                                        <span class="emoji-item" onclick="insertEmoji('🍫')">🍫</span>
+                                        <span class="emoji-item" onclick="insertEmoji('🍭')">🍭</span>
+                                        <span class="emoji-item" onclick="insertEmoji('🧁')">🧁</span>
+                                        <span class="emoji-item" onclick="insertEmoji('🎂')">🎂</span>
+                                        <span class="emoji-item" onclick="insertEmoji('❤')">❤</span>
+                                        <span class="emoji-item" onclick="insertEmoji('😋')">😋</span>
+                                        <span class="emoji-item" onclick="insertEmoji('🤤')">🤤</span>
+                                        <span class="emoji-item" onclick="insertEmoji('😎')">😎</span>
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fmt-sep"></div>
+                            <button type="button" class="fmt-btn" data-format="bold"   title="Negrita (Ctrl+B)" onclick="applyRichFormat('bold')"><i class="bi bi-type-bold"></i></button>
+                            <button type="button" class="fmt-btn" data-format="italic" title="Cursiva (Ctrl+I)" onclick="applyRichFormat('italic')"><i class="bi bi-type-italic"></i></button>
+                            <button type="button" class="fmt-btn" data-format="underline" title="Subrayado (Ctrl+U)" onclick="applyRichFormat('underline')"><i class="bi bi-type-underline"></i></button>
+                            <div class="fmt-sep"></div>
+                            <button type="button" class="fmt-btn" id="btnListado" title="Lista" onclick="insertListItem()"><i class="bi bi-list-ul"></i></button>
+                            <div class="fmt-sep"></div>
+                            <label class="fmt-btn" id="btnAdjuntarImg" title="Adjuntar imagen" style="cursor:pointer;margin:0;">
+                                <i class="bi bi-image"></i>
+                                <input type="file" id="inputImagenChat" accept="image/*" style="display:none;" onchange="adjuntarImagenDesdeArchivo(this)">
+                            </label>
+                        </div>
+
+                        <!-- Previsualizaciones de imágenes antes de enviar -->
+                        <div id="imagenesPreview" class="chat-img-preview-area" style="display:none;"></div>
+
+                        <!-- Cita de respuesta (se muestra cuando admin/vendedor responde a alguien) -->
+                        <div id="replyQuote" class="reply-quote" style="display:none;">
+                            <div class="reply-quote-inner">
+                                <i class="bi bi-reply-fill me-1"></i>
+                                <span id="replyQuoteText"></span>
+                            </div>
+                            <button class="reply-quote-close" onclick="cancelarRespuesta()"><i class="bi bi-x-lg"></i></button>
+                        </div>
+
+                        <div id="mensajeInput"
+                             class="rich-editor"
+                             contenteditable="true"
+                             data-i18n-placeholder="chat.placeholder"
+                             data-placeholder="Escribe tu sugerencia aquí..."
+                             spellcheck="true"></div>
+
+                        <div class="d-flex flex-column align-items-center mt-3">
+                            <button id="sendBtn" class="btn btn-primary ds-ripple fw-bold px-5 py-2 shadow-sm d-flex align-items-center justify-content-center">
+                                <span data-i18n="chat.send">Enviar Sugerencia</span>
+                                <i class="bi bi-send-fill ms-2"></i>
+                            </button>
+                            <p class="text-muted mb-0 mt-2 d-none d-md-block" style="font-size:0.8rem;" data-i18n="chat.hint">
+                                Déjanos saber lo que piensas, ayúdanos con tu sugerencia.
+                            </p>
+                        </div>
+                    </div>
+                </div><!-- /#panelPublico -->
+
+
+                {% if session.get('user_id') %}
+                <div id="panelPrivado" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+
+                    {% set user_rol = session.get('rol', 'cliente') %}
+
+                    {% if user_rol == 'vendedor' %}
+                    <!-- â”€â”€ Vista vendedor: sub-tabs (Clientes | Equipo) â”€â”€ -->
+                    <div class="priv-subtabs-bar">
+                        <button class="priv-subtab active" id="subtabClientes" onclick="switchPrivSubtab('clientes')">
+                            <i class="bi bi-people-fill me-1"></i> <span data-i18n="chat.tab_clients">Clientes</span>
+                            <span class="tab-badge" id="subtabClientesBadge" style="display:none;">0</span>
+                        </button>
+                        <button class="priv-subtab" id="subtabEquipo" onclick="switchPrivSubtab('equipo')">
+                            <i class="bi bi-shield-fill me-1"></i> <span data-i18n="chat.tab_team">Equipo</span>
+                            <span class="tab-badge" id="subtabEquipoBadge" style="display:none;">0</span>
+                        </button>
+                    </div>
+
+                    <div id="privPanelClientes" class="priv-layout">
+                        <div class="priv-sidebar">
+                            <div class="priv-sidebar-head d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-people-fill me-1"></i> <span data-i18n="chat.conversations">Conversaciones</span></span>
+                            </div>
+                            <div id="hilosLista" class="priv-hilos-list"></div>
+                        </div>
+                        <div class="priv-conv-wrap">
+                            <div id="privConvEmpty" class="priv-conv-empty"><i class="bi bi-chat-dots"></i><p data-i18n="chat.select_conv">Selecciona una conversación</p></div>
+                            <div id="privConvHeader" class="priv-conv-header" style="display:none;"></div>
+                            <div id="privConvBox" class="priv-conv-box" style="display:none;"></div>
+                            <div id="privConvInput" class="priv-conv-input" style="display:none;">
+                                <textarea id="privRespuestaInput" class="priv-textarea" data-i18n-placeholder="chat.reply_placeholder" placeholder="Escribe tu respuesta al cliente..." rows="2"></textarea>
+                                <button class="priv-send-btn" onclick="enviarRespuestaVendedor()"><i class="bi bi-send-fill"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="privPanelEquipo" class="priv-layout" style="display:none;">
+                        <div class="priv-sidebar">
+                            <div class="priv-sidebar-head"><i class="bi bi-shield-fill me-1"></i> <span data-i18n="chat.team_members">Equipo</span></div>
+                            <div id="staffContactosLista" class="priv-hilos-list"></div>
+                        </div>
+                        <div class="priv-conv-wrap">
+                            <div id="staffConvEmpty" class="priv-conv-empty"><i class="bi bi-chat-dots"></i><p data-i18n="chat.select_conv">Selecciona un contacto</p></div>
+                            <div id="staffConvHeader" class="priv-conv-header" style="display:none;"></div>
+                            <div id="staffConvBox" class="priv-conv-box" style="display:none;"></div>
+                            <div id="staffConvInput" class="priv-conv-input" style="display:none;">
+                                <textarea id="staffMensajeInput" class="priv-textarea" data-i18n-placeholder="chat.reply_placeholder" placeholder="Escribe tu mensaje..." rows="2"></textarea>
+                                <button class="priv-send-btn" onclick="enviarMensajeStaff()"><i class="bi bi-send-fill"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% elif user_rol == 'admin' %}
+                    <!-- â”€â”€ Vista admin: solo mensajes de equipo (vendedores) â”€â”€ -->
+                    <div class="priv-layout">
+                        <div class="priv-sidebar">
+                            <div class="priv-sidebar-head"><i class="bi bi-shield-fill me-1"></i> <span data-i18n="chat.tab_team">Equipo</span></div>
+                            <div id="staffContactosLista" class="priv-hilos-list"></div>
+                        </div>
+                        <div class="priv-conv-wrap">
+                            <div id="staffConvEmpty" class="priv-conv-empty"><i class="bi bi-chat-dots"></i><p data-i18n="chat.select_conv">Selecciona un contacto</p></div>
+                            <div id="staffConvHeader" class="priv-conv-header" style="display:none;"></div>
+                            <div id="staffConvBox" class="priv-conv-box" style="display:none;"></div>
+                            <div id="staffConvInput" class="priv-conv-input" style="display:none;">
+                                <textarea id="staffMensajeInput" class="priv-textarea" data-i18n-placeholder="chat.reply_placeholder" placeholder="Escribe tu mensaje..." rows="2"></textarea>
+                                <button class="priv-send-btn" onclick="enviarMensajeStaff()"><i class="bi bi-send-fill"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% else %}
+                    <!-- â”€â”€ Vista cliente: su conversación + mensajes predeterminados + texto libre â”€â”€ -->
+                    <div class="priv-client-wrap">
+                        <div class="priv-client-info">
+                            <i class="bi bi-lock-fill me-1" style="color:#d35400;"></i>
+                            <span data-i18n-html="chat.private_info">Esta conversación es <strong>privada</strong>. Solo los vendedores pueden verla y responder.</span>
+                        </div>
+                        <div id="clienteHiloBox" class="priv-conv-box priv-conv-box--client"></div>
+                        <div class="priv-predefined-area">
+                            <p class="priv-predefined-label"><i class="bi bi-chat-square-dots-fill me-1"></i><span data-i18n="chat.select_reason">Selecciona el motivo de tu consulta:</span></p>
+                            <div id="predefinedBtns" class="priv-predefined-grid"></div>
+                        </div>
+                        <div class="priv-conv-input" style="display:flex;">
+                            <textarea id="clienteMensajeLibre" class="priv-textarea" data-i18n-placeholder="chat.placeholder" placeholder="O escribe tu mensaje aquí..." rows="2"></textarea>
+                            <button class="priv-send-btn" onclick="enviarMensajeLibreCliente()"><i class="bi bi-send-fill"></i></button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+                {% endif %}
+                <!-- /#panelPrivado -->
+
+            </div><!-- /.chat-container -->
+        </div>
+    </main>
+
+    <div id="toastContainer"></div>
+    {% include 'global_modules/footer.html' %}
+    <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const USER_CONFIG = {
+            userId:   String("{{ session.get('user_id') or '' }}"),
+            isLogged: {{ 'true' if session.get('user_id') else 'false' }},
+            userRol:  "{{ session.get('rol', 'cliente') }}",
+            userName: "{{ session.get('nombre', '') }}"
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/general_js/comentarios.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
+</body>
+</html>
+

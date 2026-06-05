@@ -1,0 +1,234 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Panel Gestión de Productos | D'Antojitos©</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_modules/style_gestion_productos.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
+</head>
+<body>
+    {% include 'global_modules/navbar.html' %}
+
+    {% if session.get('user_id') and session.get('rol') in ['admin', 'vendedor'] %}
+    <main class="page-wrapper py-4">
+        <div class="container-fluid px-lg-5">
+            <div class="card-title-marketing text-center mb-4">
+                <h3 class="fw-bold m-0"><i class="bi bi-box-seam me-2"></i> <span data-i18n="prod.title">Panel de Productos</span></h3>
+                <p class="text-white-50 mb-0 small ls-1" data-i18n="prod.subtitle">Administra el catálogo de postres disponibles.</p>
+            </div>
+
+<<<<<<< HEAD
+            <div class="row mb-3" data-reveal>
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-3" id="cardDescuentoCumple">
+                        <div class="card-body py-2 px-3 d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                            <i class="bi bi-cake2-fill text-danger fs-5 flex-shrink-0"></i>
+                            <span class="fw-bold small text-muted flex-grow-1">Descuento de Cumpleaños</span>
+                            <div class="input-group flex-nowrap" style="max-width:160px;">
+                                <input type="number" id="inputDescuentoCumple" class="form-control form-control-sm shadow-none text-center"
+                                       min="0" max="100" step="1" value="5" title="Porcentaje de descuento (0–100)">
+                                <span class="input-group-text px-2">%</span>
+                            </div>
+                            <button class="btn btn-sm btn-primary fw-bold px-3 flex-shrink-0" id="btnGuardarDescuento">
+                                <i class="bi bi-floppy me-1"></i>Guardar
+                            </button>
+                            <span id="descuentoFeedback" class="small d-none"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+=======
+>>>>>>> 0ab2597905e557fe9736e94d6545559f2c102829
+            <div class="row g-3 mb-4 align-items-center" data-reveal>
+                <div class="col-12 col-lg-9">
+                    <div class="input-group search-group shadow-sm rounded-3">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchProductos" class="form-control border-start-0 shadow-none"
+                               data-i18n-placeholder="prod.search" placeholder="Buscar por nombre de producto...">
+                    </div>
+                </div>
+                <div class="col-12 col-lg-3 text-lg-end">
+                    <button class="btn btn-primary shadow-sm w-100 py-2 fw-bold" id="btnAgregarPostre">
+                        <i class="bi bi-plus-circle-fill me-2"></i><span data-i18n="prod.add">NUEVO POSTRE</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="formAgregarPostre" class="form-panel mb-5 d-none">
+                <div class="p-4 bg-white border rounded-4 shadow-sm animate-in" data-reveal>
+                    <h4 class="mb-4 text-primary fw-bold" id="formPanelTitle" data-i18n="prod.new_title">Nuevo Postre</h4>
+                    <form id="agregarPostreForm" enctype="multipart/form-data">
+                        <div class="row g-4">
+                            <div class="col-12 col-md-8">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold small" data-i18n="prod.name">Nombre del Postre</label>
+                                        <input type="text" id="nombrePostre" class="form-control shadow-none"
+                                               data-i18n-placeholder="ph.product_name" placeholder="Ej: Torta de Chocolate" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small" data-i18n="prod.price">Precio (COP)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" id="precioPostre" class="form-control shadow-none"
+                                                   data-i18n-placeholder="ph.product_price" placeholder="0" min="0" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small" data-i18n="prod.stock">Stock Inicial</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-boxes"></i></span>
+                                            <input type="number" id="stockPostre" class="form-control shadow-none"
+                                                   data-i18n-placeholder="ph.product_stock" placeholder="0" min="0" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold small" data-i18n="prod.desc">Descripción del Producto</label>
+                                        <textarea id="descripcionPostre" class="form-control shadow-none" rows="4"
+                                                  data-i18n-placeholder="ph.product_desc" placeholder="Detalles, ingredientes o porciones..." required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-bold small d-block text-center text-md-start" data-i18n="prod.image">Imagen del Producto</label>
+                                <div id="previewNotificacion" class="preview-img-box mb-3 d-flex align-items-center justify-content-center border rounded-4 bg-light overflow-hidden shadow-sm">
+                                    <div id="placeholderNotif" class="text-center text-muted">
+                                        <i class="bi bi-image" style="font-size: 3rem; color: #cbd5e0;"></i>
+                                        <span class="d-block fw-bold text-uppercase mt-2" style="font-size: 0.65rem; letter-spacing: 1px;">Seleccionar Imagen</span>
+                                    </div>
+                                    <img id="previewNotificacionImg" src="" alt="Vista previa" class="w-100 h-100 d-none">
+                                </div>
+                                <input type="file" id="fotoPostre" class="form-control form-control-sm shadow-none" accept="image/*">
+                                <div class="mt-2 text-center">
+                                    <small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-info-circle me-1"></i><span data-i18n="prod.img_compress">La imagen será comprimida automáticamente para ahorrar espacio.</span></small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" id="btnSubmitForm" class="btn btn-success ds-btn-primary flex-grow-1 fw-bold py-2">
+                                <i class="bi bi-save2 me-2"></i><span data-i18n="prod.save">Agregar nuevo producto</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary px-4 fw-bold" id="btnCancelar">
+                                <i class="bi bi-x-circle me-1"></i><span data-i18n="btn.cancel">Cancelar</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="avisoAgotados" class="alert alert-warning d-none mb-4 shadow-sm border-0 animate-in">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Atención: Algunos productos han alcanzado stock cero.
+            </div>
+
+            <div class="row g-3 mb-5" id="statsRow" data-reveal>
+                <div class="col-12 col-md-4">
+                    <div class="stats-card bg-white shadow-sm">
+                        <span class="h3 d-block mb-0 text-primary fw-bold" id="statTotalNum" data-counter>0</span>
+                        <small class="text-muted text-uppercase fw-bold ls-1" data-i18n="prod.total_label">Productos Totales</small>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="stats-card bg-white shadow-sm border-bottom-success">
+                        <span class="h3 d-block mb-0 text-success fw-bold" id="statDispNum" data-counter>0</span>
+                        <small class="text-muted text-uppercase fw-bold ls-1" data-i18n="prod.in_stock">En Existencia</small>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="stats-card bg-white shadow-sm border-bottom-danger">
+                        <span class="h3 d-block mb-0 text-danger fw-bold" id="statAgotNum" data-counter>0</span>
+                        <small class="text-muted text-uppercase fw-bold ls-1" data-i18n="prod.no_stock">Sin Stock</small>
+                    </div>
+                </div>
+            </div>
+
+            <section class="mb-5 animate-in" style="animation-delay: 0.1s;">
+                <div class="section-header mb-4">
+                    <h5 class="fw-bold text-dark m-0"><i class="bi bi-check2-circle text-success me-2"></i><span data-i18n="prod.available">Postres Disponibles</span></h5>
+                    <div class="header-line"></div>
+                </div>
+                <div id="listaPostresDisponibles" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4"></div>
+                <div id="emptyDisponibles" class="text-center py-5 d-none">
+                    <i class="bi bi-inbox text-muted display-4"></i>
+                    <p class="text-muted mt-2" data-i18n="prod.empty_active">No hay productos activos en este momento</p>
+                </div>
+            </section>
+
+            <section class="mb-5 animate-in" style="animation-delay: 0.2s;">
+                <div class="section-header mb-4 border-danger-soft">
+                    <h5 class="fw-bold text-dark m-0"><i class="bi bi-x-circle text-danger me-2"></i><span data-i18n="prod.soldout">Postres Agotados</span></h5>
+                    <div class="header-line bg-danger"></div>
+                </div>
+                <div id="listaPostresAgotados" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4"></div>
+                <div id="emptyAgotados" class="text-center py-5 d-none">
+                    <p class="text-muted" data-i18n="prod.empty_soldout">Inventario de agotados vacío</p>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <div class="modal fade" id="modalPostre" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg overflow-hidden rounded-4">
+                <div class="modal-header border-0 bg-light">
+                    <h5 class="modal-title fw-bold" id="modalNombre">Detalle del Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-4 align-items-center">
+                        <div class="col-md-6">
+                            <div class="modal-img-container bg-light rounded-4 shadow-sm">
+                                <img id="modalFoto" src="" alt="Producto" class="w-100 h-100">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h3 class="text-primary fw-bold mb-2" id="modalNombreH3"></h3>
+                            <p class="text-muted mb-4" id="modalDescripcion"></p>
+                            <div class="bg-light p-3 rounded-4 mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small fw-bold text-muted text-uppercase">Precio Venta</span>
+                                    <span class="h4 mb-0 text-dark fw-bold" id="modalPrecio"></span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small fw-bold text-muted text-uppercase">Stock Disponible</span>
+                                    <span class="badge bg-secondary p-2 px-3" id="modalStock"></span>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-warning fw-bold py-2" id="btnEditar">
+                                    <i class="bi bi-pencil-square me-2"></i>Editar Registro
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm border-0" id="btnEliminar">
+                                    <i class="bi bi-trash3 me-2"></i>Eliminar Permanentemente
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% include 'global_modules/footer.html' %}
+    <div id="toastContainer"></div>
+    <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/global_js/widget_system.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_js/gestion_productos.js') }}"></script>
+</body>
+</html>

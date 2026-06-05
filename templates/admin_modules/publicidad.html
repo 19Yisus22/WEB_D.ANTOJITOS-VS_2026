@@ -1,0 +1,263 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel Gestión de Publicidad | D'Antojitos©</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_modules/style_publicidad.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
+</head>
+<body>
+    {% include 'global_modules/navbar.html' %}
+    <div class="page-wrapper">
+    <div class="main-content">
+        <div class="container-central">
+            <div class="card-title-marketing mb-5 text-center">
+                <h3 class="display-6 fw-bold m-0"><i class="bi bi-megaphone me-2"></i> Panel de Publicidad</h3>
+                <p class="text-white-50 mb-0 mt-1 fw-500">Gestiona y filtra todo el contenido de tu marketing digital.</p>
+            </div>
+            <div class="card ds-card section-notificaciones mb-4" data-reveal>
+                <div class="card-body">
+                    <!-- Encabezado sección -->
+                    <div class="d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-bell-fill fs-4 text-warning"></i>
+                        <h4 class="m-0 fw-bold">Sistema de Alertas</h4>
+                    </div>
+
+                    <!-- ── Formulario de nueva alerta ── -->
+                    <div class="notif-form-grid">
+
+                        <!-- Columna izquierda: campos de texto -->
+                        <div class="notif-form-fields">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Título de la Alerta</label>
+                                <input type="text" id="tituloNotificacion" class="form-control"
+                                       placeholder="Ej: ¡Nuevo Producto!">
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label fw-semibold">Mensaje</label>
+                                <textarea id="descNotificacion" class="form-control notif-textarea"
+                                          placeholder="Descripción de la alerta que verán los usuarios..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Columna derecha: imagen -->
+                        <div class="notif-form-image">
+                            <label class="form-label fw-semibold">Imagen del Producto</label>
+                            <div id="previewNotificacion" class="notif-img-preview-box">
+                                <div id="placeholderNotif" class="notif-img-placeholder">
+                                    <i class="bi bi-image"></i>
+                                    <span>SELECCIONAR IMAGEN</span>
+                                </div>
+                                <img id="previewNotificacionImg" src="" alt="Vista previa"
+                                     class="notif-img-preview d-none"
+                                     onload="this.classList.remove('d-none'); document.getElementById('placeholderNotif').classList.add('d-none')"
+                                     onerror="this.classList.add('d-none'); document.getElementById('placeholderNotif').classList.remove('d-none')">
+                            </div>
+                            <input type="file" id="archivoNotificacion" class="form-control form-control-sm mt-2 shadow-none"
+                                   accept="image/*" onchange="actualizarPreviewNotif(this)">
+                            <small class="text-muted d-block mt-1">
+                                <i class="bi bi-info-circle me-1"></i>La imagen es opcional y se comprimirá automáticamente.
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- ── Botón publicar ── -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button class="btn btn-warning flex-fill py-2 fw-bold" onclick="crearNotificacion()">
+                            <i class="bi bi-plus-circle-fill me-2"></i>Publicar Alerta
+                        </button>
+                        <button class="btn btn-outline-secondary py-2 fw-bold" onclick="
+                            document.getElementById('tituloNotificacion').value='';
+                            document.getElementById('descNotificacion').value='';
+                            document.getElementById('archivoNotificacion').value='';
+                            document.getElementById('previewNotificacionImg').classList.add('d-none');
+                            document.getElementById('placeholderNotif').classList.remove('d-none');
+                        ">
+                            <i class="bi bi-x-circle me-1"></i>Cancelar
+                        </button>
+                    </div>
+
+                    <!-- ── Lista de alertas activas ── -->
+                    <div class="mt-4 pt-3 border-top">
+                        <label class="form-label fw-semibold mb-3">Alertas Activas</label>
+                        <div id="contenedorAlertas" class="d-flex flex-column gap-2"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card ds-card section-carrusel mb-4" data-reveal>
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-images fs-4 text-primary"></i>
+                        <h4 class="m-0 fw-bold">Carruseles</h4>
+                    </div>
+                    <div id="carruselContainer" class="row g-4"></div>
+                    <button class="btn btn-outline-primary w-100 mt-4 fw-bold" onclick="agregarCarrusel()">
+                        <i class="bi bi-plus-lg"></i> Agregar Diapositiva
+                    </button>
+                </div>
+            </div>
+            <div class="card ds-card section-secundarias mb-4" data-reveal>
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-grid-3x3-gap-fill fs-4" style="color: #6f42c1;"></i>
+                        <h4 class="m-0 fw-bold">Tarjetas Informativas</h4>
+                    </div>
+                    <div id="seccionesContainer" class="row g-4"></div>
+                    <button class="btn btn-outline-secondary w-100 mt-4 fw-bold" onclick="agregarSeccion()">
+                        <i class="bi bi-plus-lg"></i> Agregar Tarjeta
+                    </button>
+                </div>
+            </div>
+            <!-- ── CINTA INICIO (mismo estilo que bancos digitales footer) ── -->
+            <div class="card ds-card section-inicio-cinta mb-4" data-reveal>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-house-heart-fill fs-4" style="color:#d35400;"></i>
+                            <h4 class="m-0 fw-bold" data-i18n="pub.inicio_ticker">Cinta del Inicio</h4>
+                            <span class="badge bg-warning text-dark ms-1" data-i18n="pub.badge_home">Inicio</span>
+                        </div>
+                        <!-- Control de velocidad -->
+                        <div class="ticker-speed-control d-flex align-items-center gap-2">
+                            <span class="text-muted small fw-bold" style="white-space:nowrap;">
+                                <i class="bi bi-speedometer2 me-1"></i><span data-i18n="pub.speed">Velocidad</span>
+                            </span>
+                            <div class="ticker-speed-group" role="group">
+                                <button class="ticker-speed-btn" data-speed="1"   onclick="setTickerSpeed(1)">1×</button>
+                                <button class="ticker-speed-btn" data-speed="1.5" onclick="setTickerSpeed(1.5)">1.5×</button>
+                                <button class="ticker-speed-btn" data-speed="2"   onclick="setTickerSpeed(2)">2×</button>
+                                <button class="ticker-speed-btn" data-speed="2.5" onclick="setTickerSpeed(2.5)">2.5×</button>
+                                <button class="ticker-speed-btn" data-speed="3"   onclick="setTickerSpeed(3)">3×</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-muted small mb-4" data-i18n="pub.inicio_ticker_desc">Agrega logos e imágenes que se muestran como marquee en la página de inicio (igual que los bancos del footer).</p>
+                    <div id="inicioCintaContainer" class="row g-3"></div>
+                    <button class="btn btn-outline-warning w-100 mt-4 fw-bold" onclick="agregarInicioCinta()">
+                        <i class="bi bi-plus-lg"></i> <span data-i18n="pub.add_init">Agregar a la Cinta del Inicio</span>
+                    </button>
+                </div>
+            </div>
+            <!-- ── GESTOR DE IMÁGENES CLOUDINARY ────────────────── -->
+            <div class="card ds-card section-gestor mb-4" id="gestorImagenesCard" data-reveal>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-folder-fill fs-4" style="color:#f59e0b;"></i>
+                            <h4 class="m-0 fw-bold">Gestor de Imágenes</h4>
+                            <span class="badge bg-secondary ms-1" id="gestorTotalBadge">—</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-warning fw-bold" onclick="cargarGestorImagenes()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+                        </button>
+                    </div>
+
+                    <!-- Pestañas de carpetas -->
+                    <ul class="nav nav-pills mb-4 gap-2" id="gestorTabs">
+                        <li class="nav-item">
+                            <button class="nav-link active" onclick="mostrarCarpeta('publicidad')" data-carpeta="publicidad">
+                                <i class="bi bi-megaphone me-1"></i>Publicidad
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="mostrarCarpeta('pagos_qr')" data-carpeta="pagos_qr">
+                                <i class="bi bi-qr-code me-1"></i>Pagos / QR
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="mostrarCarpeta('perfiles')" data-carpeta="perfiles">
+                                <i class="bi bi-people-fill me-1"></i>Perfiles
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="mostrarCarpeta('productos')" data-carpeta="productos">
+                                <i class="bi bi-box-seam me-1"></i>Productos
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Grid de imágenes -->
+                    <div id="gestorGrid" class="row g-3">
+                        <div class="col-12 text-center py-5 text-muted" id="gestorLoading">
+                            <div class="spinner-border spinner-border-sm me-2" style="color:#f59e0b;"></div>
+                            Cargando imágenes de Cloudinary...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sticky-bottom p-3 shadow-lg mb-5 mx-1" style="z-index: 1000;">
+                <div id="progressContainer" class="d-none mb-3">
+                    <div class="progress" style="height: 6px; border-radius: 10px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted mt-1 d-block" id="progressText">Subiendo imágenes...</small>
+                </div>
+                <button id="btnGuardarMarketing" class="btn btn-dark ds-btn-primary btn-lg w-100 fw-bold py-3">
+                    <i class="bi bi-cloud-arrow-up-fill me-2"></i>Guardar Todos los Cambios
+                </button>
+            </div>
+            <div class="mb-5 pb-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-display fs-4" style="color:#d35400;"></i>
+                        <h5 class="m-0 fw-bold text-uppercase" data-i18n="pub.live_preview">Vista en Vivo — Inicio</h5>
+                        <span class="badge bg-success ms-1" id="liveStatusBadge" data-i18n="pub.live_badge">EN VIVO</span>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="recargarPreviewInicio()" id="btnRecargarPreview" title="Recargar vista" style="display:none;">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary fw-bold" id="btnTogglePreview" onclick="toggleLivePreview()">
+                            <i class="bi bi-eye me-1" id="iconTogglePreview"></i><span id="lblTogglePreview">Ver Vista en Vivo</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="livePreviewCollapse" style="display:none;">
+                    <div class="live-preview-wrapper" id="livePreviewWrapper">
+                        <div class="live-preview-overlay"></div>
+                        <iframe id="iframePreviewInicio"
+                                src=""
+                                class="live-preview-iframe"
+                                title="Vista previa del inicio"
+                                frameborder="0">
+                        </iframe>
+                    </div>
+                    <p class="text-center text-muted small mt-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Muestra el estado <strong>publicado</strong> del inicio. Guarda los cambios y recarga para actualizar.
+                    </p>
+                </div>
+
+                <!-- Contenedores ocultos para actualizarPreview() -->
+                <div style="display:none;">
+                    <div id="previewCarrusel" class="carousel slide"><div class="carousel-inner"></div></div>
+                    <div id="previewCintaTrack"></div>
+                    <div id="previewSecciones"></div>
+                    <div id="prevBlockCinta"></div>
+                    <div id="prevBlockCarrusel"></div>
+                    <div id="prevBlockSecciones"></div>
+                    <div id="prevEmpty"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div><!-- /page-wrapper -->
+    {% include 'global_modules/footer.html' %}
+    <div id="toastContainer"></div>
+    <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/global_js/widget_system.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_js/publicidad.js') }}"></script>
+</body>
+</html>

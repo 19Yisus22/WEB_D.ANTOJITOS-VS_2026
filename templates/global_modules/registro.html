@@ -1,0 +1,204 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Cuenta Â· D'Antojitos©</title>
+    <link rel="icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_registro.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_login.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
+</head>
+<body class="reg-body">
+
+<div id="toastContainer"></div>
+<div class="login-top-actions">
+    <a href="/inicio" class="login-home-btn" title="Volver al inicio">
+        <i class="bi bi-house-door-fill"></i>
+        <span data-i18n="nav.home">Inicio</span>
+    </a>
+    <button class="login-theme-btn" id="regThemeBtn" onclick="toggleTheme()" title="Cambiar tema">
+        <i class="bi bi-moon-fill" id="regThemeIcon"></i>
+        <span id="regThemeLabel" data-i18n="nav.theme">Oscuro</span>
+    </button>
+    <button class="login-theme-btn" id="regLangBtn"
+            onclick="setLang(document.documentElement.lang==='es'?'en':'es')"
+            title="Cambiar idioma">
+        <i class="bi bi-translate"></i>
+        <span id="regLangLabel">EN</span>
+    </button>
+</div>
+
+<div class="reg-wrapper">
+
+    <div class="reg-left">
+        <div class="reg-brand">
+            <div class="reg-logo-ring">
+                <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo">
+            </div>
+            <h1>D'Antojitos©</h1>
+            <p>Tu dulce rincón favorito</p>
+            <div class="reg-dots"><span></span><span></span><span></span></div>
+        </div>
+        <div class="reg-features">
+            <div class="reg-feat"><i class="bi bi-shield-check-fill"></i><span>Registro 100% seguro</span></div>
+            <div class="reg-feat"><i class="bi bi-bag-heart-fill"></i><span>Postres artesanales</span></div>
+            <div class="reg-feat"><i class="bi bi-lightning-charge-fill"></i><span>Acceso inmediato</span></div>
+            <div class="reg-feat"><i class="bi bi-truck-front-fill"></i><span>Pedidos a tu puerta</span></div>
+        </div>
+        <div class="reg-deco d1"></div>
+        <div class="reg-deco d2"></div>
+    </div>
+
+    <div class="reg-right">
+        <div class="reg-card ds-card" data-reveal>
+
+            <div class="reg-header">
+                <h2 data-i18n="reg.title">Crear cuenta</h2>
+                <p data-i18n="reg.subtitle">Completa tus datos para comenzar</p>
+            </div>
+
+            <form id="formRegistro" novalidate autocomplete="off">
+
+                <div class="reg-section-label">
+                    <i class="bi bi-person-fill"></i>
+                    <span data-i18n="reg.personal_data">Datos personales</span>
+                </div>
+
+                <div class="reg-row">
+                    <div class="reg-field">
+                        <label data-i18n="reg.name">Nombre <span class="req">*</span></label>
+                        <div class="field-wrap">
+                            <i class="bi bi-person"></i>
+                            <input type="text" id="nombre" name="nombre" maxlength="50"
+                                   placeholder="María" required autocomplete="given-name">
+                        </div>
+                    </div>
+                    <div class="reg-field">
+                        <label data-i18n="reg.lastname">Apellido <span class="req">*</span></label>
+                        <div class="field-wrap">
+                            <i class="bi bi-person"></i>
+                            <input type="text" id="apellido" name="apellido" maxlength="50"
+                                   placeholder="García" required autocomplete="family-name">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reg-row">
+                    <div class="reg-field">
+                        <label data-i18n="reg.cedula">Cédula <span class="req">*</span></label>
+                        <div class="field-wrap">
+                            <i class="bi bi-card-text"></i>
+                            <input type="text" id="cedula" name="cedula" inputmode="numeric"
+                                   maxlength="15" data-i18n-placeholder="ph.cedula" placeholder="1234567890" required>
+                        </div>
+                        <small class="field-hint"><i class="bi bi-info-circle me-1"></i><span data-i18n="reg.digits_hint">7–15 dígitos</span></small>
+                    </div>
+                    <div class="reg-field">
+                        <label data-i18n="reg.phone">Teléfono <span class="req">*</span></label>
+                        <div class="field-wrap">
+                            <i class="bi bi-telephone"></i>
+                            <input type="text" id="telefono" name="telefono" inputmode="numeric"
+                                   maxlength="15" data-i18n-placeholder="ph.phone" placeholder="3001234567" required>
+                        </div>
+                        <small class="field-hint"><i class="bi bi-info-circle me-1"></i><span data-i18n="reg.digits_hint">7–15 dígitos</span></small>
+                    </div>
+                </div>
+
+                <div class="reg-section-label mt-2">
+                    <i class="bi bi-lock-fill"></i>
+                    <span data-i18n="reg.access_data">Datos de acceso</span>
+                </div>
+
+                <div class="reg-field">
+                    <label data-i18n="reg.email">Correo Electrónico <span class="req">*</span></label>
+                    <div class="field-wrap">
+                        <i class="bi bi-envelope"></i>
+                        <input type="email" id="correo" name="correo" maxlength="150"
+                               data-i18n-placeholder="ph.email" placeholder="usuario@gmail.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="reg-row">
+                    <div class="reg-field">
+                        <label data-i18n="reg.username">Usuario <small class="reg-optional" data-i18n="reg.optional">(opcional)</small></label>
+                        <div class="field-wrap">
+                            <i class="bi bi-at"></i>
+                            <input type="text" id="username" name="username" maxlength="30"
+                                   data-i18n-placeholder="ph.username" placeholder="maria99" autocomplete="username">
+                        </div>
+                    </div>
+                    <div class="reg-field">
+                        <label data-i18n="reg.password">Contraseña <span class="req">*</span></label>
+                        <div class="field-wrap">
+                            <i class="bi bi-lock"></i>
+                            <input type="password" id="contrasena" name="contrasena"
+                                   data-i18n-placeholder="reg.pass_hint" placeholder="Mín. 5 caracteres" required autocomplete="new-password">
+                            <i class="bi bi-eye toggle-pw" id="togglePw"></i>
+                        </div>
+                        <div class="pw-strength-wrap">
+                            <div class="pw-bar"><div class="pw-fill" id="pwFill"></div></div>
+                            <span class="pw-label" id="pwLabel">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-reg ds-btn-primary ds-ripple" id="btnRegistrar">
+                    <span id="btnRegText">
+                        <i class="bi bi-person-check-fill me-2"></i><span data-i18n="reg.create_btn">Crear Cuenta</span>
+                    </span>
+                    <span id="btnRegLoader" style="display:none;">
+                        <span class="spinner-border spinner-border-sm me-2"></span><span data-i18n="reg.creating">Creando cuenta...</span>
+                    </span>
+                </button>
+
+            </form>
+
+            <div class="reg-divider">
+                <span data-i18n="login.no_account2">¿Ya tienes cuenta?</span>
+            </div>
+            <a href="/login" class="btn-reg-ghost">
+                <i class="bi bi-box-arrow-in-right me-2"></i><span data-i18n="login.btn">Iniciar sesión</span>
+            </a>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/global_js/i18n.js') }}"></script>
+<script src="{{ url_for('static', filename='js/global_js/login_registro.js') }}"></script>
+<script>
+(function() {
+    function syncRegTheme() {
+        const icon  = document.getElementById('regThemeIcon');
+        const label = document.getElementById('regThemeLabel');
+        const cur   = document.documentElement.getAttribute('data-theme') || 'light';
+        if (icon)  icon.className   = cur === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+        if (label) label.textContent = cur === 'dark' ? 'Claro' : 'Oscuro';
+    }
+    syncRegTheme();
+    new MutationObserver(syncRegTheme).observe(
+        document.documentElement,
+        { attributes: true, attributeFilter: ['data-theme'] }
+    );
+})();
+
+(function() {
+    function syncRegLang() {
+        const lbl = document.getElementById('regLangLabel');
+        const cur = document.documentElement.getAttribute('lang') || 'es';
+        if (lbl) lbl.textContent = cur === 'es' ? 'EN' : 'ES';
+    }
+    syncRegLang();
+    document.addEventListener('langChanged', syncRegLang);
+})();
+</script>
+<script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
+</body>
+</html>
