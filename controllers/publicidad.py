@@ -159,8 +159,8 @@ def gestionar_notificacion(id_publicidad):
 def publicidad_activa():
     try:
         return jsonify(db.publicidad_get_activa())
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        return jsonify([]), 200
 
 
 @publicidad_bp.route("/api/publicidad/gestor")
