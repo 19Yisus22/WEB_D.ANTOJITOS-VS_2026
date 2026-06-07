@@ -20,10 +20,10 @@ DROP TABLE IF EXISTS gestion_productos CASCADE;
 DROP TABLE IF EXISTS usuarios          CASCADE;
 DROP TABLE IF EXISTS roles             CASCADE;
 
-DROP FUNCTION IF EXISTS fn_set_usuario_rol()          CASCADE;
-DROP FUNCTION IF EXISTS fn_pedido_sync_total()        CASCADE;
-DROP FUNCTION IF EXISTS fn_factura_autonumero()       CASCADE;
-DROP FUNCTION IF EXISTS _set_logros_actualizado()     CASCADE;
+DROP FUNCTION IF EXISTS fn_set_usuario_rol()      CASCADE;
+DROP FUNCTION IF EXISTS fn_pedido_sync_total()    CASCADE;
+DROP FUNCTION IF EXISTS fn_factura_autonumero()   CASCADE;
+DROP FUNCTION IF EXISTS _set_logros_actualizado() CASCADE;
 
 CREATE TABLE roles (
     id_role     uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -33,31 +33,31 @@ CREATE TABLE roles (
 );
 
 CREATE TABLE usuarios (
-    cedula               text NOT NULL,
-    username             text UNIQUE,
-    imagen_url           text DEFAULT 'static/uploads/default_icon_profile.png',
-    nombre               text NOT NULL,
-    apellido             text NOT NULL,
-    telefono             text,
-    correo               text NOT NULL UNIQUE,
-    contrasena           text,
-    id_role              uuid,
-    direccion            text,
-    metodo_pago          text DEFAULT 'Efectivo' CHECK (metodo_pago = ANY (ARRAY['Efectivo','Transferencia'])),
-    fecha_creacion       timestamptz DEFAULT now(),
-    ultima_conexion      timestamptz,
-    block_folder         jsonb DEFAULT '[]'::jsonb,
-    web_token            text,
-    expires_at           timestamptz,
-    last_change_cedula   timestamptz,
-    last_change_username timestamptz,
-    last_change_nombre   timestamptz,
-    last_change_apellido timestamptz,
+    cedula                 text NOT NULL,
+    username               text UNIQUE,
+    imagen_url             text DEFAULT 'static/uploads/default_icon_profile.png',
+    nombre                 text NOT NULL,
+    apellido               text NOT NULL,
+    telefono               text,
+    correo                 text NOT NULL UNIQUE,
+    contrasena             text,
+    id_role                uuid,
+    direccion              text,
+    metodo_pago            text DEFAULT 'Efectivo' CHECK (metodo_pago = ANY (ARRAY['Efectivo','Transferencia'])),
+    fecha_creacion         timestamptz DEFAULT now(),
+    ultima_conexion        timestamptz,
+    block_folder           jsonb DEFAULT '[]'::jsonb,
+    web_token              text,
+    expires_at             timestamptz,
+    last_change_cedula     timestamptz,
+    last_change_username   timestamptz,
+    last_change_nombre     timestamptz,
+    last_change_apellido   timestamptz,
     last_change_contrasena timestamptz,
-    fecha_nacimiento     date,
-    intentos_fallidos    integer NOT NULL DEFAULT 0,
-    bloqueado_hasta      timestamptz,
-    "letraAcc"           CHAR(1) DEFAULT 'D' CHECK ("letraAcc" = ANY(ARRAY['D','G'])),
+    fecha_nacimiento       date,
+    intentos_fallidos      integer NOT NULL DEFAULT 0,
+    bloqueado_hasta        timestamptz,
+    "letraAcc"             CHAR(1) DEFAULT 'D' CHECK ("letraAcc" = ANY(ARRAY['D','G'])),
     CONSTRAINT usuarios_pkey         PRIMARY KEY (cedula),
     CONSTRAINT usuarios_id_role_fkey FOREIGN KEY (id_role) REFERENCES roles(id_role)
 );
@@ -88,30 +88,30 @@ CREATE TABLE metodos_pago (
 );
 
 CREATE TABLE pedidos (
-    id_pedido        uuid NOT NULL DEFAULT gen_random_uuid(),
-    cedula           text,
+    id_pedido         uuid NOT NULL DEFAULT gen_random_uuid(),
+    cedula            text,
     direccion_entrega text NOT NULL,
-    metodo_pago      text CHECK (metodo_pago = ANY (ARRAY['Efectivo','Transferencia'])),
-    estado           text NOT NULL DEFAULT 'Pendiente' CHECK (estado = ANY (ARRAY['Pendiente','Enviado','Entregado','Cancelado'])),
-    pagado           boolean DEFAULT false,
-    fecha_pedido     timestamptz DEFAULT now(),
-    total            numeric DEFAULT 0 CHECK (total >= 0),
-    numero_factura   text UNIQUE,
+    metodo_pago       text CHECK (metodo_pago = ANY (ARRAY['Efectivo','Transferencia'])),
+    estado            text NOT NULL DEFAULT 'Pendiente' CHECK (estado = ANY (ARRAY['Pendiente','Enviado','Entregado','Cancelado'])),
+    pagado            boolean DEFAULT false,
+    fecha_pedido      timestamptz DEFAULT now(),
+    total             numeric DEFAULT 0 CHECK (total >= 0),
+    numero_factura    text UNIQUE,
     CONSTRAINT pedidos_pkey        PRIMARY KEY (id_pedido),
     CONSTRAINT pedidos_cedula_fkey FOREIGN KEY (cedula) REFERENCES usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE pedido_detalle (
-    id_detalle       uuid NOT NULL DEFAULT gen_random_uuid(),
-    id_pedido        uuid,
-    id_producto      uuid,
-    nombre_producto  text NOT NULL,
-    cantidad         integer NOT NULL CHECK (cantidad > 0),
-    precio_unitario  numeric NOT NULL CHECK (precio_unitario >= 0),
-    subtotal         numeric GENERATED ALWAYS AS (cantidad * precio_unitario) STORED,
-    CONSTRAINT pedido_detalle_pkey              PRIMARY KEY (id_detalle),
-    CONSTRAINT pedido_detalle_id_pedido_fkey    FOREIGN KEY (id_pedido)   REFERENCES pedidos(id_pedido)            ON DELETE CASCADE,
-    CONSTRAINT pedido_detalle_id_producto_fkey  FOREIGN KEY (id_producto) REFERENCES gestion_productos(id_producto) ON DELETE SET NULL
+    id_detalle      uuid NOT NULL DEFAULT gen_random_uuid(),
+    id_pedido       uuid,
+    id_producto     uuid,
+    nombre_producto text NOT NULL,
+    cantidad        integer NOT NULL CHECK (cantidad > 0),
+    precio_unitario numeric NOT NULL CHECK (precio_unitario >= 0),
+    subtotal        numeric GENERATED ALWAYS AS (cantidad * precio_unitario) STORED,
+    CONSTRAINT pedido_detalle_pkey             PRIMARY KEY (id_detalle),
+    CONSTRAINT pedido_detalle_id_pedido_fkey   FOREIGN KEY (id_pedido)   REFERENCES pedidos(id_pedido)            ON DELETE CASCADE,
+    CONSTRAINT pedido_detalle_id_producto_fkey FOREIGN KEY (id_producto) REFERENCES gestion_productos(id_producto) ON DELETE SET NULL
 );
 
 CREATE TABLE facturas (
@@ -141,9 +141,9 @@ CREATE TABLE carrito (
     precio_unitario numeric NOT NULL CHECK (precio_unitario >= 0),
     total           numeric GENERATED ALWAYS AS (cantidad * precio_unitario) STORED,
     fecha_creacion  timestamptz DEFAULT now(),
-    CONSTRAINT carrito_pkey              PRIMARY KEY (id_carrito),
-    CONSTRAINT carrito_cedula_fkey       FOREIGN KEY (cedula)      REFERENCES usuarios(cedula)                ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT carrito_id_producto_fkey  FOREIGN KEY (id_producto) REFERENCES gestion_productos(id_producto) ON DELETE CASCADE
+    CONSTRAINT carrito_pkey             PRIMARY KEY (id_carrito),
+    CONSTRAINT carrito_cedula_fkey      FOREIGN KEY (cedula)      REFERENCES usuarios(cedula)                ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT carrito_id_producto_fkey FOREIGN KEY (id_producto) REFERENCES gestion_productos(id_producto) ON DELETE CASCADE
 );
 
 CREATE TABLE comentarios (
@@ -167,9 +167,9 @@ CREATE TABLE chats_privados (
     mensaje     text NOT NULL,
     leido       boolean DEFAULT false,
     created_at  timestamptz DEFAULT now(),
-    CONSTRAINT chats_privados_pkey              PRIMARY KEY (id),
-    CONSTRAINT chats_privados_cedula_de_fkey    FOREIGN KEY (cedula_de)   REFERENCES usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT chats_privados_cedula_para_fkey  FOREIGN KEY (cedula_para) REFERENCES usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT chats_privados_pkey             PRIMARY KEY (id),
+    CONSTRAINT chats_privados_cedula_de_fkey   FOREIGN KEY (cedula_de)   REFERENCES usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT chats_privados_cedula_para_fkey FOREIGN KEY (cedula_para) REFERENCES usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE mensajes_privados (
@@ -204,30 +204,16 @@ CREATE TABLE inicio_config (
 );
 
 CREATE TABLE logros (
-    id          uuid NOT NULL DEFAULT gen_random_uuid(),
-    codigo      text NOT NULL UNIQUE,
-    nombre      text NOT NULL,
-    descripcion text NOT NULL,
-    icono       text NOT NULL,
-    rareza      text DEFAULT 'comun' CHECK (rareza = ANY (ARRAY['comun','raro','epico','legendario'])),
-    puntos      integer DEFAULT 10,
-    modulo      text DEFAULT '',
-    roles       text[] DEFAULT '{}',
-    campo       text DEFAULT '',
-    meta        integer,
-    CONSTRAINT logros_pkey PRIMARY KEY (id)
+    cedula         text NOT NULL,
+    id_role        uuid,
+    data           jsonb NOT NULL DEFAULT '{}'::jsonb,
+    fecha_creacion timestamptz DEFAULT now(),
+    CONSTRAINT logros_pkey      PRIMARY KEY (cedula),
+    CONSTRAINT logros_cedula_fk FOREIGN KEY (cedula)  REFERENCES usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT logros_role_fk   FOREIGN KEY (id_role) REFERENCES roles(id_role)   ON DELETE SET NULL
 );
 
-CREATE TABLE logros_data (
-    cedula    text NOT NULL,
-    id_role   uuid,
-    data      jsonb NOT NULL DEFAULT '{}'::jsonb,
-    CONSTRAINT logros_data_pkey      PRIMARY KEY (cedula),
-    CONSTRAINT logros_data_cedula_fk FOREIGN KEY (cedula)  REFERENCES usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT logros_data_role_fk   FOREIGN KEY (id_role) REFERENCES roles(id_role)   ON DELETE SET NULL
-);
-
-CREATE INDEX idx_logros_data_cedula       ON logros_data(cedula);
+CREATE INDEX idx_logros_cedula            ON logros(cedula);
 CREATE INDEX idx_usuarios_id_role         ON usuarios(id_role);
 CREATE INDEX idx_usuarios_correo_lower    ON usuarios(lower(correo));
 CREATE INDEX idx_usuarios_username_lower  ON usuarios(lower(username)) WHERE username IS NOT NULL;
@@ -306,21 +292,20 @@ $$;
 CREATE TRIGGER trg_factura_autonumero
     BEFORE INSERT ON facturas FOR EACH ROW EXECUTE FUNCTION fn_factura_autonumero();
 
-ALTER TABLE roles              ENABLE ROW LEVEL SECURITY;
-ALTER TABLE usuarios           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE gestion_productos  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE metodos_pago       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pedidos            ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pedido_detalle     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE facturas           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE carrito            ENABLE ROW LEVEL SECURITY;
-ALTER TABLE comentarios        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE chats_privados     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE mensajes_privados  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE publicidad         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE inicio_config      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE logros             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE logros_data        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE roles             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usuarios          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gestion_productos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE metodos_pago      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pedidos           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pedido_detalle    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE facturas          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE carrito           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comentarios       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chats_privados    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mensajes_privados ENABLE ROW LEVEL SECURITY;
+ALTER TABLE publicidad        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inicio_config     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE logros            ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "roles_select_pub"       ON roles            FOR SELECT USING (true);
 CREATE POLICY "productos_select_pub"   ON gestion_productos FOR SELECT USING (true);
@@ -328,23 +313,21 @@ CREATE POLICY "pagos_select_pub"       ON metodos_pago      FOR SELECT USING (tr
 CREATE POLICY "publicidad_select_pub"  ON publicidad        FOR SELECT USING (true);
 CREATE POLICY "config_select_pub"      ON inicio_config     FOR SELECT USING (true);
 CREATE POLICY "comentarios_select_pub" ON comentarios       FOR SELECT USING (true);
-CREATE POLICY "logros_select_pub"      ON logros            FOR SELECT USING (true);
 
-CREATE POLICY "roles_all_anon"           ON roles             FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "usuarios_all_anon"        ON usuarios          FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "productos_all_anon"       ON gestion_productos FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "metodos_pago_all_anon"    ON metodos_pago      FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "pedidos_all_anon"         ON pedidos           FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "detalle_all_anon"         ON pedido_detalle    FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "facturas_all_anon"        ON facturas          FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "carrito_all_anon"         ON carrito           FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "comentarios_all_anon"     ON comentarios       FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "chats_privados_all_anon"  ON chats_privados    FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "mp_all_anon"              ON mensajes_privados FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "publicidad_all_anon"      ON publicidad        FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "inicio_config_all_anon"   ON inicio_config     FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "logros_all_anon"          ON logros            FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
-CREATE POLICY "logros_data_all_anon"     ON logros_data       FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "roles_all_anon"          ON roles             FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "usuarios_all_anon"       ON usuarios          FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "productos_all_anon"      ON gestion_productos FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "metodos_pago_all_anon"   ON metodos_pago      FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "pedidos_all_anon"        ON pedidos           FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "detalle_all_anon"        ON pedido_detalle    FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "facturas_all_anon"       ON facturas          FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "carrito_all_anon"        ON carrito           FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "comentarios_all_anon"    ON comentarios       FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "chats_privados_all_anon" ON chats_privados    FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "mp_all_anon"             ON mensajes_privados FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "publicidad_all_anon"     ON publicidad        FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "inicio_config_all_anon"  ON inicio_config     FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
+CREATE POLICY "logros_all_anon"         ON logros            FOR ALL TO anon USING (CURRENT_USER IS NOT NULL) WITH CHECK (CURRENT_USER IS NOT NULL);
 
 INSERT INTO roles (nombre_role, descripcion) VALUES
     ('admin',     'Administrador con acceso total'),

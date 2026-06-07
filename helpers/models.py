@@ -33,7 +33,7 @@ from database.models import (
     mp_get_by_id, mp_update, mp_delete, mp_delete_hilo,
     mp_staff_get_conversacion, mp_staff_get_hilos_de, mp_staff_create,
     mp_staff_marcar_leidos, mp_staff_no_leidos,
-    logros_sembrar, usuario_logros_get, usuario_logro_award,
+    usuario_logros_get, usuario_logro_award,
     usuario_stats_logros, sistema_stats_logros, usuario_pedido_repetido,
     logros_contadores_get, logros_contadores_upsert_many,
 )

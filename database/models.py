@@ -742,31 +742,9 @@ def usuarios_activos_desde(desde_iso: str) -> int:
         return 0
 
 
-def logros_sembrar(logros: list) -> None:
-    rows = [
-        {
-            "codigo":      l["codigo"],
-            "nombre":      l["nombre"],
-            "descripcion": l["descripcion"],
-            "icono":       l["icono"],
-            "rareza":      l.get("rareza", "comun"),
-            "puntos":      l.get("puntos", 10),
-            "modulo":      l.get("modulo", ""),
-            "roles":       l.get("roles", []),
-            "campo":       l.get("campo", ""),
-            "meta":        l.get("meta", None),
-        }
-        for l in logros
-    ]
-    if not rows:
-        return
-    _run(_db().table("logros").upsert(rows, on_conflict="codigo"))
-
-
-
-def _logros_data_get(cedula: str) -> dict:
+def _logros_get(cedula: str) -> dict:
     rows = _many(_run_safe(
-        _db().table("logros_data").select("cedula,id_role,data").eq("cedula", cedula)
+        _db().table("logros").select("cedula,id_role,data").eq("cedula", cedula)
     ))
     if not rows:
         return {"cedula": cedula, "id_role": None, "data": {}}
@@ -781,29 +759,29 @@ def _logros_data_get(cedula: str) -> dict:
     return {"cedula": row.get("cedula"), "id_role": row.get("id_role"), "data": d}
 
 
-def _logros_data_save(cedula: str, id_role, data: dict) -> None:
-    _run(_db().table("logros_data").upsert(
+def _logros_save(cedula: str, id_role, data: dict) -> None:
+    _run(_db().table("logros").upsert(
         {"cedula": cedula, "id_role": id_role, "data": data},
         on_conflict="cedula",
     ))
 
 
 def usuario_logros_get(cedula: str) -> list:
-    row = _logros_data_get(cedula)
+    row = _logros_get(cedula)
     logros = row["data"].get("logros", [])
     return [{"codigo_logro": c, "fecha_desbloqueado": None} for c in logros]
 
 
 def usuario_logro_award(cedula: str, codigo: str, id_role=None) -> None:
     try:
-        row = _logros_data_get(cedula)
+        row = _logros_get(cedula)
         d   = row["data"]
         existing = d.get("logros", [])
         if codigo in existing:
             return
         existing.append(codigo)
         d["logros"] = existing
-        _logros_data_save(cedula, id_role or row.get("id_role"), d)
+        _logros_save(cedula, id_role or row.get("id_role"), d)
     except Exception as e:
         logger.warning("usuario_logro_award error: %s", e)
 
@@ -978,7 +956,7 @@ def usuario_pedido_repetido(cedula: str) -> bool:
 
 
 def logros_contadores_get(cedula: str) -> dict:
-    row = _logros_data_get(cedula)
+    row = _logros_get(cedula)
     return {k: int(v) for k, v in row["data"].get("contadores", {}).items()}
 
 
@@ -986,7 +964,7 @@ def logros_contadores_upsert_many(cedula: str, contadores: dict) -> None:
     if not contadores:
         return
     try:
-        row  = _logros_data_get(cedula)
+        row  = _logros_get(cedula)
         d    = row["data"]
         prev = d.get("contadores", {})
         prev.update({
@@ -995,6 +973,6 @@ def logros_contadores_upsert_many(cedula: str, contadores: dict) -> None:
             if isinstance(v, (int, float)) and v >= 0
         })
         d["contadores"] = prev
-        _logros_data_save(cedula, row.get("id_role"), d)
+        _logros_save(cedula, row.get("id_role"), d)
     except Exception as e:
         logger.warning("logros_contadores_upsert_many error: %s", e)

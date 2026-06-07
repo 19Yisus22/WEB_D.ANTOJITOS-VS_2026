@@ -293,20 +293,6 @@ assert len(LOGROS_DEFINIDOS) == 231, f"Se esperaban 231 logros, hay {len(LOGROS_
 
 LOGROS_MAP: dict[str, dict] = {l["codigo"]: l for l in LOGROS_DEFINIDOS}
 
-_logros_sembrados = False
-
-
-def _asegurar_logros_sembrados() -> None:
-    global _logros_sembrados
-    if _logros_sembrados:
-        return
-    try:
-        import helpers.models as db
-        db.logros_sembrar(LOGROS_DEFINIDOS)
-        _logros_sembrados = True
-    except Exception as e:
-        logger.warning("logros: no se pudo sembrar tabla logros: %s", e)
-
 
 def _es_hoy_cumpleanos(usuario: dict) -> bool:
     fn = usuario.get("fecha_nacimiento")
@@ -350,8 +336,6 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     import helpers.models as db
     contexto = contexto or {}
     nuevos: list[dict] = []
-
-    _asegurar_logros_sembrados()
 
     try:
         ya_obtenidos_rows = db.usuario_logros_get(cedula)

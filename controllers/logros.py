@@ -63,7 +63,6 @@ def verificar_logros():
 @logros_bp.route("/logros/contadores", methods=["GET"])
 @login_required
 def get_contadores():
-    """Devuelve contadores persistentes (visitas, rachas) del usuario."""
     cedula = session.get("user_id")
     try:
         return jsonify(db.logros_contadores_get(cedula)), 200
@@ -74,7 +73,6 @@ def get_contadores():
 @logros_bp.route("/logros/contadores", methods=["POST"])
 @login_required
 def set_contadores():
-    """Guarda contadores enviados por el cliente (toma el máximo con los valores en BD)."""
     cedula = session.get("user_id")
     data   = request.get_json() or {}
     try:
@@ -87,13 +85,3 @@ def set_contadores():
         return jsonify({"ok": False, "error": str(e)}), 200
 
 
-@logros_bp.route("/logros/sembrar", methods=["POST"])
-@login_required
-def sembrar_logros():
-    if session.get("rol") != "admin":
-        return jsonify({"error": "Sin permiso"}), 403
-    try:
-        db.logros_sembrar(LOGROS_DEFINIDOS)
-        return jsonify({"ok": True, "total": len(LOGROS_DEFINIDOS)})
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
