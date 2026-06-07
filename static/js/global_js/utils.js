@@ -1,4 +1,12 @@
-﻿/* ── Mapa de deduplicación: clave → timestamp de expiración ── */
+﻿/* ── Formateador global de pesos colombianos (COP) ────────────────────────────
+   Uso: fmtCOP(50000) → "$50.000"   fmtCOP(1500000) → "$1.500.000"         */
+function fmtCOP(n) {
+    return Number(n).toLocaleString('es-CO', {
+        style: 'currency', currency: 'COP', maximumFractionDigits: 0
+    });
+}
+
+/* ── Mapa de deduplicación: clave → timestamp de expiración ── */
 const _alertaDedup = new Map();
 
 function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {

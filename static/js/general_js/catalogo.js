@@ -270,7 +270,7 @@ function crearCardProductoHTML(p, prefix = "") {
             <div class="card-body p-3">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <h6 class="fw-bold mb-0">${p.nombre}</h6>
-                    <span class="badge bg-light text-warning shadow-sm">$${p.precio.toLocaleString()}</span>
+                    <span class="badge bg-light text-warning shadow-sm">${fmtCOP(p.precio)}</span>
                 </div>
                 <div class="text-muted small mb-3">${p.description || p.descripcion || ''}</div>
                 <div class="mb-3">
@@ -326,7 +326,7 @@ function agregarEventosProductos() {
                     mostrarToastPublicidad(
                         productoArray.imagen_url || '/static/uploads/logo.png',
                         '🛒 Añadido al carrito',
-                        `${cantidadPedida}x ${productoArray.nombre} — $${(productoArray.precio * cantidadPedida).toLocaleString()}`
+                        `${cantidadPedida}x ${productoArray.nombre} — ${fmtCOP(productoArray.precio * cantidadPedida)}`
                     );
                     if (productoArray.stock <= 0) {
                         mostrarAlertaPublica({
