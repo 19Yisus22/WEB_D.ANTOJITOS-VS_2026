@@ -6,9 +6,10 @@
     <title>Panel Mi Perfil | D'Antojitos©</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/general_modules/style_perfil.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/general_modules/style_perfil.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
 </head>
@@ -43,7 +44,7 @@
                             <p class="mt-3 text-muted small fw-medium" data-i18n="prof.photo">Presione la imagen para cambiarla</p>
 
                             <div class="mt-2">
-                                {% if user.contrasena == 'GOOGLE_AUTH_EXTERNAL' %}
+                                {% if user.letraAcc == 'G' or user.contrasena == 'GOOGLE_AUTH_EXTERNAL' %}
                                 <span class="badge rounded-pill auth-badge bg-white text-dark shadow-sm p-2 px-3 border d-inline-flex align-items-center" style="white-space:nowrap;">
                                     <img src="{{ url_for('static', filename='uploads/googlogo.ico') }}" width="16" style="flex-shrink:0;" class="me-2"><span data-i18n="prof.auth_google">Cuenta de Google</span>
                                 </span>
@@ -56,7 +57,7 @@
                         </div>
 
                         <div class="row g-4">
-                            {% set es_google_cedula = user.contrasena == 'GOOGLE_AUTH_EXTERNAL' and user.cedula and user.cedula.startswith('G-') %}
+                            {% set es_google_cedula = (user.letraAcc == 'G' or user.contrasena == 'GOOGLE_AUTH_EXTERNAL') and user.cedula and user.cedula.startswith('G-') %}
                             <div class="col-md-6">
                                 <label class="form-label"><span data-i18n="prof.cedula">Cédula / ID</span>
                                     {% if es_google_cedula %}
@@ -122,12 +123,10 @@
                                        value="{{ user.fecha_nacimiento or '' }}"
                                        disabled>
                                 <div class="form-text small text-muted">
-                                    <i class="bi bi-info-circle me-1"></i>Recibirás un 5% de descuento en tu cumpleaños 🎂
+                                    <i class="bi bi-info-circle me-1"></i>Recibirás un <span id="birthdayDiscountPct">{{ descuento_pct }}</span>% de descuento en tu cumpleaños 🎂
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Banner de cooldown global -->
                         <div id="cooldownBanner" class="prof-cooldown-banner" style="display:none;">
                             <i class="bi bi-hourglass-split"></i>
                             <div>
@@ -150,8 +149,6 @@
 
                         <div class="mt-5 p-4 border rounded-4 bg-light-soft shadow-inner" id="seccionSeguridad">
                             <h5 class="mb-4 text-dark fw-bold"><i class="bi bi-shield-lock-fill me-2 text-warning"></i><span data-i18n="prof.security">Seguridad de la Cuenta</span></h5>
-
-                            <!-- Banner cooldown contraseña -->
                             <div id="passCooldowBanner" class="prof-cooldown-banner mb-3" style="display:none;">
                                 <i class="bi bi-lock-fill"></i>
                                 <div>
@@ -247,8 +244,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Sección de Logros -->
                 <div class="mt-4 p-4 border rounded-4 bg-light fade-in" id="seccionLogros">
                     <div id="logrosContenedor">
                         <div class="text-center py-3">
@@ -275,12 +270,11 @@
     <div id="toastContainer"></div>
     {% include 'global_modules/footer.html' %}
     <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const USER_ID   = "{{ user.cedula or '' }}";
         const USER_ROLE = "{{ user.roles.nombre_role if user.roles else 'cliente' }}";
-        const USER_AUTH_GOOGLE = ("{{ user.contrasena }}" === "GOOGLE_AUTH_EXTERNAL");
+        const USER_AUTH_GOOGLE = ("{{ user.letraAcc }}" === "G" || "{{ user.contrasena }}" === "GOOGLE_AUTH_EXTERNAL");
     </script>
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/general_js/perfil.js') }}"></script>

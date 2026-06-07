@@ -1,5 +1,5 @@
-<link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_navbar.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_logros.css') }}">
+﻿<link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_logros.css') }}">
 <div id="scrollProgressBar"></div>
 <header id="main-navbar-container">
     <nav class="navbar navbar-expand-lg fixed-top">
@@ -99,7 +99,7 @@
                                onclick="sessionStorage.clear();localStorage.removeItem('cant_carrito');localStorage.removeItem('user_status');localStorage.removeItem('last_activity');localStorage.removeItem('welcomeAlertShown');"><i class="bi bi-box-arrow-right me-2"></i><span data-i18n="nav.logout">Cerrar Sesión</span></a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li class="d-flex align-items-center justify-content-between px-3 py-2">
-                            <span class="text-muted text-uppercase fw-semibold" style="font-size:0.7rem;letter-spacing:0.06em;" data-i18n="nav.version">Versión 2.0.3</span>
+                            <span id="versionLabel" class="text-uppercase fw-semibold" style="font-size:0.7rem;letter-spacing:0.06em;" data-i18n="nav.version">Versión 2.1.4</span>
                             <div class="d-flex gap-1">
                                 <button id="themeToggleBtn" onclick="toggleTheme()" class="nav-quick-icon-btn" title="Cambiar Tema">
                                     <i class="bi bi-moon-fill"></i>
@@ -267,7 +267,7 @@
     }, { passive: true });
 })();
 </script>
-<script>
+    <script>
 (function() {
     const INACTIVITY_LIMIT = 300000;
     const statusContainer = document.getElementById('statusContainer');
