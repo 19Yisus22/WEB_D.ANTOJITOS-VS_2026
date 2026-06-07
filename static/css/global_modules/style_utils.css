@@ -590,6 +590,7 @@ body {
 @media (max-width: 480px) {
     #scrollToTopBtn { bottom: 16px; right: 16px; width: 40px; height: 40px; }
     #toastContainer { top: 10px; right: 10px; left: 10px; width: auto; max-width: none; }
+    .custom-toast-alert, .custom-toast { min-width: 0; width: 100%; }
 }
 
 /* Variables tema oscuro — paleta unificada */
@@ -1201,12 +1202,15 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     display: flex;
     align-items: center;
     width: max-content;
-    /* La animación-duration es sobreescrita por JS al cambiar velocidad */
     animation: promoScroll 25s linear infinite;
+    -webkit-animation: promoScroll 25s linear infinite;
     will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
     position: relative;
     z-index: 1;
-    /* Pequeño offset inicial para que los ítems entren desde la derecha */
     transform-origin: right center;
 }
 
@@ -1227,9 +1231,13 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
 }
 
 /* El scroll: los ítems fluyen de derecha a izquierda continuamente */
+@-webkit-keyframes promoScroll {
+    from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+    to   { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
+}
 @keyframes promoScroll {
-    from { transform: translateX(0%); }
-    to   { transform: translateX(-50%); }
+    from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+    to   { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
 }
 
 /* Ítem */

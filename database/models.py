@@ -786,6 +786,24 @@ def usuario_logro_award(cedula: str, codigo: str, id_role=None) -> None:
         logger.warning("usuario_logro_award error: %s", e)
 
 
+def logros_notificados_marcar(cedula: str, codigos: list) -> list:
+    if not codigos:
+        return []
+    try:
+        row = _logros_get(cedula)
+        d = row["data"]
+        notificados = set(d.get("notificados", []))
+        nuevos_codigos = [c for c in codigos if c not in notificados]
+        if nuevos_codigos:
+            notificados.update(nuevos_codigos)
+            d["notificados"] = list(notificados)
+            _logros_save(cedula, row.get("id_role"), d)
+        return nuevos_codigos
+    except Exception as e:
+        logger.warning("logros_notificados_marcar error: %s", e)
+        return codigos
+
+
 def usuario_stats_logros(cedula: str) -> dict:
     stats: dict = {
         "total_pedidos": 0,

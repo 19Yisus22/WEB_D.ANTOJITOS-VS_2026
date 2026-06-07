@@ -413,9 +413,18 @@ main {
         left: 16px;
         right: auto;
     }
-
     .storage-container {
         width: 66px;
         height: 66px;
     }
+    .container-fluid { padding-left: 12px; padding-right: 12px; }
+    .card-title { font-size: 0.9rem; }
+    .table th, .table td { font-size: 0.82rem; padding: 0.5rem 0.4rem; }
+    .btn-sm { font-size: 0.78rem; padding: 4px 10px; }
+}
+@media (max-width: 480px) {
+    .container-fluid { padding-left: 8px; padding-right: 8px; }
+    .card { border-radius: 14px; }
+    .card-body { padding: 1rem; }
+    .table th, .table td { font-size: 0.78rem; padding: 0.4rem 0.3rem; }
 }

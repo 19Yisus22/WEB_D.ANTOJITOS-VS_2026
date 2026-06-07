@@ -697,4 +697,8 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("usr_a6", sistema_usuarios >= 100)
     _chequear("usr_a7", sistema_usuarios >= 500)
 
-    return nuevos
+    if not nuevos:
+        return []
+    codigos_nuevos = [l["codigo"] for l in nuevos]
+    codigos_a_mostrar = set(db.logros_notificados_marcar(cedula, codigos_nuevos))
+    return [l for l in nuevos if l["codigo"] in codigos_a_mostrar]

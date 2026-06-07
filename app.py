@@ -154,10 +154,10 @@ def _get_local_ip() -> str:
         s.connect(("8.8.8.8", 80))
         return s.getsockname()[0]
     except Exception:
-        return "127.0.0.1"
+        return "0.0.0.0"
     finally:
         s.close()
-        
+
 if __name__ == "__main__":
     host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), True
 

@@ -224,6 +224,16 @@ html, body {
     .btn-wide-center {
         width: 100%;
     }
+    .priv-layout {
+        flex-direction: column;
+    }
+    .priv-sidebar {
+        width: 100%;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid #eef1f6;
+        flex-shrink: 0;
+    }
 }
 
 .emoji-panel-container {

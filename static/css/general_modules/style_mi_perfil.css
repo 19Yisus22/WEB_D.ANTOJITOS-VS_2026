@@ -162,3 +162,19 @@ body {
 
 .is-valid-pass { border-color: #28a745 !important; }
 .is-invalid-pass { border-color: #dc3545 !important; }
+
+@media (max-width: 768px) {
+    .profile-img-container,
+    #previewImagen { width: 120px; height: 120px; }
+    .camera-btn { width: 34px; height: 34px; }
+    .btn-soft { padding: 10px 20px; }
+    .card { border-radius: 18px; }
+    .custom-input, .form-select { padding: 11px 12px; font-size: 0.9rem; }
+}
+@media (max-width: 480px) {
+    .profile-img-container,
+    #previewImagen { width: 100px; height: 100px; }
+    .camera-btn { width: 30px; height: 30px; font-size: 0.85rem; }
+    .btn-soft { padding: 10px 16px; font-size: 0.9rem; }
+    .btn-outline-danger { padding: 10px 16px; }
+}

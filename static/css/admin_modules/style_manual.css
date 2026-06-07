@@ -309,3 +309,21 @@ footer {
     .nav-item { justify-content: center; padding: 15px; }
     .card-grid { grid-template-columns: 1fr; }
 }
+@media (max-width: 768px) {
+    aside { display: none; }
+    main { padding: 1.5rem 1rem; }
+    h2 { font-size: 1.6rem; gap: 12px; }
+    .intro-text { font-size: 1rem; margin-bottom: 2rem; }
+    .card { padding: 1.4rem; min-height: 0; border-radius: 20px; }
+    .card h3 { font-size: 1.15rem; }
+    .card-grid { gap: 16px; }
+    .btn-back-home { bottom: 24px; right: 20px; width: 50px; height: 50px; border-radius: 16px; }
+    .footer-content { flex-direction: column; text-align: center; gap: 10px; padding: 0 1rem; }
+}
+@media (max-width: 480px) {
+    main { padding: 1rem 0.75rem; }
+    h2 { font-size: 1.35rem; }
+    .card { padding: 1.1rem; }
+    .feature-list li { font-size: 0.92rem; padding-left: 28px; }
+    .btn-back-home { bottom: 16px; right: 12px; width: 44px; height: 44px; }
+}

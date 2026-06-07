@@ -5,7 +5,6 @@ from helpers.auth import sin_cache
 
 catalogo_productos_bp = Blueprint("catalogo_productos", __name__)
 
-
 @catalogo_productos_bp.route("/catalogo_page")
 @sin_cache
 def catalogo_page():

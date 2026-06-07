@@ -11,3 +11,5 @@ EN HUGGINS FACE SPACES.
  Arreglar el cálculo de la tasa de éxito del modulo pedidos, si se anulan o se completan, las dos afectan en el porcentaje.
 
  Mejorar aún mas el sistema de descuento por cumpleaños, que sea más preciso y sensible ante la fecha estipulada.
+
+ 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

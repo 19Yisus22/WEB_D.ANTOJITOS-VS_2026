@@ -60,12 +60,22 @@
     width: 100%;
     position: relative;
     border: 1px solid rgba(241, 167, 185, 0.1);
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-perspective: 1000px;
+    perspective: 1000px;
 }
 
 #main-footer-container .payment-track {
     display: flex;
     width: calc(200px * 8);
     animation: footerScrollMarquee 25s linear infinite;
+    -webkit-animation: footerScrollMarquee 25s linear infinite;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -95,9 +105,13 @@
     transition: all 0.3s ease;
 }
 
+@-webkit-keyframes footerScrollMarquee {
+    0%   { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+    100% { -webkit-transform: translate3d(calc(-200px * 4), 0, 0); transform: translate3d(calc(-200px * 4), 0, 0); }
+}
 @keyframes footerScrollMarquee {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(calc(-200px * 4)); }
+    0%   { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+    100% { -webkit-transform: translate3d(calc(-200px * 4), 0, 0); transform: translate3d(calc(-200px * 4), 0, 0); }
 }
 
 #main-footer-container .app-badge {

@@ -36,4 +36,5 @@ from database.models import (
     usuario_logros_get, usuario_logro_award,
     usuario_stats_logros, sistema_stats_logros, usuario_pedido_repetido,
     logros_contadores_get, logros_contadores_upsert_many,
+    logros_notificados_marcar,
 )

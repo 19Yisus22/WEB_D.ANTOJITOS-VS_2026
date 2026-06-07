@@ -1,10 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS extensions;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA extensions;
-CREATE EXTENSION IF NOT EXISTS "pg_trgm" SCHEMA extensions;
-
-DROP TABLE IF EXISTS usuario_logros    CASCADE;
-DROP TABLE IF EXISTS logros_contadores CASCADE;
-DROP TABLE IF EXISTS logros_data       CASCADE;
 DROP TABLE IF EXISTS logros            CASCADE;
 DROP TABLE IF EXISTS inicio_config     CASCADE;
 DROP TABLE IF EXISTS comentarios       CASCADE;
@@ -19,11 +12,16 @@ DROP TABLE IF EXISTS metodos_pago      CASCADE;
 DROP TABLE IF EXISTS gestion_productos CASCADE;
 DROP TABLE IF EXISTS usuarios          CASCADE;
 DROP TABLE IF EXISTS roles             CASCADE;
-
 DROP FUNCTION IF EXISTS fn_set_usuario_rol()      CASCADE;
 DROP FUNCTION IF EXISTS fn_pedido_sync_total()    CASCADE;
 DROP FUNCTION IF EXISTS fn_factura_autonumero()   CASCADE;
 DROP FUNCTION IF EXISTS _set_logros_actualizado() CASCADE;
+
+-- INICIO DE LA CREACION DE TABLAS Y FUNCIONES --
+
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS "pg_trgm" SCHEMA extensions;
 
 CREATE TABLE roles (
     id_role     uuid NOT NULL DEFAULT gen_random_uuid(),
