@@ -1,33 +1,22 @@
-/**
- * D'Antojitos — Service Worker: CARRITO v4
- * Cubre: /carrito_page, líneas del carrito, métodos de pago,
- *        badges y totales en tiempo real.
- */
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-carrito-v4';
+const CACHE_NAME = 'dantojitos-carrito-v5';
 
 const PRECACHE = [
-    /* Páginas */
     '/carrito_page',
-    /* CSS módulo */
     '/static/css/general_modules/style_carrito.css',
-    /* CSS compartido */
     '/static/css/global_modules/style_utils.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_footer.css',
     '/static/css/global_modules/style_design_system.css',
-    /* JS módulo */
     '/static/js/general_js/carrito.js',
-    /* JS compartido */
+    '/static/js/global_js/logros.js',
     '/static/js/global_js/utils.js',
     '/static/js/global_js/i18n.js',
     '/static/js/compiled/design-system.js',
     '/static/js/compiled/theme.js',
-    /* Assets */
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
-    /* CDN */
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
@@ -46,6 +35,10 @@ const NETWORK_FIRST_PATHS = [
     '/api/carrito/vaciar',
     '/api/pagos',
     '/procesar_pedido',
+    '/carrito/cumpleanos',
+    '/api/config/descuento_cumpleanos',
+    '/logros/verificar',
+    '/logros/mis_logros',
 ];
 
 const CDN_RE = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com)/;
@@ -68,23 +61,17 @@ self.addEventListener('fetch', e => {
     if (CDN_RE.test(request.url)) {
         e.respondWith(cacheFirst(request, CACHE_NAME)); return;
     }
-
     if (IMG_RE.test(request.url)) {
         e.respondWith(cacheFirstWithUpdate(request, CACHE_NAME)); return;
     }
-
     if (url.pathname.startsWith('/static/')) {
         e.respondWith(cacheFirst(request, CACHE_NAME)); return;
     }
-
-    /* Carrito es tiempo real — timeout corto para no bloquear */
     if (NETWORK_FIRST_PATHS.some(p => url.pathname.startsWith(p))) {
         e.respondWith(networkFirst(request, CACHE_NAME, FAST_TIMEOUT_MS)); return;
     }
-
     if (url.pathname === '/carrito_page') {
         e.respondWith(staleWhileRevalidate(request, CACHE_NAME)); return;
     }
-
     e.respondWith(networkFirst(request, CACHE_NAME));
 });

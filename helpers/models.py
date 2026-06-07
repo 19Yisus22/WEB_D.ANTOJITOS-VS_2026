@@ -1,5 +1,5 @@
-﻿from supabase.models import *  # noqa: F401, F403
-from supabase.models import (
+from database.models import *  # noqa: F401, F403
+from database.models import (
     supabase, _run, _run_safe, _single, _many,
     rol_get_all, rol_get_by_nombre, rol_get_id,
     usuario_get, usuario_get_by_correo, usuario_get_by_username,

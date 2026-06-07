@@ -92,11 +92,11 @@ async function cargarPostres(silent = false) {
                 const ahoraAgotado = parseInt(p.stock) <= 0;
                 if (ahoraAgotado && !prevAgotados.has(p.id_producto)) {
                     /* Recién se agotó */
-                    mostrarAlerta(`📦 Agotado: ${p.nombre.toUpperCase()}`, true, 5000);
+                    mostrarAlerta(`Agotado: ${p.nombre.toUpperCase()}`, true, 5000);
                     playNotificationSound('error');
                 } else if (!ahoraAgotado && prevAgotados.has(p.id_producto)) {
                     /* Volvió a estar disponible */
-                    mostrarAlerta(`✅ Disponible de nuevo: ${p.nombre}`, false, 5000);
+                    mostrarAlerta(`Disponible de nuevo: ${p.nombre}`, false, 5000);
                     playNotificationSound('default');
                 }
             });
@@ -391,13 +391,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
                 const res = await fetch(`/eliminar_producto/${p.id_producto}`, { method: "DELETE" });
                 if (res.ok) {
-                    mostrarAlerta(`🗑️ "${p.nombre}" eliminado permanentemente`, true);
+                    mostrarAlerta(`"${p.nombre}" eliminado permanentemente`, true);
                     playNotificationSound('delete');
                     modal.hide();
                     await cargarPostres();
                 } else {
                     const err = await res.json();
-                    mostrarAlerta(`❌ Error al eliminar: ${err.error || 'intente de nuevo'}`, true);
+                    mostrarAlerta(`Error al eliminar: ${err.error || 'intente de nuevo'}`, true);
                 }
             } catch (e) { mostrarAlerta("Error de conexión", true); }
         });
@@ -477,12 +477,12 @@ async function enviarFormulario(formData) {
                 mostrarAlerta(`✏️ "${nombre}" actualizado correctamente en el catálogo`);
                 if (typeof verificarLogros === 'function') verificarLogros({ tipo: 'accion', accion: 'editar_producto' });
             } else {
-                mostrarAlerta(`🎂 "${nombre}" agregado al catálogo con éxito`);
+                mostrarAlerta(`"${nombre}" agregado al catálogo con éxito`);
                 playNotificationSound('default');
                 if (typeof verificarLogros === 'function') verificarLogros({ tipo: 'accion', accion: 'crear_producto' });
             }
             if (stockNuevo <= 0) {
-                mostrarAlerta(`⚠️ "${nombre}" registrado como AGOTADO`, true, 6000);
+                mostrarAlerta(`"${nombre}" registrado como AGOTADO`, true, 6000);
                 playNotificationSound('error');
             }
             await actualizarAlmacenamiento();

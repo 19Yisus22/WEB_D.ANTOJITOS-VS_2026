@@ -1,20 +1,9 @@
+
 from __future__ import annotations
-import os
 import time
 import logging
-from dotenv import load_dotenv
-from supabase import create_client, ClientOptions
-
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"), override=True)
-
-_url  = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
-_key  = os.getenv("SUPABASE_ANON_KEY")
-supabase = None
-if _url and _key:
-    supabase = create_client(
-        _url, _key,
-        options=ClientOptions(postgrest_client_timeout=120, storage_client_timeout=120, schema="public"),
-    )
+from database.database import supabase
+from postgrest.types import CountMethod
 
 logger = logging.getLogger(__name__)
 
@@ -26,24 +15,22 @@ def _db():
         raise RuntimeError("Base de datos no configurada. Agrega SUPABASE_URL y SUPABASE_ANON_KEY en las variables de entorno.")
     return supabase
 
-
 def _run(query) -> object:
-    last_exc: Exception = RuntimeError("DB retry exhausted")
-    for attempt in range(3):
+    last_exc: Exception | None = None
+    for attempt in range(4):
         try:
             return query.execute()
         except Exception as e:
             name = type(e).__name__
-            msg = str(e)
+            msg  = str(e)
             if any(k in name or k in msg for k in _RETRY_EXCEPTIONS):
                 last_exc = e
-                if attempt < 2:
-                    time.sleep(0.4 * (attempt + 1))
+                if attempt < 3:
+                    time.sleep(1.5 * (attempt + 1))
                     logger.warning("DB retry %d after %s: %s", attempt + 1, name, msg)
                 continue
             raise
-    raise last_exc
-
+    raise last_exc or RuntimeError("DB query failed after 4 retries")
 
 def _run_safe(query) -> object | None:
     try:
@@ -51,7 +38,6 @@ def _run_safe(query) -> object | None:
     except Exception as e:
         logger.error("DB read error: %s", e)
         return None
-
 
 def _single(result) -> dict | None:
     if result is None:
@@ -61,38 +47,17 @@ def _single(result) -> dict | None:
         return None
     return data[0] if isinstance(data, list) else data
 
-
 def _many(result) -> list:
     if result is None:
         return []
     return result.data if result.data else []
 
-
-def _fix_img(url: str | None) -> str:
-    if not url:
-        return "/static/uploads/default_icon_profile.png"
-    if isinstance(url, str) and url.startswith("static/"):
-        return "/" + url
-    return url
-
-
-def _user_norm(u: dict | None) -> dict | None:
-    if not u:
-        return u
-    u["imagen_url"] = _fix_img(u.get("imagen_url"))
-    roles = u.get("roles")
-    if isinstance(roles, dict):
-        u.setdefault("rol", roles.get("nombre_role", "cliente"))
-    return u
-
-
-def _users_norm(rows: list) -> list:
-    return [_user_norm(r) for r in rows if r]
+def _count(result) -> int:
+    return int(getattr(result, "count", None) or 0)
 
 
 def rol_get_all() -> list:
     return _many(_run(_db().table("roles").select("*")))
-
 
 def rol_get_by_nombre(nombre: str) -> dict | None:
     return _single(_run(
@@ -100,39 +65,34 @@ def rol_get_by_nombre(nombre: str) -> dict | None:
         .eq("nombre_role", nombre).limit(1)
     ))
 
-
 def rol_get_id(nombre: str) -> str | None:
     r = rol_get_by_nombre(nombre)
     return r["id_role"] if r else None
 
-
 _USR_SELECT = (
-    "cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,"
-    "direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role),"
-    "last_change_cedula,last_change_username,last_change_nombre,last_change_apellido,"
-    "last_change_contrasena,fecha_nacimiento,intentos_fallidos,bloqueado_hasta"
+    'cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,'
+    'direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role),'
+    'last_change_cedula,last_change_username,last_change_nombre,last_change_apellido,'
+    'last_change_contrasena,fecha_nacimiento,intentos_fallidos,bloqueado_hasta,"letraAcc"'
 )
 
-
 def usuario_get(cedula: str) -> dict | None:
-    return _user_norm(_single(_run(_db().table("usuarios").select(_USR_SELECT).eq("cedula", cedula).limit(1))))
-
+    return _single(_run(_db().table("usuarios").select(_USR_SELECT).eq("cedula", cedula).limit(1)))
 
 def usuario_get_by_correo(correo: str) -> dict | None:
-    return _user_norm(_single(_run(
+    return _single(_run(
         _db().table("usuarios").select(_USR_SELECT)
         .ilike("correo", correo.strip()).limit(1)
-    )))
-
+    ))
 
 def usuario_get_by_username(username: str) -> dict | None:
-    return _user_norm(_single(_run(
+    return _single(_run(
         _db().table("usuarios").select(_USR_SELECT)
         .ilike("username", username).limit(1)
-    )))
-
+    ))
 
 def usuario_get_by_identifier(identifier: str) -> dict | None:
+
     if not identifier:
         return None
     raw = identifier.strip()
@@ -154,16 +114,12 @@ def usuario_get_by_identifier(identifier: str) -> dict | None:
         return u
     return usuario_get_by_correo(raw.lower())
 
-
 def usuario_buscar_por_nombre(nombre: str) -> dict | None:
     partes = nombre.strip().split()
     if len(partes) >= 2:
         primer = partes[0]
-        resto = " ".join(partes[1:])
-        u = _single(_run(
-            _db().table("usuarios").select("cedula,nombre,apellido,username")
-            .ilike("nombre", f"%{primer}%").ilike("apellido", f"%{resto}%").limit(1)
-        ))
+        resto  = " ".join(partes[1:])
+        u = _single(_run(_db().table("usuarios").select("cedula,nombre,apellido,username").ilike("nombre", f"%{primer}%").ilike("apellido", f"%{resto}%").limit(1)))
         if u:
             return u
     u = _single(_run(
@@ -172,42 +128,33 @@ def usuario_buscar_por_nombre(nombre: str) -> dict | None:
     ))
     if u:
         return u
-    return _single(_run(
-        _db().table("usuarios").select("cedula,nombre,apellido,username")
-        .ilike("apellido", f"%{nombre}%").limit(1)
-    ))
-
+    return _single(_run(_db().table("usuarios").select("cedula,nombre,apellido,username").ilike("apellido", f"%{nombre}%").limit(1)))
 
 def usuario_get_all() -> list:
-    return _users_norm(_many(_run(
-        _db().table("usuarios").select(
-            "cedula,username,imagen_url,nombre,apellido,telefono,correo,"
-            "id_role,direccion,metodo_pago,fecha_creacion,ultima_conexion,"
-            "contrasena,roles(nombre_role)"
-        )
-    )))
-
-
-def usuario_get_web_token(cedula: str) -> dict | None:
-    return _single(_run(
-        _db().table("usuarios").select("web_token,expires_at")
-        .eq("cedula", cedula).limit(1)
+    return _many(_run(
+        _db().table("usuarios").select("cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role)")
     ))
 
+def usuario_get_web_token(cedula: str) -> dict | None:
+    row = _single(_run(
+        _db().table("usuarios")
+        .select("web_token,expires_at")
+        .eq("cedula", cedula)
+        .limit(1)
+    ))
+    return row
 
 def usuario_set_web_token(cedula: str, token_hash: str, expires_at: str) -> None:
     _run(_db().table("usuarios").update({
-        "web_token": token_hash,
+        "web_token":  token_hash,
         "expires_at": expires_at,
     }).eq("cedula", cedula))
 
-
 def usuario_clear_web_token(cedula: str) -> None:
     _run(_db().table("usuarios").update({
-        "web_token": None,
+        "web_token":  None,
         "expires_at": None,
     }).eq("cedula", cedula))
-
 
 def usuario_get_block_folder(cedula: str) -> list:
     row = _single(_run(_db().table("usuarios").select("block_folder").eq("cedula", cedula).limit(1)))
@@ -224,24 +171,21 @@ def usuario_get_block_folder(cedula: str) -> list:
     except Exception:
         return []
 
-
 def usuario_set_block_folder(cedula: str, archivos: list) -> None:
     _run(_db().table("usuarios").update({"block_folder": archivos}).eq("cedula", cedula))
-
 
 def usuario_create(data: dict) -> list:
     return _many(_run(_db().table("usuarios").insert(data)))
 
-
 def usuario_update(cedula: str, data: dict) -> list:
     return _many(_run(_db().table("usuarios").update(data).eq("cedula", cedula)))
 
-
 def cedula_cascade_update(old_cedula: str, new_cedula: str) -> None:
+    """Actualiza todas las FK dependientes antes de cambiar la PK cedula."""
     for table, col in [
-        ("pedidos", "cedula"),
-        ("facturas", "cedula"),
-        ("comentarios", "cedula"),
+        ("pedidos",           "cedula"),
+        ("facturas",          "cedula"),
+        ("comentarios",       "cedula"),
         ("mensajes_privados", "cedula_de"),
     ]:
         try:
@@ -260,57 +204,57 @@ def cedula_cascade_update(old_cedula: str, new_cedula: str) -> None:
     except Exception:
         pass
 
-
 def usuario_delete(cedula: str) -> list:
     return _many(_run(_db().table("usuarios").delete().eq("cedula", cedula)))
 
-
 def usuario_set_role(cedula: str, id_role: str) -> list:
     return _many(_run(_db().table("usuarios").update({"id_role": id_role}).eq("cedula", cedula)))
-
 
 def usuario_count_por_rol(nombre_rol: str, excluir_cedula: str | None = None) -> int:
     id_role = rol_get_id(nombre_rol)
     if not id_role:
         return 0
-    q = _db().table("usuarios").select("cedula", count="exact").eq("id_role", id_role)
+    q = _db().table("usuarios").select("cedula", count=CountMethod.exact).eq("id_role", id_role)
     if excluir_cedula:
         q = q.neq("cedula", str(excluir_cedula))
     res = _run(q)
-    return res.count if res and hasattr(res, "count") and res.count is not None else 0
-
+    cnt = getattr(res, "count", None)
+    return int(cnt) if cnt is not None else 0
 
 def usuario_get_pass_cooldown(cedula: str) -> str | None:
     try:
         row = _single(_run(
-            _db().table("usuarios").select("last_change_contrasena")
-            .eq("cedula", cedula).limit(1)
+            _db().table("usuarios")
+            .select("last_change_contrasena")
+            .eq("cedula", cedula)
+            .limit(1)
         ))
         return (row or {}).get("last_change_contrasena")
     except Exception:
         return None
 
-
 def usuario_touch(cedula: str, ts: str) -> None:
     _run_safe(_db().table("usuarios").update({"ultima_conexion": ts}).eq("cedula", cedula))
 
-
 _LOCKOUT_THRESHOLDS = [
-    (5, 5),
-    (10, 30),
-    (15, 120),
-    (20, 720),
-    (25, 1440),
-    (30, 4320),
+    (5,   5),
+    (15,  30),
+    (25,  120),
+    (35,  480),
+    (45,  1440),
+    (55,  4320),
+    (65,  10080),
+    (75,  14400),
 ]
-
 
 def usuario_incrementar_intento(cedula: str) -> dict:
     from datetime import datetime, timezone, timedelta
 
     row = _single(_run_safe(
-        _db().table("usuarios").select("intentos_fallidos")
-        .eq("cedula", cedula).limit(1)
+        _db().table("usuarios")
+        .select("intentos_fallidos")
+        .eq("cedula", cedula)
+        .limit(1)
     ))
     current = int((row or {}).get("intentos_fallidos") or 0)
     new_total = current + 1
@@ -335,7 +279,6 @@ def usuario_incrementar_intento(cedula: str) -> dict:
         "minutos_bloqueo": minutos_bloqueo,
     }
 
-
 def usuario_reset_intentos(cedula: str) -> None:
     _run_safe(_db().table("usuarios").update({
         "intentos_fallidos": 0,
@@ -345,22 +288,20 @@ def usuario_reset_intentos(cedula: str) -> None:
 
 def producto_get_all() -> list:
     return _many(_run(
-        _db().table("gestion_productos").select("*").order("fecha_creacion", desc=True)
+        _db().table("gestion_productos").select("*")
+        .order("fecha_creacion", desc=True)
     ))
-
 
 def producto_get_activos() -> list:
     return _many(_run(
         _db().table("gestion_productos").select("*").eq("estado", True)
     ))
 
-
 def producto_get(id_producto: str) -> dict | None:
     return _single(_run(
         _db().table("gestion_productos").select("*")
         .eq("id_producto", id_producto).limit(1)
     ))
-
 
 def producto_get_muchos(ids: list[str]) -> list:
     if not ids:
@@ -369,16 +310,13 @@ def producto_get_muchos(ids: list[str]) -> list:
         _db().table("gestion_productos").select("*").in_("id_producto", ids)
     ))
 
-
 def producto_create(data: dict) -> list:
     return _many(_run(_db().table("gestion_productos").insert(data)))
-
 
 def producto_update(id_producto: str, data: dict) -> list:
     return _many(_run(
         _db().table("gestion_productos").update(data).eq("id_producto", id_producto)
     ))
-
 
 def producto_delete(id_producto: str) -> list:
     return _many(_run(
@@ -389,13 +327,11 @@ def producto_delete(id_producto: str) -> list:
 def carrito_get(cedula: str) -> list:
     return _many(_run(_db().table("carrito").select("*").eq("cedula", cedula)))
 
-
 def carrito_get_item(cedula: str, id_producto: str) -> dict | None:
     return _single(_run(
         _db().table("carrito").select("*")
         .eq("cedula", cedula).eq("id_producto", id_producto).limit(1)
     ))
-
 
 def carrito_add(cedula: str, id_producto: str, nombre: str, cantidad: int, precio: float) -> None:
     existing = carrito_get_item(cedula, id_producto)
@@ -405,20 +341,18 @@ def carrito_add(cedula: str, id_producto: str, nombre: str, cantidad: int, preci
              .eq("id_carrito", existing["id_carrito"]))
     else:
         _run(_db().table("carrito").insert({
-            "cedula": cedula,
-            "id_producto": id_producto,
+            "cedula":          cedula,
+            "id_producto":     id_producto,
             "nombre_producto": nombre,
-            "cantidad": cantidad,
+            "cantidad":        cantidad,
             "precio_unitario": precio,
         }))
-
 
 def carrito_delete_item(id_carrito: str, cedula: str) -> list:
     return _many(_run(
         _db().table("carrito").delete()
         .eq("id_carrito", id_carrito).eq("cedula", cedula)
     ))
-
 
 def carrito_clear(cedula: str) -> None:
     _run(_db().table("carrito").delete().eq("cedula", cedula))
@@ -430,28 +364,25 @@ _PEDIDO_JOIN = (
     "pedido_detalle(*, gestion_productos(nombre,precio,imagen_url))"
 )
 
-
 def pedido_get_all() -> list:
     return _many(_run(
-        _db().table("pedidos").select(_PEDIDO_JOIN).order("fecha_pedido", desc=True)
+        _db().table("pedidos").select(_PEDIDO_JOIN)
+        .order("fecha_pedido", desc=True)
     ))
-
 
 def pedido_get(id_pedido: str) -> dict | None:
     return _single(_run(
-        _db().table("pedidos").select("*").eq("id_pedido", id_pedido).limit(1)
+        _db().table("pedidos").select("*")
+        .eq("id_pedido", id_pedido).limit(1)
     ))
-
 
 def pedido_create(data: dict) -> list:
     return _many(_run(_db().table("pedidos").insert(data)))
-
 
 def pedido_update(id_pedido: str, data: dict) -> list:
     return _many(_run(
         _db().table("pedidos").update(data).eq("id_pedido", id_pedido)
     ))
-
 
 def pedido_delete_many(ids: list[str]) -> list:
     if not ids:
@@ -466,7 +397,6 @@ def detalle_get(id_pedido: str) -> list:
         .eq("id_pedido", id_pedido)
     ))
 
-
 def detalle_create_many(items: list[dict]) -> None:
     if items:
         _run(_db().table("pedido_detalle").insert(items))
@@ -478,12 +408,11 @@ def factura_get_by_user(cedula: str) -> list:
         .eq("cedula", cedula).order("fecha_emision", desc=True)
     ))
 
-
 def factura_get_by_numero(numero: str) -> dict | None:
     return _single(_run(
-        _db().table("facturas").select("*").eq("numero_factura", numero).limit(1)
+        _db().table("facturas").select("*")
+        .eq("numero_factura", numero).limit(1)
     ))
-
 
 def factura_get_all() -> list:
     return _many(_run(
@@ -492,7 +421,6 @@ def factura_get_all() -> list:
         .order("fecha_emision", desc=True)
     ))
 
-
 def factura_get_all_enriched(limit: int = 120) -> list:
     return _many(_run(
         _db().table("facturas")
@@ -500,7 +428,6 @@ def factura_get_all_enriched(limit: int = 120) -> list:
         .order("fecha_emision", desc=True)
         .limit(limit)
     ))
-
 
 def factura_next_seq(year: str) -> int:
     prefix = f"F-{year}-"
@@ -516,10 +443,8 @@ def factura_next_seq(year: str) -> int:
             pass
     return 1
 
-
 def factura_create(data: dict) -> None:
     _run(_db().table("facturas").insert(data))
-
 
 def factura_update(numero: str, data: dict) -> None:
     _run(_db().table("facturas").update(data).eq("numero_factura", numero))
@@ -528,36 +453,28 @@ def factura_update(numero: str, data: dict) -> None:
 def metodo_pago_get_all() -> list:
     return _many(_run(_db().table("metodos_pago").select("*")))
 
-
 def metodo_pago_get_activos() -> list:
     return _many(_run(_db().table("metodos_pago").select("*").eq("estado", True)))
 
-
 def metodo_pago_get(id_pago: str) -> dict | None:
     return _single(_run(
-        _db().table("metodos_pago").select("*").eq("id_pago", id_pago).limit(1)
+        _db().table("metodos_pago").select("*")
+        .eq("id_pago", id_pago).limit(1)
     ))
-
 
 def metodo_pago_create(data: dict) -> list:
     return _many(_run(_db().table("metodos_pago").insert(data)))
 
-
 def metodo_pago_update(id_pago: str, data: dict) -> list:
-    return _many(_run(
-        _db().table("metodos_pago").update(data).eq("id_pago", id_pago)
-    ))
-
+    return _many(_run(_db().table("metodos_pago").update(data).eq("id_pago", id_pago)))
 
 def metodo_pago_delete(id_pago: str) -> list:
     return _many(_run(_db().table("metodos_pago").delete().eq("id_pago", id_pago)))
-
 
 def metodo_pago_delete_many(ids: list[str]) -> list:
     if not ids:
         return []
     return _many(_run(_db().table("metodos_pago").delete().in_("id_pago", ids)))
-
 
 def metodo_pago_create_many(items: list[dict]) -> list:
     if not items:
@@ -568,19 +485,16 @@ def metodo_pago_create_many(items: list[dict]) -> list:
 def publicidad_get_activa() -> list:
     return _many(_run(_db().table("publicidad").select("*").eq("estado", True)))
 
-
 def publicidad_get_all() -> list:
     return _many(_run(
         _db().table("publicidad").select("*").order("fecha_creacion", desc=True)
     ))
-
 
 def publicidad_get_by_tipo(tipo: str) -> list:
     return _many(_run(
         _db().table("publicidad").select("*")
         .eq("tipo", tipo).order("fecha_creacion", desc=True)
     ))
-
 
 def publicidad_get_by_tipos(tipos: list[str]) -> list:
     if not tipos:
@@ -591,13 +505,11 @@ def publicidad_get_by_tipos(tipos: list[str]) -> list:
         .in_("tipo", tipos).eq("estado", True)
     ))
 
-
 def publicidad_get(id_publicidad: str) -> dict | None:
     return _single(_run(
         _db().table("publicidad").select("*")
         .eq("id_publicidad", id_publicidad).limit(1)
     ))
-
 
 def publicidad_get_notificaciones() -> list:
     return _many(_run(
@@ -605,24 +517,19 @@ def publicidad_get_notificaciones() -> list:
         .eq("tipo", "notificacion").order("id_publicidad", desc=True)
     ))
 
-
 def publicidad_create(data: dict) -> list:
     return _many(_run(_db().table("publicidad").insert(data)))
-
 
 def publicidad_create_many(items: list[dict]) -> list:
     if not items:
         return []
     return _many(_run(_db().table("publicidad").insert(items)))
 
-
 def publicidad_update(id_publicidad: str, data: dict) -> None:
     _run(_db().table("publicidad").update(data).eq("id_publicidad", id_publicidad))
 
-
 def publicidad_delete(id_publicidad: str) -> None:
     _run(_db().table("publicidad").delete().eq("id_publicidad", id_publicidad))
-
 
 def publicidad_delete_many(ids: list[str]) -> None:
     if ids:
@@ -634,38 +541,35 @@ def comentario_get_all() -> list:
         _db().table("comentarios").select("*").order("created_at", desc=False)
     ))
 
-
 def comentario_get(id: str) -> dict | None:
     return _single(_run(
         _db().table("comentarios").select("*").eq("id", id).limit(1)
     ))
 
-
 def comentario_create(data: dict) -> list:
     return _many(_run(_db().table("comentarios").insert(data)))
-
 
 def comentario_update(id: str, data: dict) -> list:
     return _many(_run(_db().table("comentarios").update(data).eq("id", id)))
 
-
 def comentario_delete(id: str) -> None:
     _run(_db().table("comentarios").delete().eq("id", id))
 
-
 def comentario_update_likes(id: str, likes: list) -> None:
     _run(_db().table("comentarios").update({"likes_usuarios": likes}).eq("id", id))
+
+def comentario_delete_all() -> None:
+    _run_safe(_db().table("comentarios").delete().neq("id", "00000000-0000-0000-0000-000000000000"))
 
 
 def inicio_config_get() -> dict:
     try:
         result = _db().table("inicio_config").select("clave,valor").execute()
-        rows = result.data or []
+        rows   = result.data or []
         return {r["clave"]: r["valor"] for r in rows if "clave" in r}
     except Exception as e:
         logger.warning("inicio_config_get error: %s", e)
         return {}
-
 
 def inicio_config_save(data: dict) -> None:
     rows = [{"clave": k, "valor": str(v)} for k, v in data.items()]
@@ -679,218 +583,154 @@ def inicio_config_save(data: dict) -> None:
 
 _MP_SELECT = "id,cedula_de,cedula_para,cedula_dest,mensaje,tipo,leido,adjuntos,created_at"
 
-
-def _mp_norm(m: dict | None) -> dict | None:
-    """Add backward-compat fields so controller/frontend work without changes."""
-    if not m:
-        return m
-    cp = m.get("cedula_para") or ""
-    cd = m.get("cedula_de") or ""
-    m["cedula_cliente"]    = cp
-    m["cedula_remitente"]  = cd
-    m["es_vendedor"]       = bool(cd and cp and cd != cp)
-    m["es_predeterminado"] = False
-    return m
-
-
-def _mp_norm_many(rows: list) -> list:
-    return [_mp_norm(r) for r in rows if r]
-
-
 def mp_get_by_id(id: str) -> dict | None:
-    return _mp_norm(_single(_run(
+    return _single(_run(
         _db().table("mensajes_privados").select(_MP_SELECT).eq("id", id).limit(1)
-    )))
-
+    ))
 
 def mp_update(id: str, mensaje: str) -> None:
     _run_safe(_db().table("mensajes_privados").update({"mensaje": mensaje}).eq("id", id))
 
-
 def mp_delete(id: str) -> None:
     _run_safe(_db().table("mensajes_privados").delete().eq("id", id))
-
 
 def mp_delete_hilo(cedula_hilo: str, tipo: str) -> None:
     _run_safe(
         _db().table("mensajes_privados")
         .delete()
-        .eq("cedula_para", cedula_hilo)
+        .eq("cedula_de", cedula_hilo)
         .eq("tipo", tipo)
     )
 
-
 def mp_get_conversacion(cedula_cliente: str) -> list:
-    return _mp_norm_many(_many(_run(
+    return _many(_run(
         _db().table("mensajes_privados")
         .select(_MP_SELECT)
-        .eq("cedula_para", cedula_cliente)
+        .eq("cedula_de", cedula_cliente)
         .eq("tipo", "cv")
         .order("created_at", desc=False)
-    )))
-
+    ))
 
 def mp_get_todos_hilos() -> list:
-    return _mp_norm_many(_many(_run(
+    return _many(_run(
         _db().table("mensajes_privados")
         .select(_MP_SELECT)
         .eq("tipo", "cv")
         .order("created_at", desc=True)
-    )))
+    ))
 
+def mp_create(cedula_de: str, cedula_para: str, es_vendedor: bool,
+              mensaje: str, es_predeterminado: bool = False) -> dict | None:
+    return _single(_run(
+        _db().table("mensajes_privados").insert({
+            "cedula_de":   cedula_de,
+            "cedula_para": cedula_para,
+            "mensaje":     mensaje,
+            "tipo":        "cv",
+        })
+    ))
 
-def mp_create(cedula_cliente: str, cedula_remitente: str,
-              es_vendedor: bool, mensaje: str,
-              es_predeterminado: bool = False,
-              adjuntos: list | None = None) -> dict | None:
-    row: dict = {
-        "cedula_de":   cedula_remitente,
-        "cedula_para": cedula_cliente,
-        "mensaje":     mensaje,
-        "tipo":        "cv",
-    }
-    if adjuntos:
-        row["adjuntos"] = adjuntos
-    return _mp_norm(_single(_run(
-        _db().table("mensajes_privados").insert(row)
-    )))
-
-
-def mp_marcar_leidos(cedula_cliente: str, es_vendedor_leyendo: bool) -> None:
-    q = (
+def mp_marcar_leidos(cedula_de: str, es_vendedor_leyendo: bool) -> None:
+    _run_safe(
         _db().table("mensajes_privados")
         .update({"leido": True})
-        .eq("cedula_para", cedula_cliente)
+        .eq("cedula_para", cedula_de)
         .eq("tipo", "cv")
         .eq("leido", False)
     )
-    if es_vendedor_leyendo:
-        q = q.eq("cedula_de", cedula_cliente)
-    else:
-        q = q.neq("cedula_de", cedula_cliente)
-    _run_safe(q)
 
-
-def mp_no_leidos(cedula_cliente: str, para_vendedor: bool) -> int:
-    result = _run_safe(
+def mp_no_leidos(cedula_para: str, para_vendedor: bool) -> int:
+    res = _run(
         _db().table("mensajes_privados")
-        .select("cedula_de")
-        .eq("cedula_para", cedula_cliente)
+        .select("id", count=CountMethod.exact)
+        .eq("cedula_para", cedula_para)
         .eq("tipo", "cv")
         .eq("leido", False)
     )
-    rows = _many(result)
-    if para_vendedor:
-        return sum(1 for r in rows if r.get("cedula_de") == cedula_cliente)
-    return sum(1 for r in rows if r.get("cedula_de") != cedula_cliente)
-
+    return _count(res)
 
 def mp_total_no_leidos_vendedor() -> int:
-    result = _run_safe(
+    res = _run(
         _db().table("mensajes_privados")
-        .select("cedula_de,cedula_para")
+        .select("id", count=CountMethod.exact)
         .eq("tipo", "cv")
         .eq("leido", False)
     )
-    rows = _many(result)
-    return sum(1 for r in rows if r.get("cedula_de") == r.get("cedula_para"))
-
-
-def _staff_thread_key(a: str, b: str) -> tuple[str, str]:
-    return (min(a, b), max(a, b))
-
+    return _count(res)
 
 def mp_staff_get_conversacion(cedula_a: str, cedula_b: str) -> list:
-    c1, c2 = _staff_thread_key(cedula_a, cedula_b)
-    return _mp_norm_many(_many(_run(
+    return _many(_run(
         _db().table("mensajes_privados")
         .select(_MP_SELECT)
-        .eq("cedula_para", c1)
-        .eq("cedula_dest", c2)
+        .eq("cedula_de", cedula_a)
+        .eq("cedula_dest", cedula_b)
         .eq("tipo", "staff")
         .order("created_at", desc=False)
-    )))
-
+    ))
 
 def mp_staff_get_hilos_de(cedula: str) -> list:
-    r1 = _mp_norm_many(_many(_run(
+    r1 = _many(_run(
         _db().table("mensajes_privados")
         .select(_MP_SELECT)
-        .eq("cedula_para", cedula)
+        .eq("cedula_de", cedula)
         .eq("tipo", "staff")
         .order("created_at", desc=True)
-    )))
-    r2 = _mp_norm_many(_many(_run(
+    ))
+    r2 = _many(_run(
         _db().table("mensajes_privados")
         .select(_MP_SELECT)
         .eq("cedula_dest", cedula)
         .eq("tipo", "staff")
         .order("created_at", desc=True)
-    )))
+    ))
     return r1 + r2
 
-
-def mp_staff_create(cedula_from: str, cedula_to: str, mensaje: str,
-                    adjuntos: list | None = None) -> dict | None:
-    c1, c2 = _staff_thread_key(cedula_from, cedula_to)
-    row: dict = {
-        "cedula_de":   cedula_from,
-        "cedula_para": c1,
-        "cedula_dest": c2,
-        "mensaje":     mensaje,
-        "tipo":        "staff",
-    }
-    if adjuntos:
-        row["adjuntos"] = adjuntos
-    return _mp_norm(_single(_run(
-        _db().table("mensajes_privados").insert(row)
-    )))
-
+def mp_staff_create(cedula_from: str, cedula_to: str, mensaje: str) -> dict | None:
+    return _single(_run(
+        _db().table("mensajes_privados").insert({
+            "cedula_de":   cedula_from,
+            "cedula_dest": cedula_to,
+            "mensaje":     mensaje,
+            "tipo":        "staff",
+        })
+    ))
 
 def mp_staff_marcar_leidos(cedula_a: str, cedula_b: str, lector: str) -> None:
-    c1, c2 = _staff_thread_key(cedula_a, cedula_b)
     _run_safe(
         _db().table("mensajes_privados")
         .update({"leido": True})
-        .eq("cedula_para", c1)
-        .eq("cedula_dest", c2)
+        .eq("cedula_de", cedula_a)
+        .eq("cedula_dest", cedula_b)
         .eq("tipo", "staff")
         .neq("cedula_de", lector)
         .eq("leido", False)
     )
 
-
 def mp_staff_no_leidos(cedula_lector: str) -> int:
-    r1 = _run_safe(
+    r1 = _run(
         _db().table("mensajes_privados")
-        .select("id", count="exact")
-        .eq("cedula_para", cedula_lector)
-        .eq("tipo", "staff")
-        .eq("leido", False)
-        .neq("cedula_de", cedula_lector)
-    )
-    r2 = _run_safe(
-        _db().table("mensajes_privados")
-        .select("id", count="exact")
+        .select("id", count=CountMethod.exact)
         .eq("cedula_dest", cedula_lector)
         .eq("tipo", "staff")
         .eq("leido", False)
-        .neq("cedula_de", cedula_lector)
     )
-    c1 = r1.count if r1 and hasattr(r1, "count") and r1.count is not None else 0
-    c2 = r2.count if r2 and hasattr(r2, "count") and r2.count is not None else 0
+    r2 = _run(
+        _db().table("mensajes_privados")
+        .select("id", count=CountMethod.exact)
+        .eq("cedula_de", cedula_lector)
+        .eq("tipo", "staff")
+        .eq("leido", False)
+    )
+    c1 = _count(r1)
+    c2 = _count(r2)
     return c1 + c2
-
-
-def comentario_delete_all() -> None:
-    _run_safe(_db().table("comentarios").delete().neq("id", "00000000-0000-0000-0000-000000000000"))
 
 
 def usuarios_activos_desde(desde_iso: str) -> int:
     try:
-        r = _db().table("usuarios").select("cedula", count="exact") \
+        r = _db().table("usuarios").select("cedula", count=CountMethod.exact) \
             .gte("ultima_conexion", desde_iso).execute()
-        return r.count if r and r.count is not None else 0
+        return _count(r)
     except Exception:
         return 0
 
@@ -898,12 +738,12 @@ def usuarios_activos_desde(desde_iso: str) -> int:
 def logros_sembrar(logros: list) -> None:
     rows = [
         {
-            "codigo": l["codigo"],
-            "nombre": l["nombre"],
+            "codigo":      l["codigo"],
+            "nombre":      l["nombre"],
             "descripcion": l["descripcion"],
-            "icono": l["icono"],
-            "rareza": l.get("rareza", "comun"),
-            "puntos": l.get("puntos", 10),
+            "icono":       l["icono"],
+            "rareza":      l.get("rareza", "comun"),
+            "puntos":      l.get("puntos", 10),
         }
         for l in logros
     ]
@@ -957,7 +797,9 @@ def usuario_stats_logros(cedula: str) -> dict:
         ids_pedido = [p["id_pedido"] for p in pedidos if p.get("id_pedido")]
         if ids_pedido:
             det_r = _run_safe(
-                _db().table("pedido_detalle").select("id_producto").in_("id_pedido", ids_pedido)
+                _db().table("pedido_detalle")
+                .select("id_producto")
+                .in_("id_pedido", ids_pedido)
             )
             det = _many(det_r)
             stats["productos_distintos"] = len({d["id_producto"] for d in det if d.get("id_producto")})
@@ -965,7 +807,9 @@ def usuario_stats_logros(cedula: str) -> dict:
         pass
 
     coments_r = _run_safe(
-        _db().table("comentarios").select("likes_usuarios").eq("cedula", cedula)
+        _db().table("comentarios")
+        .select("likes_usuarios")
+        .eq("cedula", cedula)
     )
     coments = _many(coments_r)
     stats["total_comentarios"] = len(coments)
@@ -977,14 +821,14 @@ def usuario_stats_logros(cedula: str) -> dict:
     stats["max_likes"] = max_lk
 
     mp_r = _run_safe(
-        _db().table("mensajes_privados").select("id", count="exact").eq("cedula_de", cedula)
+        _db().table("mensajes_privados")
+        .select("id", count=CountMethod.exact)
+        .eq("cedula_de", cedula)
     )
-    stats["total_mensajes_privados"] = (mp_r.count if mp_r and mp_r.count is not None else 0)
+    stats["total_mensajes_privados"] = _count(mp_r)
 
     try:
-        usr_r = _run_safe(
-            _db().table("usuarios").select("fecha_creacion").eq("cedula", cedula).limit(1)
-        )
+        usr_r = _run_safe(_db().table("usuarios").select("fecha_creacion").eq("cedula", cedula).limit(1))
         usr = _single(usr_r)
         if usr:
             fc = usr.get("fecha_creacion")
@@ -1000,9 +844,9 @@ def usuario_stats_logros(cedula: str) -> dict:
 
     try:
         fac_r = _run_safe(
-            _db().table("facturas").select("id_factura", count="exact").eq("cedula", cedula)
+            _db().table("facturas").select("numero_factura", count=CountMethod.exact).eq("cedula", cedula)
         )
-        stats["total_facturas"] = (fac_r.count if fac_r and fac_r.count is not None else 0)
+        stats["total_facturas"] = _count(fac_r)
     except Exception:
         pass
 
@@ -1028,35 +872,37 @@ def sistema_stats_logros() -> dict:
     except Exception:
         pass
     try:
-        r = _run_safe(_db().table("usuarios").select("cedula", count="exact"))
-        stats["sistema_usuarios"] = (r.count if r and r.count is not None else 0)
+        r = _run_safe(_db().table("usuarios").select("cedula", count=CountMethod.exact))
+        stats["sistema_usuarios"] = _count(r)
     except Exception:
         pass
     try:
-        r = _run_safe(
-            _db().table("gestion_productos").select("id_producto", count="exact").eq("estado", True)
-        )
-        stats["sistema_productos"] = (r.count if r and r.count is not None else 0)
+        r = _run_safe(_db().table("gestion_productos").select("id_producto", count=CountMethod.exact).eq("estado", True))
+        stats["sistema_productos"] = _count(r)
+    except Exception:
+        try:
+            r = _run_safe(_db().table("gestion_productos").select("id_producto", count=CountMethod.exact))
+            stats["sistema_productos"] = _count(r)
+        except Exception:
+            pass
+    try:
+        r = _run_safe(_db().table("publicidad").select("id_publicidad", count=CountMethod.exact))
+        stats["sistema_publicidades"] = _count(r)
     except Exception:
         pass
     try:
-        r = _run_safe(_db().table("publicidad").select("id_publicidad", count="exact"))
-        stats["sistema_publicidades"] = (r.count if r and r.count is not None else 0)
+        r = _run_safe(_db().table("comentarios").select("id", count=CountMethod.exact))
+        stats["sistema_comentarios"] = _count(r)
     except Exception:
         pass
     try:
-        r = _run_safe(_db().table("comentarios").select("id", count="exact"))
-        stats["sistema_comentarios"] = (r.count if r and r.count is not None else 0)
+        r = _run_safe(_db().table("mensajes_privados").select("id", count=CountMethod.exact))
+        stats["sistema_mensajes"] = _count(r)
     except Exception:
         pass
     try:
-        r = _run_safe(_db().table("mensajes_privados").select("id", count="exact"))
-        stats["sistema_mensajes"] = (r.count if r and r.count is not None else 0)
-    except Exception:
-        pass
-    try:
-        r = _run_safe(_db().table("facturas").select("id_factura", count="exact"))
-        stats["sistema_facturas"] = (r.count if r and r.count is not None else 0)
+        r = _run_safe(_db().table("facturas").select("numero_factura", count=CountMethod.exact))
+        stats["sistema_facturas"] = _count(r)
     except Exception:
         pass
     return stats
@@ -1076,7 +922,9 @@ def usuario_pedido_repetido(cedula: str) -> bool:
 
         ids = [p["id_pedido"] for p in pedidos]
         detalles_r = _run_safe(
-            _db().table("pedido_detalle").select("id_producto,cantidad").in_("id_pedido", ids)
+            _db().table("pedido_detalle")
+            .select("id_producto,cantidad")
+            .in_("id_pedido", ids)
         )
         detalles = _many(detalles_r)
 

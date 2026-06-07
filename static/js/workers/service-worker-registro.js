@@ -1,44 +1,34 @@
-/**
- * D'Antojitos — Service Worker: REGISTRO v4
- * Cubre: /registro, validación de campos, verificación de email.
- */
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-registro-v4';
+const CACHE_NAME = 'dantojitos-registro-v5';
 
 const PRECACHE = [
-    /* Páginas */
     '/registro',
-    /* CSS módulo */
     '/static/css/global_modules/style_login.css',
     '/static/css/global_modules/style_registro.css',
-    /* CSS compartido */
     '/static/css/global_modules/style_utils.css',
     '/static/css/global_modules/style_design_system.css',
-    /* JS módulo */
     '/static/js/global_js/login_registro.js',
-    /* JS compartido */
     '/static/js/global_js/utils.js',
     '/static/js/global_js/i18n.js',
     '/static/js/compiled/design-system.js',
     '/static/js/compiled/theme.js',
-    /* Assets */
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
-    /* CDN */
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
     'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,700&display=swap',
 ];
 
-/* Rutas de registro — siempre a red */
 const NEVER_CACHE = [
     '/registro_action',
     '/verificar_email',
     '/reenviar_verificacion',
     '/api/verificar_usuario',
     '/api/verificar_email_disponible',
+    '/registro-google',
+    '/refresh',
 ];
 
 const CDN_RE = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com)/;
@@ -62,14 +52,11 @@ self.addEventListener('fetch', e => {
     if (CDN_RE.test(request.url)) {
         e.respondWith(cacheFirst(request, CACHE_NAME)); return;
     }
-
     if (url.pathname.startsWith('/static/')) {
         e.respondWith(cacheFirst(request, CACHE_NAME)); return;
     }
-
     if (url.pathname === '/registro') {
         e.respondWith(staleWhileRevalidate(request, CACHE_NAME)); return;
     }
-
     e.respondWith(networkFirst(request, CACHE_NAME));
 });

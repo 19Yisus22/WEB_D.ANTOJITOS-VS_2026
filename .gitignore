@@ -24,6 +24,7 @@ env/
 node_modules/
 package-lock.json
 
+
 # ── Logs ────────────────────────────────────────────────────────
 *.log
 *.tmp

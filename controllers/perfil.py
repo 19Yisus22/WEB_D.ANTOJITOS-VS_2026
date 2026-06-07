@@ -9,6 +9,17 @@ perfil_bp = Blueprint("perfil", __name__)
 
 COOLDOWN_DIAS = 10
 
+
+def _birthday_pct() -> int:
+    try:
+        cfg = db.inicio_config_get() or {}
+        val = cfg.get("descuento_cumpleanos")
+        if val is not None:
+            return int(round(max(0.0, min(float(val), 100.0))))
+    except Exception:
+        pass
+    return 5
+
 def _ahora_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -79,14 +90,15 @@ def perfil_usuarios():
             if v:
                 updates[campo] = v.strip().lower() if campo == "correo" else v.strip()
 
+        _pct = _birthday_pct()
         if "nombre" in updates and not is_valid_name(updates["nombre"]):
-            return render_template("general_modules/perfil.html", user=usuario, error="Nombre inválido.")
+            return render_template("general_modules/perfil.html", user=usuario, error="Nombre inválido.", descuento_pct=_pct)
         if "apellido" in updates and not is_valid_name(updates["apellido"]):
-            return render_template("general_modules/perfil.html", user=usuario, error="Apellido inválido.")
+            return render_template("general_modules/perfil.html", user=usuario, error="Apellido inválido.", descuento_pct=_pct)
         if "telefono" in updates and not is_valid_numeric(updates["telefono"], 7, 15):
-            return render_template("general_modules/perfil.html", user=usuario, error="Teléfono inválido.")
+            return render_template("general_modules/perfil.html", user=usuario, error="Teléfono inválido.", descuento_pct=_pct)
         if "correo" in updates and not is_valid_email(updates["correo"]):
-            return render_template("general_modules/perfil.html", user=usuario, error="Correo inválido.")
+            return render_template("general_modules/perfil.html", user=usuario, error="Correo inválido.", descuento_pct=_pct)
 
         archivo = request.files.get("imagen_url")
         eliminar = request.form.get("eliminar_foto") == "1"
@@ -108,7 +120,7 @@ def perfil_usuarios():
             db.usuario_update(user_id, updates)
         return redirect(url_for("perfil.perfil_usuarios"))
 
-    return render_template("general_modules/perfil.html", user=usuario)
+    return render_template("general_modules/perfil.html", user=usuario, descuento_pct=_birthday_pct())
 
 
 @perfil_bp.route("/perfil/restricciones")
@@ -196,6 +208,8 @@ def actualizar_perfil(cedula):
 
     nueva_cedula = (data.get("cedulaPerfil") or "").strip()
     if nueva_cedula and nueva_cedula != lookup_id:
+        if not lookup_id.startswith("G-"):
+            return jsonify({"ok": False, "error": "La cédula no puede modificarse una vez establecida."}), 403
         if not nueva_cedula.isdigit():
             return jsonify({"ok": False, "error": "La cédula debe contener únicamente números (sin letras ni guiones)."}), 400
         if len(nueva_cedula) < 6:
@@ -272,7 +286,7 @@ def actualizar_perfil(cedula):
         msg = str(e)
         if "foreign key" in msg.lower() or "violates" in msg.lower():
             if lookup_id.startswith("G-"):
-                return jsonify({"ok": False, "error": "No se pudo aplicar el cambio de cédula. Contacta soporte."}), 409
+                return jsonify({"ok": False, "error": "Cédula en uso por otro registro. Elige otro número."}), 409
             return jsonify({"ok": False, "error": "No se puede cambiar la cédula porque tienes pedidos o facturas registrados con ella."}), 409
         return jsonify({"ok": False, "error": msg}), 500
 

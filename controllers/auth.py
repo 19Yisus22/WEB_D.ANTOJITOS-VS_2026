@@ -96,7 +96,7 @@ def login():
                 "segundos":        segundos_restantes,
             }), 429
         else:
-            if intentos >= 30:
+            if intentos >= 75:
                 db.usuario_reset_intentos(cedula)
                 intentos = 0
 
@@ -125,7 +125,7 @@ def login():
             }), 429
 
         next_threshold = next(
-            (t for t in (5, 10, 15, 20, 25, 30) if t > new_intentos),
+            (t for t in (5, 15, 25, 35, 45, 55, 65, 75) if t > new_intentos),
             None
         )
         if next_threshold is not None:
@@ -177,6 +177,7 @@ def registro_google():
                 "metodo_pago":      "Efectivo",
                 "imagen_url":       idinfo.get("picture") or None,
                 "ultima_conexion":  ahora,
+                "letraAcc":         "G",
             })
             user = db.usuario_get_by_correo(correo)
 
@@ -293,6 +294,7 @@ def registro():
             "metodo_pago":     "Efectivo",
             "imagen_url":      None,
             "ultima_conexion": _now(),
+            "letraAcc":        "D",
         }
         if username:
             row["username"] = username

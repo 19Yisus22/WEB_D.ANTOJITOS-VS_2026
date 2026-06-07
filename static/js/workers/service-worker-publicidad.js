@@ -1,33 +1,22 @@
-/**
- * D'Antojitos — Service Worker: PUBLICIDAD v4
- * Cubre: /publicidad_page, editor de marketing, carrusel,
- *        tarjetas, cinta, alertas, gestor de imágenes Cloudinary.
- */
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-publicidad-v4';
+const CACHE_NAME = 'dantojitos-publicidad-v5';
 
 const PRECACHE = [
-    /* Páginas */
     '/publicidad_page',
-    /* CSS módulo */
     '/static/css/admin_modules/style_publicidad.css',
-    /* CSS compartido */
     '/static/css/global_modules/style_utils.css',
     '/static/css/global_modules/style_navbar.css',
     '/static/css/global_modules/style_footer.css',
     '/static/css/global_modules/style_design_system.css',
-    /* JS módulo */
     '/static/js/admin_js/publicidad.js',
-    /* JS compartido */
+    '/static/js/global_js/logros.js',
     '/static/js/global_js/utils.js',
     '/static/js/global_js/i18n.js',
     '/static/js/compiled/design-system.js',
     '/static/js/compiled/theme.js',
-    /* Assets */
     '/static/uploads/logo.ico',
     '/static/uploads/logo.png',
-    /* CDN */
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
@@ -45,6 +34,8 @@ const NETWORK_FIRST_PATHS = [
     '/guardar_marketing',
     '/subir_imagen_publicidad',
     '/eliminar_imagen_cloudinary',
+    '/logros/verificar',
+    '/logros/mis_logros',
 ];
 
 const CDN_RE = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com)/;
@@ -67,23 +58,17 @@ self.addEventListener('fetch', e => {
     if (CDN_RE.test(request.url)) {
         e.respondWith(cacheFirst(request, CACHE_NAME)); return;
     }
-
-    /* Imágenes de publicidad — caché con revalidación silenciosa */
     if (IMG_RE.test(request.url)) {
         e.respondWith(cacheFirstWithUpdate(request, CACHE_NAME)); return;
     }
-
     if (url.pathname.startsWith('/static/')) {
         e.respondWith(cacheFirst(request, CACHE_NAME)); return;
     }
-
     if (NETWORK_FIRST_PATHS.some(p => url.pathname.startsWith(p))) {
         e.respondWith(networkFirst(request, CACHE_NAME, API_TIMEOUT_MS)); return;
     }
-
     if (url.pathname === '/publicidad_page') {
         e.respondWith(staleWhileRevalidate(request, CACHE_NAME)); return;
     }
-
     e.respondWith(networkFirst(request, CACHE_NAME));
 });

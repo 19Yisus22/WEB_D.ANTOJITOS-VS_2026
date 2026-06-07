@@ -155,7 +155,7 @@ function agregarMetodoPago() {
     const fileInput = document.getElementById('archivoQR');
 
     if (!numero || !titular) {
-        mostrarAlerta("⚠️ Ingrese número de cuenta y nombre del titular", true);
+        mostrarAlerta("Ingrese número de cuenta y nombre del titular", true);
         return;
     }
 

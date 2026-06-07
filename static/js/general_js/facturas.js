@@ -542,24 +542,47 @@ async function descargarPDF(f) {
 
     const finalY = doc.lastAutoTable.finalY;
 
-    const totalVenta = (f.productos || []).reduce(
-        (acc, curr) => acc + Number(curr.subtotal),
-        0
-    );
+    const _pdfSub  = Number(f.subtotal || 0) || (f.productos || []).reduce((a, c) => a + Number(c.subtotal || 0), 0);
+    const _pdfTot  = Number(f.total || 0) || _pdfSub;
+    const _pdfDisc = (_pdfSub > 0 && _pdfTot > 0 && (_pdfSub - _pdfTot) >= 1) ? (_pdfSub - _pdfTot) : 0;
+    const _pdfPct  = _pdfDisc > 0 ? Math.round((_pdfDisc / _pdfSub) * 100) : 0;
 
-    doc.setFillColor(245, 245, 245);
+    let pdfY = finalY + 8;
 
-    doc.rect(130, finalY + 5, 65, 15, 'F');
+    if (_pdfDisc > 0) {
+        doc.setFillColor(252, 245, 235);
+        doc.rect(120, pdfY - 3, 75, 30, 'F');
 
-    doc.setFontSize(14);
-    doc.setTextColor(0);
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text(`SUBTOTAL:`, 125, pdfY + 3);
+        doc.setFont(undefined, 'normal');
+        doc.text(FormateadorCosto.format(_pdfSub), 190, pdfY + 3, { align: 'right' });
 
-    doc.text(
-        `TOTAL: ${FormateadorCosto.format(totalVenta)}`,
-        190,
-        finalY + 15,
-        { align: 'right' }
-    );
+        pdfY += 8;
+        doc.setTextColor(200, 80, 0);
+        doc.setFont(undefined, 'bold');
+        doc.text(`DESC. CUMPLEAÑOS (${_pdfPct}%):`, 125, pdfY + 3);
+        doc.setFont(undefined, 'normal');
+        doc.text(`-${FormateadorCosto.format(_pdfDisc)}`, 190, pdfY + 3, { align: 'right' });
+
+        pdfY += 8;
+        doc.setFillColor(235, 250, 235);
+        doc.rect(120, pdfY - 3, 75, 12, 'F');
+        doc.setFontSize(13);
+        doc.setTextColor(20, 150, 20);
+        doc.setFont(undefined, 'bold');
+        doc.text(`TOTAL: ${FormateadorCosto.format(_pdfTot)}`, 190, pdfY + 6, { align: 'right' });
+    } else {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(130, pdfY, 65, 15, 'F');
+        doc.setFontSize(14);
+        doc.setTextColor(0);
+        doc.setFont(undefined, 'bold');
+        doc.text(`TOTAL: ${FormateadorCosto.format(_pdfTot)}`, 190, pdfY + 10, { align: 'right' });
+    }
+
+    doc.setFont(undefined, 'normal');
 
     doc.setFontSize(8);
     doc.setTextColor(150);
@@ -825,10 +848,27 @@ function mostrarFacturasBuscadas() {
                 <i class="bi bi-chevron-down inv-chevron"></i>
             </div>
             <div class="inv-products-box">${productosHtml}</div>
-            <div class="inv-total-row">
-                <span class="inv-total-label">${t('ord.total').toUpperCase()}</span>
-                <span class="inv-total-amount">${FormateadorCosto.format(totalSuma)}</span>
-            </div>
+            ${(() => {
+                const _sub  = Number(f.subtotal || 0);
+                const _tot  = Number(f.total    || 0);
+                const _hasDisc = _sub > 0 && _tot > 0 && (_sub - _tot) >= 1;
+                if (_hasDisc) {
+                    const _descMonto = _sub - _tot;
+                    const _descPct   = Math.round((_descMonto / _sub) * 100);
+                    return `<div class="inv-total-row inv-total-birthday">
+                        <span class="inv-total-label">${t('ord.total').toUpperCase()}</span>
+                        <div class="inv-birthday-prices">
+                            <span class="inv-original-price">${FormateadorCosto.format(_sub)}</span>
+                            <span class="inv-birthday-badge"><i class="bi bi-cake2-fill me-1"></i>${_descPct}% desc. cumpleaños · -${FormateadorCosto.format(_descMonto)}</span>
+                            <span class="inv-total-amount inv-total-discount">${FormateadorCosto.format(_tot)}</span>
+                        </div>
+                    </div>`;
+                }
+                return `<div class="inv-total-row">
+                    <span class="inv-total-label">${t('ord.total').toUpperCase()}</span>
+                    <span class="inv-total-amount">${FormateadorCosto.format(totalSuma)}</span>
+                </div>`;
+            })()}
 
             <div class="inv-body" id="inv-body-${globalIdx}">
 

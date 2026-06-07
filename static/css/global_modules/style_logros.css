@@ -64,17 +64,17 @@
     position: relative;
 }
 
-.logro-icono-wrap.rareza-comun      { background: linear-gradient(135deg, #2c3e50, #34495e); }
-.logro-icono-wrap.rareza-raro       { background: linear-gradient(135deg, #1a3a6e, #2980b9); box-shadow: 0 0 12px rgba(41,128,185,0.4); }
-.logro-icono-wrap.rareza-epico      { background: linear-gradient(135deg, #4a235a, #8e44ad); box-shadow: 0 0 12px rgba(142,68,173,0.4); }
-.logro-icono-wrap.rareza-legendario { background: linear-gradient(135deg, #7d5a00, #d4a017); box-shadow: 0 0 16px rgba(212,160,23,0.5); }
+.logro-icono-wrap.rareza-comun      { background: linear-gradient(135deg, #2e4a7a, #4a6fa5); box-shadow: 0 0 10px rgba(74,111,165,0.35); }
+.logro-icono-wrap.rareza-raro       { background: linear-gradient(135deg, #4a1b7a, #7c3aed); box-shadow: 0 0 12px rgba(124,58,237,0.45); }
+.logro-icono-wrap.rareza-epico      { background: linear-gradient(135deg, #6d28d9, #a855f7); box-shadow: 0 0 14px rgba(168,85,247,0.5); }
+.logro-icono-wrap.rareza-legendario { background: linear-gradient(135deg, #c2410c, #f59e0b); box-shadow: 0 0 18px rgba(245,158,11,0.55); }
 
 .logro-icono-wrap.rareza-legendario::after {
     content: '';
     position: absolute;
     inset: -2px;
     border-radius: 13px;
-    background: conic-gradient(from 0deg, #d4a017, #f5e642, #d4a017, #a87800, #d4a017);
+    background: conic-gradient(from 0deg, #f59e0b, #f97316, #ef4444, #f59e0b, #fbbf24, #f59e0b);
     z-index: -1;
     animation: logro-glow-spin 2s linear infinite;
 }
@@ -123,10 +123,10 @@
     border-radius: 20px;
 }
 
-.logro-rareza-badge.comun      { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
-.logro-rareza-badge.raro       { background: rgba(41,128,185,0.25); color: #5dade2; }
-.logro-rareza-badge.epico      { background: rgba(142,68,173,0.25); color: #c39bd3; }
-.logro-rareza-badge.legendario { background: rgba(212,160,23,0.25); color: #f5e642; }
+.logro-rareza-badge.comun      { background: rgba(74,111,165,0.25); color: #7da7d9; }
+.logro-rareza-badge.raro       { background: rgba(124,58,237,0.25); color: #c084fc; }
+.logro-rareza-badge.epico      { background: rgba(168,85,247,0.3);  color: #e879f9; }
+.logro-rareza-badge.legendario { background: rgba(245,158,11,0.25); color: #fbbf24; }
 
 .logro-progress-bar {
     position: absolute;
@@ -221,6 +221,22 @@
 .logro-card-nombre { font-size: 0.82rem; font-weight: 700; color: #1a1a2e; }
 .logro-card-desc   { font-size: 0.7rem; color: #6c757d; margin-top: 2px; }
 
+.logro-card-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.logro-rareza-card {
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+}
+
 .logro-check {
     width: 20px;
     height: 20px;
@@ -234,6 +250,33 @@
     color: #fff;
 }
 
+.logro-lock-ico {
+    font-size: 0.85rem;
+    color: #b0b0c0;
+}
+
+/* ── Mini barra de progreso en tarjetas bloqueadas ── */
+.logro-progreso {
+    height: 5px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.logro-progreso-bar {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.6s ease;
+    min-width: 4px;
+}
+
+.logro-progreso-txt {
+    font-size: 0.62rem;
+    color: #8a8a9a;
+    margin-top: 2px;
+}
+
 /* Dark mode */
 [data-theme="dark"] .logro-card { background: #1e1e3a; border-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .logro-card:not(.bloqueado) { border-color: rgba(211,84,0,0.3); }
@@ -241,6 +284,9 @@
 [data-theme="dark"] .logro-card-desc   { color: rgba(255,255,255,0.5); }
 [data-theme="dark"] .logros-modulo-header h6 { color: #e67e22; }
 [data-theme="dark"] .logros-modulo-header { border-color: rgba(211,84,0,0.25); }
+[data-theme="dark"] .logro-progreso { background: rgba(255,255,255,0.08); }
+[data-theme="dark"] .logro-progreso-txt { color: rgba(255,255,255,0.4); }
+[data-theme="dark"] .logro-lock-ico { color: rgba(255,255,255,0.3); }
 
 @media (max-width: 480px) {
     #logros-container { right: 12px; bottom: 16px; max-width: calc(100vw - 24px); width: calc(100vw - 24px); }

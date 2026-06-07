@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 from supabase import create_client, ClientOptions
 
+_logger = logging.getLogger(__name__)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, ".env"), override=True)
 
@@ -14,13 +16,26 @@ SUPABASE_REST_URL = ""
 
 if SUPABASE_URL and SUPABASE_KEY:
     SUPABASE_REST_URL = os.getenv("SUPABASE_REST_URL") or f"{SUPABASE_URL.rstrip('/')}/rest/v1/"
-    opts = ClientOptions(postgrest_client_timeout=120, storage_client_timeout=120, schema="public")
+    opts = ClientOptions(postgrest_client_timeout=30, storage_client_timeout=60, schema="public")
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=opts)
+    try:
+        import httpx
+        _limits = httpx.Limits(max_keepalive_connections=5, keepalive_expiry=10)
+        _old = supabase.postgrest.session
+        _new_session = httpx.Client(
+            base_url=_old.base_url,
+            headers=dict(_old.headers),
+            http2=False,
+            limits=_limits,
+            timeout=30,
+        )
+        setattr(supabase.postgrest, "session", _new_session)
+        del _old, _limits, _new_session
+    except Exception as _e:
+        _logger.warning("httpx reconfigure skipped: %s", _e)
 
-# ── Transaction Pooler (psycopg2 direct SQL) ──────────────────────────────────
 DATABASE_URL = os.getenv("DATABASE_URL")
 _pool = None
-_logger = logging.getLogger(__name__)
 
 
 def _get_pool():
@@ -39,7 +54,6 @@ def _get_pool():
 
 
 def execute_sql(query: str, params=None) -> list[dict]:
-    """Ejecuta SQL directo via Transaction Pooler. Devuelve lista de dicts."""
     from psycopg2.extras import RealDictCursor
     pool = _get_pool()
     if not pool:

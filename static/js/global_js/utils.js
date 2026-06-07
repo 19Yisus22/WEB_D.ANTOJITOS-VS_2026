@@ -952,6 +952,19 @@ async function _pollSistemNotif() {
     _lastBellCount = cnt;
 }
 
+/* ── Cierra todos los paneles de notificación abiertos ── */
+function _cerrarTodosPaneles(exceptId) {
+    if (_clientPanelOpen && exceptId !== 'clientNotifPanel') {
+        _clientPanelOpen = _togglePanel('clientNotifPanel','clientNotifBody','clientNotifChevron','navClientBellBtn', true, null);
+    }
+    if (_sistemPanelOpen && exceptId !== 'sistemPanel') {
+        _sistemPanelOpen = _togglePanel('sistemPanel','sistemBody','sistemChevron','navBellBtn', true, null);
+    }
+    if (_notifPanelOpenGlobal && exceptId !== 'notifAdminPanel') {
+        _notifPanelOpenGlobal = _togglePanel('notifAdminPanel','notifAdminBody','notifChevron','navPubBtn', true, null);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initScrollToTop();
     initScrollProgressBar();
@@ -966,9 +979,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(_pollSistemNotif, 12000);
     }
 
-    /* Cargar bandeja del cliente desde localStorage al iniciar */
+    /* Cargar bandeja del cliente desde localStorage al iniciar y limpiar automáticamente */
     if (document.getElementById('clientNotifList')) {
         _renderClientNotifs();
+        _clientNotifClearAll();
     }
 
     /* Polling mensajes privados: cliente (campana naranja) y admin/vendedor (campana gris) */
@@ -976,6 +990,35 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(_pollPrivMsgs, 4000);
         setInterval(_pollPrivMsgs, 20000);
     }
+
+    /* Etiqueta de versión: cicla colores aleatorios */
+    (function () {
+        const _vl = document.getElementById('versionLabel');
+        if (!_vl) return;
+        const _vc = ['#d35400','#e67e22','#9b59b6','#3498db','#1abc9c',
+                     '#e74c3c','#f39c12','#27ae60','#e91e63','#00bcd4',
+                     '#8e44ad','#16a085','#c0392b','#2980b9','#f59e0b'];
+        setInterval(() => {
+            _vl.style.color = _vc[Math.floor(Math.random() * _vc.length)];
+        }, 2200);
+    })();
+
+    /* Cerrar bandeja de notificaciones al clic fuera de ella */
+    document.addEventListener('click', function(e) {
+        const pares = [
+            { panel: 'clientNotifPanel', btn: 'navClientBellBtn' },
+            { panel: 'sistemPanel',      btn: 'navBellBtn'       },
+            { panel: 'notifAdminPanel',  btn: 'navPubBtn'        },
+        ];
+        pares.forEach(({ panel, btn }) => {
+            const panelEl = document.getElementById(panel);
+            if (!panelEl || !panelEl.classList.contains('is-open')) return;
+            const btnEl = document.getElementById(btn);
+            if (!panelEl.contains(e.target) && !(btnEl && btnEl.contains(e.target))) {
+                _cerrarTodosPaneles(null);
+            }
+        });
+    }, true);
 });
 
 /* ══════════════════════════════════════════════════

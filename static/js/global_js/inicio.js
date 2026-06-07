@@ -590,3 +590,34 @@ if ('serviceWorker' in navigator) {
             .catch(() => {});
     });
 }
+
+/* ── Barra de progreso de logros en sección Explorar ── */
+(function _initLogrosProgressBar() {
+    const bar   = document.getElementById('logrosProgresoBar');
+    const label = document.getElementById('logrosProgresoLabel');
+    if (!bar || !label) return;
+
+    async function _cargarProgreso() {
+        try {
+            const r = await fetch('/logros/mis_logros', { cache: 'no-store' });
+            if (!r.ok) return;
+            const data = await r.json();
+            const total     = (data.todos     || []).length;
+            const obtenidos = (data.obtenidos || []).length;
+            if (total === 0) return;
+            const pct = Math.round((obtenidos / total) * 100);
+            label.textContent = `${obtenidos}/${total} · ${pct}%`;
+            /* Animar con pequeño delay para que la transición CSS sea visible */
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                bar.style.width = pct + '%';
+            }));
+        } catch (_) {}
+    }
+
+    /* Esperar a que el DOM esté listo y los estilos aplicados */
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => setTimeout(_cargarProgreso, 600));
+    } else {
+        setTimeout(_cargarProgreso, 600);
+    }
+})();

@@ -23,6 +23,7 @@ def _enriquecer_factura(f: dict) -> dict:
         "id_factura":     str(f.get("id_factura", "")),
         "numero_factura": str(f.get("numero_factura", "")),
         "fecha_emision":  str(f.get("fecha_emision", "")),
+        "subtotal":       float(f.get("subtotal") or 0),
         "total":          float(f.get("total") or 0),
         "metodo_pago":    str(f.get("metodo_pago") or "No especificado"),
         "estado":         str(f.get("estado") or "Emitida"),

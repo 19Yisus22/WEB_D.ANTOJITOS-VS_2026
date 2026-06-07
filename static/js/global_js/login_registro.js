@@ -168,51 +168,44 @@ function _formatSeconds(secs) {
 }
 
 function _showLockoutBanner(segundos, bloqueadoHasta) {
-    const banner    = document.getElementById('lockoutBanner');
-    const msgEl     = document.getElementById('lockoutMsg');
-    const countdown = document.getElementById('lockoutCountdown');
-    const titleEl   = document.getElementById('lockoutTitle');
-    const btn       = document.getElementById('btnLogin');
-    if (!banner) return;
-
-    banner.style.display = '';
+    const bar  = document.getElementById('loginLockoutBar');
+    const cdEl = document.getElementById('loginLockoutCd');
+    const btn  = document.getElementById('btnLogin');
     if (btn) btn.disabled = true;
-    if (titleEl) titleEl.textContent = 'Cuenta bloqueada temporalmente';
 
-    if (msgEl && bloqueadoHasta) {
+    let toastMsg = 'Demasiados intentos fallidos.';
+    if (bloqueadoHasta) {
         try {
             const dt   = new Date(bloqueadoHasta);
-            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            msgEl.textContent = `Se desbloqueará el ${dt.toLocaleDateString('es-ES', opts)}`;
-        } catch {
-            msgEl.textContent = 'Cuenta bloqueada temporalmente.';
-        }
-    } else if (msgEl) {
-        msgEl.textContent = 'Cuenta bloqueada temporalmente.';
+            const opts = { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            toastMsg = `Cuenta bloqueada. Se desbloquea el ${dt.toLocaleDateString('es-ES', opts)}.`;
+        } catch { /**/ }
     }
+    mostrarAlertaPublica({ titulo: 'Cuenta bloqueada', mensaje: toastMsg, tipo: 'error' });
+
+    if (bar) bar.classList.remove('d-none');
 
     let remaining = Math.max(0, Math.round(segundos));
-
     function tick() {
         if (remaining <= 0) {
-            if (countdown) countdown.textContent = 'Ya puedes intentar de nuevo.';
+            if (cdEl) cdEl.textContent = 'Ya puedes intentar de nuevo.';
             if (btn) btn.disabled = false;
+            if (bar) bar.classList.add('d-none');
             clearInterval(_lockoutTimer);
             _lockoutTimer = null;
             return;
         }
-        if (countdown) countdown.textContent = `Tiempo restante: ${_formatSeconds(remaining)}`;
+        if (cdEl) cdEl.textContent = `Bloqueado — ${_formatSeconds(remaining)}`;
         remaining--;
     }
-
     tick();
     clearInterval(_lockoutTimer);
     _lockoutTimer = setInterval(tick, 1000);
 }
 
 function _hideLockoutBanner() {
-    const banner = document.getElementById('lockoutBanner');
-    if (banner) banner.style.display = 'none';
+    const bar = document.getElementById('loginLockoutBar');
+    if (bar) bar.classList.add('d-none');
     clearInterval(_lockoutTimer);
     _lockoutTimer = null;
     const btn = document.getElementById('btnLogin');
@@ -297,6 +290,7 @@ function initRegistroForm() {
     if (!form) return;
 
     initTogglePw('togglePw', 'contrasena');
+    initCapsLock('contrasena', 'capsWarnReg');
 
     const pwInp = document.getElementById('contrasena');
     if (pwInp) pwInp.addEventListener('input', () => renderStrength(pwInp.value));

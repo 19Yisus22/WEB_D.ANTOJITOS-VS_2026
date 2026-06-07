@@ -969,3 +969,22 @@ body { padding-top: 68px; }
     background: rgba(240,136,62,0.18);
     color: #f0883e;
 }
+
+/* ── Label de versión animado ── */
+#versionLabel {
+    display: inline-block;
+    color: #9c8fa0;
+    transition: color 0.7s ease, opacity 0.5s ease;
+    animation: version-blink 3.5s ease-in-out infinite;
+    cursor: default;
+    user-select: none;
+}
+
+@keyframes version-blink {
+    0%,  38%  { opacity: 1; }
+    45%        { opacity: 0; }
+    52%        { opacity: 1; }
+    100%       { opacity: 1; }
+}
+
+[data-theme="dark"] #versionLabel { color: #6a5f7a; }

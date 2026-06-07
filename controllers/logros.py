@@ -15,11 +15,27 @@ def todos_los_logros():
 @login_required
 def mis_logros():
     cedula = session.get("user_id")
+    rol    = (session.get("rol") or "cliente").lower()
+    if rol not in ("cliente", "vendedor", "admin"):
+        rol = "cliente"
+    logros_rol = [l for l in LOGROS_DEFINIDOS if rol in l.get("roles", [])]
     try:
         obtenidos = db.usuario_logros_get(cedula)
-        return jsonify({"todos": LOGROS_DEFINIDOS, "obtenidos": obtenidos})
+        stats     = db.usuario_stats_logros(cedula)
+        rol_stats: dict = {}
+        if rol in ("admin", "vendedor"):
+            try:
+                rol_stats = db.sistema_stats_logros()
+            except Exception:
+                rol_stats = {}
+        return jsonify({
+            "todos": logros_rol,
+            "obtenidos": obtenidos,
+            "stats": stats,
+            "rol_stats": rol_stats,
+        })
     except Exception as e:
-        return jsonify({"todos": LOGROS_DEFINIDOS, "obtenidos": [], "error": str(e)})
+        return jsonify({"todos": logros_rol, "obtenidos": [], "stats": {}, "rol_stats": {}, "error": str(e)})
 
 
 @logros_bp.route("/logros/verificar", methods=["POST"])

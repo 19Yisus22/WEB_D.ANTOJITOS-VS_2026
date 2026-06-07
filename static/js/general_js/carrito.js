@@ -138,12 +138,44 @@ async function cargarCarrito() {
 
         const footer = document.createElement('div');
         footer.className = 'cart-list-footer';
-        footer.innerHTML = `
-            <div class="cart-footer-items">${productos.length} producto(s)</div>
-            <div class="cart-footer-total">
-                <span>Total</span>
-                <strong id="totalCarritoFinal">${fmt(totalGeneral)}</strong>
-            </div>`;
+
+        let footerHtml = `<div class="cart-footer-items">${productos.length} producto(s)</div>`;
+
+        let descPct = 0;
+        try {
+            const cumplRes = await fetch('/carrito/cumpleanos');
+            if (cumplRes.ok) {
+                const cumplData = await cumplRes.json();
+                if (cumplData.es_cumpleanos && cumplData.descuento_pct > 0) {
+                    descPct = cumplData.descuento_pct;
+                }
+            }
+        } catch (_) {}
+
+        if (descPct > 0) {
+            const descMonto = Math.round(totalGeneral * descPct / 100);
+            const totalFinal = totalGeneral - descMonto;
+            footerHtml += `
+                <div class="cart-footer-subtotal">
+                    <span>Subtotal</span><span>${fmt(totalGeneral)}</span>
+                </div>
+                <div class="cart-footer-discount">
+                    <span>🎂 Desc. cumpleaños (${descPct}%)</span>
+                    <span class="text-success fw-bold">-${fmt(descMonto)}</span>
+                </div>
+                <div class="cart-footer-total">
+                    <span>Total</span>
+                    <strong id="totalCarritoFinal">${fmt(totalFinal)}</strong>
+                </div>`;
+        } else {
+            footerHtml += `
+                <div class="cart-footer-total">
+                    <span>Total</span>
+                    <strong id="totalCarritoFinal">${fmt(totalGeneral)}</strong>
+                </div>`;
+        }
+
+        footer.innerHTML = footerHtml;
         wrap.appendChild(footer);
         container.appendChild(wrap);
 

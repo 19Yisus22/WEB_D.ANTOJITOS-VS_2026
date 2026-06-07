@@ -1,6 +1,0 @@
-{
-  "pythonVersion": "3.12",
-  "venv": "venv",
-  "reportMissingImports": "none",
-  "reportMissingModuleSource": "none"
-}

@@ -77,7 +77,7 @@
         info.className = 'logro-info';
         const etiqueta = document.createElement('div');
         etiqueta.className = 'logro-etiqueta';
-        etiqueta.textContent = '🏆 Logro Desbloqueado';
+        etiqueta.innerHTML = '<i class="bi bi-trophy-fill me-1"></i>Logro Desbloqueado';
         const nombre = document.createElement('div');
         nombre.className = 'logro-nombre';
         nombre.textContent = logro.nombre;
@@ -130,15 +130,33 @@
         setTimeout(() => window.verificarLogros({ tipo: 'login' }), 1500);
     }
 
-    // ── Verificar visita a módulo actual ───────────────────────
+    // ── Verificar visita a módulo actual (días únicos + racha) ─
     (function () {
         const modulo = _moduloActual();
         if (!modulo) return;
-        const key = `_dantojitos_visits_${modulo}`;
-        const visitas = parseInt(localStorage.getItem(key) || '0') + 1;
-        localStorage.setItem(key, String(visitas));
+        const hoy = new Date().toISOString().slice(0, 10);
+
+        // Días únicos visitados
+        const daysKey = `_dantojitos_days_${modulo}`;
+        let days = [];
+        try { days = JSON.parse(localStorage.getItem(daysKey) || '[]'); } catch (_) {}
+        const esDiaNuevo = !days.includes(hoy);
+        if (esDiaNuevo) days.push(hoy);
+        localStorage.setItem(daysKey, JSON.stringify(days));
+
+        // Racha de días consecutivos
+        const streakKey = `_dantojitos_streak_${modulo}`;
+        let sd = { streak: 0, lastDay: '' };
+        try { sd = JSON.parse(localStorage.getItem(streakKey) || '{"streak":0,"lastDay":""}'); } catch (_) {}
+        let streak = sd.streak || 0;
+        if (esDiaNuevo) {
+            const ayer = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+            streak = sd.lastDay === ayer ? streak + 1 : 1;
+        }
+        localStorage.setItem(streakKey, JSON.stringify({ streak, lastDay: hoy }));
+
         setTimeout(() => {
-            window.verificarLogros({ tipo: 'visita', modulo, visit_count: visitas });
+            window.verificarLogros({ tipo: 'visita', modulo, visit_count: days.length, streak_count: streak });
         }, 2500);
     })();
 
@@ -158,6 +176,34 @@
         } catch (_) {}
     };
 
+    const RAREZA_COLOR = {
+        comun:      { bg: 'linear-gradient(135deg,#2e4a7a,#4a6fa5)', text: '#7da7d9' },
+        raro:       { bg: 'linear-gradient(135deg,#4a1b7a,#7c3aed)', text: '#c084fc' },
+        epico:      { bg: 'linear-gradient(135deg,#6d28d9,#a855f7)', text: '#e879f9' },
+        legendario: { bg: 'linear-gradient(135deg,#c2410c,#f59e0b)', text: '#fbbf24' },
+    };
+
+    function _valorCampo(campo, stats, rolStats) {
+        if (!campo) return 0;
+        if (campo.startsWith('v_')) {
+            const modulo = campo.slice(2);
+            try {
+                const raw = localStorage.getItem(`_dantojitos_days_${modulo}`);
+                return raw ? JSON.parse(raw).length : 0;
+            } catch (_) { return 0; }
+        }
+        if (campo.startsWith('s_')) {
+            const modulo = campo.slice(2);
+            try {
+                const raw = localStorage.getItem(`_dantojitos_streak_${modulo}`);
+                return raw ? (JSON.parse(raw).streak || 0) : 0;
+            } catch (_) { return 0; }
+        }
+        if (campo in (stats || {})) return Number(stats[campo]) || 0;
+        if (campo in (rolStats || {})) return Number(rolStats[campo]) || 0;
+        return 0;
+    }
+
     /** Renderiza logros agrupados por módulo en un contenedor */
     window.renderizarLogrosUsuario = async function (contenedorId) {
         const cont = document.getElementById(contenedorId);
@@ -168,7 +214,9 @@
             if (!r.ok) return;
             const data = await r.json();
             const obtenidos = new Set((data.obtenidos || []).map(l => l.codigo_logro));
-            const todos = data.todos || [];
+            const todos     = data.todos || [];
+            const stats     = data.stats || {};
+            const rolStats  = data.rol_stats || {};
 
             if (!todos.length) {
                 cont.innerHTML = '<p class="text-muted text-center">Sin logros disponibles</p>';
@@ -177,14 +225,6 @@
 
             const obtenidosCount = obtenidos.size;
 
-            const iconoBg = {
-                comun:      'background:linear-gradient(135deg,#2c3e50,#34495e)',
-                raro:       'background:linear-gradient(135deg,#1a3a6e,#2980b9)',
-                epico:      'background:linear-gradient(135deg,#4a235a,#8e44ad)',
-                legendario: 'background:linear-gradient(135deg,#7d5a00,#d4a017)',
-            };
-
-            // Agrupar por módulo
             const porModulo = {};
             const ordenModulos = Object.keys(MODULOS_ES);
             todos.forEach(l => {
@@ -200,7 +240,6 @@
                 </div>`;
 
             const modulosOrdenados = ordenModulos.filter(m => porModulo[m]);
-            // append any leftovers not in the order
             Object.keys(porModulo).forEach(m => { if (!modulosOrdenados.includes(m)) modulosOrdenados.push(m); });
 
             modulosOrdenados.forEach(mod => {
@@ -215,16 +254,50 @@
                 <div class="logros-grid">`;
                 lista.forEach(l => {
                     const desbloqueado = obtenidos.has(l.codigo);
+                    const rc = RAREZA_COLOR[l.rareza] || RAREZA_COLOR.comun;
+                    const rarLabel = RAREZA_ES[l.rareza] || l.rareza || 'Común';
+
+                    let barraHtml = '';
+                    if (!desbloqueado && l.meta && l.campo) {
+                        const val = _valorCampo(l.campo, stats, rolStats);
+                        const pct = Math.min(100, Math.round(val / l.meta * 100));
+                        let valFmt, metaFmt;
+                        const esMoney = l.campo.includes('gastado') || l.campo.includes('gasto');
+                        const esDias  = l.campo.startsWith('v_') || l.campo.startsWith('s_') || l.campo === 'dias_registrado';
+                        const esRacha = l.campo.startsWith('s_');
+                        if (esMoney) {
+                            const fmt = n => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+                            valFmt  = fmt(val);
+                            metaFmt = fmt(l.meta);
+                        } else if (esDias) {
+                            const sufijo = esRacha ? ' días seguidos' : ' días';
+                            valFmt  = val + sufijo;
+                            metaFmt = l.meta + sufijo;
+                        } else {
+                            valFmt  = val;
+                            metaFmt = l.meta;
+                        }
+                        barraHtml = `
+                        <div class="logro-progreso">
+                            <div class="logro-progreso-bar" style="width:${pct}%;background:${rc.bg}"></div>
+                        </div>
+                        <div class="logro-progreso-txt">${valFmt} / ${metaFmt}</div>`;
+                    }
+
                     html += `
                     <div class="logro-card ${desbloqueado ? '' : 'bloqueado'}">
-                        <div class="logro-card-icono" style="${iconoBg[l.rareza] || ''}">${l.icono}</div>
+                        <div class="logro-card-icono" style="background:${rc.bg}">${l.icono}</div>
                         <div class="logro-card-info">
                             <div class="logro-card-nombre">${l.nombre}</div>
                             <div class="logro-card-desc">${l.descripcion}</div>
+                            ${barraHtml}
                         </div>
-                        ${desbloqueado
-                            ? '<div class="logro-check"><i class="bi bi-check-lg"></i></div>'
-                            : '<i class="bi bi-lock-fill text-muted" style="font-size:0.9rem;"></i>'}
+                        <div class="logro-card-side">
+                            <span class="logro-rareza-card" style="color:${rc.text}">${rarLabel}</span>
+                            ${desbloqueado
+                                ? '<div class="logro-check"><i class="bi bi-check-lg"></i></div>'
+                                : '<i class="bi bi-lock-fill logro-lock-ico"></i>'}
+                        </div>
                     </div>`;
                 });
                 html += '</div>';

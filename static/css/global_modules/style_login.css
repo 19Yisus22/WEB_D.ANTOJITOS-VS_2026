@@ -261,3 +261,59 @@
     pointer-events: none;
 }
 
+.login-lockout-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(220,38,38,0.12), rgba(239,68,68,0.08));
+    border: 1.5px solid rgba(220,38,38,0.28);
+    animation: lockout-appear 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes lockout-appear {
+    from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.lockout-icon-wrap {
+    flex-shrink: 0;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(220,38,38,0.35);
+}
+.lockout-icon-wrap i {
+    font-size: 1.2rem;
+    color: #fff;
+}
+.lockout-body { flex: 1; }
+.lockout-title {
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: #dc2626;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+}
+.lockout-msg {
+    font-size: 0.83rem;
+    color: #555;
+    margin-bottom: 4px;
+}
+.lockout-cd {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #dc2626;
+    font-variant-numeric: tabular-nums;
+}
+
+[data-theme="dark"] .login-lockout-banner {
+    background: linear-gradient(135deg, rgba(220,38,38,0.18), rgba(239,68,68,0.10)) !important;
+    border-color: rgba(239,68,68,0.35) !important;
+}
+[data-theme="dark"] .lockout-msg { color: #aaa !important; }
+[data-theme="dark"] .lockout-title,
+[data-theme="dark"] .lockout-cd { color: #f87171 !important; }
+

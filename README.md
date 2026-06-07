@@ -1,4 +1,3 @@
-<!-- ============================ HEADER ============================ -->
 <div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:FFB6B9,50:E07A5F,100:8B5A2B&height=220&section=header&text=D'Antojitos%C2%A9&fontSize=68&fontColor=ffffff&animation=fadeIn&fontAlignY=36&desc=Dulcer%C3%ADa%20Artesanal%20Colombiana&descAlignY=58&descSize=20&descAlign=50" width="100%" alt="D'Antojitos banner"/>
@@ -14,7 +13,6 @@ Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, men
 
 <br/>
 
-<!-- ============================ BADGES ============================ -->
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.0.3-000000?style=for-the-badge&logo=flask&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
@@ -24,7 +22,6 @@ Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, men
 
 </div>
 
-<!-- divider -->
 <img src="https://raw.githubusercontent.com/Trilokia/Trilokia/379277808c61ef204768a61bbc5d25bc7798ccf1/bottom_header.svg" width="100%" alt="divider"/>
 
 ## 📑 Índice
@@ -36,17 +33,19 @@ Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, men
 1. [Descripción General](#-descripción-general)
 2. [Stack Tecnológico](#-stack-tecnológico)
 3. [Flujo Principal de la Aplicación](#-flujo-principal-de-la-aplicación)
-4. [Roles y Permisos](#-roles-y-permisos)
-5. [Módulos del Sistema](#-módulos-del-sistema)
+4. [Sistema de Autenticación](#-sistema-de-autenticación)
+5. [Roles y Permisos](#-roles-y-permisos)
+6. [Módulos del Sistema](#-módulos-del-sistema)
 
 </td>
 <td>
 
-6. [Arquitectura del Proyecto](#-arquitectura-del-proyecto)
-7. [Base de Datos](#-base-de-datos)
-8. [Variables de Entorno](#-variables-de-entorno)
-9. [Instalación y Ejecución Local](#-instalación-y-ejecución-local)
-10. [Despliegue en Producción](#-despliegue-en-producción)
+7. [Sistema de Logros](#-sistema-de-logros)
+8. [Arquitectura del Proyecto](#-arquitectura-del-proyecto)
+9. [Base de Datos](#-base-de-datos)
+10. [Variables de Entorno](#-variables-de-entorno)
+11. [Instalación y Ejecución Local](#-instalación-y-ejecución-local)
+12. [Despliegue en Producción](#-despliegue-en-producción)
 
 </td>
 </tr>
@@ -58,7 +57,7 @@ Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, men
 
 **D'Antojitos©** es una plataforma de comercio electrónico especializada en postres artesanales. Está construida con **Python/Flask** en el backend y **Jinja2 + Bootstrap** en el frontend, conectada a **Supabase (PostgreSQL)** como base de datos principal y a **Cloudinary** para el almacenamiento de imágenes.
 
-La aplicación soporta tres perfiles de usuario con flujos completamente diferenciados: **cliente, vendedor y administrador**. Incluye sistema de internacionalización (ES/EN), modo oscuro, notificaciones en tiempo real, mensajería privada multicanal y generación de facturas en PDF.
+La aplicación soporta tres perfiles de usuario con flujos completamente diferenciados: **cliente, vendedor y administrador**. Incluye sistema de internacionalización (ES/EN), modo oscuro, notificaciones en tiempo real, mensajería privada multicanal, generación de facturas, descuento de cumpleaños y un sistema de **231 logros** desbloqueables por rol.
 
 <br/>
 
@@ -72,12 +71,13 @@ La aplicación soporta tres perfiles de usuario con flujos completamente diferen
 
 | Capa | Tecnología |
 |------|-----------|
-| **Backend** | Python 3.12 · Flask 3.0.3 · Flask-CORS |
+| **Backend** | Python 3.12 · Flask 3.0.3 · Flask-CORS 4.0.1 |
 | **Servidor (desarrollo)** | Waitress 3.0.0 |
 | **Servidor (producción)** | Gunicorn 22.0.0 |
 | **Base de datos** | Supabase (PostgreSQL) · supabase-py 2.10.0 |
 | **Almacenamiento de imágenes** | Cloudinary 1.41.0 |
-| **Autenticación** | Google OAuth2 · sesiones Flask (SHA-256 + salt) |
+| **Autenticación** | Google OAuth2 · JWT (PyJWT 2.9.0) · SHA-256 + salt |
+| **Tokens de sesión** | Access Token (5 min, HttpOnly) · Refresh Token (7 días, HttpOnly) |
 | **Frontend** | Jinja2 · Bootstrap 5.3.3 · Bootstrap Icons · Vanilla JS |
 | **Email transaccional** | Resend 2.30.1 |
 | **Despliegue** | Vercel (serverless) |
@@ -89,28 +89,28 @@ La aplicación soporta tres perfiles de usuario con flujos completamente diferen
 Recorrido completo de un usuario, desde que llega a la tienda hasta la gestión interna del pedido. Cada paso indica **quién** actúa, **dónde** ocurre (ruta) y **qué** sucede en el sistema.
 
 > **1. 🏠 Llegada al Inicio** · `Visitante` · `/inicio`
-> El usuario entra a la **Home**: cinta publicitaria dinámica, sección de bienvenida y una vista previa del catálogo. Desde aquí puede navegar libremente sin necesidad de cuenta.
+> El usuario entra a la **Home**: cinta publicitaria dinámica, carrusel de imágenes, secciones configurables y una vista previa del catálogo. Desde aquí puede navegar libremente sin necesidad de cuenta.
 
-> **2. 🛍️ Exploración del Catálogo** · `Visitante` · `/catalogo`
-> Recorre los productos con buscador, filtros y monitor de stock en tiempo real. Puede mirar todo el catálogo aunque aún no haya iniciado sesión.
+> **2. 🛍️ Exploración del Catálogo** · `Visitante` · `/catalogo_page`
+> Recorre los productos con buscador, filtros por categoría y monitor de stock en tiempo real. Puede mirar todo el catálogo aunque aún no haya iniciado sesión.
 
 > **3. 🔐 Autenticación** · `Visitante → Usuario` · `/login` · `/registro`
-> Para comprar, se identifica mediante **Google OAuth2** o credenciales propias. Al validarse, se abre una **sesión activa** (24 h) que habilita las acciones de compra.
+> Para comprar, se identifica mediante **Google OAuth2** o credenciales propias (correo/usuario/cédula + contraseña). Al validarse, se generan un **Access Token** (5 min, cookie HttpOnly `_at`) y un **Refresh Token** (7 días, cookie HttpOnly `_rt`) que reconstruyen la sesión automáticamente.
 
-> **4. 🛒 Carrito de Compras** · `Usuario autenticado` · `/carrito`
-> Agrega ítems desde el catálogo, ajusta cantidades y revisa el total calculado. El carrito queda asociado a su cuenta.
+> **4. 🛒 Carrito de Compras** · `Usuario autenticado` · `/carrito_page`
+> Agrega ítems desde el catálogo. El stock se **descuenta de forma inmediata** (reserva) al agregar y se restaura al quitar. Si es el cumpleaños del cliente se aplica un descuento automático configurable (5 % por defecto).
 
 > **5. 📦 Generación del Pedido** · `Usuario autenticado` · `Supabase`
-> Al confirmar, se crea el pedido en la base de datos con estado inicial **`Pendiente`**. A partir de aquí el flujo se bifurca según el rol.
+> Al confirmar, se crea el pedido en la base de datos con estado inicial **`Pendiente`** y se genera automáticamente la factura con número secuencial (`F-AÑO-000001`). A partir de aquí el flujo se bifurca según el rol.
 
 > **6a. 🙋 Seguimiento del Cliente** · `Cliente`
 > Consulta el **estado de su pedido**, su **historial de facturas** y mantiene la **mensajería privada** con el equipo de venta.
 
 > **6b. 🧑‍🍳 Gestión del Staff** · `Vendedor / Admin`
-> Administra el pedido desde el **Módulo de Pedidos** (cambio de estado), gestiona **Productos** y atiende la **mensajería de equipo**.
+> Administra el pedido desde el **Módulo de Pedidos** (cambio de estado), gestiona **Productos** y atiende la **mensajería de equipo** y la **mensajería cliente↔vendedor**.
 
 > **7. ⚙️ Administración Avanzada** · `Admin`
-> Acceso exclusivo a **Publicidad**, **Facturación**, **Gestión de Usuarios** y la **Zona de Pagos** para cerrar el ciclo de negocio.
+> Acceso exclusivo a **Publicidad**, **Facturación**, **Gestión de Usuarios**, el **Gestor de imágenes Cloudinary** y configuración global (descuento cumpleaños, widgets de inicio).
 
 **Resumen del recorrido:**
 
@@ -130,7 +130,7 @@ flowchart LR
     style F fill:#8B5A2B,color:#fff
 ```
 
-> El estado del pedido es actualizado por el vendedor o administrador desde el **Módulo de Pedidos**. Al marcar como **Emitida**, el sistema genera automáticamente una factura asociada visible para el cliente en su historial.
+> El estado del pedido es actualizado por el vendedor o administrador desde el **Módulo de Pedidos**. Al marcar como **Pagada**, el sistema actualiza la factura y el pedido pasa a **Entregado** automáticamente. Al cancelar, el stock de los productos se restaura.
 
 ### 💳 Ciclo de pago
 
@@ -138,7 +138,7 @@ flowchart LR
 flowchart TD
     A([Pedido pendiente de pago]) --> B[Cliente envía comprobante de pago]
     B --> C{Vendedor/Admin revisa<br/>Módulo Facturación}
-    C -->|Aprobado| D["✅ Estado: Pagado"]
+    C -->|Aprobado| D["✅ Estado: Pagada · Pedido: Entregado"]
     C -->|Rechazado| E["🔔 Notificación al cliente"]
 
     style A fill:#FFB6B9,color:#3d2b1f
@@ -149,21 +149,91 @@ flowchart TD
 
 <br/>
 
+## 🔐 Sistema de Autenticación
+
+La autenticación combina **sesiones Flask** con un sistema de **doble token JWT** en cookies HttpOnly.
+
+### Flujo de tokens
+
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant S as Servidor Flask
+    participant DB as Supabase
+
+    C->>S: POST /login (credenciales)
+    S->>DB: Verificar usuario
+    DB-->>S: OK
+    S->>S: Genera AT (5 min) + RT (7 días)
+    S->>DB: Guarda hash(RT) + expires_at
+    S-->>C: Set-Cookie: _at, _rt
+
+    Note over C,S: En cada request
+
+    C->>S: GET /cualquier-ruta
+    S->>S: ¿Sesión activa? → Si no, lee _at
+    S->>S: ¿_at expirado? → Lee _rt
+    S->>DB: Verifica hash(RT) en DB
+    DB-->>S: OK
+    S->>S: Reconstruye sesión + nuevo _at
+    S-->>C: Respuesta normal
+```
+
+| Cookie | Nombre | TTL | Descripción |
+|--------|--------|-----|-------------|
+| Access Token | `_at` | 5 minutos | JWT firmado con `ACCESS_TOKEN_SECRET`. Se renueva automáticamente. |
+| Refresh Token | `_rt` | 7 días | JWT firmado con `REFRESH_TOKEN_SECRET`. Su hash SHA-256 se almacena en `usuarios.web_token`. |
+
+### Seguridad en login
+
+El sistema aplica un **bloqueo progresivo** por intentos fallidos:
+
+| Intentos fallidos | Siguiente bloqueo |
+|---|---|
+| 5 | bloqueo corto |
+| 15 · 25 · 35 · 45 · 55 | bloqueo progresivo |
+| 65 | bloqueo largo |
+| 75 | bloqueo máximo |
+
+### Registro con Google OAuth2
+
+Los usuarios de Google reciben una cédula temporal con prefijo `G-` (ej. `G-a3f82bc1`). Desde el perfil pueden actualizar su cédula real, lo que desencadena un **cascade update** en todas las tablas relacionadas (carrito, pedidos, facturas, mensajes, logros).
+
+### Decoradores de acceso
+
+| Decorador | Acceso |
+|---|---|
+| `@login_required` | Cualquier usuario autenticado |
+| `@vendedor_required` | Rol `vendedor` o `admin` |
+| `@admin_required` | Solo rol `admin` |
+| `@api_token_required` | Valida el token JWT del header `Authorization` o cookie `_at` |
+
+<br/>
+
 ## 👥 Roles y Permisos
 
 | Módulo / Acción | Cliente | Vendedor | Admin |
 |---|:---:|:---:|:---:|
 | Ver catálogo | ✅ | ✅ | ✅ |
 | Agregar al carrito | ✅ | ✅ | ✅ |
-| Ver historial de facturas | ✅ (propias) | ✅ (todas) | ✅ |
+| Finalizar compra | ✅ | ✅ | ✅ |
+| Descuento de cumpleaños | ✅ | ✅ | ✅ |
+| Ver historial de facturas | ✅ (propias) | ✅ (todas, excepto admin) | ✅ |
+| Anular factura propia | ✅ | ✅ | ✅ |
 | Muro de sugerencias | ✅ | ✅ | ✅ |
-| Mensajes privados (clientes) | ✅ | ✅ | ❌ |
-| Mensajes staff/equipo | ❌ | ✅ | ✅ |
+| Sistema de logros | ✅ | ✅ | ✅ |
+| Editar perfil (cooldown 10 días) | ✅ | ✅ | ✅ |
+| Mensajes privados (cliente↔vendedor) | ✅ | ✅ | ❌ |
+| Mensajes de equipo (staff↔staff) | ❌ | ✅ | ✅ |
 | Gestión de pedidos | ❌ | ✅ | ✅ |
 | Gestión de productos | ❌ | ✅ | ✅ |
+| Ver historial de todos los usuarios | ❌ | ✅ | ✅ |
 | Módulo Publicidad | ❌ | ❌ | ✅ |
-| Módulo Facturación | ❌ | ❌ | ✅ |
+| Módulo Facturación (métodos de pago) | ❌ | ❌ | ✅ |
 | Gestión de usuarios | ❌ | ❌ | ✅ |
+| Gestor de imágenes Cloudinary | ❌ | ❌ | ✅ |
+| Configuración global (inicio/descuento) | ❌ | ❌ | ✅ |
+| Sembrar logros en BD | ❌ | ❌ | ✅ |
 | Ver manual del sistema | ❌ | ✅ | ✅ |
 
 <br/>
@@ -175,12 +245,13 @@ flowchart TD
 
 <br/>
 
-- **🏠 Inicio (`/inicio`)** — Panel principal con cinta publicitaria dinámica, sección de bienvenida configurable y accesos rápidos. Los administradores pueden editar el contenido en modo visual (drag-and-drop).
-- **🛍️ Catálogo (`/catalogo_page`)** — Vitrina de productos con filtros, buscador y monitor de stock en tiempo real. Soporte multiidioma (ES/EN).
-- **🛒 Carrito (`/carrito_page`)** — Gestión de ítems, cálculo de totales y generación del pedido.
-- **⚙️ Perfil (`/mi_perfil`)** — Edición de datos personales con cooldown de 30 días en campos sensibles (cédula, nombre, apellido, usuario), cambio de contraseña y eliminación de cuenta.
-- **📄 Historial de Facturas (`/gestionar_facturas_page`)** — Listado de facturas con filtros, vista de detalle, modal de pago con QR y archivado persistente.
-- **💬 Sugerencias y Mensajes (`/comentarios_page`)** — Muro público de sugerencias con likes, edición y respuesta por rol. Panel privado con mensajería cliente↔vendedor y staff↔staff.
+- **🏠 Inicio (`/inicio`)** — Panel principal con cinta publicitaria dinámica, carrusel de imágenes, secciones de contenido y accesos rápidos. Los administradores pueden editar el contenido y configurar el descuento de cumpleaños vía API.
+- **🛍️ Catálogo (`/catalogo_page`)** — Vitrina de productos con filtros por categoría, buscador en tiempo real y monitor de stock (polling). Soporte multiidioma (ES/EN). No requiere autenticación.
+- **🛒 Carrito (`/carrito_page`)** — Gestión de ítems con reserva inmediata de stock, cálculo de totales, detección automática de cumpleaños con descuento configurable y generación del pedido + factura al confirmar.
+- **⚙️ Perfil (`/mi_perfil`)** — Edición de datos personales con **cooldown global de 10 días** en campos de identidad (cédula, nombre, apellido, usuario), cambio de contraseña (también con cooldown de 10 días), subida de foto a Cloudinary y eliminación de cuenta. Los usuarios de Google pueden establecer su cédula real una única vez con cascade update.
+- **📄 Historial de Facturas (`/gestionar_facturas_page`)** — Listado de facturas con filtros, vista de detalle, modal de pago con QR (métodos configurados por admin) y archivado persistente. Admins y vendedores pueden buscar facturas por cédula, nombre, @username o correo.
+- **💬 Sugerencias y Mensajes (`/comentarios_page`)** — Muro público de sugerencias con likes, edición, adjuntos en base64 y respuesta por rol. Panel privado con mensajería cliente↔vendedor (canal CV) y staff↔staff (canal Staff). Conteo de mensajes no leídos en tiempo real.
+- **🏆 Logros (`/logros/mis_logros`)** — Sistema de 231 logros desbloqueables agrupados por módulo y rareza, diferenciados por rol. Los logros nuevos se notifican automáticamente tras cada acción relevante (compra, comentario, mensaje, edición de perfil, etc.).
 
 </details>
 
@@ -189,8 +260,8 @@ flowchart TD
 
 <br/>
 
-- **📦 Pedidos (`/pedidos_page`)** — Vista Kanban de todos los pedidos con gestión de estado, diferenciadores visuales por estado (activo/finalizado/anulado) y notificaciones en tiempo real.
-- **🧁 Productos (`/gestionar_productos_page`)** — CRUD completo de productos con subida de imágenes a Cloudinary, control de stock y estados.
+- **📦 Pedidos (`/pedidos_page`)** — Vista Kanban de todos los pedidos con gestión de estado (`Pendiente → Enviado → Entregado / Cancelado`), marcado de pago, eliminación masiva con restauración automática de stock, y sincronización del estado de la factura.
+- **🧁 Productos (`/gestionar_productos_page`)** — CRUD completo de productos con subida de imágenes a Cloudinary (base64 o archivo), control de stock, categorías y estados. Trigger de logros al crear o editar un producto.
 
 </details>
 
@@ -199,12 +270,100 @@ flowchart TD
 
 <br/>
 
-- **📢 Publicidad (`/publicidad_page`)** — Gestión de la cinta de inicio (Home Ticker) con control de velocidad y previsualización en vivo.
-- **🧾 Facturación (`/facturacion_page`)** — Registro de pagos, validación de comprobantes, generación de facturas y reportes.
-- **👥 Gestión de Usuarios (`/gestion_usuarios_page`)** — Alta, edición y gestión de roles de usuarios.
+- **📢 Publicidad (`/publicidad_page`)** — Gestión de contenido visual por tipo: `carrusel`, `seccion`, `cinta`, `inicio_cinta`, `notificacion`, `login_slide`. Subida de imágenes a Cloudinary con reemplazo automático de versiones anteriores. Notificaciones de sistema basadas en pedidos recientes.
+- **🧾 Facturación (`/facturacion_page`)** — Alta, edición y eliminación de métodos de pago (Nequi, Daviplata, Bancolombia, NuBank) con imagen de QR en Cloudinary. Los métodos activos aparecen en el modal de pago del cliente.
+- **👥 Gestión de Usuarios (`/gestion_usuarios_page`)** — Listado completo de usuarios con rol, método de autenticación (email/Google) y gestión de roles.
+- **🖼️ Gestor Cloudinary (`/api/cloudinary/gestor`)** — Listado y eliminación de imágenes en Cloudinary organizadas por carpeta, disponible desde el módulo de publicidad.
+- **⚙️ Configuración de Inicio (`/api/inicio/config`)** — Configuración global del porcentaje de descuento por cumpleaños y otros parámetros de la página de inicio.
 - **📘 Manual del Sistema (`/manual_page`)** — Documentación interna para vendedores y administradores.
 
 </details>
+
+<details>
+<summary><b>📄 Páginas Estáticas</b></summary>
+
+<br/>
+
+- **Políticas (`/politicas_page`)** — Política de privacidad y tratamiento de datos (acceso público).
+- **Condiciones (`/condiciones_page`)** — Términos y condiciones de uso (acceso público).
+
+</details>
+
+<br/>
+
+## 🏆 Sistema de Logros
+
+El sistema incluye **231 logros** distribuidos en **11 módulos**, con **4 niveles de rareza** y diferenciados por **rol de usuario**.
+
+### Rarezas
+
+| Rareza | Color | Puntos | Descripción |
+|---|---|---|---|
+| Común | ⬜ | 5–20 | Acciones básicas del día a día |
+| Raro | 🟦 | 20–50 | Constancia o cantidad moderada |
+| Épico | 🟪 | 50–80 | Hitos de uso avanzado |
+| Legendario | 🟨 | 100–200 | Récords de la plataforma |
+
+### Módulos de logros
+
+| Módulo | Logros | Roles |
+|---|:---:|---|
+| Inicio (`ini_*`) | 21 | Cliente · Vendedor · Admin |
+| Catálogo (`cat_*`) | 21 | Cliente · Vendedor · Admin |
+| Carrito (`cart_*`) | 21 | Cliente · Vendedor · Admin |
+| Pagos (`pago_*`) | 21 | Cliente · Vendedor · Admin |
+| Sugerencias (`sug_*`) | 21 | Cliente · Vendedor · Admin |
+| Mensajes (`msg_*`) | 21 | Cliente · Vendedor · Admin |
+| Perfil (`prf_*`) | 21 | Cliente · Vendedor · Admin |
+| Historial (`fac_*`) | 21 | Cliente · Vendedor · Admin |
+| Productos (`prod_*`) | 21 | Cliente · Vendedor · Admin |
+| Publicidad (`pub_*`) | 21 | Cliente · Vendedor · Admin |
+| Usuarios (`usr_*`) | 21 | Cliente · Vendedor · Admin |
+
+### Activación de logros
+
+Los logros se verifican y otorgan automáticamente en cada acción relevante mediante `helpers/logros_utils.py`. El contexto enviado indica el tipo de acción (`login`, `compra`, `comentario`, `mensaje_privado`, `perfil`, `visita`, `accion`) y variables como módulo visitado, conteo acumulado, racha de días y valor del carrito.
+
+```python
+verificar_y_otorgar(user_id, {
+    "tipo": "compra",
+    "repite_producto": True,
+})
+```
+
+### Endpoints de logros
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/logros/todos` | Público | Lista todos los logros definidos |
+| `GET` | `/logros/mis_logros` | Autenticado | Logros del usuario, estadísticas y rol_stats |
+| `POST` | `/logros/verificar` | Autenticado | Verifica y otorga logros según contexto enviado |
+| `POST` | `/logros/sembrar` | Admin | Inserta/actualiza definiciones de logros en BD |
+
+<br/>
+
+## 🎂 Descuento de Cumpleaños
+
+El sistema detecta automáticamente si la fecha de nacimiento del cliente coincide con la fecha actual y aplica un descuento al total del carrito.
+
+- **Porcentaje configurable** vía `PUT /api/config/descuento_cumpleanos` (solo admin). Por defecto: **5 %**.
+- El descuento se aplica **una sola vez por día**: si el cliente ya usó el descuento hoy (tiene una factura con diferencia subtotal–total significativa), no se aplica de nuevo.
+- El endpoint `GET /carrito/cumpleanos` informa al frontend si el descuento está activo para el usuario actual.
+
+<br/>
+
+## 📦 Reserva de Stock
+
+El stock se gestiona con un sistema de **reserva inmediata**:
+
+| Evento | Efecto en stock |
+|---|---|
+| Agregar producto al carrito | Stock se descuenta al instante |
+| Quitar producto del carrito | Stock se restaura al instante |
+| Finalizar compra | Stock ya descontado; no se vuelve a modificar |
+| Anular factura | Stock de todos los ítems se restaura |
+| Eliminar pedido (admin/vendedor) | Stock de los ítems se restaura |
+| Cancelar pedido (cambio de estado) | Stock **no** se restaura automáticamente desde pedidos; usar anular factura |
 
 <br/>
 
@@ -215,65 +374,78 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["🌐 Solicitud HTTP"] --> B["🧩 Flask Blueprint · controllers/<br/>Valida sesión · rol · datos de entrada"]
-    B --> C["🗂️ helpers/models.py<br/>select · insert · update · delete"]
-    C --> D[("🐘 Supabase · PostgreSQL")]
-    D --> E["📤 Respuesta JSON o render_template()"]
+    B --> C["🗂️ helpers/models.py<br/>Re-exporta todo desde database/models.py"]
+    C --> D["🐘 database/models.py<br/>select · insert · update · delete (Supabase)"]
+    D --> E[("☁️ Supabase · PostgreSQL")]
+    E --> F["📤 Respuesta JSON o render_template()"]
 
     style A fill:#E07A5F,color:#fff
     style B fill:#8B5A2B,color:#fff
     style C fill:#FFD8A8,color:#3d2b1f
-    style D fill:#3FCF8E,color:#0d3b2e
-    style E fill:#FFB6B9,color:#3d2b1f
+    style D fill:#FFD8A8,color:#3d2b1f
+    style E fill:#3FCF8E,color:#0d3b2e
+    style F fill:#FFB6B9,color:#3d2b1f
 ```
 
 <details>
 <summary><b>📂 Estructura de carpetas</b></summary>
 
 ```
-D'Antojitos - Local/
+WEB_D.Antojitos_2026/
 │
-├── app.py                          # Punto de entrada · registro de blueprints
+├── app.py                          # Punto de entrada · registro de blueprints · middleware JWT
 ├── requirements.txt
 ├── Dockerfile
+├── vercel.json
 │
 ├── controllers/                    # Blueprints Flask (un archivo por dominio)
-│   ├── auth.py                     # Login · Registro · Google OAuth2 · Logout
-│   ├── perfil.py                   # Perfil usuario · cooldowns · restricciones
-│   ├── perfil_usuarios.py          # Gestión de usuarios (admin)
-│   ├── gestion_productos.py        # CRUD productos + Cloudinary
-│   ├── catalogo_productos.py       # Catálogo público
-│   ├── carrito.py                  # Carrito de compras
-│   ├── pedidos_usuarios.py         # Módulo de pedidos (vendedor/admin)
-│   ├── historial_facturas.py       # Facturas · archivado · PDF
-│   ├── publicidad.py               # Cinta publicitaria (admin)
-│   ├── facturacion.py              # Facturación y pagos (admin)
-│   ├── comentarios.py              # Muro público · mensajería privada
-│   ├── inicio.py                   # Home · configuración de widgets
-│   └── paginas_estaticas.py        # Políticas · condiciones · manual
+│   ├── auth.py                     # Login · Registro · Google OAuth2 · Logout · Refresh token
+│   ├── perfil.py                   # Perfil usuario · cooldowns · restricciones · cambio contraseña
+│   ├── perfil_usuarios.py          # Gestión de usuarios (admin) · archivos por usuario
+│   ├── gestion_productos.py        # CRUD productos + Cloudinary (archivo y base64)
+│   ├── catalogo_productos.py       # Catálogo público (sin autenticación requerida)
+│   ├── carrito.py                  # Carrito · reserva de stock · finalizar compra · descuento cumpleaños
+│   ├── pedidos_usuarios.py         # Módulo de pedidos (vendedor/admin) · Kanban · restauración de stock
+│   ├── historial_facturas.py       # Facturas · archivado · anulación · búsqueda multicriterio
+│   ├── publicidad.py               # Publicidad multimedia · notificaciones sistema · gestor Cloudinary
+│   ├── facturacion.py              # Métodos de pago + QR (admin)
+│   ├── comentarios.py              # Muro público · mensajería privada CV y Staff
+│   ├── inicio.py                   # Config de inicio · descuento cumpleaños · imágenes home
+│   ├── logros.py                   # Sistema de logros · mis logros · verificar · sembrar
+│   └── paginas_estaticas.py        # Políticas · condiciones · manual del sistema
 │
 ├── helpers/
-│   ├── models.py                   # Capa de acceso a datos (Supabase)
-│   ├── auth.py                     # Decoradores: login_required · vendedor_required · admin_required
-│   ├── validators.py               # Validaciones de campos (username, cédula, etc.)
-│   ├── cloudinary.py               # Subida y compresión de imágenes
-│   └── database.py                 # Cliente Supabase centralizado
+│   ├── models.py                   # Re-exporta toda la capa de datos desde database/models.py
+│   ├── auth.py                     # Decoradores · JWT (AT/RT) · hash contraseña · sesión
+│   ├── validators.py               # Validaciones de campos · constantes de dominio
+│   ├── cloudinary.py               # Subida, compresión, listado y eliminación de imágenes
+│   └── logros_utils.py             # Definición de los 231 logros · función verificar_y_otorgar()
+│
+├── database/
+│   ├── database.py                 # Cliente Supabase centralizado
+│   └── models.py                   # Todas las funciones de acceso a datos (select/insert/update/delete)
+│
+├── config_env/                     # Scripts de utilidad para el entorno de desarrollo
+│   ├── entorno_virtual.py          # Creación del entorno virtual
+│   ├── clean_pycache.py            # Limpieza de __pycache__
+│   └── escanear_librerias.py       # Escaneo de dependencias instaladas
 │
 ├── templates/
-│   ├── global_modules/             # navbar.html · footer.html · login · registro
+│   ├── global_modules/             # navbar.html · footer.html · login · registro · blocked · politicas · condiciones
 │   ├── general_modules/            # inicio · catálogo · carrito · perfil · comentarios · facturas
-│   └── admin_modules/              # pedidos · productos · publicidad · facturación · manual
+│   └── admin_modules/              # pedidos · productos · publicidad · facturación · gestion_usuarios · manual
 │
 └── static/
     ├── css/
-    │   ├── global_modules/         # style_navbar · style_footer · style_utils · style_inicio
-    │   ├── general_modules/        # style_perfil · style_comentarios · style_catalogo · etc.
-    │   └── admin_modules/          # style_pedidos · style_productos · etc.
+    │   ├── global_modules/         # style_navbar · style_footer · style_utils · style_inicio · style_login
+    │   ├── general_modules/        # style_perfil · style_comentarios · style_catalogo · style_facturas
+    │   └── admin_modules/          # style_pedidos · style_productos · style_publicidad · style_gestion_usuarios
     ├── js/
-    │   ├── global_js/              # utils.js · i18n.js · inicio.js · widget_system.js
-    │   ├── general_js/             # perfil.js · comentarios.js · facturas.js · catalogo.js
-    │   ├── admin_js/               # pedidos.js · gestion_productos.js · facturacion.js
-    │   └── workers/                # Service Workers por módulo
-    └── uploads/                    # Archivos estáticos locales (logo, íconos)
+    │   ├── global_js/              # utils.js · i18n.js · inicio.js · login_registro.js
+    │   ├── general_js/             # perfil.js · comentarios.js · facturas.js · carrito.js
+    │   ├── admin_js/               # pedidos.js · gestion_productos.js · facturacion.js · gestion_usuarios.js · publicidad.js
+    │   └── workers/                # Service Workers por módulo (caché offline)
+    └── uploads/                    # Archivos estáticos locales (logo, íconos, imagen de perfil por defecto)
 ```
 
 </details>
@@ -286,17 +458,31 @@ D'Antojitos - Local/
 
 | Tabla | Descripción |
 |---|---|
-| `usuarios` | Datos del usuario, rol, imagen, cooldowns de campos |
+| `usuarios` | Datos del usuario, rol, imagen, cooldowns de campos, tokens JWT, intentos de login, bloqueo |
 | `roles` | Definición de roles: `cliente`, `vendedor`, `admin` |
-| `gestion_productos` | Catálogo de productos con stock, precio e imagen |
-| `carrito` | Ítems del carrito por usuario |
-| `pedidos` | Cabecera del pedido con estado y datos de entrega |
-| `pedido_detalle` | Líneas de detalle de cada pedido |
-| `facturas` | Facturas generadas, estado de pago y campo `archivada` |
-| `metodos_pago` | Métodos de pago habilitados con datos de cuenta y QR |
-| `publicidad` | Ítems de la cinta publicitaria con estado activo/inactivo |
-| `comentarios` | Muro público de sugerencias con likes |
-| `mensajes_privados` | Mensajería privada con columnas `tipo` (cv/staff) y `cedula_dest` |
+| `gestion_productos` | Catálogo de productos con stock, precio, categoría e imagen |
+| `carrito` | Ítems del carrito por usuario (con reserva de stock activa) |
+| `pedidos` | Cabecera del pedido con estado, pagado, número de factura y datos de entrega |
+| `pedido_detalle` | Líneas de detalle de cada pedido (producto, cantidad, precio unitario) |
+| `facturas` | Facturas generadas con número secuencial, estado de pago y campo `archivada` |
+| `metodos_pago` | Métodos de pago habilitados con entidad, tipo de cuenta, número, titular y QR |
+| `publicidad` | Ítems de contenido multimedia por tipo con estado activo/inactivo |
+| `comentarios` | Muro público de sugerencias con likes por usuario y adjuntos en base64 |
+| `mensajes_privados` | Mensajería privada con columna `tipo` (cv/staff), `cedula_dest` y adjuntos |
+| `inicio_config` | Configuración global del sistema (descuento cumpleaños, etc.) |
+| `logros` | Definición maestra de los 231 logros (código, nombre, rareza, puntos, roles) |
+| `usuario_logros` | Relación usuario ↔ logro desbloqueado con timestamp de obtención |
+
+### Tipos y constantes de dominio
+
+| Constante | Valores |
+|---|---|
+| `ESTADOS_PEDIDO` | `Pendiente`, `Enviado`, `Entregado`, `Cancelado` |
+| `ESTADOS_FACTURA` | `Emitida`, `Anulada`, `Pagada` |
+| `METODOS_PAGO_VALIDOS` | `Efectivo`, `Transferencia` |
+| `ENTIDADES_PAGO` | `Nequi`, `Daviplata`, `Bancolombia`, `NuBank` |
+| `TIPOS_CUENTA` | `Billetera Digital`, `Ahorros`, `Corriente` |
+| `TIPOS_PUBLICIDAD` | `carrusel`, `seccion`, `cinta`, `inicio_cinta`, `notificacion`, `login_slide` |
 
 <details>
 <summary><b>🛠️ Migraciones requeridas</b></summary>
@@ -309,11 +495,52 @@ ALTER TABLE facturas ADD COLUMN IF NOT EXISTS archivada BOOLEAN DEFAULT FALSE;
 ALTER TABLE mensajes_privados ADD COLUMN IF NOT EXISTS tipo TEXT DEFAULT 'cv';
 ALTER TABLE mensajes_privados ADD COLUMN IF NOT EXISTS cedula_dest TEXT;
 
--- Cooldowns de perfil (30 días por campo)
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_cedula    TIMESTAMPTZ;
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_username   TIMESTAMPTZ;
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_nombre     TIMESTAMPTZ;
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_apellido   TIMESTAMPTZ;
+-- Cooldowns de perfil (10 días por campo)
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_cedula      TIMESTAMPTZ;
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_username     TIMESTAMPTZ;
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_nombre       TIMESTAMPTZ;
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_apellido     TIMESTAMPTZ;
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS last_change_contrasena   TIMESTAMPTZ;
+
+-- Sistema de tokens JWT
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS web_token   TEXT;
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS expires_at  TIMESTAMPTZ;
+
+-- Seguridad en login
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS intentos_fallidos INTEGER DEFAULT 0;
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS bloqueado_hasta    TIMESTAMPTZ;
+
+-- Fecha de cumpleaños para descuento
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS fecha_nacimiento DATE;
+
+-- Número de factura en pedido (para sincronización de estados)
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS numero_factura TEXT;
+
+-- Configuración global
+CREATE TABLE IF NOT EXISTS inicio_config (
+    id      SERIAL PRIMARY KEY,
+    clave   TEXT UNIQUE NOT NULL,
+    valor   TEXT
+);
+
+-- Sistema de logros
+CREATE TABLE IF NOT EXISTS logros (
+    id      SERIAL PRIMARY KEY,
+    codigo  TEXT UNIQUE NOT NULL,
+    nombre  TEXT,
+    rareza  TEXT,
+    puntos  INTEGER DEFAULT 0,
+    modulo  TEXT,
+    roles   TEXT[]
+);
+
+CREATE TABLE IF NOT EXISTS usuario_logros (
+    id           SERIAL PRIMARY KEY,
+    cedula       TEXT REFERENCES usuarios(cedula) ON DELETE CASCADE,
+    codigo_logro TEXT REFERENCES logros(codigo),
+    obtenido_at  TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (cedula, codigo_logro)
+);
 
 -- Rol vendedor
 INSERT INTO roles (nombre_role) VALUES ('vendedor') ON CONFLICT DO NOTHING;
@@ -331,7 +558,6 @@ Crear un archivo `.env` en la raíz del proyecto con las siguientes variables:
 # Supabase
 SUPABASE_URL=https://<proyecto>.supabase.co
 SUPABASE_SERVICE_KEY=<service_role_key>
-SUPABASE_REST_URL=https://<proyecto>.supabase.co/rest/v1
 
 # Cloudinary
 CLOUDINARY_CLOUD_NAME=<cloud_name>
@@ -343,7 +569,16 @@ GOOGLE_CLIENT_ID=<client_id>.apps.googleusercontent.com
 
 # Flask
 FLASK_SECRET_KEY=<clave_aleatoria_segura>
+
+# JWT (se generan automáticamente si no se definen, pero se pierden al reiniciar)
+ACCESS_TOKEN_SECRET=<clave_aleatoria_segura_32_bytes>
+REFRESH_TOKEN_SECRET=<clave_aleatoria_segura_32_bytes>
+
+# Email transaccional (opcional)
+RESEND_API_KEY=<api_key>
 ```
+
+> ⚠️ Si `ACCESS_TOKEN_SECRET` y `REFRESH_TOKEN_SECRET` no están definidos, Flask los genera aleatoriamente en cada arranque, invalidando todos los tokens existentes. **Define siempre estas variables en producción.**
 
 <br/>
 
@@ -361,7 +596,7 @@ FLASK_SECRET_KEY=<clave_aleatoria_segura>
 ```bash
 # 1. Clonar el repositorio
 git clone <url-del-repositorio>
-cd "D'Antojitos - Local"
+cd "WEB_D.Antojitos_2026"
 
 # 2. Crear y activar entorno virtual
 python -m venv venv
@@ -377,10 +612,10 @@ pip install -r requirements.txt
 
 # 4. Configurar variables de entorno
 cp .env.example .env
+
 # Editar .env con las credenciales correspondientes
 
 # 5. Ejecutar las migraciones SQL en Supabase
-# (ver sección Base de Datos → Migraciones requeridas)
 
 # 6. Iniciar el servidor de desarrollo
 python app.py
@@ -392,6 +627,14 @@ El servidor estará disponible en:
 |---|---|
 | **Local** | `http://localhost:8000` |
 | **Red local** | `http://<IP-local>:8000` |
+
+### Modo debug
+
+Para activar el modo debug con recarga automática, editar `app.py`:
+
+```python
+debug_mode = True
+```
 
 <br/>
 
@@ -410,10 +653,13 @@ Configurar las mismas variables del archivo `.env` directamente en el panel de V
 
 ### Consideraciones de producción
 
-- El modo `debug=True` en `app.py` debe estar desactivado (`debug_mode = False`)
-- Las sesiones están configuradas para una duración de **24 horas** (`permanent_session_lifetime`)
+- El modo `debug_mode = False` en `app.py` debe mantenerse en producción
+- Las cookies `_at` y `_rt` se emiten con `Secure=True` y `SameSite=Strict` cuando no hay `FLASK_DEBUG`
+- Las sesiones Flask no tienen lifetime fijo (`permanent_session_lifetime` está configurado en 1 día como fallback)
 - El campo `MAX_CONTENT_LENGTH` admite hasta **50 MB** por subida (imágenes Cloudinary)
 - CORS está habilitado globalmente con `flask-cors`
+- Las cabeceras de seguridad se agregan vía `@app.after_request`: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`
+- Define siempre `ACCESS_TOKEN_SECRET` y `REFRESH_TOKEN_SECRET` para que los tokens no se invaliden al reiniciar
 
 <br/>
 
@@ -435,17 +681,25 @@ La aplicación incluye soporte completo para **Español (ES)** e **Inglés (EN)*
 | 📡 **Monitor de stock** | Polling cada 8 s; notificaciones automáticas al agotarse o reponerse un producto |
 | 🔔 **Notificaciones nativas** | Solicitud de permisos del navegador en la primera visita |
 | 🎞️ **Cinta publicitaria dinámica** | Ticker configurable con control de velocidad (0.5× · 1× · 1.5× · 2×) |
-| ⏳ **Cooldown de 30 días** | Campos sensibles del perfil (cédula, usuario, nombre, apellido) con cuenta regresiva en tiempo real |
+| 🎂 **Descuento de cumpleaños** | % configurable por admin; detección automática al finalizar compra; uso único por día |
+| 🔒 **Bloqueo progresivo de login** | Bloqueo por intentos fallidos (5, 15, 25... hasta 75) con duración escalada |
+| 🔑 **Doble token JWT** | Access Token (5 min) + Refresh Token (7 días) en cookies HttpOnly; renovación transparente |
+| 📦 **Reserva de stock** | Stock se descuenta al agregar al carrito y se restaura al quitar o cancelar |
+| 🏆 **Sistema de logros** | 231 logros · 11 módulos · 4 rarezas · 3 roles · notificación en tiempo real |
+| ⏳ **Cooldown de 10 días** | Campos de identidad del perfil (cédula, usuario, nombre, apellido) con cuenta regresiva |
+| 🔄 **Cascade de cédula** | Usuarios Google (G-xxxxx) pueden establecer cédula real con update en cascade de todas las FK |
 | ⚡ **Service Workers** | Caché por módulo y experiencia offline básica |
 | 🔝 **Scroll to top** | Barra de progreso de lectura global |
+| 🖼️ **Gestor Cloudinary** | Admin puede ver y eliminar imágenes de Cloudinary organizadas por carpeta desde la app |
+| 👥 **Indicador de usuarios activos** | Conteo de usuarios activos en los últimos 2 minutos visible en comentarios |
 
 <br/>
 
-<!-- ============================ FOOTER ============================ -->
 <div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:8B5A2B,50:E07A5F,100:FFB6B9&height=140&section=footer&text=Hecho%20con%20%E2%9D%A4%EF%B8%8F%20desde%20casa&fontSize=22&fontColor=ffffff&fontAlignY=72&animation=fadeIn" width="100%" alt="footer"/>
 
-**D'Antojitos© — Hecho con amor desde casa.**
+**2025 D'Antojitos© — Hecho con amor desde casa.**
+**Created By: 2022 Yisus™**
 
 </div>

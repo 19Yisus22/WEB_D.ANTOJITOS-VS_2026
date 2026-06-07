@@ -179,7 +179,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                 const pBaja = pedidos.find(p => String(p.id_pedido) === id);
                 if (pBaja) {
                     const cli = `${pBaja.usuarios?.nombre || "CLIENTE"} ${pBaja.usuarios?.apellido || ""}`;
-                    mostrarAlerta(`⚠️ PEDIDO ANULADO: ${cli.toUpperCase()} — Ref #${pBaja.id_pedido}`, true, 9000);
+                    mostrarAlerta(`PEDIDO ANULADO: ${cli.toUpperCase()} — Ref #${pBaja.id_pedido}`, true, 9000);
                     if (typeof addNotifLog === 'function') addNotifLog('cancelado', `Pedido anulado: ${cli} — Ref #${pBaja.id_pedido}`);
                     sonidoNuevoPedido.play().catch(() => {});
                 }
@@ -197,6 +197,12 @@ async function cargarPedidos(isAutoRefresh = false) {
             
             const cardExistente = document.getElementById(`pedido-${pedido.id_pedido}`);
             const estabaAbierta = cardExistente ? !cardExistente.classList.contains('card-collapsed') : false;
+
+            const totalOriginal = (pedido.pedido_detalle || []).reduce((a, i) => a + Number(i.subtotal || 0), 0);
+            const pedidoTotalFinal = Number(pedido.total || totalOriginal);
+            const descuentoCumple = (totalOriginal > 0 && pedidoTotalFinal > 0 && totalOriginal - pedidoTotalFinal >= 1)
+                ? totalOriginal - pedidoTotalFinal : 0;
+            const descPct = descuentoCumple > 0 ? Math.round((descuentoCumple / totalOriginal) * 100) : 0;
 
             let totalPendiente = 0;
             const itemsRows = (pedido.pedido_detalle || []).map((item, idx) => {
@@ -222,6 +228,10 @@ async function cargarPedidos(isAutoRefresh = false) {
                     </td>
                 </tr>`;
             }).join("");
+
+            if (descuentoCumple > 0 && totalOriginal > 0) {
+                totalPendiente = Math.round(totalPendiente * (pedidoTotalFinal / totalOriginal));
+            }
 
             const todosPagos = (pedido.pedido_detalle || []).every((_, i) => {
                 const id = `${pedido.id_pedido}-${i}`;
@@ -266,6 +276,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                                     <span class="badge rounded-pill ${esAnulado ? 'bg-danger' : (esTerminado ? 'bg-success' : 'bg-secondary')}">
                                         ${t('state.' + pedido.estado) || pedido.estado}
                                     </span>
+                                    ${descuentoCumple > 0 ? `&nbsp;<span class="badge rounded-pill bg-warning text-dark"><i class="bi bi-cake2-fill me-1"></i>${descPct}% cumpleaños</span>` : ''}
                                 </small>
                             </div>
                         </div>
@@ -386,7 +397,28 @@ async function cargarPedidos(isAutoRefresh = false) {
                                 </thead>
                                 <tbody>${itemsRows}</tbody>
                                 <tfoot class="border-top">
-                                    <tr style="height:56px;">
+                                    ${descuentoCumple > 0 ? `
+                                    <tr>
+                                        <td colspan="2" class="text-end align-middle text-muted small py-1 border-0">Subtotal</td>
+                                        <td colspan="2" class="text-start align-middle text-muted small ps-3 border-0">
+                                            <s>${totalOriginal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</s>
+                                        </td>
+                                    </tr>
+                                    <tr style="background:rgba(255,193,7,0.07);">
+                                        <td colspan="2" class="text-end align-middle fw-semibold small text-muted py-1 border-0">
+                                            <i class="bi bi-cake2-fill text-warning me-1"></i>Desc. cumpleaños (${descPct}%)
+                                        </td>
+                                        <td colspan="2" class="text-start align-middle text-warning fw-bold small ps-3 border-0">
+                                            -${descuentoCumple.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" class="text-end align-middle fw-bold small text-dark py-1 border-0">Total pedido</td>
+                                        <td colspan="2" class="text-start align-middle fw-bolder text-success small ps-3 border-0">
+                                            ${pedidoTotalFinal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                                        </td>
+                                    </tr>` : ''}
+                                    <tr style="height:52px;">
                                         <td colspan="2" class="text-end align-middle fw-bold fs-6">${t('ord.balance_due')}</td>
                                         <td colspan="2" class="text-start align-middle fw-bolder ${totalPendiente === 0 ? 'text-success' : 'text-danger'} fs-5 ps-3 saldo-pendiente-valor">
                                             ${totalPendiente === 0 ? t('ord.paid').toUpperCase() : totalPendiente.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
@@ -430,8 +462,11 @@ async function cargarPedidos(isAutoRefresh = false) {
                     const saldoHeader = card.querySelector(".saldo-header");
                     let saldoActual = parseFloat(saldoElement.innerText.replace(/[^0-9]/g, '')) || 0;
                     
-                    if (ahoraPagado) saldoActual -= subtotalValor;
-                    else saldoActual += subtotalValor;
+                    const valorEfectivo = (descuentoCumple > 0 && totalOriginal > 0)
+                        ? Math.round(subtotalValor * (pedidoTotalFinal / totalOriginal))
+                        : subtotalValor;
+                    if (ahoraPagado) saldoActual -= valorEfectivo;
+                    else saldoActual += valorEfectivo;
 
                     const estaPagado = saldoActual <= 0;
                     const saldoFormato = estaPagado ? 'PAGADO' : saldoActual.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
@@ -456,7 +491,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                             body: JSON.stringify({ indice, pagado: ahoraPagado })
                         });
                         if (res.ok) {
-                        mostrarAlerta(ahoraPagado ? `✅ Ítem marcado como pagado` : `↩️ Ítem marcado como pendiente de pago`);
+                        mostrarAlerta(ahoraPagado ? `Ítem marcado como pagado` : `Ítem marcado como pendiente de pago`);
                         if (typeof addNotifLog === 'function') addNotifLog('pago', `Pago ${ahoraPagado ? 'registrado' : 'revertido'} — ítem del pedido #${pedido.id_pedido}`);
                     }
                         else throw new Error();
@@ -491,7 +526,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                         body: JSON.stringify({ ids: [idStr] }) 
                     });
                     if (res.ok) {
-                        mostrarAlerta("🗑️ Pedido eliminado permanentemente del sistema", true);
+                        mostrarAlerta("Pedido eliminado permanentemente del sistema", true);
                         if (typeof addNotifLog === 'function') addNotifLog('cancelado', `Pedido eliminado — Ref #${idStr}`);
                         pedidosGlobal = pedidosGlobal.filter(c => c.dataset.id_real !== idStr);
                         pedidosDatosRaw = pedidosDatosRaw.filter(p => String(p.id_pedido) !== idStr);
@@ -509,21 +544,19 @@ async function cargarPedidos(isAutoRefresh = false) {
 
             card.querySelector(".actualizar-btn").onclick = async () => {
                 const nuevoEstado = card.querySelector(".estado-select").value;
-                const ICONOS_ESTADO = { Pendiente: '⏳', Enviado: '🚚', Entregado: '✅', Cancelado: '❌' };
                 const res = await fetch(`/actualizar_estado/${pedido.id_pedido}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ estado: nuevoEstado })
                 });
                 if (res.ok) {
-                    const icon = ICONOS_ESTADO[nuevoEstado] || '📋';
                     const cliente = `${pedido.usuarios?.nombre || ''} ${pedido.usuarios?.apellido || ''}`.trim();
-                    mostrarAlerta(`${icon} Pedido de ${cliente} → ${nuevoEstado.toUpperCase()}`);
+                    mostrarAlerta(`Pedido de ${cliente} actualizado a ${nuevoEstado.toUpperCase()}`);
                     if (typeof addNotifLog === 'function') addNotifLog('estado', `Estado cambiado a ${nuevoEstado} — ${cliente} Ref #${pedido.id_pedido}`);
                     card.dataset.estado = nuevoEstado;
                     debouncedCargarPedidos(true);
                 } else {
-                    mostrarAlerta("❌ Error al actualizar el estado del pedido", true);
+                    mostrarAlerta("Error al actualizar el estado del pedido", true);
                 }
             };
 
@@ -865,17 +898,21 @@ async function generarReporteConfigurado() {
     let totalVendido = 0;
     const stats = { Pendiente: 0, Enviado: 0, Entregado: 0, Cancelado: 0 };
 
+    let hayDescuentos = false;
     const bodyTable = lista.map(p => {
-        const sub = (p.pedido_detalle || []).reduce((acc, item) => acc + (item.subtotal || 0), 0);
-        totalVendido += sub;
+        const itemsTotal = (p.pedido_detalle || []).reduce((acc, item) => acc + (item.subtotal || 0), 0);
+        const finalTotal = Number(p.total || itemsTotal);
+        totalVendido += finalTotal;
         if (stats[p.estado] !== undefined) stats[p.estado]++;
-        
+        const hasDiscount = itemsTotal > 0 && finalTotal < itemsTotal - 0.99;
+        if (hasDiscount) hayDescuentos = true;
+        const totalLabel = finalTotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
         return [
             generarNumeroFactura(p.id_pedido, p.fecha_pedido),
             new Date(p.fecha_pedido).toLocaleDateString('es-CO'),
             `${p.usuarios?.nombre || ''} ${p.usuarios?.apellido || ''}`.substring(0, 25),
             p.estado.toUpperCase(),
-            sub.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
+            hasDiscount ? `${totalLabel} *` : totalLabel
         ];
     });
 
@@ -889,7 +926,16 @@ async function generarReporteConfigurado() {
         styles: { fontSize: 8, cellPadding: 3 }
     });
 
-    let finalY = doc.lastAutoTable.finalY + 15;
+    let finalY = doc.lastAutoTable.finalY + 5;
+
+    if (hayDescuentos) {
+        doc.setFontSize(7);
+        doc.setTextColor(180, 90, 0);
+        doc.text('* Total con descuento de cumpleaños aplicado', 15, finalY + 4);
+        finalY += 10;
+    }
+
+    finalY += 10;
     if (finalY > 210) { doc.addPage(); finalY = 25; }
 
     const canvas = document.createElement('canvas');
@@ -949,6 +995,11 @@ async function generarReporteConfigurado() {
     doc.setFontSize(13);
     doc.setTextColor(colorPrimario[0], colorPrimario[1], colorPrimario[2]);
     doc.text(totalVendido.toLocaleString('es-CO', { style: 'currency', currency: 'COP' }), resX, finalY + 32);
+    doc.setFontSize(7);
+    doc.setTextColor(120);
+    doc.setFont(undefined, 'italic');
+    doc.text("* Precio con descuento de cumpleaños aplicado.", resX, finalY + 40);
+    doc.setFont(undefined, 'normal');
 
     const paginas = doc.internal.getNumberOfPages();
     for(let i = 1; i <= paginas; i++) {

@@ -31,6 +31,19 @@ def _es_cumpleanos(usuario: dict) -> bool:
     except Exception:
         return False
 
+
+def _ya_uso_descuento_hoy(user_id: str) -> bool:
+    try:
+        hoy = date.today().isoformat()
+        facturas = db.factura_get_by_user(user_id)
+        return any(
+            (f.get("fecha_emision") or "")[:10] == hoy
+            and float(f.get("subtotal") or 0) > float(f.get("total") or 0) + 0.99
+            for f in facturas
+        )
+    except Exception:
+        return False
+
 carrito_bp = Blueprint("carrito", __name__)
 
 
@@ -181,7 +194,7 @@ def finalizar_compra():
 
         subtotal = sum(int(i["cantidad"]) * float(i["precio_unitario"]) for i in carrito)
 
-        es_cumple = _es_cumpleanos(usuario)
+        es_cumple = _es_cumpleanos(usuario) and not _ya_uso_descuento_hoy(user_id)
         descuento_monto = round(subtotal * _get_descuento_pct()) if es_cumple else 0
         total_compra = subtotal - descuento_monto
 
@@ -258,7 +271,7 @@ def cumpleanos_info():
     user_id = session.get("user_id")
     try:
         usuario = db.usuario_get(user_id) or {}
-        es_cumple = _es_cumpleanos(usuario)
+        es_cumple = _es_cumpleanos(usuario) and not _ya_uso_descuento_hoy(user_id)
         pct_real  = round(_get_descuento_pct() * 100)
         return jsonify({
             "es_cumpleanos": es_cumple,
