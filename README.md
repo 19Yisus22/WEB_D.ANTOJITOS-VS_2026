@@ -75,14 +75,13 @@ La aplicación soporta tres perfiles de usuario con flujos completamente diferen
 
 <div align="center">
 
-<img src="https://skillicons.dev/icons?i=python,flask,postgres,bootstrap,js,html,css,vercel,docker&theme=dark" alt="stack icons"/>
+<img src="https://skillicons.dev/icons?i=python,flask,postgres,bootstrap,js,html,css,docker&theme=dark" alt="stack icons"/>
 
 </div>
 
 | Capa | Tecnología |
 |------|-----------|
 | **Backend** | Python 3.12 · Flask 3.0.3 · Flask-CORS 4.0.1 |
-| **Servidor (desarrollo)** | Waitress 3.0.0 |
 | **Servidor (producción)** | Gunicorn 22.0.0 |
 | **Base de datos** | Supabase (PostgreSQL) · supabase-py 2.10.0 |
 | **Almacenamiento de imágenes** | Cloudinary 1.41.0 |
@@ -90,7 +89,7 @@ La aplicación soporta tres perfiles de usuario con flujos completamente diferen
 | **Tokens de sesión** | Access Token (5 min, HttpOnly) · Refresh Token (7 días, HttpOnly) |
 | **Frontend** | Jinja2 · Bootstrap 5.3.3 · Bootstrap Icons · Vanilla JS |
 | **Email transaccional** | Resend 2.30.1 |
-| **Despliegue** | Hugging Face Spaces (Docker) |
+| **Despliegue** | Compatible: HF Spaces · Render · AWS · Azure · Hostinger (Docker / Gunicorn) |
 
 <br/>
 
