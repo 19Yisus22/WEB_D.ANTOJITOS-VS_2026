@@ -32,7 +32,10 @@ if _CLD_NAME and _CLD_KEY and _CLD_SECRET:
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR    = os.path.join(BASE_DIR, "static")
 UPLOAD_DIR    = os.path.join(STATIC_DIR, "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+try:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+except OSError:
+    pass
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
 app.secret_key                   = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(24)
@@ -158,7 +161,7 @@ def _get_local_ip() -> str:
         s.close()
         
 if __name__ == "__main__":
-    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), False # Cambia a True para modo desarrollo con debug
+    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), True # Cambia a True para modo desarrollo con debug
 
     if debug_mode:
         print("\033[93m" + "MODE DEVELOPMENT - DEBUG" + "\033[0m")

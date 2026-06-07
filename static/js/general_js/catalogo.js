@@ -328,6 +328,17 @@ function agregarEventosProductos() {
                         '🛒 Añadido al carrito',
                         `${cantidadPedida}x ${productoArray.nombre} — $${(productoArray.precio * cantidadPedida).toLocaleString()}`
                     );
+                    if (productoArray.stock <= 0) {
+                        mostrarAlertaPublica({
+                            titulo:   '¡Producto Agotado!',
+                            mensaje:  `${productoArray.nombre} ya no tiene stock disponible`,
+                            imagen:   productoArray.imagen_url || '/static/uploads/logo.png',
+                            tipo:     'error',
+                            duracion: 6000,
+                            idUnico:  `agotado-${id_producto}-${Date.now()}`,
+                            sonido:   true,
+                        });
+                    }
                     renderProductos(searchInput.value);
                 } else {
                     const errorData = await res.json();
@@ -400,10 +411,10 @@ function resetBotonesEstado() {
 window.onload = () => {
     cargarProductos();
     resetBotonesEstado();
-    setInterval(() => { if (!isProcessingPurchase) cargarProductos(); }, 3000);
+    setInterval(() => { if (!isProcessingPurchase) cargarProductos(); }, 20000);
     if (userLogged && userLogged !== "false") {
         sincronizarContadorCarrito();
-        setInterval(() => { if (!isProcessingPurchase) sincronizarContadorCarrito(); }, 3000);
+        setInterval(() => { if (!isProcessingPurchase) sincronizarContadorCarrito(); }, 30000);
     }
 };
 

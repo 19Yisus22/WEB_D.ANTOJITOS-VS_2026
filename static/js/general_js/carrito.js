@@ -1,6 +1,9 @@
 let productosCarrito = [];
 let catalogoLocalCache = [];
 let isRequesting = false;
+let _descPct = 0;
+
+const fmt = n => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
 function showConfirmToast(msg, callback) {
     mostrarConfirmacionApp('Confirmación', msg, callback);
@@ -34,10 +37,110 @@ function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
     mostrarAlertaPublica({ imagen, titulo, mensaje: descripcion, tipo: isError ? 'error' : 'info' });
 }
 
+/* ── Recalcula el total sumando los subtotales de cada fila ── */
+function recalcularTotal() {
+    let total = 0;
+    document.querySelectorAll('.cart-item[data-subtotal]').forEach(r => {
+        total += parseFloat(r.dataset.subtotal) || 0;
+    });
+
+    const totalEl    = document.getElementById('totalCarritoFinal');
+    const subtotalEl = document.getElementById('cartSubtotalDisplay');
+    const discEl     = document.getElementById('cartDiscountDisplay');
+
+    if (_descPct > 0) {
+        const descMonto  = Math.round(total * _descPct / 100);
+        const totalFinal = total - descMonto;
+        if (subtotalEl) subtotalEl.textContent = fmt(total);
+        if (discEl)     discEl.textContent     = '-' + fmt(descMonto);
+        if (totalEl)    totalEl.textContent    = fmt(totalFinal);
+    } else {
+        if (totalEl) totalEl.textContent = fmt(total);
+    }
+
+    let totalQty = 0;
+    document.querySelectorAll('.cart-qty-badge').forEach(b => { totalQty += parseInt(b.textContent) || 0; });
+    actualizarContadorBadge(totalQty);
+}
+
+/* ── Ajusta la cantidad de un ítem (+1 / -1) sin recargar la página ── */
+async function ajustarCantidad(id_carrito, delta, row, idProducto) {
+    if (isRequesting) return;
+    isRequesting = true;
+
+    const btnPlus  = row.querySelector('.cart-qty-btn.plus');
+    const btnMinus = row.querySelector('.cart-qty-btn.minus');
+    if (btnPlus)  btnPlus.disabled  = true;
+    if (btnMinus) btnMinus.disabled = true;
+
+    try {
+        const r = await fetch(`/carrito_cantidad/${id_carrito}`, {
+            method:  'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ delta }),
+        });
+        const data = await r.json();
+
+        if (!data.ok) {
+            showMessage(data.error || 'Error al actualizar cantidad', true);
+            if (btnPlus)  btnPlus.disabled  = false;
+            if (btnMinus) btnMinus.disabled = false;
+            return;
+        }
+
+        if (data.eliminado) {
+            row.style.transition = 'opacity 0.3s, transform 0.3s';
+            row.style.opacity    = '0';
+            row.style.transform  = 'translateX(20px)';
+            setTimeout(() => {
+                row.remove();
+                recalcularTotal();
+                if (!document.querySelector('.cart-item')) cargarCarrito();
+            }, 300);
+            window.dispatchEvent(new CustomEvent('stockActualizado', {
+                detail: { id_producto: idProducto, cambio: 1 },
+            }));
+        } else {
+            const qtyBadge = row.querySelector('.cart-qty-badge');
+            const subEl    = row.querySelector('.cart-item-sub');
+            if (qtyBadge) qtyBadge.textContent = data.cantidad;
+            if (subEl)    subEl.textContent    = fmt(data.subtotal);
+            row.dataset.subtotal = data.subtotal;
+            if (btnPlus)  btnPlus.disabled  = data.stock <= 0;
+            if (btnMinus) btnMinus.disabled = false;
+            if (delta > 0 && data.stock <= 0) {
+                const nomProducto = row.querySelector('.cart-item-name')?.textContent || 'Producto';
+                const imgEl       = row.querySelector('.cart-item-img img');
+                mostrarAlertaPublica({
+                    titulo:   '¡Producto Agotado!',
+                    mensaje:  `${nomProducto} ya no tiene stock disponible`,
+                    imagen:   (imgEl && imgEl.src) || '/static/uploads/logo.png',
+                    tipo:     'error',
+                    duracion: 6000,
+                    idUnico:  `agotado-cart-${id_carrito}-${Date.now()}`,
+                    sonido:   true,
+                });
+            }
+            recalcularTotal();
+            window.dispatchEvent(new CustomEvent('stockActualizado', {
+                detail: { id_producto: idProducto, cambio: delta > 0 ? -1 : 1 },
+            }));
+        }
+    } catch {
+        showMessage('Error de conexión al actualizar cantidad', true);
+        if (row.isConnected) {
+            if (btnPlus)  btnPlus.disabled  = false;
+            if (btnMinus) btnMinus.disabled = false;
+        }
+    } finally {
+        isRequesting = false;
+    }
+}
+
 async function cargarCarrito() {
     const container = document.getElementById("carritoContainer");
     const btn = document.getElementById("btnFinalizarCompra");
-    
+
     try {
         const res = await fetch("/obtener_carrito");
         if (!res.ok) return;
@@ -64,7 +167,6 @@ async function cargarCarrito() {
         }
 
         let totalGeneral = 0;
-        const fmt = n => n.toLocaleString('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});
 
         const wrap = document.createElement('div');
         wrap.className = 'cart-list-wrap';
@@ -84,11 +186,12 @@ async function cargarCarrito() {
         productos.forEach(item => {
             const sub  = Number(item.precio_unitario) * Number(item.cantidad);
             totalGeneral += sub;
-            const imgPath = item.imagen || item.imagen_url;
+            const imgPath  = item.imagen || item.imagen_url;
             const validImg = imgPath && imgPath.startsWith('http');
 
             const row = document.createElement('div');
-            row.className = 'cart-item';
+            row.className        = 'cart-item';
+            row.dataset.subtotal = sub;
 
             row.innerHTML = `
                 <div class="cart-item-img">
@@ -103,7 +206,11 @@ async function cargarCarrito() {
                     <div class="cart-item-unit">${fmt(Number(item.precio_unitario))} / unidad</div>
                 </div>
                 <div class="cart-item-qty">
-                    <span class="cart-qty-badge">${item.cantidad}</span>
+                    <div class="cart-qty-ctrl">
+                        <button class="cart-qty-btn minus" title="Reducir">−</button>
+                        <span class="cart-qty-badge">${item.cantidad}</span>
+                        <button class="cart-qty-btn plus" title="Aumentar"${item.agotado ? ' disabled' : ''}>+</button>
+                    </div>
                 </div>
                 <div class="cart-item-sub">${fmt(sub)}</div>
                 <div class="cart-item-del">
@@ -111,6 +218,9 @@ async function cargarCarrito() {
                         <i class="bi bi-trash3-fill"></i>
                     </button>
                 </div>`;
+
+            row.querySelector('.cart-qty-btn.plus').onclick  = () => ajustarCantidad(item.id_carrito,  1, row, item.id_producto);
+            row.querySelector('.cart-qty-btn.minus').onclick = () => ajustarCantidad(item.id_carrito, -1, row, item.id_producto);
 
             row.querySelector('.cart-del-btn').onclick = () => {
                 if (isRequesting) return;
@@ -131,6 +241,7 @@ async function cargarCarrito() {
                     finally { isRequesting = false; }
                 });
             };
+
             list.appendChild(row);
         });
 
@@ -139,33 +250,35 @@ async function cargarCarrito() {
         const footer = document.createElement('div');
         footer.className = 'cart-list-footer';
 
-        let footerHtml = `<div class="cart-footer-items">${productos.length} producto(s)</div>`;
-
-        let descPct = 0;
+        _descPct = 0;
         try {
             const cumplRes = await fetch('/carrito/cumpleanos');
             if (cumplRes.ok) {
                 const cumplData = await cumplRes.json();
                 if (cumplData.es_cumpleanos && cumplData.descuento_pct > 0) {
-                    descPct = cumplData.descuento_pct;
+                    _descPct = cumplData.descuento_pct;
                 }
             }
         } catch (_) {}
 
-        if (descPct > 0) {
-            const descMonto = Math.round(totalGeneral * descPct / 100);
+        let footerHtml = `<div class="cart-footer-items">${productos.length} producto(s)</div>`;
+
+        if (_descPct > 0) {
+            const descMonto  = Math.round(totalGeneral * _descPct / 100);
             const totalFinal = totalGeneral - descMonto;
             footerHtml += `
-                <div class="cart-footer-subtotal">
-                    <span>Subtotal</span><span>${fmt(totalGeneral)}</span>
-                </div>
-                <div class="cart-footer-discount">
-                    <span>🎂 Desc. cumpleaños (${descPct}%)</span>
-                    <span class="text-success fw-bold">-${fmt(descMonto)}</span>
-                </div>
-                <div class="cart-footer-total">
-                    <span>Total</span>
-                    <strong id="totalCarritoFinal">${fmt(totalFinal)}</strong>
+                <div class="cart-footer-right">
+                    <div class="cart-footer-subtotal">
+                        <span>Subtotal</span><span id="cartSubtotalDisplay">${fmt(totalGeneral)}</span>
+                    </div>
+                    <div class="cart-footer-discount">
+                        <span>🎂 Desc. cumpleaños (${_descPct}%)</span>
+                        <span class="text-success fw-bold" id="cartDiscountDisplay">-${fmt(descMonto)}</span>
+                    </div>
+                    <div class="cart-footer-total">
+                        <span>Total</span>
+                        <strong id="totalCarritoFinal">${fmt(totalFinal)}</strong>
+                    </div>
                 </div>`;
         } else {
             footerHtml += `
@@ -227,7 +340,6 @@ async function finalizarCompra() {
         }
         let msg = "🎉 ¡Pedido enviado con éxito! Pronto te contactaremos.";
         if (data.descuento_cumpleanos && data.descuento_monto > 0) {
-            const fmt = n => n.toLocaleString('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});
             msg += ` Se aplicó descuento de cumpleaños de ${fmt(data.descuento_monto)}.`;
         }
         showMessage(msg);

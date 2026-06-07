@@ -1057,14 +1057,31 @@ async function cargarTodasFacturasPage() {
     } catch (e) { console.error(e); }
 }
 
+/* ── Carga las facturas del propio cliente automáticamente ── */
+async function cargarFacturasCliente() {
+    try {
+        const res = await fetch('/obtener_facturas_page');
+        if (res.status === 401) { window.location.reload(); return; }
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        facturasLocalesCache = JSON.parse(JSON.stringify(data));
+        facturasActuales     = ordenarFacturas(data);
+        paginaActual         = 1;
+        mostrarFacturasBuscadas();
+    } catch (e) { console.error(e); }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
 
     await cargarMetodosPago();
 
-    /* Auto-carga inicial para vendedor y admin */
+    /* Auto-carga inicial según rol */
     const _roleInit = (window.FACTURA_ROLE || 'cliente').toLowerCase();
     if (_roleInit === 'vendedor' || _roleInit === 'admin') {
         cargarTodasFacturasPage();
+    } else {
+        cargarFacturasCliente();
     }
 
     const inputInput = document.getElementById("buscarFactura");
@@ -1115,12 +1132,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             else if (val.length === 0) {
                 const _roleClear = (window.FACTURA_ROLE || 'cliente').toLowerCase();
                 if (_roleClear === 'vendedor' || _roleClear === 'admin') {
-                    /* Vendedor/Admin: al borrar la búsqueda vuelven a ver todas */
                     cargarTodasFacturasPage();
                 } else {
-                    facturasActuales     = [];
-                    facturasLocalesCache = [];
-                    mostrarFacturasBuscadas();
+                    /* Cliente: recarga sus propias facturas */
+                    cargarFacturasCliente();
                 }
             }
         });

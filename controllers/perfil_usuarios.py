@@ -42,8 +42,12 @@ def listar_usuarios():
             u["nombre_completo"] = f"{u.get('nombre','')} {u.get('apellido','')}".strip()
             u["rol"]             = u.get("roles", {}).get("nombre_role") if u.get("roles") else None
             contrasena           = u.pop("contrasena", "")
-            is_google            = (str(contrasena).upper() == "GOOGLE_AUTH_EXTERNAL"
-                                    or str(u.get("cedula", "")).startswith("G-"))
+            letra_acc            = str(u.get("letraAcc") or "").upper()
+            is_google            = (
+                letra_acc == "G"
+                or str(contrasena).upper() == "GOOGLE_AUTH_EXTERNAL"
+                or str(u.get("cedula", "")).startswith("G-")
+            )
             u["auth_method"]     = "google" if is_google else "email"
             resultado.append(u)
         return jsonify(resultado)

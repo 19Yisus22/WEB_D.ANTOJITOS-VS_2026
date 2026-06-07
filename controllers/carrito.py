@@ -164,6 +164,63 @@ def carrito_quitar(id_carrito):
         return jsonify({"ok": False, "message": str(e)}), 500
 
 
+@carrito_bp.route("/carrito_cantidad/<id_carrito>", methods=["PATCH"])
+@login_required
+def carrito_ajustar_cantidad(id_carrito):
+    """Incrementa o decrementa la cantidad de un ítem del carrito en ±1.
+    Ajusta el stock del producto en tiempo real."""
+    user_id = session.get("user_id")
+    data    = request.get_json() or {}
+    delta   = int(data.get("delta", 0))
+    if delta not in (1, -1):
+        return jsonify({"ok": False, "error": "delta debe ser 1 o -1"}), 400
+
+    try:
+        carrito_items = db.carrito_get(user_id)
+        item = next(
+            (i for i in carrito_items if str(i.get("id_carrito")) == str(id_carrito)),
+            None
+        )
+        if not item:
+            return jsonify({"ok": False, "error": "Ítem no encontrado"}), 404
+
+        cantidad_actual = int(item.get("cantidad", 1) or 1)
+        id_producto     = item["id_producto"]
+        prod            = db.producto_get(id_producto)
+        if not prod:
+            return jsonify({"ok": False, "error": "Producto no encontrado"}), 404
+
+        stock_actual = int(prod.get("stock", 0) or 0)
+
+        if delta == 1:
+            if stock_actual < 1:
+                return jsonify({"ok": False, "error": "Sin stock disponible", "stock": 0}), 400
+            nueva_cantidad = cantidad_actual + 1
+            nuevo_stock    = stock_actual - 1
+        else:
+            if cantidad_actual <= 1:
+                # Si llega a 0, eliminar el ítem y devolver el stock
+                db.producto_update(str(id_producto), {"stock": stock_actual + 1})
+                db.carrito_delete_item(id_carrito, user_id)
+                return jsonify({"ok": True, "eliminado": True, "stock": stock_actual + 1}), 200
+            nueva_cantidad = cantidad_actual - 1
+            nuevo_stock    = stock_actual + 1
+
+        db.producto_update(str(id_producto), {"stock": nuevo_stock})
+        db.carrito_update_cantidad(str(id_carrito), user_id, nueva_cantidad)
+
+        nuevo_subtotal = round(float(item.get("precio_unitario", 0) or 0) * nueva_cantidad, 2)
+        return jsonify({
+            "ok":        True,
+            "eliminado": False,
+            "cantidad":  nueva_cantidad,
+            "subtotal":  nuevo_subtotal,
+            "stock":     nuevo_stock,
+        }), 200
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @carrito_bp.route("/finalizar_compra", methods=["POST"])
 @login_required
 def finalizar_compra():

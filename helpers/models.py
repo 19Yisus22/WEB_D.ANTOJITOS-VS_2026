@@ -12,7 +12,7 @@ from database.models import (
     cedula_cascade_update,
     producto_get_all, producto_get_activos, producto_get, producto_get_muchos,
     producto_create, producto_update, producto_delete,
-    carrito_get, carrito_get_item, carrito_add, carrito_delete_item, carrito_clear,
+    carrito_get, carrito_get_item, carrito_add, carrito_update_cantidad, carrito_delete_item, carrito_clear,
     pedido_get_all, pedido_get, pedido_create, pedido_update, pedido_delete_many,
     detalle_get, detalle_create_many,
     factura_get_by_user, factura_get_by_numero, factura_get_all,

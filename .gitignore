@@ -56,5 +56,10 @@ static/uploads/*.webp
 # ── Claude Code ─────────────────────────────────────────────────
 .claude/
 SUGERENCIAS.txt
-.gitignore
-.dockerignore
+
+# ── Vercel local ─────────────────────────────────────────────────
+.vercel/
+
+# ── Archivos sensibles ───────────────────────────────────────────
+config_env.rar
+*.rar

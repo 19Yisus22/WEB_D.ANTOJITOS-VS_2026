@@ -921,8 +921,8 @@ function _pushStockToSistemPanel(p, tipo) {
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(_checkStock, 3000);
-        setInterval(_checkStock, 8000);
+        setTimeout(_checkStock, 5000);
+        setInterval(_checkStock, 30000);
     });
 })();
 

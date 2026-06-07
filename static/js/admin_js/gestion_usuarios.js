@@ -15,7 +15,13 @@ function _fecha(iso) {
 async function cargarUsuarios() {
     try {
         const res  = await fetch('/listar_usuarios');
-        _usuarios  = await res.json();
+        const raw  = await res.json();
+        _usuarios  = raw.map(u => ({
+            ...u,
+            rol: u.rol || 'cliente',
+            /* letraAcc='G' → Google  |  letraAcc='D' o null → email/D'Antojitos */
+            auth_method: String(u.letraAcc || '').toUpperCase() === 'G' ? 'google' : 'email',
+        }));
         _actualizarStats();
         filtrarUsuarios();
     } catch { mostrarAlerta('Error al cargar usuarios', true); }
@@ -142,10 +148,13 @@ function _renderTabla(lista) {
             </td>
             <td><span class="role-badge ${ROLES_CLASS[u.rol] || 'role-cliente'}">${u.rol || 'cliente'}</span></td>
             <td>
-                <span class="role-badge ${u.auth_method === 'google' ? 'method-google' : 'method-email'}">
-                    <i class="bi bi-${u.auth_method === 'google' ? 'google' : 'envelope-fill'} me-1"></i>
-                    ${u.auth_method === 'google' ? 'Google' : 'Correo'}
-                </span>
+                ${u.auth_method === 'google'
+                    ? `<span class="role-badge method-google">
+                           <i class="bi bi-google me-1"></i>Google
+                       </span>`
+                    : `<span class="role-badge method-email">
+                           <img src="/static/uploads/logo.png" style="width:13px;height:13px;object-fit:contain;margin-right:4px;border-radius:3px;" onerror="this.style.display='none'">D'Antojitos
+                       </span>`}
             </td>
             <td><small class="text-muted">${_fecha(u.fecha_creacion)}</small></td>
             <td class="text-center">
@@ -304,8 +313,8 @@ function mostrarDetalleUsuario(u) {
                             </span>
                             <span class="udet-method-badge">
                                 ${esGoogle
-                                    ? '<img src="/static/uploads/googlogo.ico" style="width:13px;height:13px;margin-right:4px;">Google'
-                                    : '<i class="bi bi-envelope-fill me-1" style="color:#0277bd;"></i>Correo'}
+                                    ? '<img src="/static/uploads/googlogo.ico" style="width:13px;height:13px;margin-right:4px;" onerror="this.style.display=\'none\'">Google'
+                                    : '<img src="/static/uploads/logo.png" style="width:13px;height:13px;object-fit:contain;margin-right:4px;border-radius:3px;" onerror="this.style.display=\'none\'">D\'Antojitos'}
                             </span>
                         </div>
                     </div>

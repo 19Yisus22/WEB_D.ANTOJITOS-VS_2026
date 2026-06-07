@@ -209,7 +209,10 @@ def anular_factura_page(numero_factura):
         factura = db.factura_get_by_numero(numero_factura)
         if not factura:
             return jsonify({"message": "Factura no encontrada"}), 404
-        if str(factura["cedula"]) != str(user_id) and rol not in ("admin", "vendedor"):
+        # Vendedor no puede anular desde historial (solo desde módulo de pedidos)
+        if rol == "vendedor":
+            return jsonify({"message": "El vendedor no puede anular facturas desde el historial. Usa el módulo de Pedidos."}), 403
+        if str(factura["cedula"]) != str(user_id) and rol != "admin":
             return jsonify({"message": "Sin permiso"}), 403
         if factura["estado"].lower() in ("anulada", "pagada"):
             return jsonify({"message": f"No se puede anular en estado: {factura['estado']}"}), 400

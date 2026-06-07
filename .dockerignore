@@ -1,0 +1,45 @@
+# Entorno virtual Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Variables de entorno (nunca en imagen)
+.env
+.env.*
+
+# Git
+.git/
+.gitignore
+
+# Editor / OS
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Archivos temporales y logs
+*.log
+*.tmp
+*.bak
+
+# Node (si existe)
+node_modules/
+package-lock.json
+
+# Archivos de la sesión de Claude Code
+.claude/
+
+# Otros
+ZPA\ SACAR(NO\ ELIMINAR)/
+SUGERENCIAS.txt
+RLS_ANON_POLICIES.sql
+tsconfig.json
+package.json
+.gitignore
+.dockerignore

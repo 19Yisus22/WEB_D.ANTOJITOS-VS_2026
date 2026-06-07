@@ -7,7 +7,8 @@ from postgrest.types import CountMethod
 
 logger = logging.getLogger(__name__)
 
-_RETRY_EXCEPTIONS = ("RemoteProtocolError", "ConnectError", "ReadError", "WriteError", "TimeoutException")
+_RETRY_EXCEPTIONS  = ("RemoteProtocolError", "ReadError", "WriteError", "TimeoutException")
+_NORETRY_EXCEPTIONS = ("ConnectError", "getaddrinfo", "WinError", "Network")
 
 
 def _db():
@@ -23,10 +24,13 @@ def _run(query) -> object:
         except Exception as e:
             name = type(e).__name__
             msg  = str(e)
+            # Error de red: no tiene sentido reintentar, falla inmediata
+            if any(k in name or k in msg for k in _NORETRY_EXCEPTIONS):
+                raise
             if any(k in name or k in msg for k in _RETRY_EXCEPTIONS):
                 last_exc = e
                 if attempt < 3:
-                    time.sleep(1.5 * (attempt + 1))
+                    time.sleep(1.0 * (attempt + 1))
                     logger.warning("DB retry %d after %s: %s", attempt + 1, name, msg)
                 continue
             raise
@@ -132,7 +136,7 @@ def usuario_buscar_por_nombre(nombre: str) -> dict | None:
 
 def usuario_get_all() -> list:
     return _many(_run(
-        _db().table("usuarios").select("cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role)")
+        _db().table("usuarios").select('cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,"letraAcc",roles(nombre_role)')
     ))
 
 def usuario_get_web_token(cedula: str) -> dict | None:
@@ -347,6 +351,10 @@ def carrito_add(cedula: str, id_producto: str, nombre: str, cantidad: int, preci
             "cantidad":        cantidad,
             "precio_unitario": precio,
         }))
+
+def carrito_update_cantidad(id_carrito: str, cedula: str, cantidad: int) -> None:
+    _run(_db().table("carrito").update({"cantidad": cantidad})
+         .eq("id_carrito", id_carrito).eq("cedula", cedula))
 
 def carrito_delete_item(id_carrito: str, cedula: str) -> list:
     return _many(_run(
