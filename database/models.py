@@ -752,6 +752,10 @@ def logros_sembrar(logros: list) -> None:
             "icono":       l["icono"],
             "rareza":      l.get("rareza", "comun"),
             "puntos":      l.get("puntos", 10),
+            "modulo":      l.get("modulo", ""),
+            "roles":       l.get("roles", []),
+            "campo":       l.get("campo", ""),
+            "meta":        l.get("meta", None),
         }
         for l in logros
     ]
@@ -760,23 +764,50 @@ def logros_sembrar(logros: list) -> None:
     _run(_db().table("logros").upsert(rows, on_conflict="codigo"))
 
 
-def usuario_logros_get(cedula: str) -> list:
-    return _many(_run(
-        _db().table("usuario_logros")
-        .select("codigo_logro,fecha_desbloqueado")
-        .eq("cedula", cedula)
+# ── logros_data: JSON storage (cedula, id_role, data JSONB) ──────────────────
+
+def _logros_data_get(cedula: str) -> dict:
+    rows = _many(_run_safe(
+        _db().table("logros_data").select("cedula,id_role,data").eq("cedula", cedula)
+    ))
+    if not rows:
+        return {"cedula": cedula, "id_role": None, "data": {}}
+    row = rows[0]
+    d = row.get("data") or {}
+    if isinstance(d, str):
+        import json as _json
+        try:
+            d = _json.loads(d)
+        except Exception:
+            d = {}
+    return {"cedula": row.get("cedula"), "id_role": row.get("id_role"), "data": d}
+
+
+def _logros_data_save(cedula: str, id_role, data: dict) -> None:
+    _run(_db().table("logros_data").upsert(
+        {"cedula": cedula, "id_role": id_role, "data": data},
+        on_conflict="cedula",
     ))
 
 
-def usuario_logro_award(cedula: str, codigo: str) -> None:
+def usuario_logros_get(cedula: str) -> list:
+    row = _logros_data_get(cedula)
+    logros = row["data"].get("logros", [])
+    return [{"codigo_logro": c, "fecha_desbloqueado": None} for c in logros]
+
+
+def usuario_logro_award(cedula: str, codigo: str, id_role=None) -> None:
     try:
-        _run(_db().table("usuario_logros").upsert(
-            {"cedula": cedula, "codigo_logro": codigo},
-            on_conflict="cedula,codigo_logro",
-        ))
+        row = _logros_data_get(cedula)
+        d   = row["data"]
+        existing = d.get("logros", [])
+        if codigo in existing:
+            return
+        existing.append(codigo)
+        d["logros"] = existing
+        _logros_data_save(cedula, id_role or row.get("id_role"), d)
     except Exception as e:
-        if "unique" not in str(e).lower() and "duplicate" not in str(e).lower():
-            raise
+        logger.warning("usuario_logro_award error: %s", e)
 
 
 def usuario_stats_logros(cedula: str) -> dict:
@@ -947,24 +978,26 @@ def usuario_pedido_repetido(cedula: str) -> bool:
         return False
 
 
-# ── Contadores persistentes de logros (visitas, rachas) ───────────────────────
+# ── Contadores persistentes de logros — almacenados en logros_data.data ──────
 
 def logros_contadores_get(cedula: str) -> dict:
-    """Devuelve {clave: valor} con todos los contadores del usuario desde la BD."""
-    rows = _many(_run_safe(
-        _db().table("logros_contadores").select("clave,valor").eq("cedula", cedula)
-    ))
-    return {r["clave"]: int(r["valor"]) for r in rows}
+    row = _logros_data_get(cedula)
+    return {k: int(v) for k, v in row["data"].get("contadores", {}).items()}
 
 
 def logros_contadores_upsert_many(cedula: str, contadores: dict) -> None:
-    """Guarda/actualiza múltiples contadores (clave→valor) para el usuario."""
     if not contadores:
         return
-    rows = [
-        {"cedula": cedula, "clave": k, "valor": int(v)}
-        for k, v in contadores.items()
-        if isinstance(v, (int, float)) and v >= 0
-    ]
-    if rows:
-        _run(_db().table("logros_contadores").upsert(rows, on_conflict="cedula,clave"))
+    try:
+        row  = _logros_data_get(cedula)
+        d    = row["data"]
+        prev = d.get("contadores", {})
+        prev.update({
+            k: int(v)
+            for k, v in contadores.items()
+            if isinstance(v, (int, float)) and v >= 0
+        })
+        d["contadores"] = prev
+        _logros_data_save(cedula, row.get("id_role"), d)
+    except Exception as e:
+        logger.warning("logros_contadores_upsert_many error: %s", e)

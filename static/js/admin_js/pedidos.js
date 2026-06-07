@@ -575,10 +575,12 @@ async function cargarPedidos(isAutoRefresh = false) {
 
 function actualizarStatsVentas(pedidos) {
     if (!Array.isArray(pedidos) || !pedidos.length) return;
-    const total = pedidos.length;
+    const total      = pedidos.length;
     const entregados = pedidos.filter(p => p.estado === 'Entregado').length;
-    const ventas = pedidos.filter(p => p.estado === 'Entregado').reduce((s, p) => s + Number(p.total || 0), 0);
-    const porcentaje = total > 0 ? Math.round((entregados / total) * 100) : 0;
+    const cancelados = pedidos.filter(p => p.estado === 'Cancelado').length;
+    const resueltos  = entregados + cancelados;
+    const ventas     = pedidos.filter(p => p.estado === 'Entregado').reduce((s, p) => s + Number(p.total || 0), 0);
+    const porcentaje = resueltos > 0 ? Math.round((entregados / resueltos) * 100) : 0;
 
     const elTotal = document.getElementById('svTotalPedidos');
     const elVentas = document.getElementById('svTotalVentas');

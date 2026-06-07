@@ -1,3 +1,13 @@
+---
+title: "D'Antojitos"
+emoji: 🍰
+colorFrom: orange
+colorTo: red
+sdk: docker
+pinned: false
+app_port: 7860
+---
+
 <div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:FFB6B9,50:E07A5F,100:8B5A2B&height=220&section=header&text=D'Antojitos%C2%A9&fontSize=68&fontColor=ffffff&animation=fadeIn&fontAlignY=36&desc=Dulcer%C3%ADa%20Artesanal%20Colombiana&descAlignY=58&descSize=20&descAlign=50" width="100%" alt="D'Antojitos banner"/>
@@ -18,7 +28,7 @@ Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, men
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Cloudinary](https://img.shields.io/badge/Cloudinary-Images-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-Serverless-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![HuggingFace](https://img.shields.io/badge/Hugging%20Face-Spaces-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
 
 </div>
 
@@ -80,7 +90,7 @@ La aplicación soporta tres perfiles de usuario con flujos completamente diferen
 | **Tokens de sesión** | Access Token (5 min, HttpOnly) · Refresh Token (7 días, HttpOnly) |
 | **Frontend** | Jinja2 · Bootstrap 5.3.3 · Bootstrap Icons · Vanilla JS |
 | **Email transaccional** | Resend 2.30.1 |
-| **Despliegue** | Vercel (serverless) |
+| **Despliegue** | Hugging Face Spaces (Docker) |
 
 <br/>
 
@@ -638,28 +648,53 @@ debug_mode = True
 
 <br/>
 
-## ☁️ Despliegue en Producción
+## ☁️ Despliegue en Producción — Hugging Face Spaces
 
-La aplicación está configurada para desplegarse en **Vercel** en modo serverless con **Gunicorn**.
+La aplicación se despliega en **Hugging Face Spaces** con **Docker** y **Gunicorn** en el puerto **7860**.
 
-### Archivos de configuración relevantes
+### Pasos para crear el Space
 
-- `Dockerfile` — imagen para contenedores
-- `vercel.json` — configuración de rutas y runtime para Vercel
+1. Ve a [huggingface.co/new-space](https://huggingface.co/new-space)
+2. Elige **Docker** como SDK
+3. Copia el repo al Space: `git remote add hf https://<tu-usuario>:<HF_TOKEN>@huggingface.co/spaces/<tu-usuario>/<space-name>.git`
+4. Haz push: `git push hf master --force`
 
-### Variables de entorno en Vercel
+### Variables de entorno en HF Spaces
 
-Configurar las mismas variables del archivo `.env` directamente en el panel de Vercel bajo **Settings → Environment Variables**.
+Configurar en **Settings → Repository secrets** del Space:
+
+| Variable | Descripción |
+|---|---|
+| `SUPABASE_URL` | URL del proyecto Supabase |
+| `SUPABASE_ANON_KEY` | Clave anónima de Supabase |
+| `CLOUDINARY_CLOUD_NAME` | Nombre del cloud en Cloudinary |
+| `CLOUDINARY_API_KEY` | API Key de Cloudinary |
+| `CLOUDINARY_API_SECRET` | API Secret de Cloudinary |
+| `GOOGLE_CLIENT_ID` | Client ID de Google OAuth2 |
+| `FLASK_SECRET_KEY` | Clave secreta de Flask (generada aleatoriamente) |
+| `ACCESS_TOKEN_SECRET` | Clave para firmar Access Tokens JWT |
+| `REFRESH_TOKEN_SECRET` | Clave para firmar Refresh Tokens JWT |
+| `RESEND_API_KEY` | API Key de Resend (email, opcional) |
+
+### Deploy automático desde GitHub
+
+El workflow `.github/workflows/deploy.yml` hace push automático a HF Spaces en cada push a `master`.
+Requiere los siguientes GitHub Secrets:
+
+| Secret | Valor |
+|---|---|
+| `HF_TOKEN` | Token de Hugging Face con permiso `write` |
+| `HF_USERNAME` | Tu nombre de usuario en Hugging Face |
+| `HF_SPACE_NAME` | Nombre del Space creado en HF |
 
 ### Consideraciones de producción
 
-- El modo `debug_mode = False` en `app.py` debe mantenerse en producción
-- Las cookies `_at` y `_rt` se emiten con `Secure=True` y `SameSite=Strict` cuando no hay `FLASK_DEBUG`
-- Las sesiones Flask no tienen lifetime fijo (`permanent_session_lifetime` está configurado en 1 día como fallback)
+- El Dockerfile usa **usuario no-root con UID 1000** (requerido por HF Spaces)
+- Gunicorn corre con **2 workers** en el puerto **7860**
+- Las cookies `_at` y `_rt` se emiten con `Secure=True` y `SameSite=Strict`
 - El campo `MAX_CONTENT_LENGTH` admite hasta **50 MB** por subida (imágenes Cloudinary)
-- CORS está habilitado globalmente con `flask-cors`
-- Las cabeceras de seguridad se agregan vía `@app.after_request`: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`
 - Define siempre `ACCESS_TOKEN_SECRET` y `REFRESH_TOKEN_SECRET` para que los tokens no se invaliden al reiniciar
+- Las imágenes se almacenan en **Cloudinary** (el filesystem del Space no es persistente)
 
 <br/>
 

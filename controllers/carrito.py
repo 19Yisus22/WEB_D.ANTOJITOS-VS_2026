@@ -1,11 +1,18 @@
 import uuid
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, timedelta
 
 from flask import Blueprint, request, jsonify, session, render_template
 
 import helpers.models as db
 from helpers.auth import sin_cache, login_required, admin_required
 from helpers.validators import METODOS_PAGO_VALIDOS
+
+# Colombia: UTC-5 (sin horario de verano)
+_TZ_COL = timezone(timedelta(hours=-5))
+
+
+def _hoy_colombia() -> date:
+    return datetime.now(_TZ_COL).date()
 
 
 def _get_descuento_pct() -> float:
@@ -26,19 +33,20 @@ def _es_cumpleanos(usuario: dict) -> bool:
     try:
         if isinstance(fn, str):
             fn = date.fromisoformat(fn[:10])
-        hoy = date.today()
+        hoy = _hoy_colombia()
         return fn.month == hoy.month and fn.day == hoy.day
     except Exception:
         return False
 
 
 def _ya_uso_descuento_hoy(user_id: str) -> bool:
+    """Verifica si el usuario ya usó el descuento de cumpleaños hoy (hora Colombia)."""
     try:
-        hoy = date.today().isoformat()
+        hoy = _hoy_colombia().isoformat()
         facturas = db.factura_get_by_user(user_id)
         return any(
             (f.get("fecha_emision") or "")[:10] == hoy
-            and float(f.get("subtotal") or 0) > float(f.get("total") or 0) + 0.99
+            and float(f.get("subtotal") or 0) > float(f.get("total") or 0) + 0.01
             for f in facturas
         )
     except Exception:

@@ -5,31 +5,40 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-WORKDIR /app
-
+# Dependencias del sistema (como root, antes de cambiar a usuario sin privilegios)
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Hugging Face Spaces requiere usuario no-root con UID 1000 (OBLIGATORIO)
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
 
-COPY . .
+WORKDIR /home/user/app
 
+# Instalar dependencias Python como usuario
+COPY --chown=user:user requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copiar código fuente
+COPY --chown=user:user . .
+
+# Crear directorio de uploads si no existe
 RUN mkdir -p static/uploads
-RUN adduser --disabled-password --gecos "" appuser \
-    && chown -R appuser:appuser /app
-USER appuser
 
-EXPOSE 8000
+# Puerto estándar de Hugging Face Spaces
+EXPOSE 7860
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD curl -f http://localhost:8000/inicio || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:7860/inicio || exit 1
 
 CMD ["gunicorn", \
-     "--workers", "4", \
+     "--workers", "2", \
      "--worker-class", "sync", \
-     "--bind", "0.0.0.0:8000", \
+     "--bind", "0.0.0.0:7860", \
      "--timeout", "120", \
      "--keep-alive", "5", \
      "--access-logfile", "-", \
