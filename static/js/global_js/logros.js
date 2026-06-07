@@ -117,12 +117,83 @@
         setTimeout(() => toast.remove(), 380);
     }
 
-    /** API pública: mostrar uno o varios logros en esquina */
     window.mostrarLogros = function (logros) {
         if (!logros) return;
         const lista = Array.isArray(logros) ? logros : [logros];
         lista.forEach((l, i) => setTimeout(() => _mostrarLogro(l), i * 320));
     };
+
+    // ── Helpers localStorage ──────────────────────────────────
+    function _lsGetDays(modulo) {
+        try { return JSON.parse(localStorage.getItem(`_dantojitos_days_${modulo}`) || '[]'); } catch (_) { return []; }
+    }
+    function _lsSetDays(modulo, arr) {
+        localStorage.setItem(`_dantojitos_days_${modulo}`, JSON.stringify(arr));
+    }
+    function _lsGetStreak(modulo) {
+        try { return JSON.parse(localStorage.getItem(`_dantojitos_streak_${modulo}`) || '{"streak":0,"lastDay":""}'); } catch (_) { return { streak: 0, lastDay: '' }; }
+    }
+    function _lsSetStreak(modulo, obj) {
+        localStorage.setItem(`_dantojitos_streak_${modulo}`, JSON.stringify(obj));
+    }
+
+    // ── Sincronizar contadores con BD (POST) ──────────────────
+    async function _sincContadores(contadores) {
+        if (!contadores || !Object.keys(contadores).length) return;
+        try {
+            await fetch('/logros/contadores', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(contadores),
+            });
+        } catch (_) {}
+    }
+
+    // ── Cargar contadores de BD y fusionar con localStorage ───
+    async function _cargarYFusionarContadores(modulo) {
+        try {
+            const r = await fetch('/logros/contadores');
+            if (!r.ok) return null;
+            const db = await r.json();
+
+            // Fusionar: actualizar localStorage con el máximo de BD vs local
+            const todosModulos = Object.values(_RUTAS_MODULO.reduce((acc, [, m]) => { acc[m] = m; return acc; }, { inicio: 'inicio' }));
+            const modulosUnicos = [...new Set([...todosModulos, modulo])];
+
+            const actualizar = {};
+            for (const m of modulosUnicos) {
+                const vKey = `v_${m}`;
+                const sKey = `s_${m}`;
+                const dbVisit  = parseInt(db[vKey] || 0);
+                const dbStreak = parseInt(db[sKey] || 0);
+                const lsDays   = _lsGetDays(m);
+                const lsSD     = _lsGetStreak(m);
+
+                if (dbVisit > lsDays.length) {
+                    // BD tiene más días — generar fechas ficticias pasadas para rellenar
+                    const fechasNecesarias = dbVisit - lsDays.length;
+                    for (let i = fechasNecesarias; i >= 1; i--) {
+                        const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+                        if (!lsDays.includes(d)) lsDays.push(d);
+                    }
+                    _lsSetDays(m, lsDays);
+                }
+                if (dbStreak > (lsSD.streak || 0)) {
+                    _lsSetStreak(m, { streak: dbStreak, lastDay: lsSD.lastDay || new Date().toISOString().slice(0, 10) });
+                }
+
+                const nuevoVisit  = Math.max(dbVisit, lsDays.length);
+                const nuevoStreak = Math.max(dbStreak, lsSD.streak || 0);
+                if (nuevoVisit > dbVisit)  actualizar[vKey] = nuevoVisit;
+                if (nuevoStreak > dbStreak) actualizar[sKey] = nuevoStreak;
+            }
+
+            if (Object.keys(actualizar).length) _sincContadores(actualizar);
+            return db;
+        } catch (_) {
+            return null;
+        }
+    }
 
     // ── Verificación login (una vez por sesión de tab) ─────────
     if (!sessionStorage.getItem('_logros_login_ok')) {
@@ -136,31 +207,37 @@
         if (!modulo) return;
         const hoy = new Date().toISOString().slice(0, 10);
 
-        // Días únicos visitados
-        const daysKey = `_dantojitos_days_${modulo}`;
-        let days = [];
-        try { days = JSON.parse(localStorage.getItem(daysKey) || '[]'); } catch (_) {}
-        const esDiaNuevo = !days.includes(hoy);
-        if (esDiaNuevo) days.push(hoy);
-        localStorage.setItem(daysKey, JSON.stringify(days));
+        // Cargar BD primero (async), luego hacer tracking
+        _cargarYFusionarContadores(modulo).then(() => {
+            let days = _lsGetDays(modulo);
+            const esDiaNuevo = !days.includes(hoy);
+            if (esDiaNuevo) {
+                days.push(hoy);
+                _lsSetDays(modulo, days);
+            }
 
-        // Racha de días consecutivos
-        const streakKey = `_dantojitos_streak_${modulo}`;
-        let sd = { streak: 0, lastDay: '' };
-        try { sd = JSON.parse(localStorage.getItem(streakKey) || '{"streak":0,"lastDay":""}'); } catch (_) {}
-        let streak = sd.streak || 0;
-        if (esDiaNuevo) {
-            const ayer = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-            streak = sd.lastDay === ayer ? streak + 1 : 1;
-        }
-        localStorage.setItem(streakKey, JSON.stringify({ streak, lastDay: hoy }));
+            let sd = _lsGetStreak(modulo);
+            let streak = sd.streak || 0;
+            if (esDiaNuevo) {
+                const ayer = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+                streak = sd.lastDay === ayer ? streak + 1 : 1;
+                _lsSetStreak(modulo, { streak, lastDay: hoy });
+            }
 
-        setTimeout(() => {
-            window.verificarLogros({ tipo: 'visita', modulo, visit_count: days.length, streak_count: streak });
-        }, 2500);
+            const visitCount  = days.length;
+            const streakCount = streak;
+
+            // Persistir en BD si hay cambio
+            if (esDiaNuevo) {
+                _sincContadores({ [`v_${modulo}`]: visitCount, [`s_${modulo}`]: streakCount });
+            }
+
+            setTimeout(() => {
+                window.verificarLogros({ tipo: 'visita', modulo, visit_count: visitCount, streak_count: streakCount });
+            }, 2500);
+        });
     })();
 
-    /** Llama al backend para verificar logros y muestra los nuevos */
     window.verificarLogros = async function (contexto) {
         try {
             const r = await fetch('/logros/verificar', {
@@ -183,28 +260,29 @@
         legendario: { bg: 'linear-gradient(135deg,#c2410c,#f59e0b)', text: '#fbbf24' },
     };
 
-    function _valorCampo(campo, stats, rolStats) {
+    // ── Obtener valor de campo para barra de progreso ─────────
+    // contadores: objeto {v_modulo: N, s_modulo: N} desde BD
+    function _valorCampo(campo, stats, rolStats, contadores) {
         if (!campo) return 0;
         if (campo.startsWith('v_')) {
             const modulo = campo.slice(2);
-            try {
-                const raw = localStorage.getItem(`_dantojitos_days_${modulo}`);
-                return raw ? JSON.parse(raw).length : 0;
-            } catch (_) { return 0; }
+            const dbVal  = parseInt((contadores || {})[campo] || 0);
+            let lsVal = 0;
+            try { lsVal = _lsGetDays(modulo).length; } catch (_) {}
+            return Math.max(dbVal, lsVal);
         }
         if (campo.startsWith('s_')) {
             const modulo = campo.slice(2);
-            try {
-                const raw = localStorage.getItem(`_dantojitos_streak_${modulo}`);
-                return raw ? (JSON.parse(raw).streak || 0) : 0;
-            } catch (_) { return 0; }
+            const dbVal  = parseInt((contadores || {})[campo] || 0);
+            let lsVal = 0;
+            try { lsVal = _lsGetStreak(modulo).streak || 0; } catch (_) {}
+            return Math.max(dbVal, lsVal);
         }
         if (campo in (stats || {})) return Number(stats[campo]) || 0;
         if (campo in (rolStats || {})) return Number(rolStats[campo]) || 0;
         return 0;
     }
 
-    /** Renderiza logros agrupados por módulo en un contenedor */
     window.renderizarLogrosUsuario = async function (contenedorId) {
         const cont = document.getElementById(contenedorId);
         if (!cont) return;
@@ -213,10 +291,11 @@
             const r = await fetch('/logros/mis_logros');
             if (!r.ok) return;
             const data = await r.json();
-            const obtenidos = new Set((data.obtenidos || []).map(l => l.codigo_logro));
-            const todos     = data.todos || [];
-            const stats     = data.stats || {};
-            const rolStats  = data.rol_stats || {};
+            const obtenidos  = new Set((data.obtenidos || []).map(l => l.codigo_logro));
+            const todos       = data.todos || [];
+            const stats       = data.stats || {};
+            const rolStats    = data.rol_stats || {};
+            const contadores  = data.contadores || {};
 
             if (!todos.length) {
                 cont.innerHTML = '<p class="text-muted text-center">Sin logros disponibles</p>';
@@ -259,12 +338,12 @@
 
                     let barraHtml = '';
                     if (!desbloqueado && l.meta && l.campo) {
-                        const val = _valorCampo(l.campo, stats, rolStats);
+                        const val = _valorCampo(l.campo, stats, rolStats, contadores);
                         const pct = Math.min(100, Math.round(val / l.meta * 100));
                         let valFmt, metaFmt;
                         const esMoney = l.campo.includes('gastado') || l.campo.includes('gasto');
-                        const esDias  = l.campo.startsWith('v_') || l.campo.startsWith('s_') || l.campo === 'dias_registrado';
                         const esRacha = l.campo.startsWith('s_');
+                        const esDias  = l.campo.startsWith('v_') || esRacha || l.campo === 'dias_registrado';
                         if (esMoney) {
                             const fmt = n => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
                             valFmt  = fmt(val);

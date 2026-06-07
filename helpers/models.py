@@ -35,4 +35,5 @@ from database.models import (
     mp_staff_marcar_leidos, mp_staff_no_leidos,
     logros_sembrar, usuario_logros_get, usuario_logro_award,
     usuario_stats_logros, sistema_stats_logros, usuario_pedido_repetido,
+    logros_contadores_get, logros_contadores_upsert_many,
 )

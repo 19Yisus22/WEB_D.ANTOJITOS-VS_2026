@@ -937,3 +937,26 @@ def usuario_pedido_repetido(cedula: str) -> bool:
         return any(v >= 3 for v in conteo.values())
     except Exception:
         return False
+
+
+# ── Contadores persistentes de logros (visitas, rachas) ───────────────────────
+
+def logros_contadores_get(cedula: str) -> dict:
+    """Devuelve {clave: valor} con todos los contadores del usuario desde la BD."""
+    rows = _many(_run_safe(
+        _db().table("logros_contadores").select("clave,valor").eq("cedula", cedula)
+    ))
+    return {r["clave"]: int(r["valor"]) for r in rows}
+
+
+def logros_contadores_upsert_many(cedula: str, contadores: dict) -> None:
+    """Guarda/actualiza múltiples contadores (clave→valor) para el usuario."""
+    if not contadores:
+        return
+    rows = [
+        {"cedula": cedula, "clave": k, "valor": int(v)}
+        for k, v in contadores.items()
+        if isinstance(v, (int, float)) and v >= 0
+    ]
+    if rows:
+        _run(_db().table("logros_contadores").upsert(rows, on_conflict="cedula,clave"))

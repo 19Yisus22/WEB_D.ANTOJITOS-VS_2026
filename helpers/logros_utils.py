@@ -412,9 +412,31 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     valor_carrito    = float(contexto.get("valor_carrito", 0) or 0)
 
     modulo_visita = (contexto.get("modulo") or "").lower()
-    visit_count   = int(contexto.get("visit_count", 0) or 0)
-    streak_count  = int(contexto.get("streak_count", 0) or 0)
     es_visita     = contexto.get("tipo") == "visita"
+
+    # Contadores persistentes en BD — fuente de verdad para visitas y rachas
+    db_contadores: dict = {}
+    if es_visita and modulo_visita:
+        try:
+            db_contadores = db.logros_contadores_get(cedula)
+        except Exception:
+            db_contadores = {}
+
+    v_key = f"v_{modulo_visita}"
+    s_key = f"s_{modulo_visita}"
+    db_visit  = int(db_contadores.get(v_key, 0))
+    db_streak = int(db_contadores.get(s_key, 0))
+
+    # Tomar el máximo entre lo que reporta el cliente y lo guardado en BD
+    visit_count  = max(int(contexto.get("visit_count", 0) or 0), db_visit)
+    streak_count = max(int(contexto.get("streak_count", 0) or 0), db_streak)
+
+    # Persistir el valor máximo en BD para que sea disponible en cualquier dispositivo
+    if es_visita and modulo_visita and (visit_count > db_visit or streak_count > db_streak):
+        try:
+            db.logros_contadores_upsert_many(cedula, {v_key: visit_count, s_key: streak_count})
+        except Exception:
+            pass
     es_login      = contexto.get("tipo") == "login"
     es_compra     = contexto.get("tipo") == "compra"
     es_comentario = contexto.get("tipo") == "comentario"
