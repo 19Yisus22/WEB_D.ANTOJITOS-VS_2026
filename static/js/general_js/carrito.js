@@ -37,7 +37,7 @@ function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
     mostrarAlertaPublica({ imagen, titulo, mensaje: descripcion, tipo: isError ? 'error' : 'info' });
 }
 
-/* ── Recalcula el total sumando los subtotales de cada fila ── */
+
 function recalcularTotal() {
     let total = 0;
     document.querySelectorAll('.cart-item[data-subtotal]').forEach(r => {
@@ -63,7 +63,7 @@ function recalcularTotal() {
     actualizarContadorBadge(totalQty);
 }
 
-/* ── Ajusta la cantidad de un ítem (+1 / -1) sin recargar la página ── */
+
 async function ajustarCantidad(id_carrito, delta, row, idProducto) {
     if (isRequesting) return;
     isRequesting = true;

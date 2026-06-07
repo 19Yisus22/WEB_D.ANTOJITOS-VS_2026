@@ -12,9 +12,9 @@ const monitorConexion = {
     iniciar() {
         setTimeout(() => this.obtenerUsuariosActivos(), 500);
         this.intervaloConteo = setInterval(() => this.obtenerUsuariosActivos(), 15000);
-        
+
         if (!USER_CONFIG.isLogged) return;
-        
+
         this.enviarSenal();
         this.intervalo = setInterval(() => this.enviarSenal(), this.frecuencia);
     },
@@ -36,7 +36,7 @@ const monitorConexion = {
         try {
             const res = await fetch("/usuarios_activos_conteo");
             const indicador = document.getElementById("statusCounter");
-            
+
             if (!indicador) return;
 
             if (res.ok) {
@@ -82,9 +82,9 @@ document.addEventListener('click', (e) => {
     }
 });
 
-/* ── Sistema de adjuntos (imágenes) ── */
 
-let _pendingImages = []; // [{data: 'data:...', nombre: '...', size: n}]
+
+let _pendingImages = [];
 
 function _actualizarPreviewImagenes() {
     const area = document.getElementById('imagenesPreview');
@@ -126,7 +126,7 @@ function _agregarImagenAlChat(file) {
 function adjuntarImagenDesdeArchivo(input) {
     if (input.files && input.files[0]) {
         _agregarImagenAlChat(input.files[0]);
-        input.value = ''; // reset para poder subir la misma imagen de nuevo
+        input.value = '';
     }
 }
 
@@ -143,9 +143,9 @@ function _abrirImagenAmpliada(src) {
     modal.style.display = 'flex';
 }
 
-/* ── Helpers del editor WYSIWYG ── */
 
-/** Devuelve el ancestro .chat-list-item del nodo dado, si existe dentro del editor */
+
+
 function _getParentListItem(node) {
     while (node && node !== mensajeInput) {
         if (node.nodeType === 1 && node.classList?.contains('chat-list-item')) return node;
@@ -154,14 +154,14 @@ function _getParentListItem(node) {
     return null;
 }
 
-/** Aplica/quita negrita, cursiva o subrayado sobre la selección con previsualización */
+
 function applyRichFormat(command) {
     mensajeInput.focus();
     document.execCommand(command, false, null);
     _updateToolbarState();
 }
 
-/** Inserta un ítem de lista en la posición actual (sin newline previo, con indentación) */
+
 function insertListItem() {
     mensajeInput.focus();
     const sel = window.getSelection();
@@ -171,27 +171,27 @@ function insertListItem() {
     const existingItem = _getParentListItem(range.startContainer);
 
     if (existingItem) {
-        // Ya está en un list-item: quitar el formato de lista
+
         const text = document.createTextNode(
-            existingItem.textContent           // quita el bullet del ::before
+            existingItem.textContent
         );
         existingItem.replaceWith(text);
-        // Colocar cursor al final del texto insertado
+
         const newRange = document.createRange();
         newRange.setStartAfter(text);
         newRange.collapse(true);
         sel.removeAllRanges();
         sel.addRange(newRange);
     } else {
-        // Insertar un nuevo ítem de lista (el '•' viene del CSS ::before, no del texto)
+
         const selectedText = range.toString();
-        // Borramos la selección primero
+
         range.deleteContents();
         const div = document.createElement('div');
         div.className = 'chat-list-item';
-        div.textContent = selectedText;   // sin bullet en el DOM — lo pone CSS
+        div.textContent = selectedText;
         range.insertNode(div);
-        // Poner cursor al final del ítem recién insertado
+
         const newRange = document.createRange();
         newRange.setStart(div, div.childNodes.length || 0);
         newRange.collapse(true);
@@ -201,7 +201,7 @@ function insertListItem() {
     _updateToolbarState();
 }
 
-/** Maneja Enter dentro de un list-item: continúa la lista o la termina si está vacía */
+
 mensajeInput.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' || e.shiftKey) return;
 
@@ -213,13 +213,13 @@ mensajeInput.addEventListener('keydown', function (e) {
     e.preventDefault();
 
     if (listItem.textContent.trim() === '') {
-        // Ítem vacío → salir del modo lista
+
         listItem.replaceWith(document.createElement('br'));
     } else {
-        // Crear nuevo ítem de lista (indentado, sin newline visible)
+
         const newItem = document.createElement('div');
         newItem.className = 'chat-list-item';
-        newItem.innerHTML = '&#8203;'; // zero-width space para que el div no colapse
+        newItem.innerHTML = '&#8203;';
         listItem.after(newItem);
         const range = document.createRange();
         range.setStart(newItem, 0);
@@ -229,13 +229,13 @@ mensajeInput.addEventListener('keydown', function (e) {
     }
 });
 
-/** Actualiza el estado visual (is-active) de los botones de formato según la selección */
+
 function _updateToolbarState() {
     ['bold', 'italic', 'underline'].forEach(cmd => {
         const btn = document.querySelector(`[data-format="${cmd}"]`);
         if (btn) btn.classList.toggle('is-active', document.queryCommandState(cmd));
     });
-    // Estado botón de lista
+
     const sel = window.getSelection();
     const btnLista = document.getElementById('btnListado');
     if (btnLista && sel && sel.rangeCount) {
@@ -248,11 +248,11 @@ mensajeInput.addEventListener('keyup',   _updateToolbarState);
 mensajeInput.addEventListener('mouseup', _updateToolbarState);
 mensajeInput.addEventListener('input',   ajustarAlturaInput);
 
-/** Intercepta paste: texto plano O imagen del clipboard */
+
 mensajeInput.addEventListener('paste', function(e) {
     const clipData = e.clipboardData || window.clipboardData;
 
-    // Detectar si hay imagen en el clipboard
+
     const items = clipData.items || [];
     for (const item of items) {
         if (item.type.startsWith('image/')) {
@@ -263,7 +263,7 @@ mensajeInput.addEventListener('paste', function(e) {
         }
     }
 
-    // Sin imagen: pegar texto plano
+
     e.preventDefault();
     let text = clipData.getData('text/plain') || '';
     text = text.replace(/<[^>]*>/g, '');
@@ -271,7 +271,7 @@ mensajeInput.addEventListener('paste', function(e) {
     ajustarAlturaInput();
 });
 
-/** Inserta emoji en la posición del cursor */
+
 function insertEmoji(emoji) {
     mensajeInput.focus();
     document.execCommand('insertText', false, emoji);
@@ -280,24 +280,24 @@ function insertEmoji(emoji) {
     if (panel) panel.style.display = 'none';
 }
 
-/** Ajusta altura del editor al contenido */
+
 function ajustarAlturaInput() {
     mensajeInput.style.height = 'auto';
     mensajeInput.style.height = Math.min(mensajeInput.scrollHeight, 150) + 'px';
 }
 
-/** Devuelve el HTML limpio del editor para enviar al servidor */
+
 function _getEditorContent() {
     return mensajeInput.innerHTML.trim();
 }
 
-/** Limpia el editor */
+
 function _clearEditor() {
     mensajeInput.innerHTML = '';
     ajustarAlturaInput();
 }
 
-/** Carga contenido en el editor (al editar un mensaje existente) */
+
 function _setEditorContent(html) {
     mensajeInput.innerHTML = html;
     ajustarAlturaInput();
@@ -332,7 +332,7 @@ async function toggleLike(id) {
     const icon = container.querySelector('.btn-like-mini i');
     const span = container.querySelector('.btn-like-mini small');
     let currentCount = parseInt(span.innerText);
-    
+
     if (icon.classList.contains('bi-heart')) {
         icon.classList.replace('bi-heart', 'bi-heart-fill');
         icon.classList.add('text-danger');
@@ -345,9 +345,9 @@ async function toggleLike(id) {
 
     try {
         const res = await fetch(`/comentarios/${id}/like`, { method: "POST" });
-        if (!res.ok) await cargarComentarios(); 
-    } catch (e) { 
-        await cargarComentarios(); 
+        if (!res.ok) await cargarComentarios();
+    } catch (e) {
+        await cargarComentarios();
     }
 }
 
@@ -363,9 +363,9 @@ function renderComentario(c) {
     wrapper.className = `d-flex mb-4 ${esMio ? 'flex-row-reverse' : 'flex-row'} align-items-end gap-2`;
     wrapper.id = `msg-${c.id}`;
     const estadoClase = info.conectado ? 'estado-conectado' : 'estado-desconectado';
-    
-    // Compatibilidad hacia atrás: convierte markdown antiguo a HTML;
-    // los mensajes nuevos ya vienen como HTML del editor WYSIWYG.
+
+
+
     const mensajeFormateado = c.mensaje
         .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
         .replace(/_(.*?)_/gs,       '<em>$1</em>');
@@ -473,8 +473,8 @@ async function cargarComentarios() {
 
 function abrirConfirmacion(id) {
     showConfirmCustom(
-        "Eliminar Comentario", 
-        "¿Estás seguro de que deseas eliminar este mensaje?", 
+        "Eliminar Comentario",
+        "¿Estás seguro de que deseas eliminar este mensaje?",
         () => ejecutarEliminacionDirecta(id)
     );
 }
@@ -520,7 +520,7 @@ sendBtn.onclick = async () => {
         });
         if (res.ok) {
             const data = await res.json();
-            // Mostrar logros desbloqueados
+
             if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) {
                 window.mostrarLogros(data.logros_nuevos);
             }
@@ -545,10 +545,7 @@ window.onload = () => {
     }
 };
 
-/* ══════════════════════════════════════════════════
-   RESPUESTA PÚBLICA INDIVIDUAL (admin / vendedor)
-   Coloca una cita en el editor del chat público
-   ══════════════════════════════════════════════════ */
+
 let _replyTargetId = null;
 
 function responderPublicamente(id, nombre, extracto) {
@@ -568,7 +565,7 @@ function cancelarRespuesta() {
     if (quoteEl) quoteEl.style.display = 'none';
 }
 
-// Override sendBtn para incluir la cita si hay respuesta activa
+
 const _origSendClick = sendBtn.onclick;
 sendBtn.onclick = async function() {
     if (_replyTargetId) {
@@ -602,9 +599,7 @@ sendBtn.onclick = async function() {
     _origSendClick.call(this);
 };
 
-/* ══════════════════════════════════════════════════
-   SISTEMA DE TABS
-   ══════════════════════════════════════════════════ */
+
 function switchTab(tab) {
     const panelPub  = document.getElementById('panelPublico');
     const panelPriv = document.getElementById('panelPrivado');
@@ -625,7 +620,7 @@ function switchTab(tab) {
         tabPriv?.classList.add('active');
         if (titleEl) titleEl.textContent = 'Mensajes Privados';
         _cargarPanelPrivado();
-        // Limpiar badge al abrir
+
         _setBadgePrivado(0);
     }
 }

@@ -1,18 +1,15 @@
-﻿/* ── Formateador global de pesos colombianos (COP) ────────────────────────────
-   Uso: fmtCOP(50000) → "$50.000"   fmtCOP(1500000) → "$1.500.000"         */
+﻿
 function fmtCOP(n) {
     return Number(n).toLocaleString('es-CO', {
         style: 'currency', currency: 'COP', maximumFractionDigits: 0
     });
 }
 
-/* ── Mapa de deduplicación: clave → timestamp de expiración ── */
+
 const _alertaDedup = new Map();
 
 function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
-    /* Deduplicación global: el mismo mensaje no se muestra de nuevo
-       hasta que el toast anterior haya desaparecido + 300ms de margen.
-       Evita duplicados por polls concurrentes, foco, y eventos de storage. */
+
     const ahora = Date.now();
     const expira = _alertaDedup.get(mensaje);
     if (expira && ahora < expira) return;
@@ -108,7 +105,7 @@ function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
     setTimeout(eliminar, duracionMs);
 }
 
-// ——— TOAST PÚBLICO (fondo oscuro, con imagen) — modelo: catalogo.js / inicio ———
+
 const _notifIdSet = new Set();
 
 function mostrarAlertaPublica({
@@ -211,7 +208,7 @@ function mostrarAlertaPublica({
     setTimeout(remove, duracion);
 }
 
-// ——— CONFIRM MODAL — modelo: pedidos.js ———
+
 function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
     const existing = document.getElementById('appModalConfirm');
     if (existing) existing.remove();
@@ -326,7 +323,7 @@ function initScrollProgressBar() {
     update();
 }
 
-// ——— NOTIFICACIONES NAVEGADOR (una sola vez) ———
+
 function solicitarPermisosNotificacion() {
     if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') return;
@@ -344,7 +341,7 @@ function lanzarNotificacionNativa(titulo, cuerpo, icono = '/static/uploads/logo.
     } catch (e) { console.warn('Notificación nativa no disponible'); }
 }
 
-// ——— AUDIO INTERNO ———
+
 function _playNotifSound(type = 'default') {
     if (_isNotifMuted()) return;
     try {
@@ -352,7 +349,7 @@ function _playNotifSound(type = 'default') {
         if (!AudioCtx) return;
         const ctx = new AudioCtx();
 
-        /* Toca una nota: sine + triángulo para timbre cálido */
+
         const _nota = (freq, start, dur, vol = 0.07) => {
             [['sine', 1.0], ['triangle', 0.35]].forEach(([type, amp]) => {
                 const osc  = ctx.createOscillator();
@@ -371,19 +368,19 @@ function _playNotifSound(type = 'default') {
 
         const t = ctx.currentTime;
         if (type === 'error') {
-            /* Dos notas descendentes suaves */
-            _nota(440, t,        0.22, 0.045); // A4
-            _nota(311, t + 0.13, 0.28, 0.04);  // Eb4
+
+            _nota(440, t,        0.22, 0.045);
+            _nota(311, t + 0.13, 0.28, 0.04);
         } else {
-            /* Campanita ascendente: C5 → G5 → C6 */
-            _nota(523.25, t,        0.28, 0.07);  // C5
-            _nota(783.99, t + 0.13, 0.30, 0.06);  // G5
-            _nota(1046.5, t + 0.25, 0.22, 0.04);  // C6
+
+            _nota(523.25, t,        0.28, 0.07);
+            _nota(783.99, t + 0.13, 0.30, 0.06);
+            _nota(1046.5, t + 0.25, 0.22, 0.04);
         }
     } catch (_) {}
 }
 
-/* ── Helper para enviar mensajes al SW sin bloquear ── */
+
 function _swPost(data) {
     try {
         if (navigator.serviceWorker?.controller) {
@@ -392,7 +389,7 @@ function _swPost(data) {
     } catch (_) {}
 }
 
-/* ── Listener SW: sincroniza tema/idioma desde otras pestañas ── */
+
 let _swSyncBusy = false;
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', ev => {
@@ -405,7 +402,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ——— TEMA CLARO / OSCURO ———
+
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('dantojitos_theme', theme);
@@ -440,7 +437,7 @@ function toggleTheme() {
     setTheme(current === 'dark' ? 'light' : 'dark');
 }
 
-//  PANEL GLOBAL DE NOTIFICACIONES — funciona en TODAS las páginas
+
 
 let _notifPanelOpenGlobal = false;
 let _sistemPanelOpen = false;
@@ -474,10 +471,7 @@ function toggleSistemPanel() {
     }
 }
 
-/* ── Persistencia de vistos en pedidos (localStorage, sobrevive sesión) ──
-   Clave compuesta "id_pedido|estado" para que un cambio de estado
-   vuelva a mostrar la notificación aunque el pedido ya fue visto antes.
-── */
+
 const _PEDIDOS_VISTOS_KEY = '_dantojitos_pedidos_vistos';
 function _getPedidosVistos() {
     try { return JSON.parse(localStorage.getItem(_PEDIDOS_VISTOS_KEY) || '[]'); }
@@ -520,7 +514,7 @@ async function cargarNotificacionesSistema() {
         list.innerHTML = '';
 
         const vistos = _getPedidosVistos();
-        /* Sólo mostramos los NO vistos (clave compuesta id|estado) */
+
         const pendientes = (Array.isArray(data) ? data : [])
             .filter((n, i) => !vistos.includes(_makePedidoKey(n.id_pedido ?? i, n.estado)));
 
@@ -573,7 +567,7 @@ async function cargarNotificacionesSistema() {
                 </div>`;
             list.appendChild(li);
         });
-    } catch { /* silent */ }
+    } catch {  }
 }
 
 async function cargarNotificacionesAdmin() {
@@ -590,7 +584,7 @@ async function cargarNotificacionesAdmin() {
         if (count) count.textContent = total;
         if (empty) empty.style.display = total ? 'none' : 'flex';
 
-        // Solo actualiza el badge de publicidad (navPubBadge), nunca el de pedidos (navBellBadge)
+
         const pubCount = document.getElementById('notifCount');
         const pubBadge = document.getElementById('navPubBadge');
         const activas  = Array.isArray(data) ? data.filter(n => n.estado).length : 0;
@@ -623,7 +617,7 @@ async function cargarNotificacionesAdmin() {
                 </div>`;
             list.appendChild(li);
         });
-    } catch { /* silent */ }
+    } catch {  }
 }
 
 async function toggleNotifEstado(id, estado) {
@@ -649,7 +643,7 @@ async function eliminarNotif(id) {
     });
 }
 
-/* Helper global para fallback de imágenes en bandejas (evita comillas rotas en onerror+innerHTML) */
+
 function _notifImgFallback(img, icon, color) {
     if (!img || !img.parentNode) return;
     const i = document.createElement('i');
@@ -665,9 +659,7 @@ function _notifImgFallbackCover(img, icon, color) {
     img.parentNode.replaceChild(i, img);
 }
 
-/* ══════════════════════════════════════════════════════
-   BANDEJA DE NOTIFICACIONES — CLIENTE (localStorage)
-   ══════════════════════════════════════════════════════ */
+
 const _CLIENT_NOTIF_KEY = '_dantojitos_client_notifs';
 const _CLIENT_SEEN_KEY  = '_dantojitos_client_seen';
 const _CLIENT_NOTIF_MAX = 30;
@@ -685,17 +677,17 @@ function _syncMuteUI() {
         btn.title  = muted ? 'Activar notificaciones' : 'Silenciar notificaciones';
         btn.classList.toggle('muted', muted);
     });
-    /* Icono de la campana principal */
+
     ['navClientBellBtn','navBellBtn'].forEach(id => {
         const icon = document.querySelector(`#${id} i`);
         if (icon) icon.className = muted ? 'bi bi-bell-slash-fill' : 'bi bi-bell-fill';
     });
-    /* Si se silencia, ocultar todos los badges numéricos */
+
     if (muted) {
         ['navClientBellBadge','navBellBadge','clientNotifCount','sistemCount','navPubBadge','notifCount']
             .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     } else {
-        /* Restaurar conteos reales */
+
         _renderClientNotifs();
         if (document.getElementById('navBellBadge'))    cargarNotificacionesSistema();
         if (document.getElementById('notifAdminPanel')) cargarNotificacionesAdmin();
@@ -829,12 +821,9 @@ function toggleClientNotifPanel() {
     _clientPanelOpen = _togglePanel('clientNotifPanel','clientNotifBody','clientNotifChevron','navClientBellBtn', _clientPanelOpen, _renderClientNotifs);
 }
 
-/* ══════════════════════════════════════════════════════
-   MONITOR GLOBAL DE STOCK — visible para TODOS los roles
-   Detecta productos agotados y disponibles en tiempo real
-   ══════════════════════════════════════════════════════ */
 
-/* Empuja una notificación de stock al panel del sistem (admin/vendedor) */
+
+
 function _pushStockToSistemPanel(p, tipo) {
     const list = document.getElementById('sistemList');
     if (!list) return;
@@ -902,9 +891,9 @@ function _pushStockToSistemPanel(p, tipo) {
                         idUnico:  `agotado-${p.id_producto}-${Date.now()}`,
                         sonido:  true,
                     });
-                    /* Bandeja cliente */
+
                     _pushClientNotif({ tipo:'agotado', titulo:'¡Agotado!', mensaje: p.nombre + ' no tiene stock', imagen: p.imagen_url });
-                    /* Panel sistem admin/vendedor */
+
                     _pushStockToSistemPanel({ ...p, stock: curr }, 'agotado');
 
                 } else if (prev <= 0 && curr > 0) {
@@ -917,15 +906,15 @@ function _pushStockToSistemPanel(p, tipo) {
                         idUnico:  `disponible-${p.id_producto}-${Date.now()}`,
                         sonido:  true,
                     });
-                    /* Bandeja cliente */
+
                     _pushClientNotif({ tipo:'disponible', titulo:'¡Disponible!', mensaje: p.nombre + ' · ' + curr + ' unidades', imagen: p.imagen_url });
-                    /* Panel sistem admin/vendedor */
+
                     _pushStockToSistemPanel({ ...p, stock: curr }, 'disponible');
                 }
 
                 _stockSnapshot[p.id_producto] = curr;
             });
-        } catch { /* silente */ }
+        } catch {  }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -934,7 +923,7 @@ function _pushStockToSistemPanel(p, tipo) {
     });
 })();
 
-/* ── Animación de badge cuando llega una nueva notificación ── */
+
 function _animateBadge(badgeEl) {
     if (!badgeEl || _isNotifMuted()) return;
     badgeEl.style.transition = 'none';
@@ -946,21 +935,21 @@ function _animateBadge(badgeEl) {
     }, 80);
 }
 
-/* ── Polling de notificaciones del sistema en background ── */
+
 let _lastBellCount = 0;
 let _lastPrivCv    = -1;
 let _lastPrivStaff = -1;
 
 async function _pollSistemNotif() {
     const badge = document.getElementById('navBellBadge');
-    if (!badge) return;                          // No hay campana → no es admin/vendedor
+    if (!badge) return;
     await cargarNotificacionesSistema();
     const cnt = parseInt(badge.textContent || '0', 10);
     if (cnt > _lastBellCount) _animateBadge(badge);
     _lastBellCount = cnt;
 }
 
-/* ── Cierra todos los paneles de notificación abiertos ── */
+
 function _cerrarTodosPaneles(exceptId) {
     if (_clientPanelOpen && exceptId !== 'clientNotifPanel') {
         _clientPanelOpen = _togglePanel('clientNotifPanel','clientNotifBody','clientNotifChevron','navClientBellBtn', true, null);
@@ -978,28 +967,28 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrollProgressBar();
     solicitarPermisosNotificacion();
     setTheme(localStorage.getItem('dantojitos_theme') || 'light');
-    _syncMuteUI();   /* Restaurar estado de silencio persistido */
+    _syncMuteUI();
     if (document.getElementById('notifAdminPanel')) cargarNotificacionesAdmin();
 
-    /* Polling: cada 12 s para admin/vendedor que tienen la campana */
+
     if (document.getElementById('navBellBadge')) {
         setTimeout(_pollSistemNotif, 2000);
         setInterval(_pollSistemNotif, 12000);
     }
 
-    /* Cargar bandeja del cliente desde localStorage al iniciar y limpiar automáticamente */
+
     if (document.getElementById('clientNotifList')) {
         _renderClientNotifs();
         _clientNotifClearAll();
     }
 
-    /* Polling mensajes privados: cliente (campana naranja) y admin/vendedor (campana gris) */
+
     if (document.getElementById('navClientBellBadge') || document.getElementById('navBellBadge')) {
         setTimeout(_pollPrivMsgs, 4000);
         setInterval(_pollPrivMsgs, 20000);
     }
 
-    /* Etiqueta de versión: cicla colores aleatorios */
+
     (function () {
         const _vl = document.getElementById('versionLabel');
         if (!_vl) return;
@@ -1011,7 +1000,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2200);
     })();
 
-    /* Cerrar bandeja de notificaciones al clic fuera de ella */
+
     document.addEventListener('click', function(e) {
         const pares = [
             { panel: 'clientNotifPanel', btn: 'navClientBellBtn' },
@@ -1029,12 +1018,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, true);
 });
 
-/* ══════════════════════════════════════════════════
-   SISTEMA TICKER DE CINTAS PUBLICITARIAS
-   Muestra ítems uno a uno: entra desde la derecha,
-   permanece visible y sale por la izquierda.
-   La velocidad se persiste en localStorage.
-   ══════════════════════════════════════════════════ */
+
 
 const _TICKER_SPEED_KEY = '_dantojitos_ticker_speed';
 
@@ -1044,25 +1028,25 @@ window.saveTickerSpeed = (v) => localStorage.setItem(_TICKER_SPEED_KEY, String(v
 window.setTickerSpeed  = function(speed) {
     window.saveTickerSpeed(speed);
 
-    /* .promo-track — cinta catálogo (legado) */
+
     document.querySelectorAll('.promo-track').forEach(track => {
         const base = parseFloat(track.dataset.baseDuration || '25');
         track.style.animationDuration = (base / speed).toFixed(1) + 's';
     });
 
-    /* .ci-track (inicio) y .payment-track (footer) — misma lógica de duración */
+
     document.querySelectorAll('.ci-track, .payment-track').forEach(track => {
         const base = parseFloat(track.dataset.baseDuration || '25');
         track.style.animationDuration = (base / speed).toFixed(1) + 's';
     });
 
-    /* Actualiza botones de la UI */
+
     document.querySelectorAll('.ticker-speed-btn').forEach(btn => {
         btn.classList.toggle('active', parseFloat(btn.dataset.speed) === speed);
     });
 };
 
-/* Al cargar, aplica velocidad guardada a todas las cintas */
+
 document.addEventListener('DOMContentLoaded', () => {
     const savedSpeed = window.getTickerSpeed();
     if (savedSpeed !== 1) {
@@ -1074,20 +1058,19 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 class PromoBannerTicker {
-    /* @param {HTMLElement} track — el elemento .promo-ticker-track dentro del banner
-     * @param {Array}       items — objetos {imagen_url, titulo, descripcion}          */
+
     constructor(track, items) {
         this._track   = track;
         this._items   = items;
         this._idx     = 0;
         this._timer   = null;
         this._speed   = window.getTickerSpeed();
-        /* Duración base de permanencia por ítem (ms) a velocidad 1× */
+
         this._DWELL   = 3800;
-        /* Duración de la transición CSS (ms) — debe coincidir con el CSS */
+
         this._ENTER   = 680;
         this._EXIT    = 540;
-        /* Registrar en el pool global */
+
         if (!window._activeTickers) window._activeTickers = [];
         window._activeTickers.push(this);
     }
@@ -1107,11 +1090,11 @@ class PromoBannerTicker {
         if (!this._track || !this._items.length) return;
         const item = this._items[idx % this._items.length];
 
-        /* ── construir el nuevo ítem fuera de la vista (derecha) ── */
+
         const el = document.createElement('div');
         el.className = 'promo-ticker-item';
         el.innerHTML = this._html(item);
-        /* Empieza dentro del borde derecho del banner (60% hacia la derecha) */
+
         el.style.cssText = `
             position:absolute;inset:0;display:flex;align-items:center;
             justify-content:center;padding:0 50px;
@@ -1121,30 +1104,29 @@ class PromoBannerTicker {
             pointer-events:none;`;
         this._track.appendChild(el);
 
-        /* ── Entra al centro ── */
+
         requestAnimationFrame(() => requestAnimationFrame(() => {
             el.style.transform = 'translateX(0)';
             el.style.opacity   = '1';
         }));
 
-        /* ── Programa la salida ── */
+
         const dwell = this._DWELL / this._speed;
         this._timer = setTimeout(() => {
-            /* Expulsa a la izquierda */
+
             el.style.transition = `transform ${this._EXIT}ms cubic-bezier(0.55,0,0.8,0),opacity ${this._EXIT * 0.6 | 0}ms ease`;
             el.style.transform  = 'translateX(-65%)';
             el.style.opacity    = '0';
             setTimeout(() => { if (el.parentNode) el.remove(); }, this._EXIT + 80);
 
-            /* Siguiente ítem */
+
             this._idx = (idx + 1) % this._items.length;
             this._timer = setTimeout(() => this._show(this._idx), 60);
         }, dwell + this._ENTER);
     }
 
     _html(item) {
-        /* Estilos inline para funcionar en CUALQUIER módulo sin depender
-           de style_catalogo.css ni style_inicio.css                     */
+
         const imgS = [
             'width:56px;height:56px;object-fit:cover',
             'border-radius:14px;border:2px solid rgba(255,255,255,0.22)',
@@ -1189,7 +1171,7 @@ class PromoBannerTicker {
     }
 }
 
-/* ── Helpers bandeja sistema (pedidos) ── */
+
 window._marcarVistoPedido = function(btn, id) {
     _savePedidoVisto(id);
     const li = btn.closest('.notif-item');
@@ -1202,12 +1184,12 @@ window._marcarVistoPedido = function(btn, id) {
 };
 
 window._pedidosMarcarTodo = function() {
-    /* Persistir todas las claves visibles (id|estado) como vistos */
+
     const items = [...document.querySelectorAll('#sistemList .notif-item')];
     const claves = items.map(li => li.dataset.pedidoClave || li.dataset.pedidoId).filter(Boolean);
     _saveAllPedidosVistos(claves);
 
-    /* Animar salida en cascada */
+
     items.forEach((li, i) => {
         setTimeout(() => {
             li.style.transition = 'opacity 0.2s, transform 0.2s';
@@ -1217,7 +1199,7 @@ window._pedidosMarcarTodo = function() {
         }, i * 45);
     });
 
-    /* Feedback en el botón */
+
     const readAllBtn = document.getElementById('sistemReadAllBtn');
     if (readAllBtn) {
         readAllBtn.innerHTML = '<i class="bi bi-check2-all"></i><span class="notif-read-label">Listo ✓</span>';
@@ -1231,10 +1213,7 @@ window._pedidosMarcarTodo = function() {
     }
 };
 
-/* ══════════════════════════════════════════════════════
-   NOTIFICACIONES DE MENSAJES PRIVADOS — todos los roles
-   Persisten hasta que el usuario presione "leído".
-   ══════════════════════════════════════════════════════ */
+
 
 const _PRIV_STATE_KEY = '_dantojitos_priv_state';
 function _getPrivState() {
@@ -1242,13 +1221,13 @@ function _getPrivState() {
 }
 function _savePrivState(s) { localStorage.setItem(_PRIV_STATE_KEY, JSON.stringify(s)); }
 
-/* Solo muestra si count supera el umbral en que el usuario marcó "leído" */
+
 function _privShouldShow(tipo, count) {
     if (count <= 0) return false;
     return count > ((_getPrivState()[tipo] || {}).dismissedAtCount ?? -1);
 }
 
-/* Cuando count baja a 0 (mensajes leídos en servidor) se resetea el umbral */
+
 function _privResetIfZero(tipo, prev, curr) {
     if (curr === 0 && prev > 0) {
         const state = _getPrivState();
@@ -1399,10 +1378,7 @@ window._publicidadMarcarTodo = async function() {
     if (navPub) navPub.style.display = 'none';
 };
 
-/* ══════════════════════════════════════════════════════
-   NOTIFICACIÓN AUTOMÁTICA — perfil incompleto
-   Se muestra una vez por sesión si la cédula es generada (G-).
-   ══════════════════════════════════════════════════════ */
+
 const _AVATAR_PALETTES = [
     ['#d35400','#e67e22'],
     ['#1a6fa8','#2980b9'],
@@ -1456,12 +1432,12 @@ function _cloudinaryThumb(url, w = 80, h = 80) {
 
 function _googleThumb(url, size = 80) {
     if (!url || !url.includes('googleusercontent.com')) return url;
-    return url.replace(/=s\d+-c/, `=s${size}-c`).replace(/\/s\d+-c\//, `/s${size}-c/`) || url;
+    return url.replace(/=s\d+-c/, `=s${size}-c`).replace(/\/s\d+-c\
 }
 
 function loadProfileImg(imgEl, rawUrl, name, thumbSize = 80) {
     if (!imgEl) return;
-    if (imgEl.dataset.profileLoaded) return; // ya procesado, no reprocesar
+    if (imgEl.dataset.profileLoaded) return;
 
     const isDefault = !rawUrl
         || rawUrl.includes('default_icon_profile')
@@ -1480,7 +1456,7 @@ function loadProfileImg(imgEl, rawUrl, name, thumbSize = 80) {
 
     const tmp = new Image();
     tmp.onload = () => {
-        if (!imgEl.parentNode) return; // fue reemplazado mientras cargaba
+        if (!imgEl.parentNode) return;
         imgEl.src = optimized;
         imgEl.dataset.profileLoaded = '1';
         imgEl.classList.remove('prof-img-loading');

@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await actualizarAlmacenamiento();
     setInterval(actualizarAlmacenamiento, 300000);
-    
+
     cargarMetodosDesdeHTML();
 
     const archivoQR = document.getElementById('archivoQR');
@@ -49,17 +49,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         archivoQR.addEventListener('change', async function() {
             if (this.files && this.files[0]) {
                 const optimizedFile = await procesarImagenOptimizada(this.files[0]);
-                
+
                 const dt = new DataTransfer();
                 dt.items.add(optimizedFile);
                 this.files = dt.files;
 
                 const reader = new FileReader();
-                reader.onload = (e) => { 
+                reader.onload = (e) => {
                     const previewImg = document.getElementById('previewPagoImg');
                     const placeholder = document.getElementById('placeholderQR');
                     if (previewImg) {
-                        previewImg.src = e.target.result; 
+                        previewImg.src = e.target.result;
                         previewImg.classList.remove('d-none');
                     }
                     if (placeholder) placeholder.classList.add('d-none');
@@ -96,9 +96,9 @@ async function procesarImagenOptimizada(file) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 canvas.toBlob((blob) => {
-                    resolve(new File([blob], file.name.split('.')[0] + ".jpg", { 
-                        type: "image/jpeg", 
-                        lastModified: Date.now() 
+                    resolve(new File([blob], file.name.split('.')[0] + ".jpg", {
+                        type: "image/jpeg",
+                        lastModified: Date.now()
                     }));
                 }, "image/jpeg", QUALITY);
             };
@@ -141,8 +141,8 @@ function cargarMetodosDesdeHTML() {
                 url_actual: m.qr_url, cambio_img: false, file: null
             }));
             renderizarLista();
-        } catch (e) { 
-            metodosPagoArray = []; 
+        } catch (e) {
+            metodosPagoArray = [];
         }
     }
 }
@@ -311,10 +311,10 @@ function editarMetodo(index) {
     document.getElementById('tipoCuenta').value = m.tipo_cuenta;
     document.getElementById('numeroCuenta').value = m.numero;
     document.getElementById('titularCuenta').value = m.titular;
-    
+
     const previewImg = document.getElementById('previewPagoImg');
     const placeholder = document.getElementById('placeholderQR');
-    
+
     if (previewImg) {
         previewImg.src = m.file ? URL.createObjectURL(m.file) : (m.url_actual || '');
         previewImg.classList.remove('d-none');
@@ -361,8 +361,8 @@ async function guardarCambiosPagos() {
             mostrarAlerta("💳 Métodos de pago guardados y publicados correctamente");
             await actualizarAlmacenamiento();
             setTimeout(() => location.reload(), 1500);
-        } else { 
-            throw new Error(data.error); 
+        } else {
+            throw new Error(data.error);
         }
     } catch (e) {
         mostrarAlerta(e.message, true);
@@ -376,7 +376,7 @@ function resetearFormulario() {
     document.getElementById('numeroCuenta').value = "";
     document.getElementById('titularCuenta').value = "";
     document.getElementById('archivoQR').value = "";
-    
+
     const previewImg = document.getElementById('previewPagoImg');
     const placeholder = document.getElementById('placeholderQR');
     const btn = document.getElementById('btnAgregarTemporal');
@@ -393,18 +393,18 @@ function resetearFormulario() {
 }
 
 function getBadgeClass(entidad) {
-    const map = { 
-        'Nequi': 'nequi-bg', 
-        'Daviplata': 'daviplata-bg', 
-        'Bancolombia': 'bancolombia-bg', 
-        'NuBank': 'nubank-bg' 
+    const map = {
+        'Nequi': 'nequi-bg',
+        'Daviplata': 'daviplata-bg',
+        'Bancolombia': 'bancolombia-bg',
+        'NuBank': 'nubank-bg'
     };
     return map[entidad] || 'bg-secondary text-white';
 }
 
 (function() {
     window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() { 
-        window.history.pushState(null, "", window.location.href); 
+    window.onpopstate = function() {
+        window.history.pushState(null, "", window.location.href);
     };
 })();

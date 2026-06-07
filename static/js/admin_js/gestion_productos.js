@@ -91,11 +91,11 @@ async function cargarPostres(silent = false) {
             nuevosPostres.forEach(p => {
                 const ahoraAgotado = parseInt(p.stock) <= 0;
                 if (ahoraAgotado && !prevAgotados.has(p.id_producto)) {
-                    /* Recién se agotó */
+
                     mostrarAlerta(`Agotado: ${p.nombre.toUpperCase()}`, true, 5000);
                     playNotificationSound('error');
                 } else if (!ahoraAgotado && prevAgotados.has(p.id_producto)) {
-                    /* Volvió a estar disponible */
+
                     mostrarAlerta(`Disponible de nuevo: ${p.nombre}`, false, 5000);
                     playNotificationSound('default');
                 }
@@ -490,8 +490,8 @@ async function enviarFormulario(formData) {
             const errorData = await res.json();
             mostrarAlerta(errorData.error || "Error en la operación", true);
         }
-    } catch (e) { 
-        mostrarAlerta("Error de red", true); 
+    } catch (e) {
+        mostrarAlerta("Error de red", true);
     }
 }
 

@@ -7,7 +7,6 @@ import helpers.models as db
 from helpers.auth import sin_cache, login_required, admin_required
 from helpers.validators import METODOS_PAGO_VALIDOS
 
-# Colombia: UTC-5 (sin horario de verano)
 _TZ_COL = timezone(timedelta(hours=-5))
 
 
@@ -127,7 +126,6 @@ def agregar_al_carrito():
             if stock_actual < cantidad:
                 return jsonify({"error": f"Stock insuficiente para {prod.get('nombre')}"}), 400
 
-            # Agregar al carrito
             db.carrito_add(
                 cedula=user_id,
                 id_producto=p["id_producto"],
@@ -135,7 +133,6 @@ def agregar_al_carrito():
                 cantidad=cantidad,
                 precio=float(prod["precio"]),
             )
-            # Descontar stock inmediatamente (reserva)
             db.producto_update(
                 str(p["id_producto"]),
                 {"stock": max(0, stock_actual - cantidad)}
@@ -150,7 +147,6 @@ def agregar_al_carrito():
 def carrito_quitar(id_carrito):
     user_id = session.get("user_id")
     try:
-        # Obtener el ítem antes de eliminarlo para restaurar su stock
         carrito_items = db.carrito_get(user_id)
         item = next(
             (i for i in carrito_items if str(i.get("id_carrito")) == str(id_carrito)),
@@ -207,7 +203,6 @@ def carrito_ajustar_cantidad(id_carrito):
             nuevo_stock    = stock_actual - 1
         else:
             if cantidad_actual <= 1:
-                # Si llega a 0, eliminar el ítem y devolver el stock
                 db.producto_update(str(id_producto), {"stock": stock_actual + 1})
                 db.carrito_delete_item(id_carrito, user_id)
                 return jsonify({"ok": True, "eliminado": True, "stock": stock_actual + 1}), 200
@@ -246,8 +241,6 @@ def finalizar_compra():
         if not carrito:
             return jsonify({"message": "Carrito vacío", "ok": False}), 400
 
-        # El stock ya fue descontado al agregar al carrito (reserva inmediata).
-        # Solo verificamos que los productos aún existan.
         for item in carrito:
             prod = db.producto_get(item["id_producto"])
             if not prod:
@@ -306,7 +299,6 @@ def finalizar_compra():
         db.pedido_update(id_pedido, {"numero_factura": numero, "total": total_compra})
         db.carrito_clear(user_id)
 
-        # Verificar logros de compra
         try:
             from helpers.logros_utils import verificar_y_otorgar
             repite = db.usuario_pedido_repetido(user_id)

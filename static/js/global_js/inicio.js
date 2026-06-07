@@ -7,7 +7,7 @@ let swiperInstance         = null;
 
 let _editMode      = false;
 let _configOriginal = {};
-let _configActual   = {}; 
+let _configActual   = {};
 let _sortableMain   = null;
 let _sortableSidebar = null;
 let _targetConfigKey = null;
@@ -101,7 +101,7 @@ async function cargarMarketing() {
                     new Date(a.created_at || 0) - new Date(b.created_at || 0)
                 );
 
-                /* 2 copias exactas → -50% en CSS es loop perfecto sin saltos */
+
                 const looped = [...fifoQueue, ...fifoQueue];
                 const baseDuration = Math.max(28, fifoQueue.length * 6);
                 const speed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
@@ -116,7 +116,7 @@ async function cargarMarketing() {
                     }<span class="ci-item-label">${i.titulo || ''}</span></div>${showDivider ? '<div class="ci-divider"></div>' : ''}`;
                 };
 
-                /* Coloca divisor solo al final de cada copia, no entre ítems */
+
                 const half = looped.length / 2;
                 const itemsHTML = looped.map((i, idx) =>
                     buildItem(i, (idx + 1) === half || (idx + 1) === looped.length)
@@ -591,7 +591,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-/* ── Barra de progreso de logros en sección Explorar ── */
+
 (function _initLogrosProgressBar() {
     const bar   = document.getElementById('logrosProgresoBar');
     const label = document.getElementById('logrosProgresoLabel');
@@ -607,14 +607,14 @@ if ('serviceWorker' in navigator) {
             if (total === 0) return;
             const pct = Math.round((obtenidos / total) * 100);
             label.textContent = `${obtenidos}/${total} · ${pct}%`;
-            /* Animar con pequeño delay para que la transición CSS sea visible */
+
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 bar.style.width = pct + '%';
             }));
         } catch (_) {}
     }
 
-    /* Esperar a que el DOM esté listo y los estilos aplicados */
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => setTimeout(_cargarProgreso, 600));
     } else {

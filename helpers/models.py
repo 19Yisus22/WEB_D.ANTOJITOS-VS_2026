@@ -1,4 +1,4 @@
-from database.models import *  # noqa: F401, F403
+from database.models import *
 from database.models import (
     supabase, _run, _run_safe, _single, _many,
     rol_get_all, rol_get_by_nombre, rol_get_id,

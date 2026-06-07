@@ -1,8 +1,4 @@
-/**
- * D'Antojitos — Service Worker Core v4
- * Base compartida para todos los módulos.
- * Estrategias: CacheFirst · NetworkFirst · StaleWhileRevalidate · CacheFirstUpdate
- */
+
 
 const SW_VERSION      = 'v4';
 const PREFS_CACHE     = 'dantojitos-prefs-v4';
@@ -29,19 +25,19 @@ const SHARED_STATIC = [
     '/static/uploads/logo.png',
 ];
 
-/* ─── Helpers internos ─── */
+
 
 async function _openCache(name) { return caches.open(name); }
 
 function _isCacheable(res) { return res && res.status === 200 && res.type !== 'opaque'; }
 
-/* ── Broadcast a todos los clientes ── */
+
 async function broadcastAll(data) {
     const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
     clients.forEach(c => c.postMessage(data));
 }
 
-/* ── Estrategia: Cache First (CDN, estáticos) ── */
+
 async function cacheFirst(req, cacheName) {
     const cache  = await _openCache(cacheName);
     const cached = await cache.match(req);
@@ -55,7 +51,7 @@ async function cacheFirst(req, cacheName) {
     }
 }
 
-/* ── Estrategia: Cache First + actualización silenciosa en background ── */
+
 async function cacheFirstWithUpdate(req, cacheName) {
     const cache  = await _openCache(cacheName);
     const cached = await cache.match(req);
@@ -72,7 +68,7 @@ async function cacheFirstWithUpdate(req, cacheName) {
     }
 }
 
-/* ── Estrategia: Network First con timeout (APIs dinámicas) ── */
+
 async function networkFirst(req, cacheName, timeoutMs = API_TIMEOUT_MS) {
     const cache = await _openCache(cacheName);
     try {
@@ -102,7 +98,7 @@ async function networkFirst(req, cacheName, timeoutMs = API_TIMEOUT_MS) {
     }
 }
 
-/* ── Estrategia: Stale While Revalidate (páginas semi-dinámicas) ── */
+
 async function staleWhileRevalidate(req, cacheName) {
     const cache  = await _openCache(cacheName);
     const cached = await cache.match(req);
@@ -113,7 +109,7 @@ async function staleWhileRevalidate(req, cacheName) {
     return cached ?? fetchPromise;
 }
 
-/* ── Página offline completa ── */
+
 function offlinePage(isNav = true) {
     if (!isNav) return '';
     return `<!DOCTYPE html><html lang="es" data-theme="light"><head>
@@ -147,7 +143,7 @@ document.documentElement.setAttribute('data-theme',t);
 </body></html>`;
 }
 
-/* ── Precarga assets al instalar ── */
+
 async function precacheAssets(cacheName, assets) {
     const cache = await _openCache(cacheName);
     return Promise.allSettled(
@@ -159,7 +155,7 @@ async function precacheAssets(cacheName, assets) {
     );
 }
 
-/* ── Limpia caches antiguas del mismo módulo ── */
+
 async function cleanOldCaches(currentCache) {
     const keys    = await caches.keys();
     const prefix  = currentCache.replace(/-v\d+$/, '');
@@ -170,7 +166,7 @@ async function cleanOldCaches(currentCache) {
     );
 }
 
-/* ── Mensajes desde el cliente ── */
+
 self.addEventListener('message', async event => {
     const { data } = event;
     if (!data) return;
@@ -186,7 +182,7 @@ self.addEventListener('message', async event => {
                 JSON.stringify({ theme: data.theme, ts: Date.now() }),
                 { headers: { 'Content-Type': 'application/json' } }
             ));
-            /* Propaga el tema a todas las pestañas abiertas */
+
             broadcastAll({ type: 'THEME_UPDATED', theme: data.theme });
             break;
         }
@@ -197,7 +193,7 @@ self.addEventListener('message', async event => {
                 JSON.stringify({ lang: data.lang, ts: Date.now() }),
                 { headers: { 'Content-Type': 'application/json' } }
             ));
-            /* Propaga el idioma a todas las pestañas abiertas */
+
             broadcastAll({ type: 'LANG_UPDATED', lang: data.lang });
             break;
         }

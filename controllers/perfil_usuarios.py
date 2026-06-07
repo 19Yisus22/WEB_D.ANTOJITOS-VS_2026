@@ -6,7 +6,7 @@ import helpers.models as db
 from helpers.auth import sin_cache, admin_required, login_required
 from helpers.cloudinary import delete_image, upload_raw_file, delete_raw_file
 
-LIMITE_ALMACENAMIENTO = 100 * 1024 * 1024  # 100 MB por usuario
+LIMITE_ALMACENAMIENTO = 100 * 1024 * 1024
 
 perfil_usuarios_bp = Blueprint("perfil_usuarios", __name__)
 
@@ -55,7 +55,6 @@ def listar_usuarios():
         return jsonify({"error": str(e)}), 500
 
 
-# Límites máximos por rol
 _LIMITES_ROL = {
     "admin":    2,
     "vendedor": 3,
@@ -79,10 +78,8 @@ def actualizar_rol_usuario():
     if not id_role:
         return jsonify({"ok": False, "error": "Rol no encontrado"}), 404
 
-    # Verificar límite antes de asignar
     limite = _LIMITES_ROL.get(nuevo_rol)
     if limite is not None:
-        # Excluir al propio usuario del conteo (por si ya tenía ese rol)
         conteo_actual = db.usuario_count_por_rol(nuevo_rol, excluir_cedula=cedula)
         if conteo_actual >= limite:
             nombre_rol = _NOMBRES_ROL.get(nuevo_rol, nuevo_rol)

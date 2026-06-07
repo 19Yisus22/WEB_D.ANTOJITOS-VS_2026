@@ -1,6 +1,4 @@
-/* ══════════════════════════════════════════════════════
-   SISTEMA DE LOGROS — Toast estilo Steam
-   ══════════════════════════════════════════════════════ */
+
 
 (function () {
     'use strict';
@@ -21,7 +19,7 @@
         gestion_usuarios:  'Gestión de Usuarios',
     };
 
-    // ── Módulo actual por URL ──────────────────────────────────
+
     const _RUTAS_MODULO = [
         ['/catalogo',           'catalogo'],
         ['/carrito',            'carrito'],
@@ -48,7 +46,7 @@
         return null;
     }
 
-    // ── Contenedor de toasts ───────────────────────────────────
+
     let _contenedor = null;
 
     function _getContenedor() {
@@ -63,7 +61,7 @@
         return _contenedor;
     }
 
-    // ── Mostrar toast individual ───────────────────────────────
+
     function _mostrarLogro(logro) {
         const cont = _getContenedor();
         const toast = document.createElement('div');
@@ -123,7 +121,7 @@
         lista.forEach((l, i) => setTimeout(() => _mostrarLogro(l), i * 320));
     };
 
-    // ── Helpers localStorage ──────────────────────────────────
+
     function _lsGetDays(modulo) {
         try { return JSON.parse(localStorage.getItem(`_dantojitos_days_${modulo}`) || '[]'); } catch (_) { return []; }
     }
@@ -137,7 +135,7 @@
         localStorage.setItem(`_dantojitos_streak_${modulo}`, JSON.stringify(obj));
     }
 
-    // ── Sincronizar contadores con BD (POST) ──────────────────
+
     async function _sincContadores(contadores) {
         if (!contadores || !Object.keys(contadores).length) return;
         try {
@@ -149,14 +147,14 @@
         } catch (_) {}
     }
 
-    // ── Cargar contadores de BD y fusionar con localStorage ───
+
     async function _cargarYFusionarContadores(modulo) {
         try {
             const r = await fetch('/logros/contadores');
             if (!r.ok) return null;
             const db = await r.json();
 
-            // Fusionar: actualizar localStorage con el máximo de BD vs local
+
             const todosModulos = Object.values(_RUTAS_MODULO.reduce((acc, [, m]) => { acc[m] = m; return acc; }, { inicio: 'inicio' }));
             const modulosUnicos = [...new Set([...todosModulos, modulo])];
 
@@ -170,7 +168,7 @@
                 const lsSD     = _lsGetStreak(m);
 
                 if (dbVisit > lsDays.length) {
-                    // BD tiene más días — generar fechas ficticias pasadas para rellenar
+
                     const fechasNecesarias = dbVisit - lsDays.length;
                     for (let i = fechasNecesarias; i >= 1; i--) {
                         const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
@@ -195,19 +193,19 @@
         }
     }
 
-    // ── Verificación login (una vez por sesión de tab) ─────────
+
     if (!sessionStorage.getItem('_logros_login_ok')) {
         sessionStorage.setItem('_logros_login_ok', '1');
         setTimeout(() => window.verificarLogros({ tipo: 'login' }), 1500);
     }
 
-    // ── Verificar visita a módulo actual (días únicos + racha) ─
+
     (function () {
         const modulo = _moduloActual();
         if (!modulo) return;
         const hoy = new Date().toISOString().slice(0, 10);
 
-        // Cargar BD primero (async), luego hacer tracking
+
         _cargarYFusionarContadores(modulo).then(() => {
             let days = _lsGetDays(modulo);
             const esDiaNuevo = !days.includes(hoy);
@@ -227,7 +225,7 @@
             const visitCount  = days.length;
             const streakCount = streak;
 
-            // Persistir en BD si hay cambio
+
             if (esDiaNuevo) {
                 _sincContadores({ [`v_${modulo}`]: visitCount, [`s_${modulo}`]: streakCount });
             }
@@ -260,8 +258,8 @@
         legendario: { bg: 'linear-gradient(135deg,#c2410c,#f59e0b)', text: '#fbbf24' },
     };
 
-    // ── Obtener valor de campo para barra de progreso ─────────
-    // contadores: objeto {v_modulo: N, s_modulo: N} desde BD
+
+
     function _valorCampo(campo, stats, rolStats, contadores) {
         if (!campo) return 0;
         if (campo.startsWith('v_')) {

@@ -29,7 +29,7 @@ function playNotificationSound(type = 'default') {
             oscillator.stop(audioCtx.currentTime + 0.4);
         } else {
             oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+            oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime);
             oscillator.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.15);
             gainNode.gain.setValueAtTime(0.02, audioCtx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);

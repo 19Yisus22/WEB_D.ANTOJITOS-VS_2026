@@ -86,12 +86,12 @@ function mostrarToastActualizacion(imagen, titulo, descripcion, idUnico, isError
 }
 
 function mostrarBienvenida(nombre) {
-    mostrarAlerta({ 
-        titulo: "Bienvenida", 
-        descripcion: `¡Hola, ${nombre}! Explora nuestro catálogo.`, 
-        imagen: "/static/uploads/logo.png", 
-        tipo: "bienvenida", 
-        duracion: 5000 
+    mostrarAlerta({
+        titulo: "Bienvenida",
+        descripcion: `¡Hola, ${nombre}! Explora nuestro catálogo.`,
+        imagen: "/static/uploads/logo.png",
+        tipo: "bienvenida",
+        duracion: 5000
     });
 }
 
@@ -151,7 +151,7 @@ async function cargarProductos() {
         const res = await fetch("/obtener_catalogo");
         const data = await res.json();
         const nuevosProductos = data.productos || [];
-        // Debug: verificar URLs de imágenes
+
         if (nuevosProductos.length > 0) {
             const conImg = nuevosProductos.filter(p => p.imagen_url && p.imagen_url.startsWith('http'));
             if (conImg.length === 0 && isFirstLoad) {

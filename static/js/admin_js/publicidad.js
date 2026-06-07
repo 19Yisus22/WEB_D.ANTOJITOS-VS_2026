@@ -64,7 +64,7 @@ async function comprimirImagen(file) {
 function actualizarPreview() {
     let anyContent = false;
 
-    /* ── Carrusel ── */
+
     const pCar = document.querySelector("#previewCarrusel .carousel-inner");
     const blockCar = document.getElementById("prevBlockCarrusel");
     if (pCar) {
@@ -96,7 +96,7 @@ function actualizarPreview() {
         }
     }
 
-    /* ── Cinta del Inicio ── */
+
     const pCintaTrack = document.getElementById("previewCintaTrack");
     const blockCinta  = document.getElementById("prevBlockCinta");
     if (pCintaTrack) {
@@ -121,7 +121,7 @@ function actualizarPreview() {
         }
     }
 
-    /* ── Tarjetas Informativas ── */
+
     const pSec     = document.getElementById("previewSecciones");
     const blockSec = document.getElementById("prevBlockSecciones");
     if (pSec) {
@@ -145,7 +145,7 @@ function actualizarPreview() {
         if (hasSec) anyContent = true;
     }
 
-    /* ── Estado vacío ── */
+
     const emptyEl = document.getElementById("prevEmpty");
     if (emptyEl) emptyEl.style.display = anyContent ? 'none' : 'flex';
 }
@@ -561,7 +561,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-/* ── Toggle de la sección Vista en Vivo ── */
+
 let _previewLoaded = false;
 
 function toggleLivePreview() {
@@ -622,11 +622,11 @@ function recargarPreviewInicio() {
 }
 
 function _initLivePreviewScroll() {
-    // El wrapper tiene overflow-y:auto y el iframe pointer-events:none
-    // El scroll nativo del wrapper ya funciona — nada adicional necesario
+
+
 }
 
-//  GESTOR DE IMÁGENES CLOUDINARY
+
 
 let _gestorData = {};
 let _carpetaActual = 'publicidad';

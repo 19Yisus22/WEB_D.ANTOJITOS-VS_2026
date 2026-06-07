@@ -41,7 +41,7 @@ function mostrarNotificacionBienvenida() {
     if (yaNotificado) return;
 
     try {
-        if (pedidosDatosRaw.length === 0) return; // sin datos cargados, no marcar y no mostrar alerta engañosa
+        if (pedidosDatosRaw.length === 0) return;
 
         const pendientes = pedidosDatosRaw.filter(p => p.estado === 'Pendiente');
         if (pendientes.length === 0) {
@@ -59,7 +59,7 @@ function mostrarNotificacionBienvenida() {
     } catch (e) {}
 }
 
-/* ── IDs ya notificados en esta sesión (persiste en sessionStorage) ── */
+
 const _pedidosNotifSet = new Set(
     JSON.parse(sessionStorage.getItem('_pedidosNotifSet') || '[]')
 );
@@ -92,10 +92,10 @@ function ajustarBarraBusqueda() {
     const row = document.querySelector('.search-box-container');
     if (row) {
         row.style.cssText = `
-            background: #ffffff; 
-            padding: 30px; 
+            background: #ffffff;
+            padding: 30px;
             border-radius: 22px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             margin-bottom: 40px;
             border: 1px solid #edf2f7;
             display: flex;
@@ -156,7 +156,7 @@ async function iniciarModuloPedidos() {
 let _cargandoPedidos = false;
 
 async function cargarPedidos(isAutoRefresh = false) {
-    if (_cargandoPedidos) return; /* evita llamadas concurrentes */
+    if (_cargandoPedidos) return;
     if (isAutoRefresh && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) return;
 
     _cargandoPedidos = true;
@@ -173,7 +173,7 @@ async function cargarPedidos(isAutoRefresh = false) {
             const nuevosBajas = idsActualesCancelados.filter(id => !ultimosIdsCancelados.includes(id));
             nuevosBajas.forEach(id => {
                 const notifKey = `cancel_${id}`;
-                if (_pedidosNotifSet.has(notifKey)) return; /* ya notificado */
+                if (_pedidosNotifSet.has(notifKey)) return;
                 _pedidosNotifSet.add(notifKey);
                 _persistNotifSet();
                 const pBaja = pedidos.find(p => String(p.id_pedido) === id);
@@ -194,7 +194,7 @@ async function cargarPedidos(isAutoRefresh = false) {
             const facturaAMostrar = pedido.numero_factura || numFacturaCompuesta;
             const esFijado = pedidosFijados.includes(idStr);
             const user = pedido.usuarios || {};
-            
+
             const cardExistente = document.getElementById(`pedido-${pedido.id_pedido}`);
             const estabaAbierta = cardExistente ? !cardExistente.classList.contains('card-collapsed') : false;
 
@@ -218,9 +218,9 @@ async function cargarPedidos(isAutoRefresh = false) {
                     <td class="text-primary">${subtotalItem.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</td>
                     <td>
                         <div class="form-check form-switch d-flex justify-content-center">
-                            <input class="form-check-input toggle-pago-item-switch" type="checkbox" role="switch" 
+                            <input class="form-check-input toggle-pago-item-switch" type="checkbox" role="switch"
                                    ${pagado ? 'checked' : ''}
-                                   data-item-id="${itemId}" 
+                                   data-item-id="${itemId}"
                                    data-indice="${idx}"
                                    data-subtotal="${subtotalItem}"
                                    style="cursor:pointer; width: 40px; height: 20px;">
@@ -461,7 +461,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                     const saldoElement = card.querySelector(".saldo-pendiente-valor");
                     const saldoHeader = card.querySelector(".saldo-header");
                     let saldoActual = parseFloat(saldoElement.innerText.replace(/[^0-9]/g, '')) || 0;
-                    
+
                     const valorEfectivo = (descuentoCumple > 0 && totalOriginal > 0)
                         ? Math.round(subtotalValor * (pedidoTotalFinal / totalOriginal))
                         : subtotalValor;
@@ -520,10 +520,10 @@ async function cargarPedidos(isAutoRefresh = false) {
 
             card.querySelector(".btn-eliminar-individual").onclick = () => {
                 mostrarConfirmacionApp("ELIMINAR REGISTRO", "¿Eliminar este pedido permanentemente? Esta acción no se puede deshacer.", async () => {
-                    const res = await fetch("/eliminar_pedidos", { 
-                        method: "DELETE", 
-                        headers: { "Content-Type": "application/json" }, 
-                        body: JSON.stringify({ ids: [idStr] }) 
+                    const res = await fetch("/eliminar_pedidos", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ ids: [idStr] })
                     });
                     if (res.ok) {
                         mostrarAlerta("Pedido eliminado permanentemente del sistema", true);
@@ -754,15 +754,15 @@ function aplicarFiltros() {
     const filtroEstado = document.getElementById("filtroEstado")?.value;
     const busqNombre = normalizarTexto(document.getElementById("inputBusquedaNombre")?.value);
     const busqCedula = normalizarTexto(document.getElementById("inputBusquedaCedula")?.value);
-    
+
     let filtrados = pedidosGlobal.filter(card => {
         const id = card.dataset.id_real;
         const p = pedidosDatosRaw.find(x => String(x.id_pedido) === id);
         if (!p) return false;
-        
+
         const user = p.usuarios || {};
         const nombreCompleto = normalizarTexto(`${user.nombre||''}${user.apellido||''}`);
-        
+
         if (busqNombre && !nombreCompleto.includes(busqNombre)) return false;
         if (busqCedula && !normalizarTexto(user.cedula).includes(busqCedula)) return false;
 
@@ -770,7 +770,7 @@ function aplicarFiltros() {
             const factCard = card.dataset.factura;
             if (!factCard.includes(numFactFiltro.toLowerCase())) return false;
         }
-        
+
         const fechaObj = new Date(card.dataset.fecha_iso);
         if (anioFiltro && anioFiltro !== "Todos" && fechaObj.getFullYear().toString() !== anioFiltro) return false;
 
@@ -782,7 +782,7 @@ function aplicarFiltros() {
         if (filtroEstado === "Pendiente") return est === "Pendiente";
         if (filtroEstado === "Entregado") return est === "Entregado" && pagosOk;
         if (filtroEstado === "Cancelado") return est === "Cancelado";
-        
+
         if (est === "Cancelado" && verificado && filtroEstado === "Todos") return false;
 
         return true;
@@ -834,10 +834,10 @@ function inicializarSelectAnios() {
     const s = document.getElementById("selectAnio");
     const r = document.getElementById("repoAnio");
     if (!s || !r) return;
-    
+
     s.innerHTML = '<option value="Todos">Todos los años</option>';
     r.innerHTML = '';
-    
+
     const actual = new Date().getFullYear();
     for (let i = actual; i >= actual - 4; i--) {
         const opt = document.createElement("option");
@@ -856,7 +856,7 @@ async function generarReporteConfigurado() {
         mes: document.getElementById("repoMes").value,
         admin: document.getElementById("adminName")?.value || "Administrador"
     };
-    
+
     let lista = pedidosDatosRaw.filter(p => {
         const f = new Date(p.fecha_pedido);
         if (f.getFullYear().toString() !== config.anio) return false;
@@ -872,11 +872,11 @@ async function generarReporteConfigurado() {
     const colorOscuro = [44, 62, 80];
 
     try {
-        const img = new Image(); 
+        const img = new Image();
         img.src = '/static/uploads/logo.png';
         await new Promise(r => { img.onload = r; img.onerror = r; });
         if (img.complete && img.naturalWidth !== 0) {
-            const c = document.createElement('canvas'); 
+            const c = document.createElement('canvas');
             c.width = img.width; c.height = img.height;
             c.getContext('2d').drawImage(img, 0, 0);
             doc.addImage(c.toDataURL('image/png'), 'PNG', 15, 12, 22, 22);
@@ -887,13 +887,13 @@ async function generarReporteConfigurado() {
     doc.setTextColor(colorPrimario[0], colorPrimario[1], colorPrimario[2]);
     doc.setFont(undefined, 'bold');
     doc.text("D'ANTOJITOS", 42, 20);
-    
+
     doc.setFontSize(9);
     doc.setTextColor(100);
     doc.setFont(undefined, 'normal');
     doc.text("SISTEMA DE GESTIÓN ADMINISTRATIVA Y VENTAS", 42, 26);
     doc.text(`RESPONSABLE: ${config.admin.toUpperCase()}`, 42, 31);
-    
+
     doc.setDrawColor(200);
     doc.line(15, 38, 195, 38);
 
@@ -944,7 +944,7 @@ async function generarReporteConfigurado() {
     canvas.width = 600;
     canvas.height = 300;
     const ctx = canvas.getContext('2d');
-    
+
     const dataStats = [
         { label: "PENDIENTE", val: stats.Pendiente, color: "#d4ac0d" },
         { label: "ENVIADO", val: stats.Enviado, color: "#2e86c1" },
@@ -990,7 +990,7 @@ async function generarReporteConfigurado() {
     doc.setDrawColor(colorPrimario[0], colorPrimario[1], colorPrimario[2]);
     doc.setLineWidth(0.5);
     doc.line(resX, finalY + 15, resX + 55, finalY + 15);
-    
+
     doc.setFont(undefined, 'bold');
     doc.setFontSize(10);
     doc.text("RESUMEN CONTABLE", resX, finalY + 22);

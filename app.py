@@ -41,7 +41,6 @@ app.secret_key                   = os.getenv("FLASK_SECRET_KEY") or secrets.toke
 app.permanent_session_lifetime   = timedelta(days=1)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 CORS(app, supports_credentials=True)
-logging.getLogger("waitress").setLevel(logging.ERROR)
 
 from controllers.auth               import auth_bp
 from controllers.perfil             import perfil_bp
@@ -160,7 +159,7 @@ def _get_local_ip() -> str:
         s.close()
         
 if __name__ == "__main__":
-    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), True # Cambia a True para modo desarrollo con debug
+    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), True
 
     if debug_mode:
         print("\033[93m" + "MODE DEVELOPMENT - DEBUG" + "\033[0m")

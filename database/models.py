@@ -24,7 +24,6 @@ def _run(query) -> object:
         except Exception as e:
             name = type(e).__name__
             msg  = str(e)
-            # Error de red: no tiene sentido reintentar, falla inmediata
             if any(k in name or k in msg for k in _NORETRY_EXCEPTIONS):
                 raise
             if any(k in name or k in msg for k in _RETRY_EXCEPTIONS):
@@ -764,7 +763,6 @@ def logros_sembrar(logros: list) -> None:
     _run(_db().table("logros").upsert(rows, on_conflict="codigo"))
 
 
-# ── logros_data: JSON storage (cedula, id_role, data JSONB) ──────────────────
 
 def _logros_data_get(cedula: str) -> dict:
     rows = _many(_run_safe(
@@ -978,7 +976,6 @@ def usuario_pedido_repetido(cedula: str) -> bool:
         return False
 
 
-# ── Contadores persistentes de logros — almacenados en logros_data.data ──────
 
 def logros_contadores_get(cedula: str) -> dict:
     row = _logros_data_get(cedula)

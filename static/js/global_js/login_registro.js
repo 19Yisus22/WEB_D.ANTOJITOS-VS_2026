@@ -179,7 +179,7 @@ function _showLockoutBanner(segundos, bloqueadoHasta) {
             const dt   = new Date(bloqueadoHasta);
             const opts = { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
             toastMsg = `Cuenta bloqueada. Se desbloquea el ${dt.toLocaleDateString('es-ES', opts)}.`;
-        } catch { /**/ }
+        } catch {  }
     }
     mostrarAlertaPublica({ titulo: 'Cuenta bloqueada', mensaje: toastMsg, tipo: 'error' });
 

@@ -14,19 +14,19 @@ async function actualizarAlmacenamiento() {
                 'Pragma': 'no-cache'
             }
         });
-        
+
         if (!res.ok) return;
-        
+
         const data = await res.json();
         const circle = document.getElementById("storageCircle");
         const text = document.getElementById("storageText");
-        
+
         if (circle && text) {
             const used = parseFloat(data.used_gb);
             const limit = parseFloat(data.limit_gb);
-            
+
             let percent = (used / limit) * 100;
-            if (used > 0 && percent < 0.5) percent = 0.5; 
+            if (used > 0 && percent < 0.5) percent = 0.5;
 
             let usedLabel;
             if (used < 0.1) {
@@ -68,17 +68,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         archivoQR.addEventListener('change', async function() {
             if (this.files && this.files[0]) {
                 const optimizedFile = await procesarImagenOptimizada(this.files[0]);
-                
+
                 const dt = new DataTransfer();
                 dt.items.add(optimizedFile);
                 this.files = dt.files;
 
                 const reader = new FileReader();
-                reader.onload = (e) => { 
+                reader.onload = (e) => {
                     const previewImg = document.getElementById('previewPagoImg');
                     const placeholder = document.getElementById('placeholderQR');
                     if (previewImg) {
-                        previewImg.src = e.target.result; 
+                        previewImg.src = e.target.result;
                         previewImg.classList.remove('d-none');
                     }
                     if (placeholder) placeholder.classList.add('d-none');
@@ -95,16 +95,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function verificarAccesoAdmin() {
     try {
-        const res = await fetch("/facturacion_page", { 
-            headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+        const res = await fetch("/facturacion_page", {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
         if (res.status === 401 || res.status === 403) {
             window.location.href = "/inicio";
             return false;
         }
         return true;
-    } catch (e) { 
-        return false; 
+    } catch (e) {
+        return false;
     }
 }
 
@@ -113,23 +113,23 @@ async function actualizarAlmacenamiento() {
         const timestamp = new Date().getTime();
         const res = await fetch(`/cloudinary_storage_info?t=${timestamp}`);
         if (!res.ok) return;
-        
+
         const data = await res.json();
         const progress = document.getElementById("storageProgressBar");
         const text = document.getElementById("storageText");
-        
+
         if (progress && text) {
             const used = parseFloat(data.used_gb);
             const limit = parseFloat(data.limit_gb);
             let percent = (used / limit) * 100;
-            
+
             if (used > 0 && percent < 0.5) percent = 0.5;
-            
+
             let usedLabel = used < 0.1 ? (used * 1024).toFixed(2) + " MB" : used.toFixed(2) + " GB";
-            
+
             progress.style.width = percent.toFixed(2) + "%";
             text.textContent = `${usedLabel} / ${limit.toFixed(1)} GB (${((used / limit) * 100).toFixed(2)}%)`;
-            
+
             progress.classList.remove("bg-success", "bg-warning", "bg-danger");
             if (percent > 85) progress.classList.add("bg-danger");
             else if (percent > 60) progress.classList.add("bg-warning");
@@ -160,9 +160,9 @@ async function procesarImagenOptimizada(file) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 canvas.toBlob((blob) => {
-                    resolve(new File([blob], file.name.split('.')[0] + ".jpg", { 
-                        type: "image/jpeg", 
-                        lastModified: Date.now() 
+                    resolve(new File([blob], file.name.split('.')[0] + ".jpg", {
+                        type: "image/jpeg",
+                        lastModified: Date.now()
                     }));
                 }, "image/jpeg", QUALITY);
             };
@@ -209,8 +209,8 @@ function cargarMetodosDesdeHTML() {
                 url_actual: m.qr_url, cambio_img: false, file: null
             }));
             renderizarLista();
-        } catch (e) { 
-            metodosPagoArray = []; 
+        } catch (e) {
+            metodosPagoArray = [];
         }
     }
 }
@@ -299,10 +299,10 @@ function editarMetodo(index) {
     document.getElementById('tipoCuenta').value = m.tipo_cuenta;
     document.getElementById('numeroCuenta').value = m.numero;
     document.getElementById('titularCuenta').value = m.titular;
-    
+
     const previewImg = document.getElementById('previewPagoImg');
     const placeholder = document.getElementById('placeholderQR');
-    
+
     if (previewImg) {
         previewImg.src = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
         previewImg.classList.remove('d-none');
@@ -349,8 +349,8 @@ async function guardarCambiosPagos() {
             showMessage("¡Configuración guardada!");
             await actualizarAlmacenamiento();
             setTimeout(() => location.reload(), 1500);
-        } else { 
-            throw new Error(data.error); 
+        } else {
+            throw new Error(data.error);
         }
     } catch (e) {
         showMessage(e.message, true);
@@ -364,7 +364,7 @@ function resetearFormulario() {
     document.getElementById('numeroCuenta').value = "";
     document.getElementById('titularCuenta').value = "";
     document.getElementById('archivoQR').value = "";
-    
+
     const previewImg = document.getElementById('previewPagoImg');
     const placeholder = document.getElementById('placeholderQR');
     const btn = document.getElementById('btnAgregarTemporal');
@@ -381,18 +381,18 @@ function resetearFormulario() {
 }
 
 function getBadgeClass(entidad) {
-    const map = { 
-        'Nequi': 'nequi-bg', 
-        'Daviplata': 'daviplata-bg', 
-        'Bancolombia': 'bancolombia-bg', 
-        'NuBank': 'nubank-bg' 
+    const map = {
+        'Nequi': 'nequi-bg',
+        'Daviplata': 'daviplata-bg',
+        'Bancolombia': 'bancolombia-bg',
+        'NuBank': 'nubank-bg'
     };
     return map[entidad] || 'bg-secondary text-white';
 }
 
 (function() {
     window.history.pushState(null, "", window.location.href);
-    window.onpopstate = function() { 
-        window.history.pushState(null, "", window.location.href); 
+    window.onpopstate = function() {
+        window.history.pushState(null, "", window.location.href);
     };
 })();

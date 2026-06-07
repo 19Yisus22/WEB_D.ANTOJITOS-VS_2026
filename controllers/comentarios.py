@@ -98,7 +98,6 @@ def crear_comentario():
             return jsonify({"error": "Mensaje vacío"}), 400
         if not isinstance(adjuntos, list):
             adjuntos = []
-        # Validar tamaño máximo de cada adjunto (2 MB en base64 ≈ ~2.7MB de string)
         adjuntos = [a for a in adjuntos if isinstance(a, dict) and len(str(a.get("data","")))<= 3_000_000]
         usuario = db.usuario_get(session["user_id"])
         if not usuario:
@@ -112,7 +111,6 @@ def crear_comentario():
             "likes_usuarios": [],
             "adjuntos":       adjuntos,
         })
-        # Verificar logros de comentarios
         try:
             from helpers.logros_utils import verificar_y_otorgar
             ctx = {"tipo": "comentario"}
@@ -217,9 +215,6 @@ def actualizar_estado_comentarios():
         return jsonify({"error": "server_error"}), 500
 
 
-# ════════════════════════════════════════════════════
-#  MENSAJES PRIVADOS — canal CV (cliente ↔ vendedor)
-# ════════════════════════════════════════════════════
 
 @comentarios_bp.route("/mensajes_privados/predeterminados")
 @login_required
@@ -319,7 +314,6 @@ def enviar_mensaje_privado():
             es_predeterminado = es_pred,
             adjuntos          = adjuntos,
         )
-        # Verificar logros
         try:
             from helpers.logros_utils import verificar_y_otorgar
             ctx = {"tipo": "mensaje_privado"}
@@ -403,9 +397,6 @@ def no_leidos_count():
         return jsonify({"count": 0, "cv": 0, "staff": 0})
 
 
-# ════════════════════════════════════════════════════
-#  MENSAJES DE EQUIPO — canal STAFF (vendedor ↔ vendedor, vendedor ↔ admin)
-# ════════════════════════════════════════════════════
 
 @comentarios_bp.route("/mensajes_privados/staff/contactos")
 @login_required

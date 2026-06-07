@@ -629,9 +629,9 @@ async function procesarAnulacion(numFactura) {
     });
 }
 
-/* ── Lock + dedup de estados para evitar notificaciones duplicadas ── */
+
 let _monitorFacturaLock = false;
-const _facturaEstadosNotif = new Map(); /* "numFactura__estado" → true */
+const _facturaEstadosNotif = new Map();
 
 async function monitorearCambiosFacturas() {
     if (_monitorFacturaLock) return;
@@ -667,7 +667,7 @@ async function monitorearCambiosFacturas() {
                 );
 
                 if (fLocal && fLocal.estado !== fServ.estado) {
-                    /* Notificar solo UNA vez por transición de estado */
+
                     const key = `${fServ.numero_factura}__${fServ.estado}`;
                     if (!_facturaEstadosNotif.has(key)) {
                         _facturaEstadosNotif.set(key, true);
@@ -679,7 +679,7 @@ async function monitorearCambiosFacturas() {
 
         facturasLocalesCache = JSON.parse(JSON.stringify(facturasServidor));
 
-        /* Normaliza: quita @ inicial para comparar usernames con o sin @ */
+
         const term = criterio.toLowerCase().replace(/^@/, '');
 
         const filtradas = facturasServidor.filter(f =>
@@ -1042,7 +1042,7 @@ function paginar(totalItems) {
     nav.appendChild(frag);
 }
 
-/* ── Carga todas las facturas para vendedor/admin (sin búsqueda requerida) ── */
+
 async function cargarTodasFacturasPage() {
     try {
         const res = await fetch('/todas_facturas_page');
@@ -1057,7 +1057,7 @@ async function cargarTodasFacturasPage() {
     } catch (e) { console.error(e); }
 }
 
-/* ── Carga las facturas del propio cliente automáticamente ── */
+
 async function cargarFacturasCliente() {
     try {
         const res = await fetch('/obtener_facturas_page');
@@ -1076,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await cargarMetodosPago();
 
-    /* Auto-carga inicial según rol */
+
     const _roleInit = (window.FACTURA_ROLE || 'cliente').toLowerCase();
     if (_roleInit === 'vendedor' || _roleInit === 'admin') {
         cargarTodasFacturasPage();
@@ -1134,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (_roleClear === 'vendedor' || _roleClear === 'admin') {
                     cargarTodasFacturasPage();
                 } else {
-                    /* Cliente: recarga sus propias facturas */
+
                     cargarFacturasCliente();
                 }
             }

@@ -165,7 +165,6 @@ def actualizar_perfil(cedula):
         else:
             return jsonify({"ok": False, "error": "Sesión expirada. Recarga la página e intenta de nuevo."}), 404
 
-    # Cooldown global: un solo check para todo el perfil
     puede, siguiente = _puede_editar_perfil(usuario_previo)
     if not puede:
         dias = _dias_restantes(siguiente)
@@ -183,13 +182,11 @@ def actualizar_perfil(cedula):
     }
     campos = {k: v for k, v in campos.items() if v}
 
-    # Fecha de cumpleaños (no sujeta a cooldown, se puede editar siempre)
     fecha_nacimiento_raw = (data.get("fechaNacimientoPerfil") or "").strip()
     if fecha_nacimiento_raw:
         try:
             from datetime import date
             fn = date.fromisoformat(fecha_nacimiento_raw)
-            # Validar rango razonable
             hoy = date.today()
             if date(1900, 1, 1) <= fn <= hoy:
                 campos["fecha_nacimiento"] = fn.isoformat()
@@ -216,7 +213,6 @@ def actualizar_perfil(cedula):
             return jsonify({"ok": False, "error": "Cédula inválida (mínimo 6 dígitos)."}), 400
         campos["cedula"] = nueva_cedula
 
-    # Marcar timestamp en todos los campos de control al guardar
     ahora = _ahora_iso()
     for c in ("nombre", "apellido", "cedula", "username"):
         campos[f"last_change_{c}"] = ahora
@@ -245,10 +241,6 @@ def actualizar_perfil(cedula):
         return jsonify({"ok": False, "error": "Sin datos válidos"}), 400
 
     try:
-        # ── Cascade para cambio de cédula ─────────────────────────────────
-        # Cuando un usuario Google (G-) establece su cédula real, las FK de
-        # las tablas dependientes apuntan a la cédula temporal.
-        # Debemos actualizar esas referencias ANTES de cambiar la PK.
         nueva_cedula = campos.get("cedula")
         if nueva_cedula and lookup_id.startswith("G-"):
             db.cedula_cascade_update(lookup_id, nueva_cedula)
@@ -274,7 +266,6 @@ def actualizar_perfil(cedula):
         session["user"] = s
         session.modified = True
 
-        # Verificar logros de perfil
         try:
             from helpers.logros_utils import verificar_y_otorgar
             nuevos_logros = verificar_y_otorgar(nueva_id, {"tipo": "perfil"})

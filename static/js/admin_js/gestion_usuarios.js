@@ -19,7 +19,7 @@ async function cargarUsuarios() {
         _usuarios  = raw.map(u => ({
             ...u,
             rol: u.rol || 'cliente',
-            /* letraAcc='G' → Google  |  letraAcc='D' o null → email/D'Antojitos */
+
             auth_method: String(u.letraAcc || '').toUpperCase() === 'G' ? 'google' : 'email',
         }));
         _actualizarStats();

@@ -97,7 +97,7 @@ if (btnCambiarContrasena) {
                 confirmInput.style.borderColor = "#ddd";
                 confirmInput.style.boxShadow = "none";
                 updateStrengthBar("");
-                /* Activar cooldown inmediatamente en el frontend */
+
                 const ahora = new Date();
                 ahora.setDate(ahora.getDate() + 10);
                 _cooldown.pass_bloqueado    = true;
@@ -127,8 +127,8 @@ const btnEliminarMiCuenta = document.getElementById("btnEliminarMiCuenta");
 if (btnEliminarMiCuenta) {
     btnEliminarMiCuenta.addEventListener("click", () => {
         showConfirmCustom(
-            "Eliminar Cuenta", 
-            "¿Estás completamente seguro? Esta acción es irreversible.", 
+            "Eliminar Cuenta",
+            "¿Estás completamente seguro? Esta acción es irreversible.",
             ejecutarAutoeleminacion
         );
     });
@@ -359,8 +359,7 @@ if (btnCancelarEdicion) {
 }
 
 cargarRestricciones().then(() => {
-    /* Si el usuario es de Google y aún tiene cédula temporal G-,
-       abrir edición automáticamente y resaltar el campo cédula */
+
     const esGoogleSinCedula = typeof USER_AUTH_GOOGLE !== 'undefined'
         && USER_AUTH_GOOGLE
         && (typeof USER_ID === 'undefined' || String(USER_ID).startsWith('G-'));
@@ -379,7 +378,7 @@ cargarRestricciones().then(() => {
     }
 });
 
-/* Validación en tiempo real: la cédula debe ser solo dígitos */
+
 (function () {
     const cedInput = document.getElementById('cedulaPerfil');
     if (!cedInput) return;
@@ -496,7 +495,7 @@ document.getElementById("formPerfil").addEventListener("submit", async e => {
 function mostrarModalDetalles(u) {
     const modalId = 'modalDetalleUsuario';
     let modalEl = document.getElementById(modalId);
-    
+
     if (modalEl) {
         modalEl.remove();
     }
@@ -508,15 +507,15 @@ function mostrarModalDetalles(u) {
         if (!fechaStr) return 'Sin registro';
         const fecha = new Date(fechaStr);
         if (isNaN(fecha.getTime())) return 'Fecha inválida';
-        
+
         return fecha.toLocaleDateString('es-CO', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
-        }) + ' ' + fecha.toLocaleTimeString('es-CO', { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            hour12: true 
+        }) + ' ' + fecha.toLocaleTimeString('es-CO', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
         });
     };
 
@@ -548,10 +547,10 @@ function mostrarModalDetalles(u) {
                         </div>
                         </div>
                     </div>
-                    
+
                     <h4 class="fw-bold mb-1 text-dark">${u.nombre} ${u.apellido}</h4>
                     <p class="text-muted mb-4 small"><i class="bi bi-person-badge me-1"></i>ID Usuario: ${u.cedula || 'N/A'}</p>
-                    
+
                     <div class="row g-3 text-start bg-light p-3 rounded-4 mx-1">
                         <div class="col-12">
                             <label class="small text-muted d-block mb-1">Correo Electrónico:</label>
@@ -577,7 +576,7 @@ function mostrarModalDetalles(u) {
                                 <i class="bi bi-geo-alt me-2 text-secondary"></i> ${u.direccion || 'No registrada'}
                             </div>
                         </div>
-                        
+
                         <div class="col-12 border-top pt-3 mt-3">
                             <div class="row">
                                 <div class="col-6">
@@ -598,7 +597,7 @@ function mostrarModalDetalles(u) {
                         <div class="col-12 border-top pt-2 mt-3">
                             <label class="small text-muted d-block mb-1">Método de Registro:</label>
                             <div class="d-flex align-items-center text-dark fw-medium">
-                                <i class="bi ${esGoogle ? 'bi-google' : 'bi-envelope-at-fill'} me-2 text-secondary"></i> 
+                                <i class="bi ${esGoogle ? 'bi-google' : 'bi-envelope-at-fill'} me-2 text-secondary"></i>
                                 ${esGoogle ? 'Cuenta de Google' : 'Cuenta de E-mail'}
                             </div>
                         </div>
@@ -718,7 +717,7 @@ async function cambiarRol(id, nuevo) {
     }
     try {
         const res = await fetch("/actualizar_rol_usuario", {
-            method: "PUT", 
+            method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: id, rol: nuevo })
         });

@@ -67,7 +67,6 @@ def todas_facturas_page():
             usr       = f.get("usuarios") or {}
             rol_usr   = _rol_de_usuario(usr)
 
-            # Vendedor no puede ver facturas de admins
             if rol == "vendedor" and rol_usr == "admin":
                 continue
 
@@ -114,11 +113,9 @@ def buscar_facturas_page():
     if not termino:
         return jsonify([]), 200
 
-    # Normaliza: quita @ inicial (búsqueda por @username)
     term_norm = termino.lstrip("@").lower()
 
     try:
-        # ── Clientes: solo pueden ver su propio historial ──────────────────
         if rol not in ("admin", "vendedor"):
             cedula_s   = str(user_id or "").lower()
             nombre_s   = f"{user_data.get('nombre', '')} {user_data.get('apellido', '')}".strip().lower()
@@ -144,7 +141,6 @@ def buscar_facturas_page():
                 resultado.append(enr)
             return jsonify(resultado), 200
 
-        # ── Admin / Vendedor: pueden buscar cualquier usuario ──────────────
         usuario = db.usuario_get(termino)
         if not usuario:
             usuario = db.usuario_get_by_correo(termino)
@@ -156,11 +152,9 @@ def buscar_facturas_page():
         if not usuario:
             return jsonify([]), 200
 
-        # Vendedor no puede ver las facturas de usuarios con rol admin
         if rol == "vendedor":
             rol_encontrado = _rol_de_usuario(usuario)
             if not rol_encontrado:
-                # Consulta completa para obtener el rol si no viene en el dict básico
                 u_full = db.usuario_get(usuario["cedula"])
                 rol_encontrado = _rol_de_usuario(u_full or {})
             if rol_encontrado == "admin":
@@ -209,7 +203,6 @@ def anular_factura_page(numero_factura):
         factura = db.factura_get_by_numero(numero_factura)
         if not factura:
             return jsonify({"message": "Factura no encontrada"}), 404
-        # Vendedor no puede anular desde historial (solo desde módulo de pedidos)
         if rol == "vendedor":
             return jsonify({"message": "El vendedor no puede anular facturas desde el historial. Usa el módulo de Pedidos."}), 403
         if str(factura["cedula"]) != str(user_id) and rol != "admin":
@@ -219,7 +212,6 @@ def anular_factura_page(numero_factura):
         db.factura_update(numero_factura, {"estado": "Anulada"})
         db.pedido_update(factura["id_pedido"], {"estado": "Cancelado"})
 
-        # Restaurar stock de los productos del pedido anulado
         try:
             detalles = db.detalle_get(str(factura["id_pedido"]))
             for det in detalles:
@@ -229,7 +221,7 @@ def anular_factura_page(numero_factura):
                     cantidad_devol = int(det.get("cantidad", 0) or 0)
                     db.producto_update(str(det["id_producto"]), {"stock": stock_actual + cantidad_devol})
         except Exception:
-            pass  # La anulación ya se registró; no bloquear por error de stock
+            pass
 
         return jsonify({"message": "Factura anulada con éxito"}), 200
     except Exception as e:
