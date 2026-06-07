@@ -9,10 +9,12 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 
 _url  = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 _key  = os.getenv("SUPABASE_ANON_KEY")
-supabase = create_client(
-    _url, _key,
-    options=ClientOptions(postgrest_client_timeout=120, storage_client_timeout=120, schema="public"),
-)
+supabase = None
+if _url and _key:
+    supabase = create_client(
+        _url, _key,
+        options=ClientOptions(postgrest_client_timeout=120, storage_client_timeout=120, schema="public"),
+    )
 
 logger = logging.getLogger(__name__)
 

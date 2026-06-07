@@ -9,12 +9,13 @@ load_dotenv(os.path.join(BASE_DIR, ".env"), override=True)
 SUPABASE_URL = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("Faltan credenciales en .env. Necesitas: SUPABASE_URL y SUPABASE_ANON_KEY")
+supabase = None
+SUPABASE_REST_URL = ""
 
-SUPABASE_REST_URL = os.getenv("SUPABASE_REST_URL") or f"{SUPABASE_URL.rstrip('/')}/rest/v1/"
-opts = ClientOptions(postgrest_client_timeout=120, storage_client_timeout=120, schema="public")
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=opts)
+if SUPABASE_URL and SUPABASE_KEY:
+    SUPABASE_REST_URL = os.getenv("SUPABASE_REST_URL") or f"{SUPABASE_URL.rstrip('/')}/rest/v1/"
+    opts = ClientOptions(postgrest_client_timeout=120, storage_client_timeout=120, schema="public")
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=opts)
 
 # ── Transaction Pooler (psycopg2 direct SQL) ──────────────────────────────────
 DATABASE_URL = os.getenv("DATABASE_URL")

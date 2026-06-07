@@ -26,9 +26,8 @@ _CLD_NAME   = os.getenv("CLOUDINARY_CLOUD_NAME")
 _CLD_KEY    = os.getenv("CLOUDINARY_API_KEY")
 _CLD_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 
-if not _CLD_NAME or not _CLD_KEY or not _CLD_SECRET:
-    raise ValueError("Faltan credenciales de Cloudinary en .env")
-cloudinary.config(cloud_name=_CLD_NAME, api_key=_CLD_KEY, api_secret=_CLD_SECRET,)
+if _CLD_NAME and _CLD_KEY and _CLD_SECRET:
+    cloudinary.config(cloud_name=_CLD_NAME, api_key=_CLD_KEY, api_secret=_CLD_SECRET)
 
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR    = os.path.join(BASE_DIR, "static")
@@ -159,7 +158,7 @@ def _get_local_ip() -> str:
         s.close()
         
 if __name__ == "__main__":
-    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), True # Cambia a True para modo desarrollo con debug
+    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), False # Cambia a True para modo desarrollo con debug
 
     if debug_mode:
         print("\033[93m" + "MODE DEVELOPMENT - DEBUG" + "\033[0m")
