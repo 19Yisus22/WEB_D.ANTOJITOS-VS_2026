@@ -255,7 +255,11 @@
 <script src="{{ url_for('static', filename='js/global_js/logros.js') }}" defer></script>
 {% endif %}
 {% set _uid = session.get('user_id', '') | string %}
-{% if session.get('user_id') and _uid[:2] == 'G-' %}
+{% set _user_obj = session.get('user') or {} %}
+{% set _cedula_ok = _uid and _uid[:2] != 'G-' and _uid|length >= 6 %}
+{% set _telefono_ok = _user_obj.telefono is defined and _user_obj.telefono %}
+{% set _direccion_ok = _user_obj.direccion is defined and _user_obj.direccion %}
+{% if session.get('user_id') and (not _cedula_ok or not _telefono_ok or not _direccion_ok) %}
 <script>window._PROFILE_INCOMPLETE = true;</script>
 {% endif %}
 <script>

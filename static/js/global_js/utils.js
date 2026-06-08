@@ -720,8 +720,10 @@ function _notifSig(n) {
     return (n.tipo || '') + '|' + (n.titulo || '') + '|' + (n.mensaje || '').substring(0, 40);
 }
 function _pushClientNotif(notif) {
-    const sig = _notifSig(notif);
-    if (_getClientSeen().includes(sig)) return;
+    const sig  = _notifSig(notif);
+    const tipo = notif.tipo || '';
+    const isRepeatable = tipo === 'agotado' || tipo === 'disponible' || tipo.startsWith('pedido_');
+    if (!isRepeatable && _getClientSeen().includes(sig)) return;
     const arr = _getClientNotifs();
     if (arr.some(x => _notifSig(x) === sig)) return;
     arr.unshift({ ...notif, ts: Date.now(), _sig: sig });
@@ -747,12 +749,33 @@ function _renderClientNotifs() {
     if (count)  { count.textContent  = notifs.length > 9 ? '9+' : notifs.length; count.style.display = _muted ? 'none' : 'inline-flex'; }
     if (badge)  { badge.textContent  = notifs.length > 9 ? '9+' : notifs.length; badge.style.display = _muted ? 'none' : 'flex'; }
     notifs.forEach((n, i) => {
-        const isPerfil  = n.tipo === 'perfil';
-        const agotado   = n.tipo === 'agotado';
-        const isPrivMsg = n.tipo === 'priv_msg';
-        const icon  = agotado ? 'bi-x-circle-fill' : isPerfil ? 'bi-person-fill-exclamation' : isPrivMsg ? 'bi-chat-text-fill' : 'bi-check-circle-fill';
-        const color = agotado ? '#dc2626' : isPerfil ? '#d35400' : isPrivMsg ? '#7c3aed' : '#15803d';
-        const bg    = agotado ? '#fee2e2' : isPerfil ? '#fff4ee' : isPrivMsg ? '#f5f3ff' : '#dcfce7';
+        const isPerfil   = n.tipo === 'perfil';
+        const agotado    = n.tipo === 'agotado';
+        const isPrivMsg  = n.tipo === 'priv_msg';
+        const isPedido   = (n.tipo || '').startsWith('pedido_');
+        const isCancelado= n.tipo === 'pedido_cancelado' || n.tipo === 'pedido_anulada';
+        const isEntregado= n.tipo === 'pedido_entregado' || n.tipo === 'pedido_pagado';
+        const icon  = agotado ? 'bi-x-circle-fill'
+                    : isPerfil ? 'bi-person-fill-exclamation'
+                    : isPrivMsg ? 'bi-chat-text-fill'
+                    : isCancelado ? 'bi-x-circle'
+                    : isPedido && isEntregado ? 'bi-check-circle-fill'
+                    : isPedido ? 'bi-bag-check-fill'
+                    : 'bi-check-circle-fill';
+        const color = agotado ? '#dc2626'
+                    : isPerfil ? '#d35400'
+                    : isPrivMsg ? '#7c3aed'
+                    : isCancelado ? '#64748b'
+                    : isPedido && isEntregado ? '#15803d'
+                    : isPedido ? '#0369a1'
+                    : '#15803d';
+        const bg    = agotado ? '#fee2e2'
+                    : isPerfil ? '#fff4ee'
+                    : isPrivMsg ? '#f5f3ff'
+                    : isCancelado ? '#f1f5f9'
+                    : isPedido && isEntregado ? '#dcfce7'
+                    : isPedido ? '#e0f2fe'
+                    : '#dcfce7';
         const li = document.createElement('li');
         li.className = 'notif-item' + (n.url ? ' notif-item-link' : '');
         li.dataset.notifIdx = i;
@@ -863,58 +886,102 @@ function _pushStockToSistemPanel(p, tipo) {
     let _stockSnapshot = {};
     let _firstRun      = true;
 
+    function _ringClientBell() {
+        const cb = document.getElementById('navClientBellBtn');
+        const bd = document.getElementById('navClientBellBadge');
+        if (cb && !_isNotifMuted()) { cb.classList.add('ring-anim'); setTimeout(() => cb.classList.remove('ring-anim'), 2500); }
+        _animateBadge(bd);
+    }
+
     async function _checkStock() {
         try {
             const res  = await fetch('/obtener_catalogo', { cache: 'no-store' });
             const data = await res.json();
             const prods = data.productos || data || [];
-            if (!Array.isArray(prods) || !prods.length) return;
+            if (!Array.isArray(prods)) return;
 
             if (_firstRun) {
-                prods.forEach(p => { _stockSnapshot[p.id_producto] = parseInt(p.stock ?? 0, 10); });
+                prods.forEach(p => { _stockSnapshot[String(p.id_producto)] = parseInt(p.stock ?? 0, 10); });
                 _firstRun = false;
                 return;
             }
 
+            const currIds = new Set(prods.map(p => String(p.id_producto)));
+
+            // Detect products removed from the catalog
+            Object.keys(_stockSnapshot).forEach(id => {
+                if (!currIds.has(id)) {
+                    mostrarAlertaPublica({
+                        titulo:   '¡Producto eliminado!',
+                        mensaje:  'Un producto fue removido del catálogo',
+                        tipo:     'error',
+                        duracion:  5000,
+                        idUnico:  `eliminado-${id}-${Date.now()}`,
+                    });
+                    _pushClientNotif({ tipo: 'agotado', titulo: '¡Producto eliminado!', mensaje: 'Un producto fue removido del catálogo', imagen: '/static/uploads/logo.png' });
+                    _pushStockToSistemPanel({ id_producto: id, nombre: 'Producto eliminado', stock: 0, imagen_url: '' }, 'agotado');
+                    _ringClientBell();
+                    delete _stockSnapshot[id];
+                }
+            });
+
             prods.forEach(p => {
-                const prev = _stockSnapshot[p.id_producto] ?? -1;
+                const id   = String(p.id_producto);
                 const curr = parseInt(p.stock ?? 0, 10);
+                const isNew = !Object.prototype.hasOwnProperty.call(_stockSnapshot, id);
+                const prev  = isNew ? null : _stockSnapshot[id];
+
+                _stockSnapshot[id] = curr;
+
+                if (isNew) {
+                    // Brand-new product added to catalog
+                    mostrarAlertaPublica({
+                        titulo:   '¡Nuevo producto!',
+                        mensaje:  `${p.nombre} se añadió al catálogo` + (curr > 0 ? ` · ${curr} uds` : ''),
+                        imagen:   p.imagen_url || '/static/uploads/logo.png',
+                        tipo:     'success',
+                        duracion:  6000,
+                        idUnico:  `nuevo-${id}-${Date.now()}`,
+                        sonido:   true,
+                    });
+                    _pushClientNotif({ tipo: 'disponible', titulo: '¡Nuevo producto!', mensaje: p.nombre + (curr > 0 ? ` · ${curr} uds` : ' — sin stock aún'), imagen: p.imagen_url });
+                    _pushStockToSistemPanel({ ...p, stock: curr }, 'disponible');
+                    _ringClientBell();
+                    return;
+                }
+
                 if (prev === curr) return;
 
                 if (prev > 0 && curr <= 0) {
                     mostrarAlertaPublica({
-                        titulo:  '¡Producto Agotado!',
-                        mensaje: `${p.nombre} ya no tiene stock disponible`,
-                        imagen:  p.imagen_url || '/static/uploads/logo.png',
-                        tipo:    'error',
-                        duracion: 6000,
-                        idUnico:  `agotado-${p.id_producto}-${Date.now()}`,
-                        sonido:  true,
+                        titulo:   '¡Producto Agotado!',
+                        mensaje:  `${p.nombre} ya no tiene stock disponible`,
+                        imagen:   p.imagen_url || '/static/uploads/logo.png',
+                        tipo:     'error',
+                        duracion:  6000,
+                        idUnico:  `agotado-${id}-${Date.now()}`,
+                        sonido:   true,
                     });
-
-                    _pushClientNotif({ tipo:'agotado', titulo:'¡Agotado!', mensaje: p.nombre + ' no tiene stock', imagen: p.imagen_url });
-
+                    _pushClientNotif({ tipo: 'agotado', titulo: '¡Agotado!', mensaje: p.nombre + ' sin stock', imagen: p.imagen_url });
                     _pushStockToSistemPanel({ ...p, stock: curr }, 'agotado');
+                    _ringClientBell();
 
                 } else if (prev <= 0 && curr > 0) {
                     mostrarAlertaPublica({
-                        titulo:  '¡Disponible!',
-                        mensaje: `${p.nombre} vuelve a tener stock (${curr} unidades)`,
-                        imagen:  p.imagen_url || '/static/uploads/logo.png',
-                        tipo:    'success',
-                        duracion: 6000,
-                        idUnico:  `disponible-${p.id_producto}-${Date.now()}`,
-                        sonido:  true,
+                        titulo:   '¡Disponible!',
+                        mensaje:  `${p.nombre} vuelve a tener stock (${curr} uds)`,
+                        imagen:   p.imagen_url || '/static/uploads/logo.png',
+                        tipo:     'success',
+                        duracion:  6000,
+                        idUnico:  `disponible-${id}-${Date.now()}`,
+                        sonido:   true,
                     });
-
-                    _pushClientNotif({ tipo:'disponible', titulo:'¡Disponible!', mensaje: p.nombre + ' · ' + curr + ' unidades', imagen: p.imagen_url });
-
+                    _pushClientNotif({ tipo: 'disponible', titulo: '¡Disponible!', mensaje: p.nombre + ' · ' + curr + ' unidades', imagen: p.imagen_url });
                     _pushStockToSistemPanel({ ...p, stock: curr }, 'disponible');
+                    _ringClientBell();
                 }
-
-                _stockSnapshot[p.id_producto] = curr;
             });
-        } catch {  }
+        } catch { }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -950,6 +1017,85 @@ async function _pollSistemNotif() {
 }
 
 
+const _MIS_PEDIDOS_KEY  = '_dantojitos_mis_pedidos_estado';
+const _MIS_PEDIDOS_SEEN = '_dantojitos_mis_pedidos_vistos';
+
+function _getMisPedidosEstado() {
+    try { return JSON.parse(localStorage.getItem(_MIS_PEDIDOS_KEY) || '{}'); } catch { return {}; }
+}
+function _saveMisPedidosEstado(obj) {
+    try { localStorage.setItem(_MIS_PEDIDOS_KEY, JSON.stringify(obj)); } catch {}
+}
+function _getMisPedidosVistos() {
+    try { return JSON.parse(localStorage.getItem(_MIS_PEDIDOS_SEEN) || '[]'); } catch { return []; }
+}
+function _addMiPedidoVisto(key) {
+    const list = _getMisPedidosVistos();
+    if (!list.includes(key)) { list.push(key); localStorage.setItem(_MIS_PEDIDOS_SEEN, JSON.stringify(list.slice(-50))); }
+}
+
+const _PEDIDO_ESTADO_CFG = {
+    'Pendiente': { icon: 'bi-hourglass-split',           color: '#b45309', tipo: 'info'     },
+    'Emitida':   { icon: 'bi-file-earmark-arrow-up',     color: '#0369a1', tipo: 'info'     },
+    'Enviado':   { icon: 'bi-truck',                     color: '#92400e', tipo: 'info'     },
+    'Entregado': { icon: 'bi-house-check-fill',          color: '#15803d', tipo: 'success'  },
+    'Pagado ✓':  { icon: 'bi-check-circle-fill',         color: '#15803d', tipo: 'success'  },
+    'Cancelado': { icon: 'bi-x-circle',                  color: '#64748b', tipo: 'agotado'  },
+    'Anulada':   { icon: 'bi-slash-circle',              color: '#dc2626', tipo: 'agotado'  },
+};
+
+async function _pollMisPedidos() {
+    const badge = document.getElementById('navClientBellBadge');
+    if (!badge) return;
+    try {
+        const res = await fetch('/api/mis_pedidos/recientes', { cache: 'no-store' });
+        if (!res.ok) return;
+        const pedidos = await res.json();
+        if (!Array.isArray(pedidos)) return;
+        const prevEstados = _getMisPedidosEstado();
+        const nuevoEstados = {};
+        const vistos = _getMisPedidosVistos();
+        const hoy = new Date().toISOString().slice(0, 10);
+        pedidos.forEach(p => {
+            const id    = p.id_pedido;
+            const est   = p.estado;
+            nuevoEstados[id] = est;
+            const clave = id + '|' + est;
+            if (vistos.includes(clave)) return;
+            const prev  = prevEstados[id];
+            if (prev === est) return;
+            const total = p.total ? ` · $${Number(p.total).toLocaleString('es-CO')}` : '';
+            const items = `${p.num_items || 1} ítem${(p.num_items || 1) > 1 ? 's' : ''}`;
+            let notifTipo, notifTitulo, notifMensaje;
+            if (prev === undefined) {
+                if (p.fecha !== hoy) return;
+                notifTipo    = 'pedido_nuevo';
+                notifTitulo  = '¡Pedido recibido!';
+                notifMensaje = `Tu pedido (${items})${total} fue recibido y está ${est}`;
+            } else {
+                notifTipo    = 'pedido_' + est.toLowerCase().replace(/[^a-z]/g, '');
+                notifTitulo  = `Pedido ${est}`;
+                notifMensaje = `Tu pedido (${items})${total} — ${est}`;
+            }
+            _pushClientNotif({
+                tipo:    notifTipo,
+                titulo:  notifTitulo,
+                mensaje: notifMensaje,
+                imagen:  '/static/uploads/logo.png',
+                url:     '/historial_facturas_page',
+            });
+            if (!_isNotifMuted()) {
+                const bellEl = document.getElementById('navClientBellBtn');
+                const bdEl   = document.getElementById('navClientBellBadge');
+                if (bellEl) { bellEl.classList.add('ring-anim'); setTimeout(() => bellEl.classList.remove('ring-anim'), 2500); }
+                _animateBadge(bdEl);
+            }
+        });
+        _saveMisPedidosEstado(nuevoEstados);
+    } catch {}
+}
+
+
 function _cerrarTodosPaneles(exceptId) {
     if (_clientPanelOpen && exceptId !== 'clientNotifPanel') {
         _clientPanelOpen = _togglePanel('clientNotifPanel','clientNotifBody','clientNotifChevron','navClientBellBtn', true, null);
@@ -979,13 +1125,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (document.getElementById('clientNotifList')) {
         _renderClientNotifs();
-        _clientNotifClearAll();
     }
 
 
     if (document.getElementById('navClientBellBadge') || document.getElementById('navBellBadge')) {
         setTimeout(_pollPrivMsgs, 4000);
         setInterval(_pollPrivMsgs, 20000);
+    }
+
+    if (document.getElementById('navClientBellBadge')) {
+        setTimeout(_pollMisPedidos, 6000);
+        setInterval(_pollMisPedidos, 30000);
     }
 
 
@@ -1415,11 +1565,12 @@ function _buildAvatarDiv(name, fontSize = '1rem') {
 function _applyAvatarFallback(imgEl, name) {
     if (!imgEl || !imgEl.parentNode) return;
     const container = imgEl.parentNode;
-    const size = container.offsetWidth || 40;
-    const fs   = Math.max(10, Math.round(size * 0.4)) + 'px';
+    const size = container.offsetWidth || imgEl.offsetWidth || parseInt(imgEl.getAttribute('width') || '0', 10) || 40;
+    const fs   = Math.max(10, Math.round(size * 0.42)) + 'px';
     const div  = _buildAvatarDiv(name, fs);
-    div.style.minWidth  = '100%';
-    div.style.minHeight = '100%';
+    div.style.width       = '100%';
+    div.style.height      = '100%';
+    div.style.borderRadius = '50%';
     container.replaceChild(div, imgEl);
 }
 
@@ -1432,7 +1583,7 @@ function _cloudinaryThumb(url, w = 80, h = 80) {
 
 function _googleThumb(url, size = 80) {
     if (!url || !url.includes('googleusercontent.com')) return url;
-    return url.replace(/=s\d+-c/, `=s${size}-c`).replace(/\/s\d+-c\
+    return url.replace(/=s\d+-c/, `=s${size}-c`).replace(/\/s\d+-c/, `/s${size}-c`);
 }
 
 function loadProfileImg(imgEl, rawUrl, name, thumbSize = 80) {

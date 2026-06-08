@@ -82,6 +82,20 @@ def agregar_cabeceras(response):
     response.headers["Referrer-Policy"]              = "strict-origin-when-cross-origin"
     return response
 
+from flask import render_template as _rt
+
+@app.errorhandler(404)
+def pagina_no_encontrada(_):
+    return _rt("errors/404.html"), 404
+
+@app.errorhandler(403)
+def acceso_denegado(_):
+    return _rt("errors/404.html"), 403
+
+@app.errorhandler(500)
+def error_servidor(_):
+    return _rt("errors/404.html"), 500
+
 _RUTAS_PUBLICAS = frozenset({
     "/login", "/registro", "/registro-google", "/logout",
     "/refresh", "/obtener-cliente-id",

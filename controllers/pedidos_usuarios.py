@@ -137,3 +137,31 @@ def eliminar_pedidos():
     if not result:
         return jsonify({"success": False, "message": "No se pudo eliminar"}), 404
     return jsonify({"success": True}), 200
+
+
+@pedidos_usuarios_bp.route("/api/mis_pedidos/recientes")
+@login_required
+def mis_pedidos_recientes():
+    cedula = session.get("user_id")
+    if not cedula:
+        return jsonify([]), 401
+    try:
+        pedidos   = db.pedido_get_by_cedula(str(cedula), limit=10)
+        resultado = []
+        for p in pedidos:
+            detalles  = p.get("pedido_detalle") or []
+            total     = sum(float(d.get("subtotal") or 0) for d in detalles)
+            num_items = sum(int(d.get("cantidad")  or 0) for d in detalles)
+            estado    = "Pagado ✓" if p.get("pagado") else p.get("estado", "Pendiente")
+            resultado.append({
+                "id_pedido":      str(p.get("id_pedido", "")),
+                "estado":         estado,
+                "fecha":          str(p.get("fecha_pedido", ""))[:10],
+                "total":          total,
+                "num_items":      num_items,
+                "numero_factura": p.get("numero_factura", ""),
+            })
+        return jsonify(resultado), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+

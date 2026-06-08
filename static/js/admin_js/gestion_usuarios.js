@@ -279,6 +279,10 @@ function mostrarDetalleUsuario(u) {
             <span class="udet-row-label"><i class="bi ${icon}"></i>${label}</span>
             <span class="udet-row-value">${value || '<span class="text-muted">—</span>'}</span>
         </div>`;
+    const _detName = (u.nombre_completo || '?');
+    const _detIdx  = _detName.split('').reduce((h,c) => (h<<5)-h+c.charCodeAt(0), 0);
+    const _detPals = [['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],['#6d28d9','#8b5cf6'],['#b91c1c','#ef4444'],['#0e7490','#06b6d4']];
+    const [_dc1, _dc2] = _detPals[Math.abs(_detIdx) % _detPals.length];
 
     const existing = document.getElementById('modalDetalleUsuario');
     if (existing) existing.remove();
@@ -302,7 +306,7 @@ function mostrarDetalleUsuario(u) {
                                     class="udet-avatar udet-avatar-lg"
                                     style="display:block;object-fit:cover;border-radius:50%;"
                                     onerror="this.style.display='none'">`
-                            : `<div class="udet-avatar-lg udet-avatar-initial">${(u.nombre_completo||'?').charAt(0).toUpperCase()}</div>`}
+                            : `<div class="udet-avatar-lg udet-avatar-initial" style="background:linear-gradient(135deg,${_dc1},${_dc2});">${_detName.charAt(0).toUpperCase()}</div>`}
                     </div>
                     <div class="udet-header-info text-center">
                         <div class="udet-name">${u.nombre_completo || '—'}</div>
@@ -446,9 +450,18 @@ function abrirFilesPanel(cedula, nombre, imagen) {
     if (cedEl)    cedEl.textContent    = cedula || '—';
     if (avatarEl) {
         if (imagen) {
-            avatarEl.innerHTML = `<img src="${imagen}" onerror="this.outerHTML='<i class=\\'bi bi-person-fill\\'></i>'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            const _fpn  = nombre || '?';
+            const _fpi  = _fpn.split('').reduce((h,c) => (h<<5)-h+c.charCodeAt(0), 0);
+            const _fpp  = [['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],['#6d28d9','#8b5cf6'],['#b91c1c','#ef4444'],['#0e7490','#06b6d4']];
+            const [_fc1,_fc2] = _fpp[Math.abs(_fpi) % _fpp.length];
+            const _fallback = `<i class="bi bi-person-fill" style="display:none;"></i><div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,${_fc1},${_fc2});display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem;">${_fpn.charAt(0).toUpperCase()}</div>`;
+            avatarEl.innerHTML = `<img src="${imagen}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"><div style="display:none;width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,${_fc1},${_fc2});align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.1rem;">${_fpn.charAt(0).toUpperCase()}</div>`;
         } else {
-            avatarEl.innerHTML = '<i class="bi bi-person-fill"></i>';
+            const _fpn  = nombre || '?';
+            const _fpi  = _fpn.split('').reduce((h,c) => (h<<5)-h+c.charCodeAt(0), 0);
+            const _fpp  = [['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],['#6d28d9','#8b5cf6'],['#b91c1c','#ef4444'],['#0e7490','#06b6d4']];
+            const [_fc1,_fc2] = _fpp[Math.abs(_fpi) % _fpp.length];
+            avatarEl.innerHTML = `<div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,${_fc1},${_fc2});display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.1rem;">${_fpn.charAt(0).toUpperCase()}</div>`;
         }
     }
 

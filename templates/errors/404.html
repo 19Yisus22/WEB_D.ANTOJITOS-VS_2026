@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página no encontrada | D'Antojitos©</title>
+    <link rel="icon" type="image/x-icon" href="/static/uploads/logo.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --primary:#d35400;
+            --primary-light:#e67e22;
+            --bg:#fff8f0;
+            --dark:#1a1a2e;
+            --card:#ffffff;
+        }
+        [data-theme="dark"]{
+            --bg:#111118;
+            --card:#1e1e2e;
+            --dark:#f0f0f0;
+        }
+        html,body{height:100%;overflow:hidden}
+        body{
+            font-family:'Segoe UI',system-ui,sans-serif;
+            background:var(--bg);
+            display:flex;flex-direction:column;
+            align-items:center;justify-content:center;
+            min-height:100vh;
+            position:relative;
+            overflow:hidden;
+        }
+
+        /* floating food particles */
+        .particle{
+            position:fixed;font-size:1.8rem;
+            animation:floatUp linear infinite;
+            opacity:0;pointer-events:none;user-select:none;
+        }
+        @keyframes floatUp{
+            0%  {transform:translateY(110vh) rotate(0deg);opacity:0}
+            10% {opacity:.7}
+            90% {opacity:.6}
+            100%{transform:translateY(-10vh) rotate(360deg);opacity:0}
+        }
+
+        /* main card */
+        .error-card{
+            background:var(--card);
+            border-radius:28px;
+            padding:2.5rem 2rem;
+            max-width:520px;
+            width:90%;
+            text-align:center;
+            box-shadow:0 30px 80px rgba(211,84,0,.15);
+            position:relative;
+            z-index:10;
+            animation:cardIn .6s cubic-bezier(.175,.885,.32,1.275) both;
+        }
+        @keyframes cardIn{
+            from{transform:scale(.7) translateY(40px);opacity:0}
+            to  {transform:scale(1) translateY(0);opacity:1}
+        }
+
+        /* 404 big number */
+        .error-number{
+            font-size:clamp(5rem,20vw,8rem);
+            font-weight:900;
+            line-height:1;
+            background:linear-gradient(135deg,var(--primary),var(--primary-light));
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+            animation:pulse 2.4s ease-in-out infinite;
+            display:block;
+        }
+        @keyframes pulse{
+            0%,100%{filter:brightness(1)}
+            50%    {filter:brightness(1.25)}
+        }
+
+        .error-emoji{
+            font-size:3.5rem;
+            display:block;
+            margin:.5rem 0;
+            animation:wobble 1.8s ease-in-out infinite;
+        }
+        @keyframes wobble{
+            0%,100%{transform:rotate(-8deg)}
+            50%    {transform:rotate(8deg)}
+        }
+
+        .error-title{
+            font-size:1.5rem;
+            font-weight:700;
+            color:var(--dark);
+            margin:.75rem 0 .4rem;
+        }
+        .error-desc{
+            color:#888;
+            font-size:.95rem;
+            line-height:1.6;
+            margin-bottom:1.8rem;
+        }
+
+        /* buttons */
+        .btn-group{
+            display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;
+        }
+        .btn{
+            display:inline-flex;align-items:center;gap:.45rem;
+            padding:.65rem 1.4rem;border-radius:50px;
+            font-weight:600;font-size:.9rem;
+            text-decoration:none;border:none;cursor:pointer;
+            transition:transform .2s,box-shadow .2s,background .2s;
+        }
+        .btn:active{transform:scale(.96)}
+        .btn-primary{
+            background:var(--primary);color:#fff;
+            box-shadow:0 4px 18px rgba(211,84,0,.35);
+        }
+        .btn-primary:hover{background:var(--primary-light);box-shadow:0 6px 24px rgba(211,84,0,.45);transform:translateY(-2px)}
+        .btn-outline{
+            background:transparent;
+            border:2px solid var(--primary);
+            color:var(--primary);
+        }
+        .btn-outline:hover{background:var(--primary);color:#fff;transform:translateY(-2px)}
+
+        /* search bar */
+        .search-wrap{
+            display:flex;gap:.5rem;margin:1.5rem 0 .5rem;
+        }
+        .search-wrap input{
+            flex:1;padding:.6rem 1rem;
+            border:2px solid #eee;border-radius:50px;
+            font-size:.9rem;outline:none;
+            background:var(--bg);color:var(--dark);
+            transition:border-color .2s;
+        }
+        .search-wrap input:focus{border-color:var(--primary)}
+        .search-wrap button{
+            padding:.6rem 1.1rem;
+            background:var(--primary);color:#fff;
+            border:none;border-radius:50px;
+            cursor:pointer;font-size:.95rem;
+            transition:background .2s,transform .2s;
+        }
+        .search-wrap button:hover{background:var(--primary-light);transform:scale(1.07)}
+
+        /* breadcrumb-like path */
+        .error-path{
+            font-size:.75rem;color:#aaa;
+            font-family:monospace;
+            background:#f5f5f5;border-radius:8px;
+            padding:.35rem .7rem;display:inline-block;
+            margin-top:1rem;word-break:break-all;
+        }
+        [data-theme="dark"] .error-path{background:#2a2a3e;color:#888}
+
+        /* confetti dots */
+        .dot{
+            position:fixed;width:10px;height:10px;border-radius:50%;
+            animation:dotFall linear infinite;pointer-events:none;opacity:.7;
+        }
+        @keyframes dotFall{
+            0% {transform:translateY(-20px) rotate(0deg);opacity:1}
+            100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <span class="error-number">404</span>
+        <span class="error-emoji">🍩</span>
+        <h1 class="error-title">¡Ups! Página no encontrada</h1>
+        <p class="error-desc">
+            Al parecer esta página se la comieron los postres.<br>
+            La ruta que buscas no existe o fue movida.
+        </p>
+
+        <div class="search-wrap">
+            <input type="text" id="searchQ" placeholder="Buscar en el sitio..." oninput="filterSugg(this.value)" onkeydown="if(event.key==='Enter')goSearch()">
+            <button onclick="goSearch()" title="Buscar"><i class="bi bi-search"></i></button>
+        </div>
+        <div id="suggestions" style="text-align:left;margin-bottom:.5rem;"></div>
+
+        <div class="btn-group">
+            <a href="/inicio" class="btn btn-primary">
+                <i class="bi bi-house-door-fill"></i> Ir al Inicio
+            </a>
+            <a href="/catalogo_page" class="btn btn-outline">
+                <i class="bi bi-shop"></i> Ver Catálogo
+            </a>
+            <button class="btn btn-outline" onclick="history.back()">
+                <i class="bi bi-arrow-left"></i> Volver
+            </button>
+        </div>
+
+        <div class="error-path" id="errPath"></div>
+    </div>
+
+    <script>
+    (function(){
+        /* show current path */
+        const p = document.getElementById('errPath');
+        if(p) p.textContent = '📍 ' + location.pathname;
+
+        /* apply saved theme */
+        const th = localStorage.getItem('dantojitos_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', th);
+
+        /* floating food particles */
+        const foods = ['🍩','🧁','🍰','🍫','🍪','🍭','🍬','🍮','🎂','🥐','🍓','🍑'];
+        for(let i=0;i<12;i++){
+            const el = document.createElement('div');
+            el.className='particle';
+            el.textContent=foods[i%foods.length];
+            el.style.left=Math.random()*100+'vw';
+            el.style.animationDuration=(7+Math.random()*8)+'s';
+            el.style.animationDelay=(Math.random()*8)+'s';
+            el.style.fontSize=(1.2+Math.random()*1.5)+'rem';
+            document.body.appendChild(el);
+        }
+
+        /* color confetti dots */
+        const colors=['#d35400','#e67e22','#f39c12','#27ae60','#3498db','#9b59b6','#e74c3c'];
+        for(let i=0;i<18;i++){
+            const d=document.createElement('div');
+            d.className='dot';
+            d.style.left=Math.random()*100+'vw';
+            d.style.background=colors[i%colors.length];
+            d.style.width=d.style.height=(6+Math.random()*10)+'px';
+            d.style.animationDuration=(5+Math.random()*10)+'s';
+            d.style.animationDelay=(Math.random()*10)+'s';
+            document.body.appendChild(d);
+        }
+
+        /* search suggestions */
+        const PAGES = [
+            {label:'Inicio', url:'/inicio',              icon:'bi-house-door-fill'},
+            {label:'Catálogo de productos', url:'/catalogo_page', icon:'bi-shop'},
+            {label:'Mi carrito', url:'/carrito_page',   icon:'bi-cart3'},
+            {label:'Mi perfil', url:'/mi_perfil',       icon:'bi-person-circle'},
+            {label:'Sugerencias', url:'/comentarios_page', icon:'bi-chat-dots'},
+            {label:'Historial de facturas', url:'/historial_facturas_page', icon:'bi-receipt'},
+            {label:'Iniciar sesión', url:'/login',       icon:'bi-box-arrow-in-right'},
+            {label:'Registrarme', url:'/registro',       icon:'bi-person-plus'},
+        ];
+        window.filterSugg = function(q){
+            const box = document.getElementById('suggestions');
+            if(!q.trim()){box.innerHTML='';return;}
+            const res = PAGES.filter(p=>p.label.toLowerCase().includes(q.toLowerCase())).slice(0,4);
+            box.innerHTML = res.map(p=>`<a href="${p.url}" style="display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;border-radius:8px;text-decoration:none;color:inherit;font-size:.88rem;transition:background .15s;" onmouseover="this.style.background='#fff0e5'" onmouseout="this.style.background='transparent'"><i class="bi ${p.icon}" style="color:#d35400;"></i>${p.label}</a>`).join('');
+        };
+        window.goSearch = function(){
+            const q = document.getElementById('searchQ').value.trim();
+            if(!q) return;
+            const match = PAGES.find(p=>p.label.toLowerCase().includes(q.toLowerCase()));
+            if(match) location.href = match.url;
+        };
+    })();
+    </script>
+</body>
+</html>

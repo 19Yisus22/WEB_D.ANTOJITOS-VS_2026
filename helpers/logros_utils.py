@@ -410,14 +410,41 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     db_visit  = int(db_contadores.get(v_key, 0))
     db_streak = int(db_contadores.get(s_key, 0))
 
-    visit_count  = max(int(contexto.get("visit_count", 0) or 0), db_visit)
-    streak_count = max(int(contexto.get("streak_count", 0) or 0), db_streak)
+    # Anti-cheat: server-side day tracking — counters increment at most once per calendar day.
+    # Keys {modulo}_vd = epoch-day of last visit, {modulo}_sd = epoch-day of last streak update.
+    hoy_epoch     = (date.today() - date(1970, 1, 1)).days
+    vd_key        = f"{modulo_visita}_vd"
+    sd_key        = f"{modulo_visita}_sd"
+    last_visit_d  = int(db_contadores.get(vd_key, 0))
+    last_streak_d = int(db_contadores.get(sd_key, 0))
 
-    if es_visita and modulo_visita and (visit_count > db_visit or streak_count > db_streak):
-        try:
-            db.logros_contadores_upsert_many(cedula, {v_key: visit_count, s_key: streak_count})
-        except Exception:
-            pass
+    if es_visita and modulo_visita:
+        # Visit counter: increment only on a new calendar day
+        visit_count = db_visit + 1 if last_visit_d < hoy_epoch else db_visit
+
+        # Streak: continue if yesterday was visited, reset if gap > 1 day, hold if already today
+        if last_streak_d == hoy_epoch:
+            streak_count = db_streak                  # already counted today
+        elif last_streak_d == hoy_epoch - 1:
+            streak_count = db_streak + 1              # yesterday → continue streak
+        elif last_streak_d == 0:
+            streak_count = 1                          # first ever visit
+        else:
+            streak_count = 1                          # gap > 1 day → streak reset
+
+        save_patch: dict = {v_key: visit_count, s_key: streak_count}
+        if last_visit_d < hoy_epoch:
+            save_patch[vd_key] = hoy_epoch
+        if last_streak_d < hoy_epoch:
+            save_patch[sd_key] = hoy_epoch
+        if any(save_patch.get(k) != db_contadores.get(k) for k in save_patch):
+            try:
+                db.logros_contadores_upsert_many(cedula, save_patch)
+            except Exception:
+                pass
+    else:
+        visit_count  = db_visit
+        streak_count = db_streak
     es_login      = contexto.get("tipo") == "login"
     es_compra     = contexto.get("tipo") == "compra"
     es_comentario = contexto.get("tipo") == "comentario"
