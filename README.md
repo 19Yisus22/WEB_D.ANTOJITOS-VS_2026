@@ -3,7 +3,7 @@
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:FFB6B9,50:E07A5F,100:8B5A2B&height=220&section=header&text=D'Antojitos%C2%A9&fontSize=68&fontColor=ffffff&animation=fadeIn&fontAlignY=36&desc=Dulcer%C3%ADa%20Artesanal%20Colombiana&descAlignY=58&descSize=20&descAlign=50" width="100%" alt="D'Antojitos banner"/>
 
 <a href="https://readme-typing-svg.demolab.com">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3200&pause=900&color=E07A5F&center=true&vCenter=true&width=640&lines=Postres+artesanales+hechos+con+amor;Cat%C3%A1logo+%C2%B7+Carrito+%C2%B7+Pedidos+%C2%B7+Facturaci%C3%B3n;Python+%C2%B7+Flask+%C2%B7+Supabase+%C2%B7+Cloudinary" alt="Typing SVG"/>
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3200&pause=900&color=E07A5F&center=true&vCenter=true&width=640&lines=Postres+artesanales+hechos+con+amor;Cat%C3%A1logo+%C2%B7+Carrito+%C2%B7+Pedidos+%C2%B7+Facturaci%C3%B3n;Python+%C2%B7+Flask+%C2%B7+Supabase+%C2%B7+Vercel" alt="Typing SVG"/>
 </a>
 
 <br/>
@@ -18,7 +18,7 @@ Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, men
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Cloudinary](https://img.shields.io/badge/Cloudinary-Images-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
-![HuggingFace](https://img.shields.io/badge/Hugging%20Face-Spaces-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
 </div>
 
@@ -45,7 +45,7 @@ Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, men
 9. [Base de Datos](#-base-de-datos)
 10. [Variables de Entorno](#-variables-de-entorno)
 11. [Instalación y Ejecución Local](#-instalación-y-ejecución-local)
-12. [Despliegue en Producción](#-despliegue-en-producción)
+12. [Despliegue en Producción](#-despliegue-en-producción-vercel)
 
 </td>
 </tr>
@@ -57,7 +57,7 @@ Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, men
 
 **D'Antojitos©** es una plataforma de comercio electrónico especializada en postres artesanales. Está construida con **Python/Flask** en el backend y **Jinja2 + Bootstrap** en el frontend, conectada a **Supabase (PostgreSQL)** como base de datos principal y a **Cloudinary** para el almacenamiento de imágenes.
 
-La aplicación soporta tres perfiles de usuario con flujos completamente diferenciados: **cliente, vendedor y administrador**. Incluye sistema de internacionalización (ES/EN), modo oscuro, notificaciones en tiempo real, mensajería privada multicanal, generación de facturas, descuento de cumpleaños y un sistema de **231 logros** desbloqueables por rol.
+La aplicación soporta tres perfiles de usuario con flujos completamente diferenciados: **cliente, vendedor y administrador**. Incluye sistema de internacionalización (ES/EN), modo oscuro, notificaciones en tiempo real, mensajería privada multicanal, generación de facturas, descuento de cumpleaños y un sistema de **231 logros** desbloqueables por rol. Se despliega en **Vercel** con soporte adicional para Docker + Gunicorn en entornos contenedorizados.
 
 <br/>
 
@@ -65,21 +65,22 @@ La aplicación soporta tres perfiles de usuario con flujos completamente diferen
 
 <div align="center">
 
-<img src="https://skillicons.dev/icons?i=python,flask,postgres,bootstrap,js,html,css,docker&theme=dark" alt="stack icons"/>
+<img src="https://skillicons.dev/icons?i=python,flask,postgres,bootstrap,ts,js,html,css,docker&theme=dark" alt="stack icons"/>
 
 </div>
 
 | Capa | Tecnología |
 |------|-----------|
 | **Backend** | Python 3.12 · Flask 3.0.3 · Flask-CORS 4.0.1 |
-| **Servidor (producción)** | Gunicorn 22.0.0 |
+| **Servidor (contenedor)** | Gunicorn 22.0.0 · Docker |
+| **Despliegue en la nube** | Vercel |
 | **Base de datos** | Supabase (PostgreSQL) · supabase-py 2.10.0 |
 | **Almacenamiento de imágenes** | Cloudinary 1.41.0 |
 | **Autenticación** | Google OAuth2 · JWT (PyJWT 2.9.0) · SHA-256 + salt |
 | **Tokens de sesión** | Access Token (5 min, HttpOnly) · Refresh Token (7 días, HttpOnly) |
-| **Frontend** | Jinja2 · Bootstrap 5.3.3 · Bootstrap Icons · Vanilla JS |
+| **Frontend** | Jinja2 · Bootstrap 5.3.3 · Bootstrap Icons · TypeScript · Tailwind CSS · Vanilla JS |
+| **Build frontend** | esbuild · Tailwind CLI · TypeScript 5.4 |
 | **Email transaccional** | Resend 2.30.1 |
-| **Despliegue** | Compatible: HF Spaces · Render · AWS · Azure · Hostinger (Docker / Gunicorn) |
 
 <br/>
 
@@ -393,9 +394,11 @@ flowchart TD
 WEB_D.Antojitos_2026/
 │
 ├── app.py                          # Punto de entrada · registro de blueprints · middleware JWT
-├── requirements.txt
-├── Dockerfile
-├── vercel.json
+├── requirements.txt                # Dependencias Python
+├── Dockerfile                      # Imagen Docker con Gunicorn (puerto 7860)
+├── vercel.json                     # Configuración de despliegue en Vercel
+├── package.json                    # Build frontend: esbuild + Tailwind CLI
+├── tsconfig.json                   # Configuración TypeScript
 │
 ├── controllers/                    # Blueprints Flask (un archivo por dominio)
 │   ├── auth.py                     # Login · Registro · Google OAuth2 · Logout · Refresh token
@@ -424,11 +427,6 @@ WEB_D.Antojitos_2026/
 │   ├── database.py                 # Cliente Supabase centralizado
 │   └── models.py                   # Todas las funciones de acceso a datos (select/insert/update/delete)
 │
-├── config_env/                     # Scripts de utilidad para el entorno de desarrollo
-│   ├── entorno_virtual.py          # Creación del entorno virtual
-│   ├── clean_pycache.py            # Limpieza de __pycache__
-│   └── escanear_librerias.py       # Escaneo de dependencias instaladas
-│
 ├── templates/
 │   ├── global_modules/             # navbar.html · footer.html · login · registro · blocked · politicas · condiciones
 │   ├── general_modules/            # inicio · catálogo · carrito · perfil · comentarios · facturas
@@ -436,13 +434,19 @@ WEB_D.Antojitos_2026/
 │
 └── static/
     ├── css/
-    │   ├── global_modules/         # style_navbar · style_footer · style_utils · style_inicio · style_login
-    │   ├── general_modules/        # style_perfil · style_comentarios · style_catalogo · style_facturas
-    │   └── admin_modules/          # style_pedidos · style_productos · style_publicidad · style_gestion_usuarios
+    │   ├── global_modules/         # Estilos navbar · footer · utils · inicio · login
+    │   ├── general_modules/        # Estilos perfil · comentarios · catálogo · facturas
+    │   ├── admin_modules/          # Estilos pedidos · productos · publicidad · gestion_usuarios
+    │   └── tailwind.input.css      # Entrada para compilar Tailwind CSS
+    ├── ts/                         # Fuentes TypeScript (compilados con esbuild)
+    │   ├── design-system.ts
+    │   ├── theme.ts
+    │   └── utils.ts
     ├── js/
+    │   ├── compiled/               # JS compilados desde TypeScript
     │   ├── global_js/              # utils.js · i18n.js · inicio.js · login_registro.js
     │   ├── general_js/             # perfil.js · comentarios.js · facturas.js · carrito.js
-    │   ├── admin_js/               # pedidos.js · gestion_productos.js · facturacion.js · gestion_usuarios.js · publicidad.js
+    │   ├── admin_js/               # pedidos.js · gestion_productos.js · facturacion.js · publicidad.js
     │   └── workers/                # Service Workers por módulo (caché offline)
     └── uploads/                    # Archivos estáticos locales (logo, íconos, imagen de perfil por defecto)
 ```
@@ -586,6 +590,7 @@ RESEND_API_KEY=<api_key>
 ### Requisitos previos
 
 ![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white)
+![Node](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Cuenta-3FCF8E?style=flat-square&logo=supabase&logoColor=white)
 ![Cloudinary](https://img.shields.io/badge/Cloudinary-Cuenta-3448C5?style=flat-square&logo=cloudinary&logoColor=white)
 ![Google Cloud](https://img.shields.io/badge/Google%20Cloud-OAuth2-4285F4?style=flat-square&logo=googlecloud&logoColor=white)
@@ -597,7 +602,7 @@ RESEND_API_KEY=<api_key>
 git clone <url-del-repositorio>
 cd "WEB_D.Antojitos_2026"
 
-# 2. Crear y activar entorno virtual
+# 2. Crear y activar entorno virtual Python
 python -m venv venv
 
 # Windows
@@ -606,17 +611,22 @@ venv\Scripts\activate
 # Linux / macOS
 source venv/bin/activate
 
-# 3. Instalar dependencias
+# 3. Instalar dependencias Python
 pip install -r requirements.txt
 
-# 4. Configurar variables de entorno
-cp .env.example .env
+# 4. Instalar dependencias frontend
+npm install
 
+# 5. Compilar assets frontend (TypeScript + Tailwind)
+npm run build
+
+# 6. Configurar variables de entorno
+cp .env.example .env
 # Editar .env con las credenciales correspondientes
 
-# 5. Ejecutar las migraciones SQL en Supabase
+# 7. Ejecutar las migraciones SQL en Supabase
 
-# 6. Iniciar el servidor de desarrollo
+# 8. Iniciar el servidor de desarrollo
 python app.py
 ```
 
@@ -627,7 +637,15 @@ El servidor estará disponible en:
 | **Local** | `http://localhost:8000` |
 | **Red local** | `http://<IP-local>:8000` |
 
-### Modo debug
+### Watch mode (desarrollo frontend)
+
+Para que TypeScript y Tailwind se recompilen automáticamente al guardar cambios:
+
+```bash
+npm run watch
+```
+
+### Modo debug Python
 
 Para activar el modo debug con recarga automática, editar `app.py`:
 
@@ -637,53 +655,102 @@ debug_mode = True
 
 <br/>
 
-## ☁️ Despliegue en Producción — Hugging Face Spaces
+## ☁️ Despliegue en Producción — Vercel
 
-La aplicación se despliega en **Hugging Face Spaces** con **Docker** y **Gunicorn** en el puerto **7860**.
+La aplicación se despliega en **Vercel** utilizando el adaptador WSGI para aplicaciones Python/Flask.
 
-### Pasos para crear el Space
+### Estructura requerida para Vercel
 
-1. Ve a [huggingface.co/new-space](https://huggingface.co/new-space)
-2. Elige **Docker** como SDK
-3. Copia el repo al Space: `git remote add hf https://<tu-usuario>:<HF_TOKEN>@huggingface.co/spaces/<tu-usuario>/<space-name>.git`
-4. Haz push: `git push hf master --force`
+Vercel ejecuta la aplicación Flask a través de `app.py` exportando el objeto `app`. El archivo `vercel.json` en la raíz del proyecto define el ruteo:
 
-### Variables de entorno en HF Spaces
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
+  ]
+}
+```
 
-Configurar en **Settings → Repository secrets** del Space:
+### Variables de entorno en Vercel
+
+Configurar en **Settings → Environment Variables** del proyecto en Vercel:
 
 | Variable | Descripción |
 |---|---|
 | `SUPABASE_URL` | URL del proyecto Supabase |
-| `SUPABASE_ANON_KEY` | Clave anónima de Supabase |
+| `SUPABASE_SERVICE_KEY` | Clave service_role de Supabase |
 | `CLOUDINARY_CLOUD_NAME` | Nombre del cloud en Cloudinary |
 | `CLOUDINARY_API_KEY` | API Key de Cloudinary |
 | `CLOUDINARY_API_SECRET` | API Secret de Cloudinary |
 | `GOOGLE_CLIENT_ID` | Client ID de Google OAuth2 |
-| `FLASK_SECRET_KEY` | Clave secreta de Flask (generada aleatoriamente) |
+| `FLASK_SECRET_KEY` | Clave secreta de Flask |
 | `ACCESS_TOKEN_SECRET` | Clave para firmar Access Tokens JWT |
 | `REFRESH_TOKEN_SECRET` | Clave para firmar Refresh Tokens JWT |
 | `RESEND_API_KEY` | API Key de Resend (email, opcional) |
 
+### Deploy desde CLI de Vercel
+
+```bash
+# Instalar CLI de Vercel (una sola vez)
+npm install -g vercel
+
+# Login
+vercel login
+
+# Despliegue a producción desde la raíz del proyecto
+vercel --prod
+```
+
 ### Deploy automático desde GitHub
 
-El workflow `.github/workflows/deploy.yml` hace push automático a HF Spaces en cada push a `master`.
-Requiere los siguientes GitHub Secrets:
+Conectar el repositorio a Vercel desde el dashboard:
 
-| Secret | Valor |
-|---|---|
-| `HF_TOKEN` | Token de Hugging Face con permiso `write` |
-| `HF_USERNAME` | Tu nombre de usuario en Hugging Face |
-| `HF_SPACE_NAME` | Nombre del Space creado en HF |
+1. Ve a [vercel.com/new](https://vercel.com/new)
+2. Importa el repositorio de GitHub
+3. Configura las variables de entorno en **Settings → Environment Variables**
+4. Cada push a `master` dispara un deploy automático
 
 ### Consideraciones de producción
 
-- El Dockerfile usa **usuario no-root con UID 1000** (requerido por HF Spaces)
-- Gunicorn corre con **2 workers** en el puerto **7860**
-- Las cookies `_at` y `_rt` se emiten con `Secure=True` y `SameSite=Strict`
+- Las imágenes se almacenan en **Cloudinary** (el filesystem de Vercel es efímero, no persistente)
+- Las cookies `_at` y `_rt` se emiten con `Secure=True` y `SameSite=Strict` automáticamente en producción (cuando `FLASK_DEBUG` no está definido)
 - El campo `MAX_CONTENT_LENGTH` admite hasta **50 MB** por subida (imágenes Cloudinary)
-- Define siempre `ACCESS_TOKEN_SECRET` y `REFRESH_TOKEN_SECRET` para que los tokens no se invaliden al reiniciar
-- Las imágenes se almacenan en **Cloudinary** (el filesystem del Space no es persistente)
+- Define siempre `ACCESS_TOKEN_SECRET` y `REFRESH_TOKEN_SECRET` para que los tokens no se invaliden entre deploys
+- El dominio de producción debe estar registrado como **Authorized JavaScript origin** y **Authorized redirect URI** en Google Cloud Console para que OAuth2 funcione
+
+### Despliegue con Docker (alternativo)
+
+Para entornos contenedorizados (Render, Railway, VPS, etc.):
+
+```bash
+# Construir imagen
+docker build -t dantojitos .
+
+# Ejecutar con variables de entorno
+docker run -p 7860:7860 \
+  -e SUPABASE_URL=... \
+  -e SUPABASE_SERVICE_KEY=... \
+  -e CLOUDINARY_CLOUD_NAME=... \
+  -e CLOUDINARY_API_KEY=... \
+  -e CLOUDINARY_API_SECRET=... \
+  -e GOOGLE_CLIENT_ID=... \
+  -e FLASK_SECRET_KEY=... \
+  -e ACCESS_TOKEN_SECRET=... \
+  -e REFRESH_TOKEN_SECRET=... \
+  dantojitos
+```
+
+La imagen Docker usa **Gunicorn con 2 workers** en el puerto **7860**.
 
 <br/>
 
@@ -716,6 +783,7 @@ La aplicación incluye soporte completo para **Español (ES)** e **Inglés (EN)*
 | 🔝 **Scroll to top** | Barra de progreso de lectura global |
 | 🖼️ **Gestor Cloudinary** | Admin puede ver y eliminar imágenes de Cloudinary organizadas por carpeta desde la app |
 | 👥 **Indicador de usuarios activos** | Conteo de usuarios activos en los últimos 2 minutos visible en comentarios |
+| 🔷 **TypeScript + Tailwind** | Assets compilados con esbuild y Tailwind CLI; watch mode para desarrollo |
 
 <br/>
 
