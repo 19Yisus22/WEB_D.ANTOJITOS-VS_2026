@@ -1,9 +1,8 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-catalogo-v5';
+const CACHE_NAME = 'dantojitos-catalogo-v7';
 
 const PRECACHE = [
-    '/catalogo_page',
     '/static/css/general_modules/style_catalogo.css',
     '/static/css/global_modules/style_utils.css',
     '/static/css/global_modules/style_navbar.css',
@@ -25,7 +24,10 @@ const PRECACHE = [
 
 const NETWORK_FIRST_PATHS = [
     '/obtener_catalogo',
+    '/guardar_catalogo',
     '/api/carrito',
+    '/api/mis_pedidos',
+    '/api/admin/notificaciones_sistema',
     '/obtener-cliente-id',
     '/api/carrito/cantidad',
     '/api/productos',
@@ -37,7 +39,7 @@ const NETWORK_FIRST_PATHS = [
 ];
 
 const CDN_RE = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com)/;
-const IMG_RE = /^https:\/\/res\.cloudinary\.com\
+const IMG_RE = /^https:\/\/res\.cloudinary\.com\//;
 
 self.addEventListener('install', e => {
     self.skipWaiting();
@@ -66,7 +68,7 @@ self.addEventListener('fetch', e => {
         e.respondWith(networkFirst(request, CACHE_NAME, FAST_TIMEOUT_MS)); return;
     }
     if (url.pathname === '/catalogo_page') {
-        e.respondWith(staleWhileRevalidate(request, CACHE_NAME)); return;
+        e.respondWith(networkFirst(request, CACHE_NAME)); return;
     }
     e.respondWith(networkFirst(request, CACHE_NAME));
 });

@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-carrito-v5';
+const CACHE_NAME = 'dantojitos-carrito-v6';
 
 const PRECACHE = [
     '/carrito_page',

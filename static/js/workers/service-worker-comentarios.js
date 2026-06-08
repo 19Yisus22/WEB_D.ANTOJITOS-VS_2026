@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-comentarios-v5';
+const CACHE_NAME = 'dantojitos-comentarios-v6';
 
 const PRECACHE = [
     '/comentarios_page',

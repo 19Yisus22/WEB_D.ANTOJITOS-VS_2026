@@ -383,6 +383,15 @@ def pedido_get(id_pedido: str) -> dict | None:
         .eq("id_pedido", id_pedido).limit(1)
     ))
 
+def pedido_get_by_cedula(cedula: str, limit: int = 10) -> list:
+    return _many(_run(
+        _db().table("pedidos")
+        .select("id_pedido,estado,pagado,fecha_pedido,numero_factura,pedido_detalle(subtotal,cantidad)")
+        .eq("cedula", str(cedula))
+        .order("fecha_pedido", desc=True)
+        .limit(limit)
+    ))
+
 def pedido_create(data: dict) -> list:
     return _many(_run(_db().table("pedidos").insert(data)))
 

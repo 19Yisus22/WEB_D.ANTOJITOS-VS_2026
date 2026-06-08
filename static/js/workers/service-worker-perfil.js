@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-perfil-v5';
+const CACHE_NAME = 'dantojitos-perfil-v6';
 
 const PRECACHE = [
     '/mi_perfil',

@@ -262,8 +262,15 @@ function initLoginForm() {
             const data = await res.json();
 
             if (data.ok) {
-                showMessage('¡Bienvenido!', 'Sesión iniciada correctamente', true);
-                setTimeout(() => { window.location.href = data.redirect || '/inicio'; }, 1000);
+                try { showMessage('¡Bienvenido!', 'Sesión iniciada correctamente', true); } catch (_) {}
+                const dest = data.redirect || '/inicio';
+                if ('caches' in window) {
+                    caches.keys().then(keys =>
+                        keys.filter(k => k.startsWith('dantojitos-inicio'))
+                            .forEach(k => caches.delete(k))
+                    ).catch(() => {});
+                }
+                setTimeout(() => { window.location.href = dest; }, 900);
                 return;
             }
 

@@ -364,8 +364,11 @@ cargarRestricciones().then(() => {
         && USER_AUTH_GOOGLE
         && (typeof USER_ID === 'undefined' || String(USER_ID).startsWith('G-'));
 
-    if (esGoogleSinCedula) {
-        _habilitarEdicion();
+    const cedulaVacia = !esGoogleSinCedula
+        && (typeof USER_ID === 'undefined' || !String(USER_ID).trim() || String(USER_ID).length < 6);
+
+    if (esGoogleSinCedula || cedulaVacia) {
+        if (!_cooldown.bloqueado) _habilitarEdicion();
         const cedInput = document.getElementById('cedulaPerfil');
         if (cedInput) {
             cedInput.disabled = false;
@@ -374,7 +377,10 @@ cargarRestricciones().then(() => {
             cedInput.classList.add('border-warning');
             cedInput.setAttribute('placeholder', 'Ingresa tu número de cédula (solo dígitos)');
         }
-        showMessage('Tu cuenta Google requiere una cédula real (solo números) para poder realizar pedidos.', true);
+        const msg = esGoogleSinCedula
+            ? 'Tu cuenta Google requiere una cédula real (solo números) para realizar pedidos.'
+            : 'Completa tu perfil: ingresa tu cédula real para poder realizar pedidos.';
+        mostrarAlertaPublica({ titulo: '¡Perfil incompleto!', mensaje: msg, tipo: 'error', duracion: 7000 });
     }
 });
 
@@ -502,6 +508,14 @@ function mostrarModalDetalles(u) {
 
     const esGoogle = esCuentaGoogle(u);
     const rol = u.roles?.nombre_role || u.rol || 'cliente';
+    const _mdn  = (u.nombre || '?');
+    const _mdi  = _mdn.split('').reduce((h,c) => (h<<5)-h+c.charCodeAt(0), 0);
+    const _mdp  = [['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],['#6d28d9','#8b5cf6'],['#b91c1c','#ef4444'],['#0e7490','#06b6d4']];
+    const [_mc1, _mc2] = _mdp[Math.abs(_mdi) % _mdp.length];
+    const _mdHasPhoto = u.imagen_url && !u.imagen_url.includes('default_icon_profile');
+    const _mdAvatarHTML = _mdHasPhoto
+        ? `<img src="${u.imagen_url}" data-profile="${u.imagen_url}" data-profile-name="${_mdn}" data-profile-size="120" class="rounded-circle border shadow" width="120" height="120" style="object-fit:cover;border:4px solid #fff!important;display:block;">`
+        : `<div style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,${_mc1},${_mc2});display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:3rem;border:4px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,0.15);">${_mdn.charAt(0).toUpperCase()}</div>`;
 
     const formatearFecha = (fechaStr) => {
         if (!fechaStr) return 'Sin registro';
@@ -535,10 +549,7 @@ function mostrarModalDetalles(u) {
                 <div class="modal-body p-4 text-center">
                     <div class="d-flex justify-content-center mb-3">
                         <div class="position-relative" style="width:120px;height:120px;flex-shrink:0;">
-                        <img src="${u.imagen_url || '/static/uploads/default_icon_profile.png'}"
-                             class="rounded-circle border shadow"
-                             width="120" height="120"
-                             style="object-fit:cover; border: 4px solid #fff !important; display:block;">
+                        ${_mdAvatarHTML}
                         <div class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow d-flex align-items-center justify-content-center border"
                              style="width:35px; height:35px; transform: translate(-5px, -5px);">
                             ${esGoogle ?
@@ -653,10 +664,18 @@ function renderUserTable() {
             const esYo = String(u.cedula) === String(USER_ID);
             const esGoogle = esCuentaGoogle(u);
             const metodoRegistro = esGoogle ? 'Google' : 'Email';
+            const _uln = (u.nombre || '?');
+            const _uli = _uln.split('').reduce((h,c) => (h<<5)-h+c.charCodeAt(0), 0);
+            const _ulp = [['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],['#6d28d9','#8b5cf6'],['#b91c1c','#ef4444'],['#0e7490','#06b6d4']];
+            const [_ulc1, _ulc2] = _ulp[Math.abs(_uli) % _ulp.length];
+            const _ulHasPhoto = u.imagen_url && !u.imagen_url.includes('default_icon_profile');
+            const _ulAvatarHTML = _ulHasPhoto
+                ? `<img src="" data-profile="${u.imagen_url}" data-profile-name="${_uln}" data-profile-size="50" class="rounded-circle border shadow-sm me-3" width="50" height="50" style="object-fit:cover;">`
+                : `<div class="me-3" style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,${_ulc1},${_ulc2});display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.2rem;flex-shrink:0;">${_uln.charAt(0).toUpperCase()}</div>`;
             div.innerHTML = `
                 <div class="d-flex align-items-center">
                     <div class="position-relative">
-                        <img src="${u.imagen_url || '/static/uploads/default_icon_profile.png'}" class="rounded-circle border shadow-sm me-3" width="50" height="50" style="object-fit:cover;">
+                        ${_ulAvatarHTML}
                         <div class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center border" style="width:22px; height:22px; transform: translate(-10px, 2px); padding: 2px;">
                             ${esGoogle ? '<img src="/static/uploads/googlogo.ico" style="width:14px; height:14px; object-fit:contain;">' : '<i class="bi bi-envelope-at-fill text-primary" style="font-size: 0.75rem;"></i>'}
                         </div>
@@ -708,6 +727,7 @@ function renderUserTable() {
     renderSection(pageItems.filter(u => (u.roles?.nombre_role || u.rol) === 'admin'), "Administradores", "bg-danger");
     renderSection(pageItems.filter(u => (u.roles?.nombre_role || u.rol) !== 'admin'), "Clientes", "bg-primary");
     renderPagination();
+    requestAnimationFrame(() => { if (typeof initAllProfileImages === 'function') initAllProfileImages(); });
 }
 
 async function cambiarRol(id, nuevo) {

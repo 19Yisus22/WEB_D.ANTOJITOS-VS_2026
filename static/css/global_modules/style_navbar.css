@@ -741,10 +741,11 @@ body { padding-top: 68px; }
     body { padding-top: 58px; }
 
     #main-navbar-container .navbar-brand span {
-        display: none;
+        font-size: 0.82rem;
+        white-space: nowrap;
     }
 
-    #main-navbar-container .navbar-brand img { width: 36px; }
+    #main-navbar-container .navbar-brand img { width: 32px; }
 
     #main-navbar-container .navbar-actions {
         gap: 4px;
