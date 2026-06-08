@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Restringido | D'Antojitos©</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/compiled/tailwind.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_blocked.css') }}">
+</head>
+<body>
+
+    <div class="blocked-screen">
+        {% if login_required %}
+        <div class="blocked-card" data-redirect="/login" data-delay="3000">
+            <i class="bi bi-person-lock icon-lock" style="color:#d35400;"></i>
+            <h2 class="blocked-title" data-i18n="blocked.login_req">Acceso Restringido</h2>
+            <p class="blocked-text" data-i18n="blocked.login_sub">Debes iniciar sesión para acceder a este módulo.</p>
+            <div class="spinner-border spinner-size" role="status" style="color:#d35400;"></div>
+            <span class="redirect-info"><i data-i18n="blocked.redirecting">Redirigiendo al inicio de sesión...</i></span>
+            <div class="mt-4 d-flex gap-3 justify-content-center flex-wrap">
+                <button onclick="window.location.href='/login'" class="btn btn-danger fw-bold btn-return px-4">
+                    <i class="bi bi-box-arrow-in-right me-2"></i><span data-i18n="blocked.btn_login">Iniciar Sesión</span>
+                </button>
+                <button onclick="window.location.href='/inicio'" class="btn btn-outline-secondary fw-bold px-4">
+                    <i class="bi bi-house me-2"></i><span data-i18n="blocked.btn_inicio">Ir al Inicio</span>
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <div class="blocked-card" data-redirect="/inicio" data-delay="3000">
+            <i class="bi bi-shield-lock-fill icon-lock"></i>
+            <h2 class="blocked-title" data-i18n="blocked.denied">Acceso Denegado</h2>
+            <p class="blocked-text" data-i18n="blocked.denied_sub">Tu cuenta no tiene los permisos necesarios.</p>
+            <div class="spinner-border text-danger spinner-size" role="status"></div>
+            <span class="redirect-info"><i data-i18n="blocked.redirecting">Redirigiendo automáticamente...</i></span>
+            <div class="mt-4">
+                <button onclick="window.location.href='/inicio'" class="btn btn-danger w-100 fw-bold btn-return">
+                    <span data-i18n="blocked.btn_home">VOLVER AL PANEL DE CONTROL</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <script src="{{ url_for('static', filename='js/global_js/i18n.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/global_js/blocked.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,296 @@
+/* ══════════════════════════════════════════════════════
+   SISTEMA DE LOGROS — Notificaciones estilo Steam (esquina)
+   ══════════════════════════════════════════════════════ */
+
+#logros-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 10px;
+    pointer-events: none;
+    max-width: 360px;
+    width: calc(100vw - 48px);
+    max-height: 80vh;
+    overflow: hidden;
+}
+
+.logro-toast {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 1px solid rgba(211, 84, 0, 0.4);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    pointer-events: all;
+    cursor: pointer;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(211, 84, 0, 0.15),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+    animation: logro-slide-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.logro-toast::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #d35400, #e67e22, #f39c12);
+    border-radius: 14px 14px 0 0;
+}
+
+.logro-toast.saliendo {
+    animation: logro-slide-out 0.35s ease-in forwards;
+}
+
+.logro-icono-wrap {
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.logro-icono-wrap.rareza-comun      { background: linear-gradient(135deg, #2e4a7a, #4a6fa5); box-shadow: 0 0 10px rgba(74,111,165,0.35); }
+.logro-icono-wrap.rareza-raro       { background: linear-gradient(135deg, #4a1b7a, #7c3aed); box-shadow: 0 0 12px rgba(124,58,237,0.45); }
+.logro-icono-wrap.rareza-epico      { background: linear-gradient(135deg, #6d28d9, #a855f7); box-shadow: 0 0 14px rgba(168,85,247,0.5); }
+.logro-icono-wrap.rareza-legendario { background: linear-gradient(135deg, #c2410c, #f59e0b); box-shadow: 0 0 18px rgba(245,158,11,0.55); }
+
+.logro-icono-wrap.rareza-legendario::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 13px;
+    background: conic-gradient(from 0deg, #f59e0b, #f97316, #ef4444, #f59e0b, #fbbf24, #f59e0b);
+    z-index: -1;
+    animation: logro-glow-spin 2s linear infinite;
+}
+
+.logro-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.logro-etiqueta {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #d35400;
+    margin-bottom: 2px;
+}
+
+.logro-nombre {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.logro-desc {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.6);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.logro-rareza-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: 20px;
+}
+
+.logro-rareza-badge.comun      { background: rgba(74,111,165,0.25); color: #7da7d9; }
+.logro-rareza-badge.raro       { background: rgba(124,58,237,0.25); color: #c084fc; }
+.logro-rareza-badge.epico      { background: rgba(168,85,247,0.3);  color: #e879f9; }
+.logro-rareza-badge.legendario { background: rgba(245,158,11,0.25); color: #fbbf24; }
+
+.logro-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #d35400, #e67e22);
+    border-radius: 0 0 14px 14px;
+    animation: logro-progress 5s linear forwards;
+    width: 100%;
+}
+
+@keyframes logro-slide-in {
+    from { opacity: 0; transform: translateX(110%) scale(0.92); }
+    to   { opacity: 1; transform: translateX(0)   scale(1); }
+}
+
+@keyframes logro-slide-out {
+    from { opacity: 1; transform: translateX(0)   scale(1); }
+    to   { opacity: 0; transform: translateX(110%) scale(0.92); }
+}
+
+@keyframes logro-progress {
+    from { width: 100%; }
+    to   { width: 0%; }
+}
+
+@keyframes logro-glow-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* ── Vista de logros en el perfil ── */
+.logros-modulo-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0 4px;
+    border-bottom: 2px solid rgba(211,84,0,0.15);
+    margin: 16px 0 10px;
+}
+
+.logros-modulo-header:first-child { margin-top: 0; }
+
+.logros-modulo-header h6 {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #d35400;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.logros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+}
+
+.logro-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px solid #f0f0f0;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.logro-card.bloqueado {
+    opacity: 0.42;
+    filter: grayscale(0.7);
+}
+
+.logro-card:not(.bloqueado) { border-color: rgba(211,84,0,0.2); box-shadow: 0 2px 12px rgba(211,84,0,0.08); }
+.logro-card:not(.bloqueado):hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(211,84,0,0.15); }
+
+.logro-card-icono {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.logro-card-info { flex: 1; min-width: 0; }
+.logro-card-nombre { font-size: 0.82rem; font-weight: 700; color: #1a1a2e; }
+.logro-card-desc   { font-size: 0.7rem; color: #6c757d; margin-top: 2px; }
+
+.logro-card-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.logro-rareza-card {
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+}
+
+.logro-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    color: #fff;
+}
+
+.logro-lock-ico {
+    font-size: 0.85rem;
+    color: #b0b0c0;
+}
+
+/* ── Mini barra de progreso en tarjetas bloqueadas ── */
+.logro-progreso {
+    height: 5px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.logro-progreso-bar {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.6s ease;
+    min-width: 4px;
+}
+
+.logro-progreso-txt {
+    font-size: 0.62rem;
+    color: #8a8a9a;
+    margin-top: 2px;
+}
+
+/* Dark mode */
+[data-theme="dark"] .logro-card { background: #1e1e3a; border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .logro-card:not(.bloqueado) { border-color: rgba(211,84,0,0.3); }
+[data-theme="dark"] .logro-card-nombre { color: #e8e8f0; }
+[data-theme="dark"] .logro-card-desc   { color: rgba(255,255,255,0.5); }
+[data-theme="dark"] .logros-modulo-header h6 { color: #e67e22; }
+[data-theme="dark"] .logros-modulo-header { border-color: rgba(211,84,0,0.25); }
+[data-theme="dark"] .logro-progreso { background: rgba(255,255,255,0.08); }
+[data-theme="dark"] .logro-progreso-txt { color: rgba(255,255,255,0.4); }
+[data-theme="dark"] .logro-lock-ico { color: rgba(255,255,255,0.3); }
+
+@media (max-width: 480px) {
+    #logros-container { right: 12px; bottom: 16px; max-width: calc(100vw - 24px); width: calc(100vw - 24px); }
+    .logro-toast { padding: 12px 14px; gap: 10px; }
+    .logro-icono-wrap { width: 44px; height: 44px; font-size: 1.5rem; }
+    .logros-grid { grid-template-columns: 1fr; }
+}

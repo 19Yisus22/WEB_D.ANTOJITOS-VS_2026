@@ -1,0 +1,198 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Términos y Condiciones | D'Antojitos©</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/compiled/tailwind.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_legal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
+</head>
+<body>
+    <div id="scrollProgressBar"></div>
+
+    <div class="legal-top-actions">
+        <a href="/login" class="login-home-btn">
+            <i class="bi bi-arrow-left-circle-fill me-1"></i>
+            <span data-i18n="legal.back_login">Volver al inicio de sesión</span>
+        </a>
+        <button class="login-theme-btn" onclick="toggleTheme()">
+            <i class="bi bi-moon-fill" id="legalThemeIcon"></i>
+            <span id="legalThemeLabel" data-i18n="nav.theme">Oscuro</span>
+        </button>
+        <button class="login-theme-btn"
+                onclick="setLang(document.documentElement.lang==='es'?'en':'es')">
+            <i class="bi bi-translate"></i>
+            <span id="legalLangLabel">EN</span>
+        </button>
+    </div>
+
+    <div class="container page-wrapper">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="legal-container ds-card" data-reveal>
+                    <img src="{{ url_for('static', filename='uploads/logo.png') }}" class="logo-legal" alt="Logo D'Antojitos">
+
+                    <header class="text-center mb-5">
+                        <h1 class="display-5" data-i18n="legal.title_terms">Términos y Condiciones de Uso</h1>
+                        <p class="last-updated" data-i18n="legal.updated">Última actualización: 1 de enero de 2025</p>
+                    </header>
+
+                    <div class="alert-legal">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Lea estos Términos y Condiciones detenidamente. Al registrarse, iniciar sesión o realizar un pedido en <strong>D'Antojitos©</strong>, usted acepta quedar vinculado por el presente acuerdo. Si no está de acuerdo con alguna parte, le pedimos que no utilice la plataforma.
+                    </div>
+
+                    <div class="content-sections">
+
+                        <section class="legal-section">
+                            <h2>1. Objeto y Ámbito de Aplicación</h2>
+                            <p>Los presentes Términos regulan el acceso y uso de la plataforma digital <strong>D'Antojitos©</strong>, una tienda en línea dedicada a la venta de postres y productos artesanales. Se aplican a todos los usuarios registrados (clientes, vendedores y administradores) que interactúen con cualquier función de la aplicación, incluyendo el catálogo, carrito de compras, sistema de pedidos y facturación.</p>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>2. Registro y Cuenta de Usuario</h2>
+                            <ul class="custom-list">
+                                <li>Para acceder al sistema de pedidos debes crear una cuenta proporcionando información veraz y actualizada (nombre, apellido, cédula, teléfono, correo electrónico y contraseña).</li>
+                                <li>También puedes autenticarte mediante <strong>Google OAuth</strong>, en cuyo caso aceptas los términos de uso de Google aplicables.</li>
+                                <li>Eres el único responsable de la confidencialidad de tus credenciales de acceso. Cualquier actividad realizada desde tu cuenta es de tu exclusiva responsabilidad.</li>
+                                <li>Nos reservamos el derecho de suspender o eliminar cuentas que incumplan estos términos, proporcionen datos falsos o realicen actividades fraudulentas.</li>
+                            </ul>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>3. Catálogo y Disponibilidad de Productos</h2>
+                            <ul class="custom-list">
+                                <li>Los productos del catálogo están sujetos a disponibilidad de stock. La plataforma refleja en tiempo real el inventario disponible.</li>
+                                <li>Los precios publicados incluyen impuestos aplicables y pueden modificarse sin previo aviso por cambios en costos de insumos o condiciones del mercado.</li>
+                                <li>Las imágenes de los productos son referenciales y pueden presentar variaciones menores respecto al producto final entregado.</li>
+                                <li>Un producto marcado como <strong>"Agotado"</strong> no puede añadirse al carrito hasta que su stock sea repuesto.</li>
+                            </ul>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>4. Proceso de Pedido y Facturación</h2>
+                            <ul class="custom-list">
+                                <li>Un pedido se formaliza cuando se genera la factura en estado <strong>"Emitida"</strong> por parte del administrador o vendedor, tras verificar los productos en el carrito.</li>
+                                <li>Cada pedido recibe un número de factura único con formato <em>FAC-AÑO-MES-NÚMERO</em> para su trazabilidad.</li>
+                                <li>El cliente puede consultar el historial completo de sus pedidos y facturas desde su perfil en la sección <strong>"Mis Facturas"</strong>.</li>
+                                <li>Los estados del pedido son: <strong>Pendiente â†’ Enviado â†’ Entregado</strong> (o <strong>Cancelado</strong> en caso de anulación).</li>
+                            </ul>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>5. Pagos</h2>
+                            <ul class="custom-list">
+                                <li>Aceptamos los métodos de pago digitales habilitados en la plataforma (Nequi, Daviplata, Bancolombia, PSE, entre otros) y efectivo en casos acordados.</li>
+                                <li>El pago debe realizarse a través de los canales oficiales indicados en el módulo de pago de la factura. No nos responsabilizamos por transferencias realizadas a cuentas no oficiales.</li>
+                                <li>Una vez confirmado el pago por el administrador, la factura pasa al estado <strong>"Pagado âœ“"</strong> y queda registrada en el historial del cliente.</li>
+                                <li>Los precios se expresan en Pesos Colombianos (COP).</li>
+                            </ul>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>6. Cancelaciones y Anulaciones</h2>
+                            <ul class="custom-list">
+                                <li>El cliente puede solicitar la cancelación de un pedido mientras este se encuentre en estado <strong>"Pendiente"</strong>, desde la vista de sus facturas.</li>
+                                <li>Una vez que el pedido pasa a estado <strong>"Enviado"</strong> o superior, no es posible cancelarlo sin previa consulta con el equipo.</li>
+                                <li>Por tratarse de productos alimenticios perecederos, no se aceptan devoluciones una vez entregado el pedido, salvo defectos de calidad comprobables al momento de la entrega.</li>
+                                <li>La anulación de una factura ya pagada será gestionada directamente por el administrador y su resolución dependerá del estado del proceso.</li>
+                            </ul>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>7. Entrega y Dirección</h2>
+                            <ul class="custom-list">
+                                <li>La dirección de entrega es la registrada en tu perfil o la indicada al momento de la compra. Verifica que sea correcta antes de confirmar el pedido.</li>
+                                <li>Los tiempos de entrega son estimados y pueden variar por condiciones externas (clima, tráfico, demanda). Te notificaremos cualquier cambio a través de la plataforma.</li>
+                                <li>En caso de no encontrarte en la dirección indicada al momento de la entrega, el costo de un segundo intento podrá ser asumido por el cliente.</li>
+                            </ul>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>8. Conducta del Usuario</h2>
+                            <p>Al usar la plataforma, el usuario se compromete a:</p>
+                            <ul class="custom-list">
+                                <li>No realizar pedidos fraudulentos ni proporcionar información de pago falsa.</li>
+                                <li>No intentar acceder a funcionalidades restringidas a roles administrativos sin autorización.</li>
+                                <li>No utilizar herramientas automatizadas que sobrecarguen los servidores de la plataforma.</li>
+                                <li>Mantener un trato respetuoso con el equipo de soporte y demás usuarios.</li>
+                            </ul>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>9. Propiedad Intelectual</h2>
+                            <p>Todo el contenido de la plataforma —incluyendo logotipo, diseño, imágenes de productos, textos y código fuente— es propiedad de <strong>D'Antojitos©</strong> y está protegido por las leyes de propiedad intelectual. Queda prohibida su reproducción total o parcial sin autorización expresa por escrito.</p>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>10. Limitación de Responsabilidad</h2>
+                            <p><strong>D'Antojitos©</strong> no será responsable por:</p>
+                            <ul class="custom-list">
+                                <li>Pérdidas o daños derivados de fuerza mayor (desastres naturales, cortes de energía, fallas de internet).</li>
+                                <li>Errores en la información de entrega proporcionada por el usuario.</li>
+                                <li>Fallas en pasarelas de pago externas ajenas a nuestra plataforma.</li>
+                                <li>Interrupciones temporales del servicio por mantenimiento planificado, notificado con antelación razonable.</li>
+                            </ul>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>11. Modificaciones de los Términos</h2>
+                            <p>Nos reservamos el derecho de actualizar estos Términos y Condiciones en cualquier momento. Las modificaciones serán publicadas en esta página con la fecha de actualización. El uso continuado de la plataforma tras dichos cambios implica la aceptación de los nuevos términos. Si no estás de acuerdo con las modificaciones, debes dejar de utilizar el servicio.</p>
+                        </section>
+
+                        <section class="legal-section">
+                            <h2>12. Ley Aplicable y Jurisdicción</h2>
+                            <p>Los presentes Términos se rigen por la legislación colombiana vigente. Para cualquier controversia derivada del uso de la plataforma, las partes se someten a la jurisdicción de los tribunales competentes de la República de Colombia, salvo acuerdo expreso en contrario.</p>
+                        </section>
+
+                    </div>
+
+                    <div class="mt-5 pt-4 text-center border-top">
+                        <button onclick="acceptTerms()" class="btn btn-accept px-5 ds-btn-primary ds-ripple">
+                            <i class="bi bi-check-circle-fill me-2"></i><span data-i18n="legal.accept_terms">Entendido y Aceptar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'global_modules/footer.html' %}
+    <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/global_js/i18n.js') }}" defer></script>
+    <script>
+        function acceptTerms() {
+            const btn = document.querySelector('.btn-accept');
+            btn.innerHTML = '<i class="bi bi-heart-fill me-2 animate-beat"></i>¡Gracias!';
+            btn.style.background = '#27ae60';
+            btn.disabled = true;
+            setTimeout(() => { window.location.href = "/login"; }, 1200);
+        }
+        (function() {
+            function syncLegal() {
+                const theme = document.documentElement.getAttribute('data-theme') || 'light';
+                const icon  = document.getElementById('legalThemeIcon');
+                const lbl   = document.getElementById('legalThemeLabel');
+                const llbl  = document.getElementById('legalLangLabel');
+                const lang  = document.documentElement.getAttribute('lang') || 'es';
+                if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+                if (lbl)  lbl.textContent = theme === 'dark' ? 'Claro' : 'Oscuro';
+                if (llbl) llbl.textContent = lang === 'es' ? 'EN' : 'ES';
+            }
+            syncLegal();
+            new MutationObserver(syncLegal).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme','lang'] });
+            document.addEventListener('langChanged', syncLegal);
+        })();
+    </script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
+</body>
+</html>
+
