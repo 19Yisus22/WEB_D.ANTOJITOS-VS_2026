@@ -240,7 +240,7 @@ async function cargarPedidos(isAutoRefresh = false) {
 
             const esTerminado = pedido.estado === 'Entregado' && todosPagos;
             const esAnulado = pedido.estado === 'Cancelado';
-            const bloqueado = esTerminado || esAnulado;
+            const bloqueado = false;
             const estadoClase = esAnulado ? "pedido-anulado border-danger" : (esTerminado ? "pedido-finalizado" : "pedido-activo");
 
             const card = document.createElement("div");
@@ -725,7 +725,6 @@ function actualizarCardLocalmente(card, idPedido, pedidoData, nuevoEstado = null
     const estado = nuevoEstado || card.dataset.estado;
     const esTerminado = estado === 'Entregado' && todosPagos;
     const esAnulado = estado === 'Cancelado';
-    const bloqueado = esTerminado || esAnulado;
 
     card.classList.remove('pedido-anulado', 'border-danger', 'pedido-finalizado', 'pedido-activo');
     if (esAnulado) card.classList.add('pedido-anulado', 'border-danger');
@@ -734,8 +733,8 @@ function actualizarCardLocalmente(card, idPedido, pedidoData, nuevoEstado = null
 
     const select = card.querySelector(".estado-select");
     const btn = card.querySelector(".actualizar-btn");
-    if (select) select.disabled = bloqueado;
-    if (btn) btn.disabled = bloqueado;
+    if (select) select.disabled = false;
+    if (btn) btn.disabled = false;
 }
 
 function generarNumeroFactura(idPedido, fecha) {

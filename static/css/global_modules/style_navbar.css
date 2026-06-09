@@ -96,13 +96,13 @@ body { padding-top: 68px; }
 }
 
 #main-navbar-container .nav-wm-credit {
-    font-size: 0.42rem;
-    color: rgba(211, 84, 0, 0.48);
+    font-size: 8px;
+    color: rgba(186, 8, 8, 0.48);
     white-space: nowrap;
     pointer-events: none;
     user-select: none;
     font-style: italic;
-    font-weight: 600;
+    font-weight: 1000;
     letter-spacing: 0.3px;
     line-height: 1;
     display: block;
@@ -947,7 +947,6 @@ body { padding-top: 68px; }
     color: #e4e4ef !important;
 }
 
-/* ── Botones ícono junto al label de versión en el dropdown ── */
 .nav-quick-icon-btn {
     display: inline-flex;
     align-items: center;
@@ -984,7 +983,6 @@ body { padding-top: 68px; }
     color: #f0883e;
 }
 
-/* ── Label de versión ── */
 #versionLabel {
     display: inline-block;
     color: #9c8fa0;

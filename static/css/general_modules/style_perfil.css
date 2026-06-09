@@ -15,7 +15,7 @@
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.page-wrapper { padding-top: 4px !important; }
+.page-wrapper { padding-top: 25px !important; }
 
 body {
     background: var(--bg-gradient);

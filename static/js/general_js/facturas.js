@@ -7,6 +7,58 @@ let ultimaSincronizacion = new Date();
 let mostrarArchivadas = false;
 const expandedFacturas = new Set();
 
+const _filtroNumFac = { anio: '', numero: '' };
+
+function _extraerAnioFactura(numFac) {
+    const partes = (numFac || '').split('-');
+    const segAnio = partes[1] || '';
+    return segAnio.slice(0, 4);
+}
+
+function _extraerNumFactura(numFac) {
+    const partes = (numFac || '').split('-');
+    return partes[partes.length - 1] || '';
+}
+
+function _poblarAniosSelect() {
+    const sel = document.getElementById('filtroAnioFactura');
+    if (!sel) return;
+    const años = new Set();
+    facturasActuales.forEach(f => {
+        const a = _extraerAnioFactura(f.numero_factura);
+        if (/^\d{4}$/.test(a)) años.add(a);
+    });
+    const valorActual = sel.value;
+    sel.innerHTML = '<option value="">Todos los años</option>';
+    [...años].sort((a, b) => b - a).forEach(a => {
+        const op = document.createElement('option');
+        op.value = a;
+        op.textContent = a;
+        if (a === valorActual) op.selected = true;
+        sel.appendChild(op);
+    });
+}
+
+function _aplicarFiltroNum() {
+    const panel = document.getElementById('filtroFacturaNumPanel');
+    const btnClear = document.getElementById('btnClearFiltroNum');
+    const activo = _filtroNumFac.anio || _filtroNumFac.numero;
+    if (panel) panel.classList.toggle('fnf-active', !!activo);
+    if (btnClear) btnClear.style.display = activo ? 'flex' : 'none';
+    paginaActual = 1;
+    mostrarFacturasBuscadas();
+}
+
+function _limpiarFiltroNum() {
+    _filtroNumFac.anio = '';
+    _filtroNumFac.numero = '';
+    const selAnio = document.getElementById('filtroAnioFactura');
+    const inputNum = document.getElementById('filtroNumeroFactura');
+    if (selAnio) selAnio.value = '';
+    if (inputNum) inputNum.value = '';
+    _aplicarFiltroNum();
+}
+
 const FormateadorCosto = new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
@@ -381,6 +433,16 @@ function abrirModalPago(facturaNum, total) {
                                     <i class="bi bi-copy me-1"></i>${t('btn.copy')}
                                 </button>
                             </div>
+                            ${m.clave_pago ? `
+                            <div class="payment-clave-row">
+                                <i class="bi bi-key-fill payment-clave-icon"></i>
+                                <span class="payment-clave-label">Clave</span>
+                                <span class="payment-number font-monospace">${m.clave_pago}</span>
+                                <button class="payment-copy-btn"
+                                        onclick="navigator.clipboard.writeText('${m.clave_pago}').then(()=>showMessage(t('notif.copied')))">
+                                    <i class="bi bi-copy me-1"></i>${t('btn.copy')}
+                                </button>
+                            </div>` : ''}
                         </div>
                     </div>`).join('')}
             </div>
@@ -634,7 +696,12 @@ async function procesarAnulacion(numFactura) {
 
             if (res.ok) {
 
-                await monitorearCambiosFacturas();
+                const _role = (window.FACTURA_ROLE || 'cliente').toLowerCase();
+                if (_role === 'vendedor' || _role === 'admin') {
+                    await cargarTodasFacturasPage();
+                } else {
+                    await cargarFacturasCliente();
+                }
 
                 showMessage("Pedido cancelado exitosamente");
             }
@@ -740,6 +807,21 @@ function mostrarFacturasBuscadas() {
     if (!container) return;
 
     let filtradas = [...facturasActuales];
+
+    if (_filtroNumFac.anio || _filtroNumFac.numero) {
+        filtradas = filtradas.filter(f => {
+            const num = (f.numero_factura || '');
+            if (_filtroNumFac.anio) {
+                const anioFac = _extraerAnioFactura(num);
+                if (anioFac !== _filtroNumFac.anio) return false;
+            }
+            if (_filtroNumFac.numero) {
+                const segNum = _extraerNumFactura(num);
+                if (parseInt(segNum, 10) !== parseInt(_filtroNumFac.numero, 10)) return false;
+            }
+            return true;
+        });
+    }
 
     if (mostrarArchivadas) {
         filtradas = filtradas.filter(f => f.archivada);
@@ -1070,6 +1152,7 @@ async function cargarTodasFacturasPage() {
         facturasLocalesCache = JSON.parse(JSON.stringify(data));
         facturasActuales     = ordenarFacturas(data);
         paginaActual         = 1;
+        _poblarAniosSelect();
         mostrarFacturasBuscadas();
     } catch (e) { console.error(e); }
 }
@@ -1085,6 +1168,7 @@ async function cargarFacturasCliente() {
         facturasLocalesCache = JSON.parse(JSON.stringify(data));
         facturasActuales     = ordenarFacturas(data);
         paginaActual         = 1;
+        _poblarAniosSelect();
         mostrarFacturasBuscadas();
     } catch (e) { console.error(e); }
 }
@@ -1168,10 +1252,49 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    const selAnioFac = document.getElementById('filtroAnioFactura');
+    const inputNumFac = document.getElementById('filtroNumeroFactura');
+    const btnClearNum = document.getElementById('btnClearFiltroNum');
+
+    if (selAnioFac) {
+        selAnioFac.addEventListener('change', function() {
+            _filtroNumFac.anio = this.value;
+            _aplicarFiltroNum();
+        });
+    }
+
+    if (inputNumFac) {
+        let _timerNum;
+        inputNumFac.addEventListener('input', function() {
+            clearTimeout(_timerNum);
+            const val = this.value.replace(/\D/g, '');
+            this.value = val;
+            _timerNum = setTimeout(() => {
+                _filtroNumFac.numero = val;
+                _aplicarFiltroNum();
+            }, 300);
+        });
+    }
+
+    if (btnClearNum) {
+        btnClearNum.addEventListener('click', _limpiarFiltroNum);
+    }
+
     setInterval(() => {
 
         if (facturasActuales.length > 0) {
-            monitorearCambiosFacturas();
+            const inputBuscar = document.getElementById("buscarFactura");
+            const criterio = inputBuscar ? inputBuscar.value.trim() : "";
+            if (criterio) {
+                monitorearCambiosFacturas();
+            } else {
+                const _roleInt = (window.FACTURA_ROLE || 'cliente').toLowerCase();
+                if (_roleInt === 'vendedor' || _roleInt === 'admin') {
+                    cargarTodasFacturasPage();
+                } else {
+                    cargarFacturasCliente();
+                }
+            }
         }
 
     }, 12000);

@@ -35,11 +35,11 @@
                     <div class="row g-4">
                         <div class="col-12 col-md-4 text-center">
                             <div class="preview-qr-box mb-3">
-                                <div id="placeholderQR" class="text-center text-muted">
-                                    <i class="bi bi-qr-code-scan d-block mb-2" style="font-size: 2.5rem;"></i>
-                                    <span class="small fw-bold text-uppercase">Subir QR</span>
+                                <div id="placeholderQR" class="notif-img-placeholder">
+                                    <i class="bi bi-qr-code-scan"></i>
+                                    <span>Subir código QR</span>
                                 </div>
-                                <img id="previewPagoImg" src="" alt="Vista Previa" class="w-100 h-100 d-none" style="object-fit: contain;">
+                                <img id="previewPagoImg" src="" alt="Vista Previa" class="w-100 h-100 d-none">
                             </div>
                             <input type="file" id="archivoQR" class="form-control shadow-none" accept="image/*">
                         </div>
@@ -66,7 +66,19 @@
                             <input type="text" id="numeroCuenta" class="form-control mb-3" placeholder="Ej: 300...">
 
                             <label class="form-label">Titular</label>
-                            <input type="text" id="titularCuenta" class="form-control" placeholder="Nombre completo">
+                            <input type="text" id="titularCuenta" class="form-control mb-3" placeholder="Nombre completo">
+
+                            <label class="form-label">
+                                <i class="bi bi-key-fill me-1" style="color:#e67e22;"></i>Clave de Acceso
+                            </label>
+                            <select id="tieneClave" class="form-select mb-2" onchange="toggleCampoClave(this)">
+                                <option value="no">No requiere clave</option>
+                                <option value="si">Sí, tiene clave</option>
+                            </select>
+                            <div id="campoClavePago" style="display:none;">
+                                <input type="text" id="claveCuenta" class="form-control"
+                                       placeholder="Ej: 1234 · código de pago">
+                            </div>
                         </div>
 
                         <div class="col-12">

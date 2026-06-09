@@ -1226,35 +1226,25 @@ async function _pollMisPedidos() {
         if (!res.ok) return;
         const pedidos = await res.json();
         if (!Array.isArray(pedidos)) return;
-        const prevEstados = _getMisPedidosEstado();
+        const prevEstados  = _getMisPedidosEstado();
         const nuevoEstados = {};
-        const vistos = _getMisPedidosVistos();
-        const hoy = new Date().toISOString().slice(0, 10);
+        const vistos       = _getMisPedidosVistos();
+        const estadosFinales = ['anulada', 'cancelado', 'cancelada', 'emitida', 'emitido'];
         pedidos.forEach(p => {
             const id    = p.id_pedido;
             const est   = p.estado;
             nuevoEstados[id] = est;
             const clave = id + '|' + est;
             if (vistos.includes(clave)) return;
-            const prev  = prevEstados[id];
-            if (prev === est) return;
+            const prev = prevEstados[id];
+            if (prev === est || prev === undefined) return;
+            if (!estadosFinales.includes(est.toLowerCase())) return;
             const total = p.total ? ` · $${Number(p.total).toLocaleString('es-CO')}` : '';
             const items = `${p.num_items || 1} ítem${(p.num_items || 1) > 1 ? 's' : ''}`;
-            let notifTipo, notifTitulo, notifMensaje;
-            if (prev === undefined) {
-                if (p.fecha !== hoy) return;
-                notifTipo    = 'pedido_nuevo';
-                notifTitulo  = '¡Pedido recibido!';
-                notifMensaje = `Tu pedido (${items})${total} fue recibido y está ${est}`;
-            } else {
-                notifTipo    = 'pedido_' + est.toLowerCase().replace(/[^a-z]/g, '');
-                notifTitulo  = `Pedido ${est}`;
-                notifMensaje = `Tu pedido (${items})${total} — ${est}`;
-            }
             _pushClientNotif({
-                tipo:    notifTipo,
-                titulo:  notifTitulo,
-                mensaje: notifMensaje,
+                tipo:    'pedido_' + est.toLowerCase().replace(/[^a-z]/g, ''),
+                titulo:  `Pedido ${est}`,
+                mensaje: `Tu pedido (${items})${total} — ${est}`,
                 imagen:  '/static/uploads/logo.png',
                 url:     '/historial_facturas_page',
             });

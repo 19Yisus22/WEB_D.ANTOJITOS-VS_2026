@@ -153,7 +153,7 @@ function _renderTabla(lista) {
                            <i class="bi bi-google"></i>Google
                        </span>`
                     : `<span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="font-size:0.72rem;font-weight:700;letter-spacing:0.3px;background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;">
-                           <img src="/static/uploads/logo.png" style="width:11px;height:11px;object-fit:contain;border-radius:2px;filter:brightness(10);" onerror="this.style.display='none'">D'Antojitos
+                           <img src="/static/uploads/logo.png" style="width:12px;height:12px;object-fit:contain;border-radius:2px;filter:brightness(0) invert(1);" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><i class="bi bi-shop" style="display:none;font-size:0.7rem;"></i>D'Antojitos
                        </span>`}
             </td>
             <td class="text-nowrap">
@@ -338,13 +338,15 @@ function mostrarDetalleUsuario(u) {
                 </div>
 
                 <div class="udet-body">
-                    ${row('bi-card-text',          'Cédula',          `<span class="font-monospace">${u.cedula||'—'}</span>`)}
-                    ${row('bi-envelope-fill',       'Correo',          `<span style="word-break:break-all;">${u.correo||'—'}</span>`)}
-                    ${row('bi-telephone-fill',      'Teléfono',        u.telefono)}
-                    ${row('bi-geo-alt-fill',        'Dirección',       u.direccion)}
-                    ${row('bi-wallet2',             'Método de Pago',  u.metodo_pago)}
-                    ${row('bi-calendar-plus-fill',  'Registro',        fmtDate(u.fecha_creacion))}
-                    ${row('bi-clock-history',       'Última Conexión', fmtDate(u.ultima_conexion))}
+                    ${row('bi-card-text',          'Cédula',              `<span class="font-monospace">${u.cedula||'—'}</span>`)}
+                    ${row('bi-at',                 'Usuario',             u.username ? `@${u.username}` : null)}
+                    ${row('bi-envelope-fill',       'Correo',              `<span style="word-break:break-all;">${u.correo||'—'}</span>`)}
+                    ${row('bi-telephone-fill',      'Teléfono',            u.telefono)}
+                    ${row('bi-geo-alt-fill',        'Dirección',           u.direccion)}
+                    ${row('bi-wallet2',             'Método de Pago',      u.metodo_pago)}
+                    ${row('bi-cake2-fill',          'Fecha de Nacimiento', u.fecha_nacimiento ? new Date(u.fecha_nacimiento + 'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}) : null)}
+                    ${row('bi-calendar-plus-fill',  'Registro',            fmtDate(u.fecha_creacion))}
+                    ${row('bi-clock-history',       'Última Conexión',     fmtDate(u.ultima_conexion))}
                 </div>
 
                 <div class="udet-footer">

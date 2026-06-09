@@ -44,6 +44,7 @@ def facturacion_page():
                     "tipo_cuenta": tipo_cuenta,
                     "numero":      item.get("numero", ""),
                     "titular":     item.get("titular", ""),
+                    "clave_pago":  item.get("clave_pago", "") or "",
                     "qr_url":      url_qr,
                     "estado":      True,
                 })

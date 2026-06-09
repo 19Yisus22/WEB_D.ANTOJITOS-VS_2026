@@ -16,7 +16,7 @@
     --shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
 }
 
-.page-wrapper { padding-top: 4px !important; }
+.page-wrapper { padding-top: 25px !important; }
 
 html, body {
     height: 100%;
@@ -150,6 +150,142 @@ body {
 [data-theme="dark"] .facturas-search-input-group { background: #1a1a1a !important; border-color: #2a2a2a !important; }
 [data-theme="dark"] .facturas-search-input { color: #e8e8e8 !important; }
 [data-theme="dark"] .facturas-filtro-select { background-color: #1a1a1a !important; border-color: #2a2a2a !important; color: #e8e8e8 !important; }
+
+/* ── Filtro estructurado por número de factura ── */
+.facturas-num-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fnf-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.fnf-group {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1.5px solid #e2e6ea;
+    border-radius: 14px;
+    padding: 0 6px 0 14px;
+    gap: 4px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 44px;
+}
+
+.fnf-group:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(211,84,0,0.10);
+}
+
+.fnf-prefix {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: 'DM Sans', monospace;
+}
+
+.fnf-year-select {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--dark);
+    cursor: pointer;
+    padding: 0 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    min-width: 100px;
+    max-width: 130px;
+}
+
+.fnf-sep {
+    font-size: 0.95rem;
+    color: #ccc;
+    font-weight: 300;
+    flex-shrink: 0;
+    padding: 0 2px;
+}
+
+.fnf-num-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'DM Sans', monospace;
+    font-size: 0.93rem;
+    font-weight: 700;
+    color: var(--dark);
+    width: 72px;
+    padding: 10px 4px;
+    letter-spacing: 0.5px;
+}
+
+.fnf-num-input::placeholder {
+    color: #ccc;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+.fnf-clear {
+    background: none;
+    border: none;
+    color: #bbb;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+}
+
+.fnf-clear:hover {
+    color: #d35400;
+    background: rgba(211,84,0,0.07);
+}
+
+.fnf-active .fnf-group {
+    border-color: var(--primary);
+    background: rgba(211,84,0,0.03);
+}
+
+.fnf-active .fnf-label { color: var(--primary); }
+
+[data-theme="dark"] .fnf-group {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+}
+
+[data-theme="dark"] .fnf-year-select,
+[data-theme="dark"] .fnf-num-input { color: #e8e8e8 !important; }
+
+[data-theme="dark"] .fnf-sep { color: #444 !important; }
+
+[data-theme="dark"] .fnf-label { color: #555 !important; }
+
+[data-theme="dark"] .fnf-active .fnf-label { color: #f0883e !important; }
+
+[data-theme="dark"] .fnf-active .fnf-group {
+    border-color: #f0883e !important;
+    background: rgba(240,136,62,0.06) !important;
+}
 
 /* ══════════════════════════════════════
    CABECERA DE SECCIÓN
@@ -1134,6 +1270,39 @@ body {
 .payment-number { font-size: 1.2rem; font-weight: 900; color: #d35400; flex: 1; font-family: monospace; }
 .payment-copy-btn { background: #d35400; border: none; color: #fff; border-radius: 8px; padding: 7px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .payment-copy-btn:hover { background: #e67e22; transform: scale(1.03); }
+
+.payment-clave-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px 14px;
+    background: rgba(230,126,34,0.06);
+    border: 1px solid rgba(230,126,34,0.2);
+    border-radius: 10px;
+}
+
+.payment-clave-icon {
+    color: #e67e22;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.payment-clave-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #888;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+[data-theme="dark"] .payment-clave-row {
+    background: rgba(240,136,62,0.07) !important;
+    border-color: rgba(240,136,62,0.18) !important;
+}
+
+[data-theme="dark"] .payment-clave-label { color: #666 !important; }
 
 .payment-notice {
     margin-top: 16px;

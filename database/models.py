@@ -135,7 +135,7 @@ def usuario_buscar_por_nombre(nombre: str) -> dict | None:
 
 def usuario_get_all() -> list:
     return _many(_run(
-        _db().table("usuarios").select('cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,"letraAcc",roles(nombre_role)')
+        _db().table("usuarios").select('cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,direccion,metodo_pago,fecha_nacimiento,fecha_creacion,ultima_conexion,contrasena,"letraAcc",roles(nombre_role)')
     ))
 
 def usuario_get_web_token(cedula: str) -> dict | None:

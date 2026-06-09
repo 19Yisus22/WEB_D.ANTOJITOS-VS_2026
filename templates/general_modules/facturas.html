@@ -35,7 +35,7 @@
             </header>
 
             <!-- ── Barra de búsqueda + filtro de estado ── -->
-            <div class="facturas-search-wrap mb-3">
+            <div class="facturas-search-wrap mb-2">
                 <div class="facturas-search-input-group">
                     <span class="facturas-search-icon"><i class="bi bi-search"></i></span>
                     <input
@@ -51,6 +51,27 @@
                     <option value="pagado">Pagada / Completada</option>
                     <option value="anulada">Anulada / Cancelada</option>
                 </select>
+            </div>
+
+            <!-- ── Filtro por número de factura ── -->
+            <div class="facturas-num-filter mb-3" id="filtroFacturaNumPanel">
+                <span class="fnf-label">
+                    <i class="bi bi-receipt-cutoff"></i>
+                    Factura (Año / Número)
+                </span>
+                <div class="fnf-group">
+                    <span class="fnf-prefix">F—</span>
+                    <select id="filtroAnioFactura" class="fnf-year-select">
+                        <option value="">Todos los años</option>
+                    </select>
+                    <span class="fnf-sep">—</span>
+                    <input type="text" id="filtroNumeroFactura" class="fnf-num-input"
+                           placeholder="001" maxlength="8" inputmode="numeric"
+                           autocomplete="off">
+                    <button class="fnf-clear" id="btnClearFiltroNum" title="Limpiar" style="display:none;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
             </div>
         </section>
 

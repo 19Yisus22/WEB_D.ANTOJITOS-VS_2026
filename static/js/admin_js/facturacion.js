@@ -1,5 +1,15 @@
 let metodosPagoArray = [];
 let editIndex = -1;
+
+function toggleCampoClave(select) {
+    const campo = document.getElementById('campoClavePago');
+    if (!campo) return;
+    campo.style.display = select.value === 'si' ? 'block' : 'none';
+    if (select.value === 'no') {
+        const input = document.getElementById('claveCuenta');
+        if (input) input.value = '';
+    }
+}
 let audioCtx = null;
 
 const IMG_PLACEHOLDER_HTML = `<div style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;color:#adb5bd;font-size:1.2rem;"><i class="bi bi-image-slash"></i></div>`;
@@ -138,6 +148,7 @@ function cargarMetodosDesdeHTML() {
             metodosPagoArray = data.map(m => ({
                 entidad: m.entidad, tipo_cuenta: m.tipo_cuenta,
                 numero: m.numero, titular: m.titular,
+                clave_pago: m.clave_pago || '',
                 url_actual: m.qr_url, cambio_img: false, file: null
             }));
             renderizarLista();
@@ -153,6 +164,8 @@ function agregarMetodoPago() {
     const numero = document.getElementById('numeroCuenta').value.trim();
     const titular = document.getElementById('titularCuenta').value.trim();
     const fileInput = document.getElementById('archivoQR');
+    const tieneClave = document.getElementById('tieneClave')?.value === 'si';
+    const clavePago = tieneClave ? (document.getElementById('claveCuenta')?.value.trim() || '') : '';
 
     if (!numero || !titular) {
         mostrarAlerta("Ingrese número de cuenta y nombre del titular", true);
@@ -162,6 +175,7 @@ function agregarMetodoPago() {
     const file = fileInput.files[0];
     const datos = {
         entidad, tipo_cuenta: tipo, numero, titular,
+        clave_pago: clavePago,
         url_actual: editIndex !== -1 ? metodosPagoArray[editIndex].url_actual : "",
         cambio_img: !!file,
         file: file || (editIndex !== -1 ? metodosPagoArray[editIndex].file : null)
@@ -223,6 +237,7 @@ function renderizarLista() {
                             </div>
                             <h6 class="m-0 fw-bold">${m.titular}</h6>
                             <small class="text-muted">${m.numero}</small>
+                            ${m.clave_pago ? `<small class="text-muted d-block"><i class="bi bi-key-fill me-1" style="color:#e67e22;"></i><span class="font-monospace">${m.clave_pago}</span></small>` : ''}
                         </div>
                     </div>
                     <div class="d-flex gap-2 ms-auto flex-shrink-0">
@@ -253,6 +268,14 @@ function renderizarLista() {
                                 <i class="bi bi-copy"></i>
                             </button>
                         </div>
+                        ${m.clave_pago ? `
+                        <div class="invoice-clave-row">
+                            <i class="bi bi-key-fill invoice-clave-icon"></i>
+                            <span class="invoice-clave-val font-monospace">${m.clave_pago}</span>
+                            <button class="invoice-copy-btn" onclick="navigator.clipboard.writeText('${m.clave_pago}').then(()=>mostrarAlerta('Clave copiada'))">
+                                <i class="bi bi-copy"></i>
+                            </button>
+                        </div>` : ''}
                     </div>
                 </div>
             </div>`;
@@ -323,6 +346,21 @@ function editarMetodo(index) {
     document.getElementById('numeroCuenta').value = m.numero;
     document.getElementById('titularCuenta').value = m.titular;
 
+    const tieneClave = document.getElementById('tieneClave');
+    const campoClave = document.getElementById('campoClavePago');
+    const inputClave = document.getElementById('claveCuenta');
+    if (tieneClave && campoClave && inputClave) {
+        if (m.clave_pago) {
+            tieneClave.value = 'si';
+            campoClave.style.display = 'block';
+            inputClave.value = m.clave_pago;
+        } else {
+            tieneClave.value = 'no';
+            campoClave.style.display = 'none';
+            inputClave.value = '';
+        }
+    }
+
     const previewImg = document.getElementById('previewPagoImg');
     const placeholder = document.getElementById('placeholderQR');
 
@@ -357,6 +395,7 @@ async function guardarCambiosPagos() {
     const metadata = metodosPagoArray.map(m => ({
         entidad: m.entidad, tipo_cuenta: m.tipo_cuenta,
         numero: m.numero, titular: m.titular,
+        clave_pago: m.clave_pago || '',
         url_actual: m.url_actual, cambio_img: m.cambio_img
     }));
 
@@ -387,6 +426,13 @@ function resetearFormulario() {
     document.getElementById('numeroCuenta').value = "";
     document.getElementById('titularCuenta').value = "";
     document.getElementById('archivoQR').value = "";
+
+    const tieneClave = document.getElementById('tieneClave');
+    const campoClave = document.getElementById('campoClavePago');
+    const inputClave = document.getElementById('claveCuenta');
+    if (tieneClave) tieneClave.value = 'no';
+    if (campoClave) campoClave.style.display = 'none';
+    if (inputClave) inputClave.value = '';
 
     const previewImg = document.getElementById('previewPagoImg');
     const placeholder = document.getElementById('placeholderQR');
