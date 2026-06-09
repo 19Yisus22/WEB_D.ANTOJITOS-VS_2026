@@ -60,22 +60,24 @@
     width: 100%;
     position: relative;
     border: 1px solid rgba(241, 167, 185, 0.1);
+    isolation: isolate;
+    contain: layout style;
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
-    -webkit-perspective: 1000px;
-    perspective: 1000px;
 }
 
 #main-footer-container .payment-track {
     display: flex;
+    flex-shrink: 0;
     width: calc(200px * 8);
+    min-width: calc(200px * 8);
     animation: footerScrollMarquee 25s linear infinite;
     -webkit-animation: footerScrollMarquee 25s linear infinite;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
     will-change: transform;
+    transform-style: flat;
+    -webkit-transform-style: flat;
 }
 
 @media (hover: hover) and (pointer: fine) {

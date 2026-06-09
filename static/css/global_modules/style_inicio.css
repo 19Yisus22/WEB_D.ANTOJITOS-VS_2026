@@ -1267,10 +1267,10 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     align-items: center;
     height: 72px;
     position: relative;
+    isolation: isolate;
+    contain: layout style;
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
-    -webkit-perspective: 1000px;
-    perspective: 1000px;
 }
 
 .cinta-inicio-marquee::before,
@@ -1304,8 +1304,8 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     will-change: transform;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+    transform-style: flat;
+    -webkit-transform-style: flat;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -1335,10 +1335,17 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     color: rgba(255, 255, 255, 0.90);
     font-size: 0.8rem;
     font-weight: 600;
-    transition: transform 0.2s ease;
 }
 
-.ci-item:hover { transform: scale(1.04); }
+@media (hover: hover) and (pointer: fine) {
+    .ci-item { transition: transform 0.2s ease; }
+    .ci-item:hover { transform: scale(1.04); }
+    .ci-item:hover img {
+        box-shadow:
+            0 0 18px rgba(211, 84, 0, 0.6),
+            0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+}
 
 .ci-item img {
     width: 34px;
@@ -1348,17 +1355,12 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     background: rgba(255, 255, 255, 0.08);
     padding: 3px;
     flex-shrink: 0;
+    pointer-events: none;
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow:
         0 0 10px rgba(211, 84, 0, 0.3),
         0 2px 8px rgba(0, 0, 0, 0.4);
     transition: box-shadow 0.3s ease;
-}
-
-.ci-item:hover img {
-    box-shadow:
-        0 0 18px rgba(211, 84, 0, 0.6),
-        0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .ci-item-label {
