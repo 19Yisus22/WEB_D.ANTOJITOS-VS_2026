@@ -44,6 +44,15 @@ _INICIO = [
     _l("inicio","ini_a5","Pilar del sistema","20 días en la página de inicio","🏆","epico",50,A,meta=20,campo="v_inicio"),
     _l("inicio","ini_a6","Guardián digital","Sesión un sábado o domingo como administrador","🛡️","comun",10,A),
     _l("inicio","ini_a7","Maestro del inicio","30 días en la página de inicio","👑","legendario",150,A,meta=30,campo="v_inicio"),
+    _l("inicio","ini_c8","Mediodía goloso","Iniciaste sesión a la hora del almuerzo (12-2 PM)","🍽️","comun",10,C),
+    _l("inicio","ini_c9","Racha sólida","10 días seguidos en la página de inicio","⚡","raro",30,C,meta=10,campo="s_inicio"),
+    _l("inicio","ini_c10","Habitante del portal","30 días distintos en la página de inicio","🏠","epico",55,C,meta=30,campo="v_inicio"),
+    _l("inicio","ini_v8","Mediodía laboral","Iniciaste sesión durante el mediodía (12-2 PM)","☕","comun",10,V),
+    _l("inicio","ini_v9","Racha profesional","10 días consecutivos en inicio","🔥","raro",35,V,meta=10,campo="s_inicio"),
+    _l("inicio","ini_v10","Presencia total","45 días en la página de inicio","🏆","legendario",100,V,meta=45,campo="v_inicio"),
+    _l("inicio","ini_a8","Mediodía administrativo","Sesión al mediodía como administrador","📊","comun",10,A),
+    _l("inicio","ini_a9","Control férreo","14 días consecutivos como administrador","⚙️","epico",60,A,meta=14,campo="s_inicio"),
+    _l("inicio","ini_a10","Centinela del sistema","45 días en la página de inicio","👑","legendario",140,A,meta=45,campo="v_inicio"),
 ]
 
 _CATALOGO = [
@@ -68,6 +77,15 @@ _CATALOGO = [
     _l("catalogo","cat_a5","Catálogo robusto","20 o más productos activos en el sistema","📦","raro",30,A,meta=20,campo="sistema_productos"),
     _l("catalogo","cat_a6","Gran inventario","50 o más productos activos en el sistema","🏪","epico",60,A,meta=50,campo="sistema_productos"),
     _l("catalogo","cat_a7","Megatienda","100 o más productos activos en el sistema","🌟","legendario",120,A,meta=100,campo="sistema_productos"),
+    _l("catalogo","cat_c8","Vitrina favorita","7 días consecutivos visitando el catálogo","💫","raro",35,C,meta=7,campo="s_catalogo"),
+    _l("catalogo","cat_c9","Obsesionado con el menú","50 días visitando el catálogo","🍰","epico",70,C,meta=50,campo="v_catalogo"),
+    _l("catalogo","cat_c10","Experto catador","15 productos distintos comprados","🎖️","epico",80,C,meta=15,campo="productos_distintos"),
+    _l("catalogo","cat_v8","Catálogo al día","10 días consecutivos en el catálogo","🔄","raro",40,V,meta=10,campo="s_catalogo"),
+    _l("catalogo","cat_v9","Monitor de disponibilidad","45 días visitando el catálogo","📡","epico",85,V,meta=45,campo="v_catalogo"),
+    _l("catalogo","cat_v10","Amo del inventario","60 días visitando el catálogo","🏅","legendario",145,V,meta=60,campo="v_catalogo"),
+    _l("catalogo","cat_a8","Racha de auditoría","10 días consecutivos en el catálogo","🔎","raro",35,A,meta=10,campo="s_catalogo"),
+    _l("catalogo","cat_a9","150 productos activos","150 o más productos activos en el sistema","📦","epico",90,A,meta=150,campo="sistema_productos"),
+    _l("catalogo","cat_a10","Supermercado digital","200 o más productos activos en el sistema","🏪","legendario",160,A,meta=200,campo="sistema_productos"),
 ]
 
 _CARRITO = [
@@ -92,6 +110,15 @@ _CARRITO = [
     _l("carrito","cart_a5","Crecimiento sólido","100 pedidos totales en la plataforma","📈","raro",35,A,meta=100,campo="sistema_pedidos"),
     _l("carrito","cart_a6","Gran plataforma","500 pedidos totales en la plataforma","🌟","epico",70,A,meta=500,campo="sistema_pedidos"),
     _l("carrito","cart_a7","Ecosistema próspero","1000 pedidos totales en la plataforma","🏆","legendario",120,A,meta=1000,campo="sistema_pedidos"),
+    _l("carrito","cart_c8","Carrito de campeón","Carrito con 15 o más productos","🎯","epico",70,C),
+    _l("carrito","cart_c9","Gran festín","Carrito superó $500.000 COP","💎","legendario",130,C),
+    _l("carrito","cart_c10","El millonario del dulce","Carrito superó $1.000.000 COP","🤑","legendario",200,C),
+    _l("carrito","cart_v8","Racha de carritos","10 días consecutivos en el carrito","🔥","raro",40,V,meta=10,campo="s_carrito"),
+    _l("carrito","cart_v9","2000 ventas del sistema","2000 pedidos totales en la plataforma","💹","epico",90,V,meta=2000,campo="sistema_pedidos"),
+    _l("carrito","cart_v10","Plataforma élite","5000 pedidos totales en la plataforma","👑","legendario",160,V,meta=5000,campo="sistema_pedidos"),
+    _l("carrito","cart_a8","Racha de análisis","10 días consecutivos en el carrito","📈","raro",35,A,meta=10,campo="s_carrito"),
+    _l("carrito","cart_a9","Economía en crecimiento","2000 pedidos totales en la plataforma","📊","epico",90,A,meta=2000,campo="sistema_pedidos"),
+    _l("carrito","cart_a10","Gran mercado","5000 pedidos totales en la plataforma","🌐","legendario",160,A,meta=5000,campo="sistema_pedidos"),
 ]
 
 _PAGOS = [
@@ -116,6 +143,15 @@ _PAGOS = [
     _l("pagos","pago_a5","Gran negocio","$2.000.000 COP en ventas totales del sistema","🏆","epico",70,A,meta=2000000,campo="sistema_gastado"),
     _l("pagos","pago_a6","Empresa sólida","$10.000.000 COP en ventas totales del sistema","👑","legendario",150,A,meta=10000000,campo="sistema_gastado"),
     _l("pagos","pago_a7","Cashflow épico","$50.000.000 COP en ventas totales del sistema","💥","legendario",200,A,meta=50000000,campo="sistema_gastado"),
+    _l("pagos","pago_c8","Pedidos sin parar","200 pedidos realizados","🚀","legendario",250,C,meta=200,campo="total_pedidos"),
+    _l("pagos","pago_c9","Millón en postres","Gastaste más de $1.000.000 COP en total","💸","legendario",180,C,meta=1000000,campo="total_gastado"),
+    _l("pagos","pago_c10","Cinco millones de sabor","Gastaste más de $5.000.000 COP en total","💰","legendario",250,C,meta=5000000,campo="total_gastado"),
+    _l("pagos","pago_v8","50M en ventas del sistema","$50.000.000 COP en ventas totales del sistema","🏆","legendario",200,V,meta=50000000,campo="sistema_gastado"),
+    _l("pagos","pago_v9","Racha financiera","10 días consecutivos en la zona de pagos","💳","raro",35,V,meta=10,campo="s_pagos"),
+    _l("pagos","pago_v10","Dedicación financiera","30 días en la zona de pagos","📅","epico",60,V,meta=30,campo="v_pagos"),
+    _l("pagos","pago_a8","100M en ventas totales","$100.000.000 COP en ventas totales del sistema","🌟","legendario",250,A,meta=100000000,campo="sistema_gastado"),
+    _l("pagos","pago_a9","Racha de auditoría financiera","10 días consecutivos en zona de pagos","🔍","raro",30,A,meta=10,campo="s_pagos"),
+    _l("pagos","pago_a10","Auditoría continua","30 días en la zona de pagos","📊","epico",65,A,meta=30,campo="v_pagos"),
 ]
 
 _SUGERENCIAS = [
@@ -140,6 +176,15 @@ _SUGERENCIAS = [
     _l("sugerencias","sug_a5","Comunidad activa","50 sugerencias totales en el sistema","📣","raro",35,A,meta=50,campo="sistema_comentarios"),
     _l("sugerencias","sug_a6","Gran comunidad","200 sugerencias totales en el sistema","🌟","epico",70,A,meta=200,campo="sistema_comentarios"),
     _l("sugerencias","sug_a7","Foro vibrante","500 sugerencias totales en el sistema","🏆","legendario",120,A,meta=500,campo="sistema_comentarios"),
+    _l("sugerencias","sug_c8","El embajador","30 sugerencias publicadas","📣","epico",70,C,meta=30,campo="total_comentarios"),
+    _l("sugerencias","sug_c9","Icono de la comunidad","Tu sugerencia recibió 100 likes","💥","legendario",200,C),
+    _l("sugerencias","sug_c10","Racha de sugerencias","7 días consecutivos en sugerencias","⚡","raro",35,C,meta=7,campo="s_sugerencias"),
+    _l("sugerencias","sug_v8","Feedback épico","20 sugerencias publicadas como vendedor","🌟","epico",80,V,meta=20,campo="total_comentarios"),
+    _l("sugerencias","sug_v9","Racha de feedback","7 días consecutivos en sugerencias","🔥","raro",35,V,meta=7,campo="s_sugerencias"),
+    _l("sugerencias","sug_v10","Compromiso total","45 días en el módulo de sugerencias","🏅","epico",75,V,meta=45,campo="v_sugerencias"),
+    _l("sugerencias","sug_a8","Megaforo","1000 sugerencias totales en el sistema","👑","legendario",180,A,meta=1000,campo="sistema_comentarios"),
+    _l("sugerencias","sug_a9","Racha de moderación","7 días consecutivos en sugerencias","🛡️","raro",35,A,meta=7,campo="s_sugerencias"),
+    _l("sugerencias","sug_a10","Moderador permanente","45 días en el módulo de sugerencias","🔧","epico",75,A,meta=45,campo="v_sugerencias"),
 ]
 
 _MENSAJES = [
@@ -164,6 +209,15 @@ _MENSAJES = [
     _l("mensajes","msg_a5","Comunidad conectada","200 mensajes totales en el sistema","📡","raro",35,A,meta=200,campo="sistema_mensajes"),
     _l("mensajes","msg_a6","Gran comunidad activa","500 mensajes totales en el sistema","🌟","epico",60,A,meta=500,campo="sistema_mensajes"),
     _l("mensajes","msg_a7","Red de comunicación","1000 mensajes totales en el sistema","🏆","legendario",120,A,meta=1000,campo="sistema_mensajes"),
+    _l("mensajes","msg_c8","Incansable","300 mensajes privados enviados","📱","epico",100,C,meta=300,campo="total_mensajes_privados"),
+    _l("mensajes","msg_c9","Teléfono roto","500 mensajes privados enviados","💬","legendario",180,C,meta=500,campo="total_mensajes_privados"),
+    _l("mensajes","msg_c10","Racha de chat","7 días consecutivos en mensajes","⚡","raro",30,C,meta=7,campo="s_mensajes"),
+    _l("mensajes","msg_v8","Centro de soporte","300 mensajes privados enviados","🎧","epico",100,V,meta=300,campo="total_mensajes_privados"),
+    _l("mensajes","msg_v9","Agente top","500 mensajes privados enviados","🌟","legendario",160,V,meta=500,campo="total_mensajes_privados"),
+    _l("mensajes","msg_v10","Racha de soporte","7 días consecutivos en mensajes","🏅","raro",35,V,meta=7,campo="s_mensajes"),
+    _l("mensajes","msg_a8","2000 mensajes en el sistema","2000 mensajes totales en el sistema","📡","epico",90,A,meta=2000,campo="sistema_mensajes"),
+    _l("mensajes","msg_a9","Plataforma conversacional","5000 mensajes totales en el sistema","🌐","legendario",180,A,meta=5000,campo="sistema_mensajes"),
+    _l("mensajes","msg_a10","Racha de moderación de chat","7 días consecutivos en mensajes","🔧","raro",30,A,meta=7,campo="s_mensajes"),
 ]
 
 _PERFIL = [
@@ -188,6 +242,15 @@ _PERFIL = [
     _l("perfil","prf_a5","Perfil administrativo","Completaste todos los campos de tu perfil con foto propia","✅","epico",50,A),
     _l("perfil","prf_a6","Cumpleaños anotado","Registraste tu fecha de cumpleaños","🎂","comun",15,A),
     _l("perfil","prf_a7","Administrador veterano","Llevas más de 30 días registrado","🌟","raro",30,A,meta=30,campo="dias_registrado"),
+    _l("perfil","prf_c8","Perfil explorado","10 días visitando tu perfil","🔍","comun",20,C,meta=10,campo="v_perfil"),
+    _l("perfil","prf_c9","Perfil VIP","25 días visitando tu perfil","💎","raro",35,C,meta=25,campo="v_perfil"),
+    _l("perfil","prf_c10","Perfil legendario","50 días visitando tu perfil","👑","epico",65,C,meta=50,campo="v_perfil"),
+    _l("perfil","prf_v8","Perfil activo del negocio","10 días visitando tu perfil","🏷️","comun",20,V,meta=10,campo="v_perfil"),
+    _l("perfil","prf_v9","Imagen de marca","25 días visitando tu perfil","🎨","raro",35,V,meta=25,campo="v_perfil"),
+    _l("perfil","prf_v10","Representación total","50 días visitando tu perfil","🌟","epico",65,V,meta=50,campo="v_perfil"),
+    _l("perfil","prf_a8","Perfil oficial explorado","10 días visitando tu perfil","📋","comun",20,A,meta=10,campo="v_perfil"),
+    _l("perfil","prf_a9","Autoridad visible","25 días visitando tu perfil","🛡️","raro",35,A,meta=25,campo="v_perfil"),
+    _l("perfil","prf_a10","Presencia de élite","50 días visitando tu perfil","🎖️","epico",70,A,meta=50,campo="v_perfil"),
 ]
 
 _HISTORIAL = [
@@ -212,6 +275,15 @@ _HISTORIAL = [
     _l("historial","fac_a5","Facturación masiva","50 facturas totales en el sistema","📈","raro",35,A,meta=50,campo="sistema_facturas"),
     _l("historial","fac_a6","Sistema contable","200 facturas totales en el sistema","🌟","epico",65,A,meta=200,campo="sistema_facturas"),
     _l("historial","fac_a7","Contabilidad total","500 facturas totales en el sistema","🏆","legendario",130,A,meta=500,campo="sistema_facturas"),
+    _l("historial","fac_c8","Historial extenso","50 facturas generadas","📊","epico",80,C,meta=50,campo="total_facturas"),
+    _l("historial","fac_c9","Centenario de compras","100 facturas generadas","💯","legendario",150,C,meta=100,campo="total_facturas"),
+    _l("historial","fac_c10","El gran gastador","Gastaste más de $1.000.000 COP en total","💰","legendario",200,C,meta=1000000,campo="total_gastado"),
+    _l("historial","fac_v8","Mil facturas en el sistema","1000 facturas totales en el sistema","🏆","legendario",180,V,meta=1000,campo="sistema_facturas"),
+    _l("historial","fac_v9","Racha de análisis","10 días consecutivos en el historial","📈","raro",35,V,meta=10,campo="s_historial"),
+    _l("historial","fac_v10","Dedicación contable","30 días en el historial","📅","epico",60,V,meta=30,campo="v_historial"),
+    _l("historial","fac_a8","Sistema facturado masivo","1000 facturas totales en el sistema","🌟","legendario",180,A,meta=1000,campo="sistema_facturas"),
+    _l("historial","fac_a9","Racha de auditoría","10 días consecutivos en el historial","🔎","raro",35,A,meta=10,campo="s_historial"),
+    _l("historial","fac_a10","Auditoría permanente","30 días en el historial","💼","epico",65,A,meta=30,campo="v_historial"),
 ]
 
 _PRODUCTOS = [
@@ -236,6 +308,15 @@ _PRODUCTOS = [
     _l("gestion_productos","prod_a5","Variedad asegurada","50 o más productos activos","🏪","raro",35,A,meta=50,campo="sistema_productos"),
     _l("gestion_productos","prod_a6","Gran inventario activo","100 o más productos activos","🌟","epico",70,A,meta=100,campo="sistema_productos"),
     _l("gestion_productos","prod_a7","Megatienda activa","200 o más productos activos","🏆","legendario",130,A,meta=200,campo="sistema_productos"),
+    _l("gestion_productos","prod_c8","Catador experto","Compraste 40 productos distintos","🎖️","epico",100,C,meta=40,campo="productos_distintos"),
+    _l("gestion_productos","prod_c9","Sibarita total","Compraste 50 productos distintos","🌟","legendario",140,C,meta=50,campo="productos_distintos"),
+    _l("gestion_productos","prod_c10","El catálogo completo","Compraste 60 productos distintos","👑","legendario",200,C,meta=60,campo="productos_distintos"),
+    _l("gestion_productos","prod_v8","Racha de gestión","7 días consecutivos en gestión de productos","🔥","raro",40,V,meta=7,campo="s_gestion_productos"),
+    _l("gestion_productos","prod_v9","Portafolio total","45 días en gestión de productos","🏅","epico",80,V,meta=45,campo="v_gestion_productos"),
+    _l("gestion_productos","prod_v10","Maestro absoluto","60 días en gestión de productos","👑","legendario",150,V,meta=60,campo="v_gestion_productos"),
+    _l("gestion_productos","prod_a8","Inventario masivo","300 o más productos activos","🌐","legendario",160,A,meta=300,campo="sistema_productos"),
+    _l("gestion_productos","prod_a9","Racha administrativa","10 días consecutivos en gestión de productos","⚙️","raro",40,A,meta=10,campo="s_gestion_productos"),
+    _l("gestion_productos","prod_a10","Control absoluto","30 días en gestión de productos","🏆","epico",70,A,meta=30,campo="v_gestion_productos"),
 ]
 
 _PUBLICIDAD = [
@@ -260,6 +341,15 @@ _PUBLICIDAD = [
     _l("publicidad","pub_a5","Publicidad activa","5 publicidades en el sistema","📣","raro",35,A,meta=5,campo="sistema_publicidades"),
     _l("publicidad","pub_a6","Gran campaña","10 publicidades en el sistema","🌟","epico",60,A,meta=10,campo="sistema_publicidades"),
     _l("publicidad","pub_a7","Mega campaña","20 publicidades en el sistema","🏆","legendario",120,A,meta=20,campo="sistema_publicidades"),
+    _l("publicidad","pub_c8","Racha de ofertas","10 días consecutivos en publicidad","⚡","raro",40,C,meta=10,campo="s_publicidad"),
+    _l("publicidad","pub_c9","Fanático de promos","45 días en publicidad","🔥","epico",75,C,meta=45,campo="v_publicidad"),
+    _l("publicidad","pub_c10","Maestro del consumo","60 días en publicidad","👑","legendario",130,C,meta=60,campo="v_publicidad"),
+    _l("publicidad","pub_v8","Racha de marketing","14 días consecutivos en publicidad","📣","epico",65,V,meta=14,campo="s_publicidad"),
+    _l("publicidad","pub_v9","Publicista total","45 días en el módulo de publicidad","🌟","epico",85,V,meta=45,campo="v_publicidad"),
+    _l("publicidad","pub_v10","Campaña maestra","60 días en el módulo de publicidad","🏆","legendario",150,V,meta=60,campo="v_publicidad"),
+    _l("publicidad","pub_a8","Gran plataforma publicitaria","30 publicidades en el sistema","📊","legendario",160,A,meta=30,campo="sistema_publicidades"),
+    _l("publicidad","pub_a9","Racha de gestión","10 días consecutivos en publicidad","🛡️","raro",40,A,meta=10,campo="s_publicidad"),
+    _l("publicidad","pub_a10","Supervisor permanente","30 días en el módulo de publicidad","🔧","epico",70,A,meta=30,campo="v_publicidad"),
 ]
 
 _USUARIOS = [
@@ -284,6 +374,15 @@ _USUARIOS = [
     _l("gestion_usuarios","usr_a5","50 usuarios registrados","50 usuarios en el sistema","👨‍👩‍👧‍👦","raro",35,A,meta=50,campo="sistema_usuarios"),
     _l("gestion_usuarios","usr_a6","Gran comunidad","100 usuarios en el sistema","🌟","epico",65,A,meta=100,campo="sistema_usuarios"),
     _l("gestion_usuarios","usr_a7","Plataforma masiva","500 usuarios en el sistema","🏆","legendario",130,A,meta=500,campo="sistema_usuarios"),
+    _l("gestion_usuarios","usr_c8","Tres años con nosotros","1095 días registrado","🌟","legendario",250,C,meta=1095,campo="dias_registrado"),
+    _l("gestion_usuarios","usr_c9","Cuatro años contigo","1460 días registrado","💙","legendario",300,C,meta=1460,campo="dias_registrado"),
+    _l("gestion_usuarios","usr_c10","Leyenda permanente","50 pedidos realizados","🏆","legendario",200,C,meta=50,campo="total_pedidos"),
+    _l("gestion_usuarios","usr_v8","Vendedor de largo plazo","730 días registrado","💙","legendario",200,V,meta=730,campo="dias_registrado"),
+    _l("gestion_usuarios","usr_v9","100 clientes en el sistema","100 clientes registrados en el sistema","👨‍👩‍👧‍👦","epico",80,V,meta=100,campo="sistema_usuarios"),
+    _l("gestion_usuarios","usr_v10","500 clientes en el sistema","500 clientes registrados en el sistema","🌟","legendario",160,V,meta=500,campo="sistema_usuarios"),
+    _l("gestion_usuarios","usr_a8","Mil usuarios registrados","1000 usuarios en el sistema","👑","legendario",200,A,meta=1000,campo="sistema_usuarios"),
+    _l("gestion_usuarios","usr_a9","Racha de gestión","10 días consecutivos en gestión de usuarios","⚙️","raro",40,A,meta=10,campo="s_gestion_usuarios"),
+    _l("gestion_usuarios","usr_a10","Administrador permanente","30 días en gestión de usuarios","🏆","epico",70,A,meta=30,campo="v_gestion_usuarios"),
 ]
 
 LOGROS_DEFINIDOS: list[dict] = (
@@ -291,7 +390,7 @@ LOGROS_DEFINIDOS: list[dict] = (
     _MENSAJES + _PERFIL + _HISTORIAL + _PRODUCTOS + _PUBLICIDAD + _USUARIOS
 )
 
-assert len(LOGROS_DEFINIDOS) == 231, f"Se esperaban 231 logros, hay {len(LOGROS_DEFINIDOS)}"
+assert len(LOGROS_DEFINIDOS) == 330, f"Se esperaban 330 logros, hay {len(LOGROS_DEFINIDOS)}"
 
 LOGROS_MAP: dict[str, dict] = {l["codigo"]: l for l in LOGROS_DEFINIDOS}
 
@@ -473,26 +572,37 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     if es_visita and modulo_visita == "inicio":
         _chequear("ini_c6", streak_count >= 5)
         _chequear("ini_c7", visit_count >= 20)
+        _chequear("ini_c9", streak_count >= 10)
+        _chequear("ini_c10", visit_count >= 30)
         _chequear("ini_v5", streak_count >= 7)
         _chequear("ini_v6", visit_count >= 20)
         _chequear("ini_v7", visit_count >= 30)
+        _chequear("ini_v9", streak_count >= 10)
+        _chequear("ini_v10", visit_count >= 45)
         _chequear("ini_a4", streak_count >= 7)
         _chequear("ini_a5", visit_count >= 20)
         _chequear("ini_a7", visit_count >= 30)
+        _chequear("ini_a9", streak_count >= 14)
+        _chequear("ini_a10", visit_count >= 45)
+    _chequear("ini_c8", hora_actual in (12, 13))
     _chequear("ini_v1", True)
     _chequear("ini_v2", hora_actual < 7)
     _chequear("ini_v3", hora_actual >= 22)
     _chequear("ini_v4", dia_semana in (5, 6))
+    _chequear("ini_v8", hora_actual in (12, 13))
     _chequear("ini_a1", True)
     _chequear("ini_a2", hora_actual >= 23 or hora_actual < 2)
     _chequear("ini_a3", hora_actual < 6)
     _chequear("ini_a6", dia_semana in (5, 6))
+    _chequear("ini_a8", hora_actual in (12, 13))
 
     if es_visita and modulo_visita == "catalogo":
         _chequear("cat_c1", visit_count >= 1)
         _chequear("cat_c2", visit_count >= 5)
         _chequear("cat_c3", visit_count >= 15)
         _chequear("cat_c4", visit_count >= 30)
+        _chequear("cat_c8", streak_count >= 7)
+        _chequear("cat_c9", visit_count >= 50)
         _chequear("cat_v1", visit_count >= 1)
         _chequear("cat_v2", visit_count >= 5)
         _chequear("cat_v3", visit_count >= 15)
@@ -500,24 +610,33 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
         _chequear("cat_v5", streak_count >= 7)
         _chequear("cat_v6", visit_count >= 20)
         _chequear("cat_v7", visit_count >= 30)
+        _chequear("cat_v8", streak_count >= 10)
+        _chequear("cat_v9", visit_count >= 45)
+        _chequear("cat_v10", visit_count >= 60)
         _chequear("cat_a1", visit_count >= 1)
         _chequear("cat_a2", visit_count >= 5)
         _chequear("cat_a3", visit_count >= 15)
         _chequear("cat_a4", visit_count >= 30)
+        _chequear("cat_a8", streak_count >= 10)
     _chequear("cat_c5", productos_distintos >= 3)
     _chequear("cat_c6", productos_distintos >= 5)
     _chequear("cat_c7", productos_distintos >= 10)
+    _chequear("cat_c10", productos_distintos >= 15)
     _chequear("cat_a5", sistema_productos >= 20)
     _chequear("cat_a6", sistema_productos >= 50)
     _chequear("cat_a7", sistema_productos >= 100)
+    _chequear("cat_a9", sistema_productos >= 150)
+    _chequear("cat_a10", sistema_productos >= 200)
 
     if es_visita and modulo_visita == "carrito":
         _chequear("cart_v1", visit_count >= 1)
         _chequear("cart_v2", visit_count >= 5)
         _chequear("cart_v3", visit_count >= 15)
+        _chequear("cart_v8", streak_count >= 10)
         _chequear("cart_a1", visit_count >= 1)
         _chequear("cart_a2", visit_count >= 5)
         _chequear("cart_a3", visit_count >= 15)
+        _chequear("cart_a8", streak_count >= 10)
     if num_prod_carrito >= 1:
         _chequear("cart_c1", True)
     _chequear("cart_c2", num_prod_carrito >= 3)
@@ -526,14 +645,21 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("cart_c5", valor_carrito >= 50_000)
     _chequear("cart_c6", valor_carrito >= 150_000)
     _chequear("cart_c7", valor_carrito >= 300_000)
+    _chequear("cart_c8", num_prod_carrito >= 15)
+    _chequear("cart_c9", valor_carrito >= 500_000)
+    _chequear("cart_c10", valor_carrito >= 1_000_000)
     _chequear("cart_v4", sistema_pedidos >= 50)
     _chequear("cart_v5", sistema_pedidos >= 100)
     _chequear("cart_v6", sistema_pedidos >= 500)
     _chequear("cart_v7", sistema_pedidos >= 1000)
+    _chequear("cart_v9", sistema_pedidos >= 2000)
+    _chequear("cart_v10", sistema_pedidos >= 5000)
     _chequear("cart_a4", sistema_pedidos >= 50)
     _chequear("cart_a5", sistema_pedidos >= 100)
     _chequear("cart_a6", sistema_pedidos >= 500)
     _chequear("cart_a7", sistema_pedidos >= 1000)
+    _chequear("cart_a9", sistema_pedidos >= 2000)
+    _chequear("cart_a10", sistema_pedidos >= 5000)
 
     _chequear("pago_c1", total_pedidos >= 1)
     _chequear("pago_c2", total_pedidos >= 3)
@@ -542,21 +668,30 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("pago_c5", total_pedidos >= 20)
     _chequear("pago_c6", total_pedidos >= 50)
     _chequear("pago_c7", total_pedidos >= 100)
+    _chequear("pago_c8", total_pedidos >= 200)
+    _chequear("pago_c9", total_gastado >= 1_000_000)
+    _chequear("pago_c10", total_gastado >= 5_000_000)
     if es_visita and modulo_visita == "pagos":
         _chequear("pago_v1", visit_count >= 1)
         _chequear("pago_v2", visit_count >= 5)
         _chequear("pago_v3", visit_count >= 15)
+        _chequear("pago_v9", streak_count >= 10)
+        _chequear("pago_v10", visit_count >= 30)
         _chequear("pago_a1", visit_count >= 1)
         _chequear("pago_a2", visit_count >= 5)
         _chequear("pago_a3", visit_count >= 15)
+        _chequear("pago_a9", streak_count >= 10)
+        _chequear("pago_a10", visit_count >= 30)
     _chequear("pago_v4", sistema_gastado >= 50_000)
     _chequear("pago_v5", sistema_gastado >= 500_000)
     _chequear("pago_v6", sistema_gastado >= 2_000_000)
     _chequear("pago_v7", sistema_gastado >= 10_000_000)
+    _chequear("pago_v8", sistema_gastado >= 50_000_000)
     _chequear("pago_a4", sistema_gastado >= 500_000)
     _chequear("pago_a5", sistema_gastado >= 2_000_000)
     _chequear("pago_a6", sistema_gastado >= 10_000_000)
     _chequear("pago_a7", sistema_gastado >= 50_000_000)
+    _chequear("pago_a8", sistema_gastado >= 100_000_000)
 
     if es_compra:
         if contexto.get("repite_producto"):
@@ -570,21 +705,30 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("sug_c5", max_likes_recibidos >= 5)
     _chequear("sug_c6", max_likes_recibidos >= 20)
     _chequear("sug_c7", max_likes_recibidos >= 50)
+    _chequear("sug_c8", total_comentarios >= 30)
+    _chequear("sug_c9", max_likes_recibidos >= 100)
     _chequear("sug_v5", total_comentarios >= 1)
     _chequear("sug_v6", total_comentarios >= 5)
     _chequear("sug_v7", total_comentarios >= 10)
+    _chequear("sug_v8", total_comentarios >= 20)
     if es_visita and modulo_visita == "sugerencias":
+        _chequear("sug_c10", streak_count >= 7)
         _chequear("sug_v1", visit_count >= 1)
         _chequear("sug_v2", visit_count >= 5)
         _chequear("sug_v3", visit_count >= 15)
         _chequear("sug_v4", visit_count >= 30)
+        _chequear("sug_v9", streak_count >= 7)
+        _chequear("sug_v10", visit_count >= 45)
         _chequear("sug_a1", visit_count >= 1)
         _chequear("sug_a2", visit_count >= 5)
         _chequear("sug_a3", visit_count >= 15)
+        _chequear("sug_a9", streak_count >= 7)
+        _chequear("sug_a10", visit_count >= 45)
     _chequear("sug_a4", sistema_comentarios >= 10)
     _chequear("sug_a5", sistema_comentarios >= 50)
     _chequear("sug_a6", sistema_comentarios >= 200)
     _chequear("sug_a7", sistema_comentarios >= 500)
+    _chequear("sug_a8", sistema_comentarios >= 1000)
 
     _chequear("msg_c1", total_mensajes_privados >= 1)
     _chequear("msg_c2", total_mensajes_privados >= 10)
@@ -592,23 +736,32 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("msg_c4", total_mensajes_privados >= 50)
     _chequear("msg_c5", total_mensajes_privados >= 100)
     _chequear("msg_c7", total_mensajes_privados >= 200)
+    _chequear("msg_c8", total_mensajes_privados >= 300)
+    _chequear("msg_c9", total_mensajes_privados >= 500)
     _chequear("msg_v1", total_mensajes_privados >= 1)
     _chequear("msg_v2", total_mensajes_privados >= 10)
     _chequear("msg_v3", total_mensajes_privados >= 25)
     _chequear("msg_v4", total_mensajes_privados >= 50)
     _chequear("msg_v5", total_mensajes_privados >= 100)
     _chequear("msg_v7", total_mensajes_privados >= 200)
+    _chequear("msg_v8", total_mensajes_privados >= 300)
+    _chequear("msg_v9", total_mensajes_privados >= 500)
     if contexto.get("foto_chat"):
         _chequear("msg_c6", True)
         _chequear("msg_v6", True)
     if es_visita and modulo_visita == "mensajes":
+        _chequear("msg_c10", streak_count >= 7)
+        _chequear("msg_v10", streak_count >= 7)
         _chequear("msg_a1", visit_count >= 1)
         _chequear("msg_a2", visit_count >= 5)
         _chequear("msg_a3", visit_count >= 15)
+        _chequear("msg_a10", streak_count >= 7)
     _chequear("msg_a4", sistema_mensajes >= 50)
     _chequear("msg_a5", sistema_mensajes >= 200)
     _chequear("msg_a6", sistema_mensajes >= 500)
     _chequear("msg_a7", sistema_mensajes >= 1000)
+    _chequear("msg_a8", sistema_mensajes >= 2000)
+    _chequear("msg_a9", sistema_mensajes >= 5000)
 
     _chequear("prf_c1", bool(usuario.get("username")))
     _chequear("prf_c2", bool(usuario.get("telefono")))
@@ -631,6 +784,16 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("prf_a5", _perfil_completo(usuario))
     _chequear("prf_a6", bool(usuario.get("fecha_nacimiento")))
     _chequear("prf_a7", dias_registrado >= 30)
+    if es_visita and modulo_visita == "perfil":
+        _chequear("prf_c8", visit_count >= 10)
+        _chequear("prf_c9", visit_count >= 25)
+        _chequear("prf_c10", visit_count >= 50)
+        _chequear("prf_v8", visit_count >= 10)
+        _chequear("prf_v9", visit_count >= 25)
+        _chequear("prf_v10", visit_count >= 50)
+        _chequear("prf_a8", visit_count >= 10)
+        _chequear("prf_a9", visit_count >= 25)
+        _chequear("prf_a10", visit_count >= 50)
 
     _chequear("fac_c1", total_facturas >= 1)
     _chequear("fac_c2", total_facturas >= 3)
@@ -639,27 +802,39 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("fac_c5", total_facturas >= 20)
     _chequear("fac_c6", total_gastado >= 50_000)
     _chequear("fac_c7", total_gastado >= 500_000)
+    _chequear("fac_c8", total_facturas >= 50)
+    _chequear("fac_c9", total_facturas >= 100)
+    _chequear("fac_c10", total_gastado >= 1_000_000)
     if es_visita and modulo_visita == "historial":
         _chequear("fac_v1", visit_count >= 1)
         _chequear("fac_v2", visit_count >= 5)
         _chequear("fac_v3", visit_count >= 15)
+        _chequear("fac_v9", streak_count >= 10)
+        _chequear("fac_v10", visit_count >= 30)
         _chequear("fac_a1", visit_count >= 1)
         _chequear("fac_a2", visit_count >= 5)
         _chequear("fac_a3", visit_count >= 15)
+        _chequear("fac_a9", streak_count >= 10)
+        _chequear("fac_a10", visit_count >= 30)
     _chequear("fac_v4", sistema_facturas >= 10)
     _chequear("fac_v5", sistema_facturas >= 50)
     _chequear("fac_v6", sistema_facturas >= 200)
     _chequear("fac_v7", sistema_facturas >= 500)
+    _chequear("fac_v8", sistema_facturas >= 1000)
     _chequear("fac_a4", sistema_facturas >= 10)
     _chequear("fac_a5", sistema_facturas >= 50)
     _chequear("fac_a6", sistema_facturas >= 200)
     _chequear("fac_a7", sistema_facturas >= 500)
+    _chequear("fac_a8", sistema_facturas >= 1000)
 
     _chequear("prod_c3", productos_distintos >= 3)
     _chequear("prod_c4", productos_distintos >= 5)
     _chequear("prod_c5", productos_distintos >= 10)
     _chequear("prod_c6", productos_distintos >= 20)
     _chequear("prod_c7", productos_distintos >= 30)
+    _chequear("prod_c8", productos_distintos >= 40)
+    _chequear("prod_c9", productos_distintos >= 50)
+    _chequear("prod_c10", productos_distintos >= 60)
     if es_visita and modulo_visita == "gestion_productos":
         _chequear("prod_c1", visit_count >= 1)
         _chequear("prod_v2", visit_count >= 3)
@@ -667,9 +842,14 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
         _chequear("prod_v4", visit_count >= 20)
         _chequear("prod_v5", streak_count >= 5)
         _chequear("prod_v7", visit_count >= 30)
+        _chequear("prod_v8", streak_count >= 7)
+        _chequear("prod_v9", visit_count >= 45)
+        _chequear("prod_v10", visit_count >= 60)
         _chequear("prod_a1", visit_count >= 1)
         _chequear("prod_a2", visit_count >= 5)
         _chequear("prod_a3", visit_count >= 15)
+        _chequear("prod_a9", streak_count >= 10)
+        _chequear("prod_a10", visit_count >= 30)
     if es_accion and accion == "crear_producto":
         _chequear("prod_v1", True)
     if es_accion and accion == "editar_producto":
@@ -678,6 +858,7 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("prod_a5", sistema_productos >= 50)
     _chequear("prod_a6", sistema_productos >= 100)
     _chequear("prod_a7", sistema_productos >= 200)
+    _chequear("prod_a8", sistema_productos >= 300)
 
     if es_visita and modulo_visita == "publicidad":
         _chequear("pub_c1", visit_count >= 1)
@@ -686,14 +867,22 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
         _chequear("pub_c4", visit_count >= 30)
         _chequear("pub_c6", streak_count >= 5)
         _chequear("pub_c7", visit_count >= 30)
+        _chequear("pub_c8", streak_count >= 10)
+        _chequear("pub_c9", visit_count >= 45)
+        _chequear("pub_c10", visit_count >= 60)
         _chequear("pub_v2", visit_count >= 3)
         _chequear("pub_v3", visit_count >= 10)
         _chequear("pub_v4", visit_count >= 20)
         _chequear("pub_v5", streak_count >= 7)
         _chequear("pub_v7", visit_count >= 30)
+        _chequear("pub_v8", streak_count >= 14)
+        _chequear("pub_v9", visit_count >= 45)
+        _chequear("pub_v10", visit_count >= 60)
         _chequear("pub_a1", visit_count >= 1)
         _chequear("pub_a2", visit_count >= 5)
         _chequear("pub_a3", visit_count >= 15)
+        _chequear("pub_a9", streak_count >= 10)
+        _chequear("pub_a10", visit_count >= 30)
     if es_accion and accion == "crear_publicidad":
         _chequear("pub_v1", True)
     if es_accion and accion == "editar_publicidad":
@@ -702,6 +891,7 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("pub_a5", sistema_publicidades >= 5)
     _chequear("pub_a6", sistema_publicidades >= 10)
     _chequear("pub_a7", sistema_publicidades >= 20)
+    _chequear("pub_a8", sistema_publicidades >= 30)
 
     _chequear("usr_c1", True)
     _chequear("usr_c2", dias_registrado >= 7)
@@ -710,6 +900,9 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("usr_c5", dias_registrado >= 180)
     _chequear("usr_c6", dias_registrado >= 365)
     _chequear("usr_c7", dias_registrado >= 730)
+    _chequear("usr_c8", dias_registrado >= 1095)
+    _chequear("usr_c9", dias_registrado >= 1460)
+    _chequear("usr_c10", total_pedidos >= 50)
     _chequear("usr_v1", dias_registrado >= 7)
     _chequear("usr_v2", dias_registrado >= 30)
     _chequear("usr_v3", dias_registrado >= 90)
@@ -717,14 +910,20 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     _chequear("usr_v5", dias_registrado >= 365)
     _chequear("usr_v6", sistema_usuarios >= 10)
     _chequear("usr_v7", sistema_usuarios >= 50)
+    _chequear("usr_v8", dias_registrado >= 730)
+    _chequear("usr_v9", sistema_usuarios >= 100)
+    _chequear("usr_v10", sistema_usuarios >= 500)
     if es_visita and modulo_visita == "gestion_usuarios":
         _chequear("usr_a1", visit_count >= 1)
         _chequear("usr_a2", visit_count >= 5)
         _chequear("usr_a3", visit_count >= 15)
+        _chequear("usr_a9", streak_count >= 10)
+        _chequear("usr_a10", visit_count >= 30)
     _chequear("usr_a4", sistema_usuarios >= 10)
     _chequear("usr_a5", sistema_usuarios >= 50)
     _chequear("usr_a6", sistema_usuarios >= 100)
     _chequear("usr_a7", sistema_usuarios >= 500)
+    _chequear("usr_a8", sistema_usuarios >= 1000)
 
     if not nuevos:
         return []

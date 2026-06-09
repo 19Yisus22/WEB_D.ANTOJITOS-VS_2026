@@ -8,6 +8,14 @@ import logging
 import cloudinary
 
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s — %(name)s — %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+_logger = logging.getLogger('dantojitos')
 try:
     import flask.cli
     flask.cli.show_server_banner = lambda *a, **kw: None
@@ -86,15 +94,27 @@ from flask import render_template as _rt
 
 @app.errorhandler(404)
 def pagina_no_encontrada(_):
+    _logger.warning("404 — %s %s", request.method, request.path)
     return _rt("errors/404.html", codigo=404, mensaje="Página no encontrada"), 404
 
 @app.errorhandler(403)
 def acceso_denegado(_):
+    _logger.warning("403 — %s %s — usuario: %s", request.method, request.path, request.remote_addr)
     return _rt("errors/404.html", codigo=403, mensaje="Acceso denegado"), 403
 
 @app.errorhandler(500)
-def error_servidor(_):
+def error_servidor(e):
+    _logger.error("500 — %s %s — %s", request.method, request.path, str(e), exc_info=True)
     return _rt("errors/404.html", codigo=500, mensaje="Error interno del servidor"), 500
+
+@app.route("/admin/preview-error")
+def preview_error_page():
+    from flask import session as _s, abort
+    if _s.get('rol') != 'admin':
+        abort(403)
+    codigo = request.args.get('codigo', 404, type=int)
+    mensajes = {404: 'Página no encontrada', 403: 'Acceso denegado', 500: 'Error interno del servidor'}
+    return _rt("errors/404.html", codigo=codigo, mensaje=mensajes.get(codigo, 'Error'))
 
 _RUTAS_PUBLICAS = frozenset({
     "/login", "/registro", "/registro-google", "/logout",

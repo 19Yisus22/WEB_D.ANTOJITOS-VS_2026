@@ -363,7 +363,7 @@ def carrito_clear(cedula: str) -> None:
 
 _PEDIDO_JOIN = (
     "*, "
-    "usuarios(cedula,nombre,apellido,telefono,correo,direccion,metodo_pago,imagen_url),"
+    "usuarios(cedula,nombre,apellido,telefono,correo,direccion,metodo_pago,imagen_url,fecha_nacimiento,username,id_role,roles(nombre_role)),"
     "pedido_detalle(*, gestion_productos(nombre,precio,imagen_url))"
 )
 

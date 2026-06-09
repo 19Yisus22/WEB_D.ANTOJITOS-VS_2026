@@ -9,8 +9,8 @@
                 <img src="/static/uploads/logo.ico" alt="Logo" width="50" height="50" class="logo-img">
                 <div class="ms-2 d-flex flex-column" style="gap:1px;">
                     <span>D'Antojitos©</span>
-                    {% if session.get('user') and request.path != '/comentarios_page' %}
-                    <span class="nav-wm-credit" aria-hidden="true">Created By: 2022 YisusPrime™</span>
+                    {% if session.get('user')%}
+                    <span class="nav-wm-credit" aria-hidden="true">2022 YisusPrime™</span>
                     {% endif %}
                 </div>
             </a>
@@ -41,6 +41,10 @@
                     <i class="bi bi-megaphone-fill"></i>
                     <span id="navPubBadge" class="nav-bell-badge" style="background:#6f42c1;display:none;">0</span>
                 </button>
+                <a href="/admin/preview-error?codigo=404" title="Vista previa página de error"
+                   style="width:6px;height:6px;border-radius:50%;background:rgba(211,84,0,0.18);display:inline-block;flex-shrink:0;margin:0 2px;cursor:pointer;transition:background 0.2s;"
+                   onmouseover="this.style.background='rgba(211,84,0,0.55)'"
+                   onmouseout="this.style.background='rgba(211,84,0,0.18)'"></a>
                 {% endif %}
 
                 <button id="navWidgetEditBtn" title="Organizar widgets"

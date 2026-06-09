@@ -204,7 +204,9 @@ async function cargarProductos() {
 function renderProductos(filterText = '') {
     catalogoContainer.innerHTML = '';
     let baseFiltrada = productos.filter(p => p.nombre.toLowerCase().includes(filterText.toLowerCase()));
-    if (filtros[filtroIndex] === 'Recientes') {
+    if (filtros[filtroIndex] === 'Favoritos') {
+        baseFiltrada = baseFiltrada.filter(p => favoritos.includes(p.id_producto.toString()));
+    } else if (filtros[filtroIndex] === 'Recientes') {
         baseFiltrada.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     } else if (filtros[filtroIndex] === 'Antiguos') {
         baseFiltrada.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
@@ -238,7 +240,8 @@ function renderProductos(filterText = '') {
         agotados.forEach(p => gridAgot.appendChild(crearCardProductoHTML(p, "agot")));
     }
     if (baseFiltrada.length === 0) {
-        catalogoContainer.innerHTML = `<div class="col-12 text-center py-5 text-muted">${t('cat.no_results')}</div>`;
+        const msgVacio = filtros[filtroIndex] === 'Favoritos' ? t('cat.no_favorites') : t('cat.no_results');
+        catalogoContainer.innerHTML = `<div class="col-12 text-center py-5 text-muted">${msgVacio}</div>`;
     }
     agregarEventosProductos();
 }
@@ -264,9 +267,9 @@ function crearCardProductoHTML(p, prefix = "") {
                 </div>
                 ${isAgotado ? `<div class="letrero-agotado">${t('cat.out_stock')}</div>` : ''}
             </div>
-            <div class="card-body p-2 d-flex flex-column gap-1">
-                <h6 class="fw-bold mb-0" style="font-size:0.85rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;">${p.nombre}</h6>
-                <span class="badge mb-1" style="background:rgba(243,156,18,0.12);color:var(--primary-color,#d35400);font-size:0.82rem;font-weight:700;align-self:flex-start;">${fmtCOP(p.precio)}</span>
+            <div class="card-body p-2 d-flex flex-column gap-1 align-items-center text-center">
+                <h6 class="fw-bold mb-0 w-100" style="font-size:0.85rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;">${p.nombre}</h6>
+                <span class="badge mb-1" style="background:rgba(243,156,18,0.12);color:var(--primary-color,#d35400);font-size:0.82rem;font-weight:700;">${fmtCOP(p.precio)}</span>
                 ${!isAgotado ? `
                     <div class="modern-quantity-control mx-auto mt-1">
                         <button class="qty-btn btn-disminuir">-</button>

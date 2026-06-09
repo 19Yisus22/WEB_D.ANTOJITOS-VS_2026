@@ -214,6 +214,7 @@ const LANG_DATA = {
     'cat.qty':           'Cantidad',
     'cat.add':           'Añadir',
     'cat.no_results':    'No se encontraron productos',
+    'cat.no_favorites':  'No tienes productos favoritos aún',
     'cat.filter':        'Filtrar',
     'cat.your_favs':     'TUS FAVORITOS',
 
@@ -292,6 +293,7 @@ const LANG_DATA = {
     'ord.field_fullname':  'Nombre completo',
     'ord.field_doc':       'Cédula / Doc.',
     'ord.field_email':     'Correo electrónico',
+    'ord.field_birthday':  'Fecha de cumpleaños',
     'ord.field_contact':   'Contacto & Entrega',
     'ord.paid_q':          '¿Pagó?',
     'ord.balance_due':     'SALDO PENDIENTE:',
@@ -807,6 +809,7 @@ const LANG_DATA = {
     'cat.qty':           'Quantity',
     'cat.add':           'Add',
     'cat.no_results':    'No products found',
+    'cat.no_favorites':  'You have no favorite products yet',
     'cat.filter':        'Filter',
     'cat.your_favs':     'YOUR FAVORITES',
 
@@ -885,6 +888,7 @@ const LANG_DATA = {
     'ord.field_fullname':  'Full name',
     'ord.field_doc':       'ID / Doc.',
     'ord.field_email':     'Email address',
+    'ord.field_birthday':  'Birthday',
     'ord.field_contact':   'Contact & Delivery',
     'ord.paid_q':          'Paid?',
     'ord.balance_due':     'BALANCE DUE:',

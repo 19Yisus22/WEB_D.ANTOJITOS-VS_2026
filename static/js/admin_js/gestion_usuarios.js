@@ -137,38 +137,47 @@ function _renderTabla(lista) {
                 <div class="fw-semibold" style="font-size:0.9rem;">${u.nombre_completo || '-'}</div>
                 ${u.username ? `<small class="text-muted">@${u.username}</small>` : ''}
             </td>
-            <td><small class="text-muted">${u.cedula || '-'}</small></td>
+            <td><span class="font-monospace text-muted" style="font-size:0.78rem;">${u.cedula || '—'}</span></td>
             <td>
                 <div class="d-flex align-items-center gap-1">
-                    <small>${u.correo || '-'}</small>
-                    <button class="btn btn-sm p-0 border-0 text-muted ms-1 btn-copiar-correo" title="Copiar correo" data-correo="${u.correo || ''}">
-                        <i class="bi bi-clipboard" style="font-size:0.75rem;"></i>
+                    <span style="font-size:0.83rem;">${u.correo || '—'}</span>
+                    <button class="btn btn-sm p-0 border-0 text-muted btn-copiar-correo" title="Copiar correo" data-correo="${u.correo || ''}">
+                        <i class="bi bi-clipboard" style="font-size:0.72rem;"></i>
                     </button>
                 </div>
             </td>
             <td><span class="role-badge ${ROLES_CLASS[u.rol] || 'role-cliente'}">${u.rol || 'cliente'}</span></td>
             <td>
                 ${u.auth_method === 'google'
-                    ? `<span class="role-badge method-google">
-                           <i class="bi bi-google me-1"></i>Google
+                    ? `<span class="badge rounded-pill text-bg-danger d-inline-flex align-items-center gap-1" style="font-size:0.72rem;font-weight:700;letter-spacing:0.3px;">
+                           <i class="bi bi-google"></i>Google
                        </span>`
-                    : `<span class="role-badge method-email">
-                           <img src="/static/uploads/logo.png" style="width:13px;height:13px;object-fit:contain;margin-right:4px;border-radius:3px;" onerror="this.style.display='none'">D'Antojitos
+                    : `<span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="font-size:0.72rem;font-weight:700;letter-spacing:0.3px;background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;">
+                           <img src="/static/uploads/logo.png" style="width:11px;height:11px;object-fit:contain;border-radius:2px;filter:brightness(10);" onerror="this.style.display='none'">D'Antojitos
                        </span>`}
             </td>
-            <td><small class="text-muted">${_fecha(u.fecha_creacion)}</small></td>
-            <td class="text-center">
-                <div class="d-flex gap-1 justify-content-center">
-                    <button class="btn btn-outline-secondary action-btn btn-ver-usuario" title="Ver detalles" data-idx="${_usuarios.indexOf(u)}">
-                        <i class="bi bi-eye"></i>
+            <td class="text-nowrap">
+                <span class="badge text-bg-light border" style="font-size:0.72rem;font-weight:600;">
+                    <i class="bi bi-calendar3 me-1 text-muted"></i>${_fecha(u.fecha_creacion)}
+                </span>
+            </td>
+            <td class="text-center text-nowrap">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-outline-secondary action-btn btn-ver-usuario"
+                            title="Ver perfil completo"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            data-idx="${_usuarios.indexOf(u)}">
+                        <i class="bi bi-eye-fill"></i>
                     </button>
                     <button class="btn btn-outline-primary action-btn"
                             onclick="abrirModalRol('${u.cedula}','${u.nombre_completo}','${u.rol}')"
-                            title="Cambiar rol">
-                        <i class="bi bi-shield-lock"></i>
+                            title="Cambiar rol"
+                            data-bs-toggle="tooltip" data-bs-placement="top">
+                        <i class="bi bi-shield-lock-fill"></i>
                     </button>
                     <button class="btn btn-outline-warning action-btn btn-archivos-usuario"
                             title="Archivos privados"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
                             data-cedula="${u.cedula}"
                             data-nombre="${u.nombre_completo}"
                             data-imagen="${u.imagen_url || ''}">
@@ -176,8 +185,9 @@ function _renderTabla(lista) {
                     </button>
                     <button class="btn btn-outline-danger action-btn"
                             onclick="eliminarUsuario('${u.correo}','${u.nombre_completo}')"
-                            title="Eliminar usuario">
-                        <i class="bi bi-trash"></i>
+                            title="Eliminar usuario"
+                            data-bs-toggle="tooltip" data-bs-placement="top">
+                        <i class="bi bi-trash-fill"></i>
                     </button>
                 </div>
             </td>`;
@@ -196,6 +206,9 @@ function _renderTabla(lista) {
         tbody.appendChild(tr);
     });
     if (typeof initAllProfileImages === 'function') initAllProfileImages();
+    tbody.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        bootstrap.Tooltip.getOrCreateInstance(el, { trigger: 'hover' });
+    });
 }
 
 function abrirModalRol(cedula, nombre, rolActual) {

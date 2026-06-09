@@ -17,7 +17,7 @@
     {% include 'global_modules/navbar.html' %}
 
     {% if session.get('user_id') and session.get('rol') in ['admin', 'vendedor'] %}
-    <main class="page-wrapper py-4">
+    <main class="page-wrapper pb-4">
         <div class="container-fluid px-lg-5">
             <div class="card-title-marketing text-center mb-4">
                 <h3 class="fw-bold m-0"><i class="bi bi-box-seam me-2"></i> <span data-i18n="prod.title">Panel de Productos</span></h3>

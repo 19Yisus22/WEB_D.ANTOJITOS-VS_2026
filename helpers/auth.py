@@ -118,7 +118,7 @@ def login_required(f):
             return f(*args, **kwargs)
         if _is_ajax_or_api():
             return jsonify({"error": "No autorizado", "code": "UNAUTHENTICATED"}), 401
-        return render_template("global_modules/blocked.html", metodos=[], login_required=True)
+        return render_template("errors/blocked.html", metodos=[], login_required=True)
     return decorated
 
 
@@ -128,11 +128,11 @@ def admin_required(f):
         if not _ensure_authenticated():
             if _is_ajax_or_api():
                 return jsonify({"error": "No autorizado", "code": "UNAUTHENTICATED"}), 401
-            return render_template("global_modules/blocked.html", metodos=[])
+            return render_template("errors/blocked.html", metodos=[])
         if session.get("rol") != "admin":
             if _is_ajax_or_api():
                 return jsonify({"error": "Acceso denegado", "code": "FORBIDDEN"}), 403
-            return render_template("global_modules/blocked.html", metodos=[])
+            return render_template("errors/blocked.html", metodos=[])
         return f(*args, **kwargs)
     return decorated
 
@@ -143,11 +143,11 @@ def vendedor_required(f):
         if not _ensure_authenticated():
             if _is_ajax_or_api():
                 return jsonify({"error": "No autorizado", "code": "UNAUTHENTICATED"}), 401
-            return render_template("global_modules/blocked.html", metodos=[])
+            return render_template("errors/blocked.html", metodos=[])
         if session.get("rol") not in ("admin", "vendedor"):
             if _is_ajax_or_api():
                 return jsonify({"error": "Acceso denegado", "code": "FORBIDDEN"}), 403
-            return render_template("global_modules/blocked.html", metodos=[])
+            return render_template("errors/blocked.html", metodos=[])
         return f(*args, **kwargs)
     return decorated
 

@@ -18,6 +18,8 @@
     --radius: 16px;
 }
 
+.page-wrapper { padding-top: 4px !important; }
+
 html,
 body {
     height: 100%;

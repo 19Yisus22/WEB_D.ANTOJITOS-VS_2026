@@ -929,9 +929,9 @@ function mostrarFacturasBuscadas() {
                                <i class="bi bi-qr-code-scan me-2"></i>${t('inv.proceed')}
                            </button>`
                         : esFinal
-                            ? `<div class="alert alert-${cv.color === 'danger' ? 'secondary' : 'success'} border-0 rounded-pill py-2 text-center small fw-bold mb-0">
-                                   <i class="bi ${cv.color === 'danger' ? 'bi-slash-circle' : 'bi-shield-fill-check'} me-1"></i>
-                                   ${cv.color === 'danger' ? t('inv.voided') : t('inv.completed')}
+                            ? `<div class="inv-final-estado inv-final-${cv.color === 'danger' ? 'anulada' : 'completada'}">
+                                   <i class="bi ${cv.icono}"></i>
+                                   <span>${cv.color === 'danger' ? t('inv.voided') : t('inv.completed')}</span>
                                </div>`
                             : '';
 

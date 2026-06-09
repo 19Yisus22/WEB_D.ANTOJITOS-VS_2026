@@ -15,7 +15,7 @@
 </head>
 <body>
     {% include 'global_modules/navbar.html' %}
-    <main class="container-fluid px-3 px-md-4 py-4 page-wrapper">
+    <main class="container-fluid px-3 px-md-4 pb-4 page-wrapper">
 
         <div class="card-title-marketing mb-4">
             <div class="ctm-glow"></div>
@@ -101,25 +101,35 @@
                     </div>
 
                     <div class="table-responsive table-card">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover table-striped align-middle mb-0">
                             <thead>
                                 <tr>
-                                    <th style="width:52px;"></th>
-                                    <th class="sortable-col" onclick="sortTabla('nombre_completo')">
-                                        Usuario <i class="bi bi-chevron-expand sort-icon" id="sort-nombre_completo"></i>
+                                    <th scope="col" style="width:56px;"></th>
+                                    <th scope="col" class="sortable-col" onclick="sortTabla('nombre_completo')">
+                                        <i class="bi bi-person-fill me-1 opacity-75"></i>Usuario
+                                        <i class="bi bi-chevron-expand sort-icon" id="sort-nombre_completo"></i>
                                     </th>
-                                    <th class="sortable-col" onclick="sortTabla('cedula')">
-                                        Cédula <i class="bi bi-chevron-expand sort-icon" id="sort-cedula"></i>
+                                    <th scope="col" class="sortable-col" onclick="sortTabla('cedula')">
+                                        <i class="bi bi-card-text me-1 opacity-75"></i>Cédula
+                                        <i class="bi bi-chevron-expand sort-icon" id="sort-cedula"></i>
                                     </th>
-                                    <th>Correo</th>
-                                    <th class="sortable-col" onclick="sortTabla('rol')">
-                                        Rol <i class="bi bi-chevron-expand sort-icon" id="sort-rol"></i>
+                                    <th scope="col">
+                                        <i class="bi bi-envelope-fill me-1 opacity-75"></i>Correo
                                     </th>
-                                    <th>Método</th>
-                                    <th class="sortable-col" onclick="sortTabla('fecha_creacion')">
-                                        Registro <i class="bi bi-chevron-expand sort-icon" id="sort-fecha_creacion"></i>
+                                    <th scope="col" class="sortable-col" onclick="sortTabla('rol')">
+                                        <i class="bi bi-shield-fill me-1 opacity-75"></i>Rol
+                                        <i class="bi bi-chevron-expand sort-icon" id="sort-rol"></i>
                                     </th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">
+                                        <i class="bi bi-key-fill me-1 opacity-75"></i>Método
+                                    </th>
+                                    <th scope="col" class="sortable-col" onclick="sortTabla('fecha_creacion')">
+                                        <i class="bi bi-calendar3 me-1 opacity-75"></i>Registro
+                                        <i class="bi bi-chevron-expand sort-icon" id="sort-fecha_creacion"></i>
+                                    </th>
+                                    <th scope="col" class="text-center">
+                                        <i class="bi bi-gear-fill me-1 opacity-75"></i>Acciones
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="tablaUsuarios">

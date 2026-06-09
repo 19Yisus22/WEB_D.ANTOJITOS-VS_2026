@@ -322,7 +322,7 @@ async function cargarPedidos(isAutoRefresh = false) {
                                         <span class="pedido-user-username">${user.username ? '@' + user.username : ''}</span>
                                     </div>
                                 </div>
-                                <span class="pedido-user-rol-badge">${user.rol || 'cliente'}</span>
+                                <span class="pedido-user-rol-badge">${(user.roles && user.roles.nombre_role) || user.rol || 'cliente'}</span>
                             </div>
 
                             <!-- Grid de campos etiquetados -->
@@ -344,6 +344,10 @@ async function cargarPedidos(isAutoRefresh = false) {
                                     <div class="pedido-field-row">
                                         <span class="pedido-field-label">${t('ord.field_email')}</span>
                                         <span class="pedido-field-value">${user.email || user.correo || '—'}</span>
+                                    </div>
+                                    <div class="pedido-field-row">
+                                        <span class="pedido-field-label">${t('ord.field_birthday')}</span>
+                                        <span class="pedido-field-value">${user.fecha_nacimiento ? new Date(user.fecha_nacimiento).toLocaleDateString('es-CO', {day:'2-digit',month:'long',year:'numeric'}) : '—'}</span>
                                     </div>
                                 </div>
 

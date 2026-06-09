@@ -1,4 +1,6 @@
-﻿:root {
+﻿.page-wrapper { padding-top: 4px !important; }
+
+:root {
     --primary: #d35400;
     --primary-light: #e67e22;
     --white: #ffffff;
@@ -26,6 +28,28 @@ html, body {
     flex-direction: column;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    position: relative;
+}
+
+.chat-watermark-texto {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='140'%3E%3Ctext x='120' y='70' font-family='Segoe UI%2C sans-serif' font-size='13' font-weight='700' fill='rgba(211%2C84%2C0%2C0.055)' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 120 70)'%3ED%27Antojitos%C2%A9%3C/text%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 240px 140px;
+}
+
+.chat-container > *:not(.chat-watermark-texto) {
+    position: relative;
+    z-index: 1;
+}
+
+[data-theme="dark"] .chat-watermark-texto {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='140'%3E%3Ctext x='120' y='70' font-family='Segoe UI%2C sans-serif' font-size='13' font-weight='700' fill='rgba(240%2C136%2C62%2C0.045)' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 120 70)'%3ED%27Antojitos%C2%A9%3C/text%3E%3C/svg%3E");
 }
 
 /* ── Panel público: flex column para que el input quede al pie ── */
