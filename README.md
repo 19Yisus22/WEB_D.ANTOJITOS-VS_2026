@@ -792,6 +792,6 @@ La aplicación incluye soporte completo para **Español (ES)** e **Inglés (EN)*
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:8B5A2B,50:E07A5F,100:FFB6B9&height=140&section=footer&text=Hecho%20con%20%E2%9D%A4%EF%B8%8F%20desde%20casa&fontSize=22&fontColor=ffffff&fontAlignY=72&animation=fadeIn" width="100%" alt="footer"/>
 
 **2025 D'Antojitos© — Hecho con amor desde casa.**
-**Created By: 2022 Yisus™**
+**Created By: 2022 YisusPrime™**
 
 </div>
