@@ -1,10 +1,11 @@
-let facturasActuales = [];
+﻿let facturasActuales = [];
 let paginaActual = 1;
-const itemsPorPagina = 10;
+const itemsPorPagina = 5;
 let facturasLocalesCache = [];
 let metodosPagoCache = [];
 let ultimaSincronizacion = new Date();
 let mostrarArchivadas = false;
+let ordenAscendente = false;
 const expandedFacturas = new Set();
 
 const _filtroNumFac = { anio: '', numero: '' };
@@ -41,22 +42,44 @@ function _poblarAniosSelect() {
     });
 }
 
-function _aplicarFiltroNum() {
+async function _aplicarFiltroNum() {
     const panel = document.getElementById('filtroFacturaNumPanel');
     const activo = _filtroNumFac.anio || _filtroNumFac.numero;
     if (panel) panel.classList.toggle('fnf-active', !!activo);
     paginaActual = 1;
-    mostrarFacturasBuscadas();
+    if (activo) {
+        const params = new URLSearchParams();
+        if (_filtroNumFac.anio)   params.set('anio',   _filtroNumFac.anio);
+        if (_filtroNumFac.numero) params.set('numero', _filtroNumFac.numero);
+        try {
+            const res = await fetch(`/buscar_facturas_por_numero_page?${params}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    facturasActuales = ordenarFacturas(data);
+                    _poblarAniosSelect();
+                }
+            }
+        } catch (e) { console.error(e); }
+        mostrarFacturasBuscadas();
+    } else {
+        const _rol = (window.FACTURA_ROLE || 'cliente').toLowerCase();
+        if (_rol === 'vendedor' || _rol === 'admin') {
+            await cargarTodasFacturasPage();
+        } else {
+            await cargarFacturasCliente();
+        }
+    }
 }
 
-function _limpiarFiltroNum() {
+async function _limpiarFiltroNum() {
     _filtroNumFac.anio = '';
     _filtroNumFac.numero = '';
     const selAnio = document.getElementById('filtroAnioFactura');
     const inputNum = document.getElementById('filtroNumeroFactura');
     if (selAnio) selAnio.value = '';
     if (inputNum) inputNum.value = '';
-    _aplicarFiltroNum();
+    await _aplicarFiltroNum();
 }
 
 const FormateadorCosto = new Intl.NumberFormat('es-CO', {
@@ -215,7 +238,7 @@ function lanzarNotificacionMultidispositivo(fObj, estado) {
     if (Notification.permission === "granted") {
         new Notification(configuracion.titulo, {
             body: `Tu factura ${facturaFormateada} ha pasado al estado: ${estado.toUpperCase()}`,
-            icon: "/static/uploads/logo.png"
+            icon: "/static/uploads/logo.ico"
         });
     }
 
@@ -435,8 +458,8 @@ function abrirModalPago(facturaNum, total) {
                             </div>
                             ${m.clave_pago ? `
                             <div class="payment-clave-row">
-                                <i class="bi bi-key-fill payment-clave-icon"></i>
-                                <span class="payment-clave-label">Clave</span>
+                                <img src="/static/uploads/bre-b.logo.png" alt="BRE-B" class="payment-clave-icon" style="height:16px;width:auto;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'">
+                                <span class="payment-clave-label">BRE-B</span>
                                 <span class="payment-number font-monospace">${m.clave_pago}</span>
                                 <button class="payment-copy-btn"
                                         onclick="navigator.clipboard.writeText('${m.clave_pago}').then(()=>showMessage(t('notif.copied')))">
@@ -505,7 +528,7 @@ async function descargarPDF(f) {
 
     const doc = new jsPDF();
 
-    const logoUrl = '/static/uploads/logo.png';
+    const logoUrl = '/static/uploads/logo.ico';
 
     try {
 
@@ -866,9 +889,11 @@ function mostrarFacturasBuscadas() {
         });
     }
 
-    filtradas = [...filtradas].sort((a, b) =>
-        new Date(b.fecha_emision || b.created_at) - new Date(a.fecha_emision || a.created_at)
-    );
+    filtradas = [...filtradas].sort((a, b) => {
+        const dA = new Date(a.fecha_emision || a.created_at);
+        const dB = new Date(b.fecha_emision || b.created_at);
+        return ordenAscendente ? dA - dB : dB - dA;
+    });
 
     const totalItems = filtradas.length;
 
@@ -932,7 +957,7 @@ function mostrarFacturasBuscadas() {
             <div class="inv-header" onclick="toggleInvItem(${globalIdx})">
                 <div class="inv-brand-side">
                     <div class="inv-brand-logo">
-                        <img src="/static/uploads/logo.png" alt="Logo D'Antojitos"
+                        <img src="/static/uploads/logo.ico" alt="Logo D'Antojitos"
                              onerror="this.src='/static/uploads/logo.ico'">
                     </div>
                     <span class="inv-brand-name">D'Antojitos©</span>
@@ -1184,6 +1209,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         cargarTodasFacturasPage();
     } else {
         cargarFacturasCliente();
+    }
+
+    const btnOrden = document.getElementById('btnOrdenFechas');
+    if (btnOrden) {
+        btnOrden.addEventListener('click', () => {
+            ordenAscendente = !ordenAscendente;
+            btnOrden.innerHTML = ordenAscendente
+                ? `<i class="bi bi-sort-up-alt"></i><span>Más antiguo</span>`
+                : `<i class="bi bi-sort-down-alt"></i><span>Más reciente</span>`;
+            btnOrden.classList.toggle('active', ordenAscendente);
+            paginaActual = 1;
+            mostrarFacturasBuscadas();
+        });
     }
 
     const inputInput = document.getElementById("buscarFactura");

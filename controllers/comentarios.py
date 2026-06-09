@@ -339,7 +339,7 @@ def editar_mensaje_privado(id):
         registro = db.mp_get_by_id(id)
         if not registro:
             return jsonify({"error": "No encontrado"}), 404
-        if registro["cedula_remitente"] != cedula:
+        if registro.get("cedula_para") != cedula:
             return jsonify({"error": "Sin permiso"}), 403
         db.mp_update(id, msg)
         return jsonify({"ok": True})
@@ -356,7 +356,7 @@ def eliminar_mensaje_privado(id):
         msg = db.mp_get_by_id(id)
         if not msg:
             return jsonify({"error": "No encontrado"}), 404
-        if msg["cedula_remitente"] != cedula and rol not in ("admin", "vendedor"):
+        if msg.get("cedula_para") != cedula and rol not in ("admin", "vendedor"):
             return jsonify({"error": "Sin permiso"}), 403
         db.mp_delete(id)
         return jsonify({"ok": True})

@@ -218,8 +218,9 @@ Los usuarios de Google reciben una cédula temporal con prefijo `G-` (ej. `G-a3f
 | Agregar al carrito | ✅ | ✅ | ✅ |
 | Finalizar compra | ✅ | ✅ | ✅ |
 | Descuento de cumpleaños | ✅ | ✅ | ✅ |
-| Ver historial de facturas | ✅ (propias) | ✅ (todas, excepto admin) | ✅ |
+| Ver historial de facturas | ✅ (propias) | ✅ (todas, sin límite) | ✅ (todas, sin límite) |
 | Anular factura propia | ✅ | ✅ | ✅ |
+| Archivar factura | ✅ (solo propias) | ✅ (solo propias) | ✅ (solo propias) |
 | Muro de sugerencias | ✅ | ✅ | ✅ |
 | Sistema de logros | ✅ | ✅ | ✅ |
 | Editar perfil (cooldown 10 días) | ✅ | ✅ | ✅ |
@@ -249,8 +250,8 @@ Los usuarios de Google reciben una cédula temporal con prefijo `G-` (ej. `G-a3f
 - **🛍️ Catálogo (`/catalogo_page`)** — Vitrina de productos con filtros por categoría, buscador en tiempo real y monitor de stock (polling). Soporte multiidioma (ES/EN). No requiere autenticación.
 - **🛒 Carrito (`/carrito_page`)** — Gestión de ítems con reserva inmediata de stock, cálculo de totales, detección automática de cumpleaños con descuento configurable y generación del pedido + factura al confirmar.
 - **⚙️ Perfil (`/mi_perfil`)** — Edición de datos personales con **cooldown global de 10 días** en campos de identidad (cédula, nombre, apellido, usuario), cambio de contraseña (también con cooldown de 10 días), subida de foto a Cloudinary y eliminación de cuenta. Los usuarios de Google pueden establecer su cédula real una única vez con cascade update.
-- **📄 Historial de Facturas (`/gestionar_facturas_page`)** — Listado de facturas con filtros, vista de detalle, modal de pago con QR (métodos configurados por admin) y archivado persistente. Admins y vendedores pueden buscar facturas por cédula, nombre, @username o correo.
-- **💬 Sugerencias y Mensajes (`/comentarios_page`)** — Muro público de sugerencias con likes, edición, adjuntos en base64 y respuesta por rol. Panel privado con mensajería cliente↔vendedor (canal CV) y staff↔staff (canal Staff). Conteo de mensajes no leídos en tiempo real.
+- **📄 Historial de Facturas (`/gestionar_facturas_page`)** — Listado de facturas con filtros, vista de detalle, modal de pago con QR (métodos configurados por admin) y archivado persistente. Admins y vendedores ven **todas las facturas del sistema sin límite de registros**, en cualquier estado (Emitida, Pagada, Anulada) y sin restricción histórica. El archivado es exclusivo del propietario: ningún otro usuario puede archivar facturas ajenas. Búsqueda por cédula, nombre completo, @username o número de factura con prefijo `F-AÑO-N`.
+- **💬 Sugerencias y Mensajes (`/comentarios_page`)** — Muro público de sugerencias con likes, edición, adjuntos en base64 y respuesta por rol. Panel privado con mensajería cliente↔vendedor (canal CV) y staff↔staff (canal Staff) con **UI optimista**: los mensajes aparecen inmediatamente en el chat sin esperar respuesta del servidor, y el botón de envío se bloquea automáticamente para prevenir duplicados. Conteo de mensajes no leídos en tiempo real.
 - **🏆 Logros (`/logros/mis_logros`)** — Sistema de 231 logros desbloqueables agrupados por módulo y rareza, diferenciados por rol. Los logros nuevos se notifican automáticamente tras cada acción relevante (compra, comentario, mensaje, edición de perfil, etc.).
 
 </details>
@@ -260,7 +261,7 @@ Los usuarios de Google reciben una cédula temporal con prefijo `G-` (ej. `G-a3f
 
 <br/>
 
-- **📦 Pedidos (`/pedidos_page`)** — Vista Kanban de todos los pedidos con gestión de estado (`Pendiente → Enviado → Entregado / Cancelado`), marcado de pago, eliminación masiva con restauración automática de stock, y sincronización del estado de la factura.
+- **📦 Pedidos (`/pedidos_page`)** — Vista Kanban de todos los pedidos con gestión de estado (`Pendiente → Enviado → Entregado / Cancelado`), marcado de pago, eliminación masiva con restauración automática de stock, y sincronización del estado de la factura. Cada card muestra la **foto de perfil real del cliente** (o su inicial con color único de 24 colores por hash del nombre). Al hacer click en el avatar se abre un **modal con la foto ampliada a máxima resolución**.
 - **🧁 Productos (`/gestionar_productos_page`)** — CRUD completo de productos con subida de imágenes a Cloudinary (base64 o archivo), control de stock, categorías y estados. Trigger de logros al crear o editar un producto.
 
 </details>
@@ -272,7 +273,7 @@ Los usuarios de Google reciben una cédula temporal con prefijo `G-` (ej. `G-a3f
 
 - **📢 Publicidad (`/publicidad_page`)** — Gestión de contenido visual por tipo: `carrusel`, `seccion`, `cinta`, `inicio_cinta`, `notificacion`, `login_slide`. Subida de imágenes a Cloudinary con reemplazo automático de versiones anteriores. Notificaciones de sistema basadas en pedidos recientes.
 - **🧾 Facturación (`/facturacion_page`)** — Alta, edición y eliminación de métodos de pago (Nequi, Daviplata, Bancolombia, NuBank) con imagen de QR en Cloudinary. Los métodos activos aparecen en el modal de pago del cliente.
-- **👥 Gestión de Usuarios (`/gestion_usuarios_page`)** — Listado completo de usuarios con rol, método de autenticación (email/Google) y gestión de roles.
+- **👥 Gestión de Usuarios (`/gestion_usuarios_page`)** — Listado completo de usuarios ordenado por jerarquía de rol: **admin → vendedor → cliente** (alfabético dentro de cada grupo), con foto de perfil o inicial con color único por usuario (paleta de 24 colores). Filtros y selectores mejorados: el dropdown se activa al hacer click en cualquier área del selector (no solo en la flecha). Detalle completo de cada usuario con historial de pedidos y facturas en el mismo modal.
 - **🖼️ Gestor Cloudinary (`/api/cloudinary/gestor`)** — Listado y eliminación de imágenes en Cloudinary organizadas por carpeta, disponible desde el módulo de publicidad.
 - **⚙️ Configuración de Inicio (`/api/inicio/config`)** — Configuración global del porcentaje de descuento por cumpleaños y otros parámetros de la página de inicio.
 - **📘 Manual del Sistema (`/manual_page`)** — Documentación interna para vendedores y administradores.
@@ -784,6 +785,15 @@ La aplicación incluye soporte completo para **Español (ES)** e **Inglés (EN)*
 | 🖼️ **Gestor Cloudinary** | Admin puede ver y eliminar imágenes de Cloudinary organizadas por carpeta desde la app |
 | 👥 **Indicador de usuarios activos** | Conteo de usuarios activos en los últimos 2 minutos visible en comentarios |
 | 🔷 **TypeScript + Tailwind** | Assets compilados con esbuild y Tailwind CLI; watch mode para desarrollo |
+| 💬 **Mensajes con UI optimista** | Los mensajes privados aparecen al instante en el chat; el botón de envío se bloquea durante el fetch para evitar duplicados |
+| 🎨 **Avatares con color único** | Paleta de 24 colores asignada por hash del nombre; cada usuario tiene el mismo color en todos los módulos (gestión de usuarios, pedidos, mensajes) |
+| 📸 **Foto de perfil en pedidos** | Las cards de pedidos muestran la foto real del cliente; si no tiene foto, muestra su inicial con color personalizado |
+| 🔍 **Modal de foto ampliada** | Click en el avatar de un pedido abre la foto a máxima resolución (`max-height: 80vh`, `object-fit: contain`, sin recorte) |
+| 📋 **Facturas sin límite histórico** | Admin y vendedor ven absolutamente todas las facturas del sistema sin importar fecha, cantidad o estado |
+| 🔐 **Archivado exclusivo del propietario** | Solo el dueño de una factura puede archivarla; admin y vendedor no pueden archivar facturas ajenas |
+| 📊 **Orden por jerarquía de rol** | Gestión de usuarios ordena: admin → vendedor → cliente (alfabético dentro de cada grupo); se puede reordenar por columna |
+| ⬇️ **Select lists mejorados** | Los selectores se abren al hacer click en cualquier parte del elemento (no solo la flecha); sin doble borde al enfocar |
+| 🖼️ **Imágenes adaptadas al contenedor** | Regla global `object-fit: cover` + `overflow: hidden` en todos los contenedores circulares y rectangulares; las imágenes siempre llenan su forma sin deformarse |
 
 <br/>
 

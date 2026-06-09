@@ -433,13 +433,15 @@ def factura_get_all() -> list:
         .order("fecha_emision", desc=True)
     ))
 
-def factura_get_all_enriched(limit: int = 120) -> list:
-    return _many(_run(
+def factura_get_all_enriched(limit: int | None = None) -> list:
+    q = (
         _db().table("facturas")
         .select("*, usuarios(cedula, nombre, apellido, username, telefono, direccion, metodo_pago, roles(nombre_role))")
         .order("fecha_emision", desc=True)
-        .limit(limit)
-    ))
+    )
+    if limit is not None:
+        q = q.limit(limit)
+    return _many(_run(q))
 
 def factura_next_seq(year: str) -> int:
     prefix = f"F-{year}-"

@@ -1,4 +1,4 @@
-let productosMemoria = [];
+﻿let productosMemoria = [];
 let notificacionesDisponibles = [];
 let isFirstLoad = true;
 const productosNotificados = new Set();
@@ -59,9 +59,9 @@ async function monitorearCambiosCatalogo() {
                 const viejo = productosMemoria.find(p => p.id_producto == nuevo.id_producto);
                 if (viejo) {
                     if (viejo.stock > 0 && nuevo.stock <= 0) {
-                        mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.png', "¡Producto Agotado!", `Se acaba de terminar: ${nuevo.nombre}`, `agotado-${nuevo.id_producto}`, true);
+                        mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.ico', "¡Producto Agotado!", `Se acaba de terminar: ${nuevo.nombre}`, `agotado-${nuevo.id_producto}`, true);
                     } else if (viejo.stock <= 0 && nuevo.stock > 0) {
-                        mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.png', "¡Nueva Disponibilidad!", `${nuevo.nombre} está listo para pedir nuevamente`, `disponible-${nuevo.id_producto}`, false);
+                        mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.ico', "¡Nueva Disponibilidad!", `${nuevo.nombre} está listo para pedir nuevamente`, `disponible-${nuevo.id_producto}`, false);
                     }
                 }
             });

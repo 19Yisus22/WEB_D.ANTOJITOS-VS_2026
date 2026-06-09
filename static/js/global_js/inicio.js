@@ -64,9 +64,9 @@ async function monitorearCambiosCatalogo() {
                 const viejo = productosMemoria.find(p => p.id_producto == nuevo.id_producto);
                 if (!viejo) return;
                 if (viejo.stock > 0 && nuevo.stock <= 0)
-                    mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.png', "¡Producto Agotado!", `Se acaba de terminar: ${nuevo.nombre}`, `agotado-${nuevo.id_producto}`, true);
+                    mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.ico', "¡Producto Agotado!", `Se acaba de terminar: ${nuevo.nombre}`, `agotado-${nuevo.id_producto}`, true);
                 else if (viejo.stock <= 0 && nuevo.stock > 0)
-                    mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.png', "¡Nueva Disponibilidad!", `${nuevo.nombre} está listo para pedir nuevamente`, `disponible-${nuevo.id_producto}`);
+                    mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.ico', "¡Nueva Disponibilidad!", `${nuevo.nombre} está listo para pedir nuevamente`, `disponible-${nuevo.id_producto}`);
             });
         }
         productosMemoria = nuevos;
@@ -131,11 +131,11 @@ async function cargarMarketing() {
 
         arr.filter(i => i.tipo === 'seccion' && i.estado !== false).forEach((item, idx) => {
             const imgSrc = (item.imagen_url && item.imagen_url.startsWith('http'))
-                ? item.imagen_url : '/static/uploads/logo.png';
+                ? item.imagen_url : '/static/uploads/logo.ico';
             const card = `
                 <div class="seccion-card shadow-sm h-100 w-100">
                     <img src="${imgSrc}" class="postre-imagen-seccion w-100"
-                         loading="lazy" onerror="this.src='/static/uploads/logo.png'">
+                         loading="lazy" onerror="this.src='/static/uploads/logo.ico'">
                     <div class="p-3 d-flex flex-column flex-grow-1">
                         <h6 class="fw-bold mb-1" style="color:#d6336c;font-size:1.1rem;">${item.titulo || ''}</h6>
                         <p class="text-muted mb-0 small">${item.descripcion || ''}</p>

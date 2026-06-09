@@ -724,9 +724,12 @@ async function enviarMensajePredeterminado(idMsg, texto) {
 }
 
 async function enviarMensajeLibreCliente() {
-    const ta  = document.getElementById('clienteMensajeLibre');
-    const msg = (ta?.value || '').trim();
+    const ta      = document.getElementById('clienteMensajeLibre');
+    const sendBtn = ta?.closest('.priv-conv-input')?.querySelector('.priv-send-btn');
+    const msg     = (ta?.value || '').trim();
     if (!msg && _pendingImages.length === 0) return;
+    if (sendBtn?.disabled) return;
+    if (sendBtn) sendBtn.disabled = true;
     try {
         if (_editandoMsgPrivado) {
             const r = await fetch(`/mensajes_privados/${_editandoMsgPrivado}`, {
@@ -737,14 +740,25 @@ async function enviarMensajeLibreCliente() {
             if (r.ok) {
                 ta.value = '';
                 _editandoMsgPrivado = null;
-                const sendBtn = ta.closest('[class*="priv-conv-input"], [class*="priv-client-wrap"]')?.querySelector('.priv-send-btn');
                 if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
                 await _cargarHiloCliente();
             }
             return;
         }
-        const body = { mensaje: msg };
-        if (_pendingImages.length > 0) body.adjuntos = _pendingImages.map(i => ({data:i.data, nombre:i.nombre, size:i.size}));
+        const msgTexto = msg;
+        const imgsOpt  = [..._pendingImages];
+        const box      = document.getElementById('clienteHiloBox');
+        ta.value = '';
+        _pendingImages = [];
+        _actualizarPreviewImagenes();
+        const tempId = 'temp_' + Date.now();
+        const tempEl = _renderMsgPrivado({ id: tempId, mensaje: msgTexto, adjuntos: imgsOpt.length > 0 ? imgsOpt.map(i => ({data:i.data, nombre:i.nombre})) : null, es_predeterminado: false, created_at: new Date().toISOString() }, true, tempId);
+        tempEl.style.opacity = '0.55';
+        tempEl.dataset.tempId = tempId;
+        tempEl.querySelectorAll('button').forEach(b => b.disabled = true);
+        if (box) { box.appendChild(tempEl); box.scrollTop = box.scrollHeight; }
+        const body = { mensaje: msgTexto };
+        if (imgsOpt.length > 0) body.adjuntos = imgsOpt.map(i => ({data:i.data, nombre:i.nombre, size:i.size}));
         const r = await fetch('/mensajes_privados/enviar', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -752,15 +766,20 @@ async function enviarMensajeLibreCliente() {
         });
         if (r.ok) {
             const data = await r.json().catch(() => ({}));
-            ta.value = '';
-            _pendingImages = [];
-            _actualizarPreviewImagenes();
-            if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
+            if (data.logros_nuevos?.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
             await _cargarHiloCliente();
         } else {
+            document.querySelector(`[data-temp-id="${tempId}"]`)?.remove();
+            ta.value = msgTexto;
+            _pendingImages = imgsOpt;
+            _actualizarPreviewImagenes();
             showMessage(t('notif.error_conn') || 'Error al enviar. Intenta de nuevo.', true);
         }
-    } catch { showMessage(t('notif.error_conn'), true); }
+    } catch {
+        showMessage(t('notif.error_conn'), true);
+    } finally {
+        if (sendBtn) sendBtn.disabled = false;
+    }
 }
 
 let _hiloSeleccionado    = null;
@@ -768,15 +787,19 @@ let _editandoMsgPrivado  = null;
 
 function editarMsgPrivado(id) {
     const msgEl = document.querySelector(`.priv-msg[data-id="${id}"]`);
-    const texto = msgEl?.dataset.msgTexto || msgEl?.querySelector('.priv-msg-text')?.textContent || '';
+    if (!msgEl) return;
+    const texto = msgEl.dataset.msgTexto || msgEl.querySelector('.priv-msg-text')?.textContent || '';
     _editandoMsgPrivado = id;
-    const taIds = ['clienteMensajeLibre', 'privRespuestaInput', 'staffMensajeInput'];
-    const ta = taIds.map(t => document.getElementById(t)).find(el => el && el.closest('[style*="flex"]'));
+    let taId;
+    if (msgEl.closest('#clienteHiloBox'))    taId = 'clienteMensajeLibre';
+    else if (msgEl.closest('#privConvBox'))  taId = 'privRespuestaInput';
+    else if (msgEl.closest('#staffConvBox')) taId = 'staffMensajeInput';
+    const ta = taId ? document.getElementById(taId) : null;
     if (!ta) return;
     ta.value = texto;
     ta.focus();
     ta.select();
-    const sendBtn = ta.closest('[class*="priv-conv-input"], [class*="priv-client-wrap"]')?.querySelector('.priv-send-btn');
+    const sendBtn = ta.closest('.priv-conv-input, .priv-client-wrap')?.querySelector('.priv-send-btn');
     if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-check2"></i>`;
 }
 
@@ -851,8 +874,11 @@ async function abrirConversacion(cedulaCliente, nombreCliente, fotoCliente) {
 async function enviarRespuestaVendedor() {
     if (!_hiloSeleccionado) return;
     const textarea = document.getElementById('privRespuestaInput');
-    const msg = (textarea?.value || '').trim();
+    const sendBtn  = textarea?.closest('.priv-conv-input')?.querySelector('.priv-send-btn');
+    const msg      = (textarea?.value || '').trim();
     if (!msg && _pendingImages.length === 0) return;
+    if (sendBtn?.disabled) return;
+    if (sendBtn) sendBtn.disabled = true;
     try {
         if (_editandoMsgPrivado) {
             const r = await fetch(`/mensajes_privados/${_editandoMsgPrivado}`, {
@@ -863,7 +889,6 @@ async function enviarRespuestaVendedor() {
             if (r.ok) {
                 textarea.value = '';
                 _editandoMsgPrivado = null;
-                const sendBtn = textarea.closest('.priv-conv-input')?.querySelector('.priv-send-btn');
                 if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
                 await abrirConversacion(_hiloSeleccionado,
                     document.querySelector('#privConvHeader strong')?.textContent || '',
@@ -871,8 +896,22 @@ async function enviarRespuestaVendedor() {
             }
             return;
         }
-        const body = { mensaje: msg, cedula_cliente: _hiloSeleccionado };
-        if (_pendingImages.length > 0) body.adjuntos = _pendingImages.map(i => ({data:i.data, nombre:i.nombre, size:i.size}));
+        const msgTexto = msg;
+        const imgsOpt  = [..._pendingImages];
+        const box      = document.getElementById('privConvBox');
+        const nombre   = document.querySelector('#privConvHeader strong')?.textContent || '';
+        const foto     = document.querySelector('#privConvHeader .priv-conv-avatar')?.src || '';
+        textarea.value = '';
+        _pendingImages = [];
+        _actualizarPreviewImagenes();
+        const tempId = 'temp_' + Date.now();
+        const tempEl = _renderMsgPrivado({ id: tempId, mensaje: msgTexto, adjuntos: imgsOpt.length > 0 ? imgsOpt.map(i => ({data:i.data, nombre:i.nombre})) : null, es_predeterminado: false, created_at: new Date().toISOString() }, true, tempId);
+        tempEl.style.opacity = '0.55';
+        tempEl.dataset.tempId = tempId;
+        tempEl.querySelectorAll('button').forEach(b => b.disabled = true);
+        if (box) { box.appendChild(tempEl); box.scrollTop = box.scrollHeight; }
+        const body = { mensaje: msgTexto, cedula_cliente: _hiloSeleccionado };
+        if (imgsOpt.length > 0) body.adjuntos = imgsOpt.map(i => ({data:i.data, nombre:i.nombre, size:i.size}));
         const r = await fetch('/mensajes_privados/enviar', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -880,17 +919,20 @@ async function enviarRespuestaVendedor() {
         });
         if (r.ok) {
             const data = await r.json().catch(() => ({}));
-            textarea.value = '';
-            _pendingImages = [];
-            _actualizarPreviewImagenes();
-            if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
-            await abrirConversacion(_hiloSeleccionado,
-                document.querySelector('#privConvHeader strong')?.textContent || '',
-                document.querySelector('#privConvHeader .priv-conv-avatar')?.src || '');
+            if (data.logros_nuevos?.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
+            await abrirConversacion(_hiloSeleccionado, nombre, foto);
         } else {
+            document.querySelector(`[data-temp-id="${tempId}"]`)?.remove();
+            textarea.value = msgTexto;
+            _pendingImages = imgsOpt;
+            _actualizarPreviewImagenes();
             showMessage(t('notif.error_conn') || 'Error al enviar. Intenta de nuevo.', true);
         }
-    } catch { showMessage(t('notif.error_conn'), true); }
+    } catch {
+        showMessage(t('notif.error_conn'), true);
+    } finally {
+        if (sendBtn) sendBtn.disabled = false;
+    }
 }
 
 async function limpiarHiloCV(cedulaCliente, ev) {
@@ -971,9 +1013,12 @@ async function abrirConversacionStaff(cedulaDest, nombre, foto, rolLabel) {
 
 async function enviarMensajeStaff() {
     if (!_staffSeleccionado) return;
-    const ta  = document.getElementById('staffMensajeInput');
-    const msg = (ta?.value || '').trim();
+    const ta      = document.getElementById('staffMensajeInput');
+    const sendBtn = ta?.closest('.priv-conv-input')?.querySelector('.priv-send-btn');
+    const msg     = (ta?.value || '').trim();
     if (!msg && _pendingImages.length === 0) return;
+    if (sendBtn?.disabled) return;
+    if (sendBtn) sendBtn.disabled = true;
     try {
         if (_editandoMsgPrivado) {
             const r = await fetch(`/mensajes_privados/${_editandoMsgPrivado}`, {
@@ -984,7 +1029,6 @@ async function enviarMensajeStaff() {
             if (r.ok) {
                 ta.value = '';
                 _editandoMsgPrivado = null;
-                const sendBtn = ta.closest('.priv-conv-input')?.querySelector('.priv-send-btn');
                 if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
                 await abrirConversacionStaff(_staffSeleccionado,
                     document.querySelector('#staffConvHeader strong')?.textContent || '',
@@ -993,8 +1037,22 @@ async function enviarMensajeStaff() {
             }
             return;
         }
-        const body = { mensaje: msg, cedula_dest: _staffSeleccionado };
-        if (_pendingImages.length > 0) body.adjuntos = _pendingImages.map(i => ({data:i.data, nombre:i.nombre, size:i.size}));
+        const msgTexto = msg;
+        const imgsOpt  = [..._pendingImages];
+        const box      = document.getElementById('staffConvBox');
+        const nombre   = document.querySelector('#staffConvHeader strong')?.textContent || '';
+        const foto     = document.querySelector('#staffConvHeader .priv-conv-avatar')?.src || '';
+        ta.value = '';
+        _pendingImages = [];
+        _actualizarPreviewImagenes();
+        const tempId = 'temp_' + Date.now();
+        const tempEl = _renderMsgPrivado({ id: tempId, mensaje: msgTexto, adjuntos: imgsOpt.length > 0 ? imgsOpt.map(i => ({data:i.data, nombre:i.nombre})) : null, es_predeterminado: false, created_at: new Date().toISOString() }, true, tempId);
+        tempEl.style.opacity = '0.55';
+        tempEl.dataset.tempId = tempId;
+        tempEl.querySelectorAll('button').forEach(b => b.disabled = true);
+        if (box) { box.appendChild(tempEl); box.scrollTop = box.scrollHeight; }
+        const body = { mensaje: msgTexto, cedula_dest: _staffSeleccionado };
+        if (imgsOpt.length > 0) body.adjuntos = imgsOpt.map(i => ({data:i.data, nombre:i.nombre, size:i.size}));
         const r = await fetch('/mensajes_privados/staff/enviar', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1002,18 +1060,20 @@ async function enviarMensajeStaff() {
         });
         if (r.ok) {
             const data = await r.json().catch(() => ({}));
-            ta.value = '';
-            _pendingImages = [];
-            _actualizarPreviewImagenes();
-            if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
-            await abrirConversacionStaff(_staffSeleccionado,
-                document.querySelector('#staffConvHeader strong')?.textContent || '',
-                document.querySelector('#staffConvHeader .priv-conv-avatar')?.src || '',
-                '');
+            if (data.logros_nuevos?.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
+            await abrirConversacionStaff(_staffSeleccionado, nombre, foto, '');
         } else {
+            document.querySelector(`[data-temp-id="${tempId}"]`)?.remove();
+            ta.value = msgTexto;
+            _pendingImages = imgsOpt;
+            _actualizarPreviewImagenes();
             showMessage(t('notif.error_conn') || 'Error al enviar. Intenta de nuevo.', true);
         }
-    } catch { showMessage(t('notif.error_conn'), true); }
+    } catch {
+        showMessage(t('notif.error_conn'), true);
+    } finally {
+        if (sendBtn) sendBtn.disabled = false;
+    }
 }
 
 async function limpiarHiloStaff(cedulaDest) {
@@ -1071,11 +1131,13 @@ function _renderMsgPrivado(m, esMio, msgId) {
     return div;
 }
 
-async function eliminarMsgPrivado(id, btn) {
-    try {
-        const r = await fetch(`/mensajes_privados/${id}`, { method: 'DELETE' });
-        if (r.ok) btn?.closest('.priv-msg')?.remove();
-    } catch { showMessage(t('notif.error_conn'), true); }
+function eliminarMsgPrivado(id, btn) {
+    mostrarConfirmacionApp(t('confirm.title'), t('confirm.delete'), async () => {
+        try {
+            const r = await fetch(`/mensajes_privados/${id}`, { method: 'DELETE' });
+            if (r.ok) btn?.closest('.priv-msg')?.remove();
+        } catch { showMessage(t('notif.error_conn'), true); }
+    });
 }
 
 async function limpiarTodosMensajes() {

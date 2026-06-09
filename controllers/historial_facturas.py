@@ -60,7 +60,7 @@ def todas_facturas_page():
         return jsonify({"error": "Sin permisos"}), 403
 
     try:
-        facturas_raw = db.factura_get_all_enriched(limit=150)
+        facturas_raw = db.factura_get_all_enriched()
         resultado    = []
 
         for f in facturas_raw:
@@ -176,6 +176,67 @@ def buscar_facturas_page():
         return jsonify({"error": str(e)}), 500
 
 
+@historial_facturas_bp.route("/buscar_facturas_por_numero_page")
+@login_required
+def buscar_facturas_por_numero_page():
+    anio      = request.args.get("anio", "").strip()
+    numero    = request.args.get("numero", "").strip()
+    rol       = session.get("rol", "")
+    user_id   = session.get("user_id")
+    user_data = session.get("user") or {}
+
+    if not anio and not numero:
+        return jsonify([]), 200
+
+    def _coincide(num_fac):
+        partes = str(num_fac or "").split("-")
+        anio_f = partes[1][:4] if len(partes) > 1 else ""
+        num_f  = partes[-1]    if partes          else ""
+        if anio and anio_f != anio:
+            return False
+        if numero:
+            try:
+                if int(num_f) != int(numero):
+                    return False
+            except (ValueError, TypeError):
+                return False
+        return True
+
+    try:
+        if rol in ("admin", "vendedor"):
+            facturas_raw = db.factura_get_all_enriched()
+            resultado = []
+            for f in facturas_raw:
+                if not _coincide(f.get("numero_factura")):
+                    continue
+                usr     = f.get("usuarios") or {}
+                rol_usr = _rol_de_usuario(usr)
+                if rol == "vendedor" and rol_usr == "admin":
+                    continue
+                enr = _enriquecer_factura(f)
+                enr["cliente_nombre"]   = f"{usr.get('nombre','')} {usr.get('apellido','')}".strip()
+                enr["username_cliente"] = str(usr.get("username") or "")
+                enr["telefono"]         = str(usr.get("telefono") or "")
+                enr["direccion"]        = str(usr.get("direccion") or "")
+                resultado.append(enr)
+        else:
+            facturas  = db.factura_get_by_user(str(user_id))
+            nombre_c  = f"{user_data.get('nombre','')} {user_data.get('apellido','')}".strip()
+            resultado = []
+            for f in facturas:
+                if not _coincide(f.get("numero_factura")):
+                    continue
+                enr = _enriquecer_factura(f)
+                enr["cliente_nombre"]   = nombre_c
+                enr["username_cliente"] = str(user_data.get("username") or "")
+                enr["telefono"]         = str(user_data.get("telefono") or "")
+                enr["direccion"]        = str(user_data.get("direccion") or "")
+                resultado.append(enr)
+        return jsonify(resultado), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @historial_facturas_bp.route("/archivar_factura_page/<numero_factura>", methods=["PUT"])
 @login_required
 def archivar_factura_page(numero_factura):
@@ -185,7 +246,7 @@ def archivar_factura_page(numero_factura):
         factura = db.factura_get_by_numero(numero_factura)
         if not factura:
             return jsonify({"message": "Factura no encontrada"}), 404
-        if str(factura["cedula"]) != str(user_id) and rol not in ("admin", "vendedor"):
+        if str(factura["cedula"]) != str(user_id):
             return jsonify({"message": "Sin permiso"}), 403
         nuevo = not bool(factura.get("archivada", False))
         db.factura_update(numero_factura, {"archivada": nuevo})

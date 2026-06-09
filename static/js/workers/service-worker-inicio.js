@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-inicio-v8';
+const CACHE_NAME = 'dantojitos-inicio-v9';
 
 const PRECACHE = [
     '/static/css/global_modules/style_inicio.css',
@@ -16,7 +16,7 @@ const PRECACHE = [
     '/static/js/compiled/design-system.js',
     '/static/js/compiled/theme.js',
     '/static/uploads/logo.ico',
-    '/static/uploads/logo.png',
+    '/static/uploads/logo.ico',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',

@@ -1,4 +1,4 @@
-const catalogoContainer = document.getElementById("catalogoProductos");
+﻿const catalogoContainer = document.getElementById("catalogoProductos");
 const btnFiltrar = document.getElementById("btnFiltrar");
 const searchInput = document.getElementById("searchInput");
 const toastContainer = document.getElementById("toastContainer");
@@ -68,7 +68,7 @@ function mostrarToastFavorito(mensaje, isAdd) {
         titulo: isAdd ? '❤️ Favoritos' : 'Favoritos',
         tipo: isAdd ? 'favorito' : 'info',
         duracion: 3000,
-        imagen: '/static/uploads/logo.png',
+        imagen: '/static/uploads/logo.ico',
         sonido: false
     });
 }
@@ -89,7 +89,7 @@ function mostrarBienvenida(nombre) {
     mostrarAlerta({
         titulo: "Bienvenida",
         descripcion: `¡Hola, ${nombre}! Explora nuestro catálogo.`,
-        imagen: "/static/uploads/logo.png",
+        imagen: "/static/uploads/logo.ico",
         tipo: "bienvenida",
         duracion: 5000
     });
@@ -164,10 +164,10 @@ async function cargarProductos() {
                 const viejo = productos.find(p => p.id_producto == nuevo.id_producto);
                 if (viejo) {
                     if (viejo.stock > 0 && nuevo.stock <= 0) {
-                        mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.png', "¡Agotado!", `${nuevo.nombre} se ha terminado`, `agotado-${nuevo.id_producto}`, true);
+                        mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.ico', "¡Agotado!", `${nuevo.nombre} se ha terminado`, `agotado-${nuevo.id_producto}`, true);
                         huboCambios = true;
                     } else if (viejo.stock <= 0 && nuevo.stock > 0) {
-                        mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.png', "¡De Vuelta!", `${nuevo.nombre} disponible`, `disponible-${nuevo.id_producto}`, false);
+                        mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.ico', "¡De Vuelta!", `${nuevo.nombre} disponible`, `disponible-${nuevo.id_producto}`, false);
                         huboCambios = true;
                     } else if (viejo.stock !== nuevo.stock || viejo.precio !== nuevo.precio) {
                         huboCambios = true;
@@ -177,13 +177,13 @@ async function cargarProductos() {
             const viejosIds = new Set(productos.map(p => p.id_producto));
             const nuevos = nuevosProductos.filter(p => !viejosIds.has(p.id_producto));
             nuevos.forEach(nuevo => {
-                mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.png', "¡Nuevo!", `${nuevo.nombre} disponible`, `nuevo-${nuevo.id_producto}`, false);
+                mostrarToastActualizacion(nuevo.imagen_url || '/static/uploads/logo.ico', "¡Nuevo!", `${nuevo.nombre} disponible`, `nuevo-${nuevo.id_producto}`, false);
                 huboCambios = true;
             });
             const nuevosIds = new Set(nuevosProductos.map(p => p.id_producto));
             const eliminados = productos.filter(p => !nuevosIds.has(p.id_producto));
             eliminados.forEach(eliminado => {
-                mostrarToastActualizacion(eliminado.imagen_url || '/static/uploads/logo.png', "Eliminado", `${eliminado.nombre} ha sido eliminado`, `eliminado-${eliminado.id_producto}`, true);
+                mostrarToastActualizacion(eliminado.imagen_url || '/static/uploads/logo.ico', "Eliminado", `${eliminado.nombre} ha sido eliminado`, `eliminado-${eliminado.id_producto}`, true);
                 huboCambios = true;
             });
             if (nuevosProductos.length !== productos.length) huboCambios = true;
@@ -320,7 +320,7 @@ function agregarEventosProductos() {
                     productoArray.stock -= cantidadPedida;
                     actualizarContadorCarrito(cantidadPedida);
                     mostrarToastPublicidad(
-                        productoArray.imagen_url || '/static/uploads/logo.png',
+                        productoArray.imagen_url || '/static/uploads/logo.ico',
                         '🛒 Añadido al carrito',
                         `${cantidadPedida}x ${productoArray.nombre} — ${fmtCOP(productoArray.precio * cantidadPedida)}`
                     );
@@ -328,7 +328,7 @@ function agregarEventosProductos() {
                         mostrarAlertaPublica({
                             titulo:   '¡Producto Agotado!',
                             mensaje:  `${productoArray.nombre} ya no tiene stock disponible`,
-                            imagen:   productoArray.imagen_url || '/static/uploads/logo.png',
+                            imagen:   productoArray.imagen_url || '/static/uploads/logo.ico',
                             tipo:     'error',
                             duracion: 6000,
                             idUnico:  `agotado-${id_producto}-${Date.now()}`,
@@ -502,7 +502,7 @@ function abrirModalProducto(p) {
                 prod.stock -= cantidad;
                 actualizarContadorCarrito(cantidad);
                 mostrarToastPublicidad(
-                    prod.imagen_url || '/static/uploads/logo.png',
+                    prod.imagen_url || '/static/uploads/logo.ico',
                     '🛒 Añadido al carrito',
                     `${cantidad}x ${prod.nombre} — ${fmtCOP(prod.precio * cantidad)}`
                 );
@@ -510,7 +510,7 @@ function abrirModalProducto(p) {
                     mostrarAlertaPublica({
                         titulo:   '¡Producto Agotado!',
                         mensaje:  `${prod.nombre} ya no tiene stock disponible`,
-                        imagen:   prod.imagen_url || '/static/uploads/logo.png',
+                        imagen:   prod.imagen_url || '/static/uploads/logo.ico',
                         tipo:     'error',
                         duracion: 6000,
                         idUnico:  `agotado-${prod.id_producto}-${Date.now()}`,

@@ -1,4 +1,4 @@
-let productosCarrito = [];
+﻿let productosCarrito = [];
 let catalogoLocalCache = [];
 let isRequesting = false;
 let _descPct = 0;
@@ -114,7 +114,7 @@ async function ajustarCantidad(id_carrito, delta, row, idProducto) {
                 mostrarAlertaPublica({
                     titulo:   '¡Producto Agotado!',
                     mensaje:  `${nomProducto} ya no tiene stock disponible`,
-                    imagen:   (imgEl && imgEl.src) || '/static/uploads/logo.png',
+                    imagen:   (imgEl && imgEl.src) || '/static/uploads/logo.ico',
                     tipo:     'error',
                     duracion: 6000,
                     idUnico:  `agotado-cart-${id_carrito}-${Date.now()}`,

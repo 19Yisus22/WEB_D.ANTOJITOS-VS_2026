@@ -139,6 +139,8 @@ img, video, canvas, svg {
     display: block;
 }
 
+img { object-fit: cover; }
+
 a { color: var(--ds-primary); text-decoration: none; }
 a:hover { color: var(--ds-primary-light); }
 

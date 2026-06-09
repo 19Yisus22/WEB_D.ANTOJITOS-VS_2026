@@ -1,4 +1,4 @@
-
+﻿
 
 const SW_VERSION      = 'v4';
 const PREFS_CACHE     = 'dantojitos-prefs-v4';
@@ -22,7 +22,7 @@ const SHARED_STATIC = [
     '/static/js/compiled/design-system.js',
     '/static/js/compiled/theme.js',
     '/static/uploads/logo.ico',
-    '/static/uploads/logo.png',
+    '/static/uploads/logo.ico',
 ];
 
 

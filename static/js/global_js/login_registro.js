@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadGoogleButton();
     initLoginForm();
     initRegistroForm();
-    initStep2();
+    if (typeof initStep2 === 'function') initStep2();
 });
 
 if ('serviceWorker' in navigator) {

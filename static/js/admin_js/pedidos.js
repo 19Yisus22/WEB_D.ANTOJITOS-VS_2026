@@ -1,4 +1,4 @@
-const toastContainer = document.getElementById('toastContainer');
+﻿const toastContainer = document.getElementById('toastContainer');
 const itemsPorPagina = 10;
 let pedidosGlobal = [];
 let pedidosDatosRaw = [];
@@ -11,6 +11,23 @@ let paginaActual = 1;
 let contadorFacturasPorAnio = JSON.parse(localStorage.getItem("contadorFacturasPorAnio") || "{}");
 let ultimoIdPedidoNotificado = parseInt(localStorage.getItem("ultimoIdPedidoNotificado") || "0");
 let debounceTimer;
+
+function _pedidoAvatarColor(nombre) {
+    const paleta = [
+        ['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],
+        ['#6d28d9','#8b5cf6'],['#b91c1c','#ef4444'],['#0e7490','#06b6d4'],
+        ['#92400e','#d97706'],['#065f46','#10b981'],['#1e40af','#3b82f6'],
+        ['#9d174d','#ec4899'],['#4c1d95','#7c3aed'],['#374151','#6b7280'],
+        ['#7f1d1d','#b45309'],['#064e3b','#059669'],['#1e3a5f','#2563eb'],
+        ['#831843','#be185d'],['#134e4a','#0d9488'],['#1c1917','#57534e'],
+        ['#422006','#a16207'],['#0c4a6e','#0284c7'],['#3b0764','#9333ea'],
+        ['#14532d','#16a34a'],['#450a0a','#dc2626'],['#172554','#1d4ed8'],
+    ];
+    const n = nombre || '?';
+    const idx = n.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0);
+    const [c1, c2] = paleta[Math.abs(idx) % paleta.length];
+    return `background:linear-gradient(135deg,${c1},${c2})`;
+}
 
 const sonidoNuevoPedido = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
 sonidoNuevoPedido.volume = 0.9;
@@ -310,13 +327,18 @@ async function cargarPedidos(isAutoRefresh = false) {
                             <!-- Encabezado del panel -->
                             <div class="pedido-user-panel-head">
                                 <div class="pedido-user-avatar-wrap">
-                                    ${user.imagen_url
-                                        ? `<img src="${user.imagen_url}" class="pedido-user-avatar pedido-avatar-clickable"
-                                               title="Ver foto de perfil"
-                                               style="cursor:pointer;"
-                                               onclick="_abrirModalFotoPedido('${user.imagen_url.replace(/'/g, "\\'")}','${((user.nombre||'')+ ' '+(user.apellido||'')).trim().replace(/'/g,"\\'")}')"
-                                               onerror="this.outerHTML='<span class=\\'pedido-avatar-fallback\\'><i class=\\'bi bi-person-fill\\'></i></span>'">`
-                                        : `<span class="pedido-avatar-fallback"><i class="bi bi-person-fill"></i></span>`}
+                                    ${(() => {
+                                        const aNombre = user.nombre || '?';
+                                        const aInit   = aNombre[0].toUpperCase();
+                                        const aBg     = _pedidoAvatarColor(aNombre);
+                                        return user.imagen_url && !user.imagen_url.includes('default_icon_profile')
+                                            ? `<img src="${user.imagen_url}" class="pedido-user-avatar pedido-avatar-clickable"
+                                                   title="Ver foto de perfil"
+                                                   style="cursor:pointer;"
+                                                   onclick="_abrirModalFotoPedido('${user.imagen_url.replace(/'/g, "\\'")}','${((user.nombre||'')+ ' '+(user.apellido||'')).trim().replace(/'/g,"\\'")}')"
+                                                   onerror="this.outerHTML='<span class=\\'pedido-avatar-initial\\' style=\\'${aBg}\\'>${aInit}</span>'">`
+                                            : `<span class="pedido-avatar-initial" style="${aBg}">${aInit}</span>`;
+                                    })()}
                                     <div class="pedido-user-avatar-info">
                                         <span class="pedido-user-fullname">${(user.nombre || '') + ' ' + (user.apellido || '') || '—'}</span>
                                         <span class="pedido-user-username">${user.username ? '@' + user.username : ''}</span>
@@ -876,7 +898,7 @@ async function generarReporteConfigurado() {
 
     try {
         const img = new Image();
-        img.src = '/static/uploads/logo.png';
+        img.src = '/static/uploads/logo.ico';
         await new Promise(r => { img.onload = r; img.onerror = r; });
         if (img.complete && img.naturalWidth !== 0) {
             const c = document.createElement('canvas');
@@ -1043,14 +1065,14 @@ window._abrirModalFotoPedido = function(url, nombre) {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = '_modalFotoPedido';
-        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:19000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.80);z-index:19000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:16px;';
         modal.innerHTML = `
-            <div style="background:#fff;border-radius:24px;padding:28px;max-width:340px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.4);position:relative;">
+            <div style="position:relative;max-width:min(90vw,520px);width:auto;text-align:center;">
                 <button onclick="document.getElementById('_modalFotoPedido').style.display='none'"
-                        style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6c757d;line-height:1;">&times;</button>
+                        style="position:absolute;top:-14px;right:-14px;background:#fff;border:none;font-size:1.2rem;cursor:pointer;color:#6c757d;line-height:1;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.25);z-index:1;">&times;</button>
                 <img id="_modalFotoImg" src="" alt=""
-                     style="width:200px;height:200px;border-radius:50%;object-fit:cover;border:4px solid #d35400;box-shadow:0 8px 28px rgba(211,84,0,0.25);display:block;margin:0 auto 14px;">
-                <p id="_modalFotoNombre" style="font-weight:700;font-size:1rem;color:#1a1a2e;margin:0;"></p>
+                     style="max-width:100%;max-height:80vh;width:auto;height:auto;display:block;border-radius:16px;object-fit:contain;border:3px solid #d35400;box-shadow:0 12px 48px rgba(0,0,0,0.5);">
+                <p id="_modalFotoNombre" style="font-weight:700;font-size:0.95rem;color:#fff;margin:12px 0 0;text-shadow:0 1px 4px rgba(0,0,0,0.5);"></p>
             </div>`;
         modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
         document.body.appendChild(modal);

@@ -434,6 +434,7 @@ main {
     transition: transform 0.4s ease;
 }
 
+.card:has(.postre-img) { overflow: hidden; }
 .card:hover .postre-img { transform: scale(1.04); }
 
 .card.gris { opacity: 0.6; filter: grayscale(50%); }

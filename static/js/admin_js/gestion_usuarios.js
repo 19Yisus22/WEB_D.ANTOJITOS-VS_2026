@@ -1,4 +1,4 @@
-let _usuarios = [];
+﻿let _usuarios = [];
 let _cedula_modal = null;
 let _sortCol = '';
 let _sortAsc = true;
@@ -81,9 +81,18 @@ function _avatarHTML(u) {
                 </div>`;
     }
     const initial = name.charAt(0).toUpperCase() || '?';
-    const palettes = [['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],['#6d28d9','#8b5cf6'],['#b91c1c','#ef4444'],['#0e7490','#06b6d4']];
+    const paletas = [
+        ['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],
+        ['#6d28d9','#8b5cf6'],['#b91c1c','#ef4444'],['#0e7490','#06b6d4'],
+        ['#92400e','#d97706'],['#065f46','#10b981'],['#1e40af','#3b82f6'],
+        ['#9d174d','#ec4899'],['#4c1d95','#7c3aed'],['#374151','#6b7280'],
+        ['#7f1d1d','#b45309'],['#064e3b','#059669'],['#1e3a5f','#2563eb'],
+        ['#831843','#be185d'],['#134e4a','#0d9488'],['#1c1917','#57534e'],
+        ['#422006','#a16207'],['#0c4a6e','#0284c7'],['#3b0764','#9333ea'],
+        ['#14532d','#16a34a'],['#450a0a','#dc2626'],['#172554','#1d4ed8'],
+    ];
     const idx = name.split('').reduce((h,c)=>(h<<5)-h+c.charCodeAt(0),0);
-    const [c1,c2] = palettes[Math.abs(idx)%palettes.length];
+    const [c1,c2] = paletas[Math.abs(idx)%paletas.length];
     return `<div class="user-avatar-cell" style="background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;">
                 <span style="color:#fff;font-weight:800;font-size:1rem;font-family:'DM Sans',sans-serif;">${initial}</span>
             </div>`;
@@ -116,12 +125,20 @@ function _renderTabla(lista) {
         _renderPaginacion(0, 1);
         return;
     }
+    const _ORDEN_ROL = { admin: 0, vendedor: 1, cliente: 2 };
     let ordenada = [...lista];
     if (_sortCol) {
         ordenada.sort((a,b) => {
             const va = (a[_sortCol] || '').toString().toLowerCase();
             const vb = (b[_sortCol] || '').toString().toLowerCase();
             return _sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+        });
+    } else {
+        ordenada.sort((a, b) => {
+            const ra = _ORDEN_ROL[a.rol] ?? 3;
+            const rb = _ORDEN_ROL[b.rol] ?? 3;
+            if (ra !== rb) return ra - rb;
+            return (a.nombre_completo || '').localeCompare(b.nombre_completo || '');
         });
     }
     _renderPaginacion(ordenada.length, _paginaUsuarios);
@@ -153,7 +170,7 @@ function _renderTabla(lista) {
                            <i class="bi bi-google"></i>Google
                        </span>`
                     : `<span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="font-size:0.72rem;font-weight:700;letter-spacing:0.3px;background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;">
-                           <img src="/static/uploads/logo.png" style="width:12px;height:12px;object-fit:contain;border-radius:2px;filter:brightness(0) invert(1);" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><i class="bi bi-shop" style="display:none;font-size:0.7rem;"></i>D'Antojitos
+                           <img src="/static/uploads/logo.ico" style="width:12px;height:12px;object-fit:contain;border-radius:2px;filter:brightness(0) invert(1);" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><i class="bi bi-shop" style="display:none;font-size:0.7rem;"></i>D'Antojitos
                        </span>`}
             </td>
             <td class="text-nowrap">
@@ -331,7 +348,7 @@ function mostrarDetalleUsuario(u) {
                             <span class="udet-method-badge">
                                 ${esGoogle
                                     ? '<img src="/static/uploads/googlogo.ico" style="width:13px;height:13px;margin-right:4px;" onerror="this.style.display=\'none\'">Google'
-                                    : '<img src="/static/uploads/logo.png" style="width:13px;height:13px;object-fit:contain;margin-right:4px;border-radius:3px;" onerror="this.style.display=\'none\'">D\'Antojitos'}
+                                    : '<img src="/static/uploads/logo.ico" style="width:13px;height:13px;object-fit:contain;margin-right:4px;border-radius:3px;" onerror="this.style.display=\'none\'">D\'Antojitos'}
                             </span>
                         </div>
                     </div>

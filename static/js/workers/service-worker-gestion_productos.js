@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-gestion-prod-v6';
+const CACHE_NAME = 'dantojitos-gestion-prod-v7';
 
 const PRECACHE = [
     '/gestionar_productos_page',
@@ -16,7 +16,7 @@ const PRECACHE = [
     '/static/js/compiled/design-system.js',
     '/static/js/compiled/theme.js',
     '/static/uploads/logo.ico',
-    '/static/uploads/logo.png',
+    '/static/uploads/logo.ico',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
@@ -41,8 +41,7 @@ const NETWORK_FIRST_PATHS = [
 ];
 
 const CDN_RE = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com)/;
-const IMG_RE = /^https:\/\/res\.cloudinary\.com\
-
+const IMG_RE = /^https:\/\/res\.cloudinary\.com\//;
 self.addEventListener('install', e => {
     self.skipWaiting();
     e.waitUntil(precacheAssets(CACHE_NAME, PRECACHE));

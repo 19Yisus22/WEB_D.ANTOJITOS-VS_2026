@@ -1,6 +1,6 @@
 (function () {
 
-    const MODULE_ID = window.location.pathname.replace(/\
+    const MODULE_ID = window.location.pathname.replace(/[^a-z0-9]/gi, '_');
     const ORDER_KEY  = `dantojitos_widget_order_${MODULE_ID}`;
     const HIDDEN_KEY = `dantojitos_widget_hidden_${MODULE_ID}`;
 

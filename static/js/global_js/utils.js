@@ -264,7 +264,7 @@ function _ssNotifIdAdd(id, duracion) {
 function mostrarAlertaPublica({
     mensaje    = '',
     titulo     = '',
-    imagen     = '/static/uploads/logo.png',
+    imagen     = '/static/uploads/logo.ico',
     tipo       = 'info',
     duracion   = 4000,
     idUnico    = null,
@@ -320,7 +320,7 @@ function mostrarAlertaPublica({
             <img src="${imagen}"
                  style="width:40px;height:40px;object-fit:cover;border-radius:9px;
                         border:1.5px solid ${borderImg};display:block;"
-                 onerror="this.src='/static/uploads/logo.png'">
+                 onerror="this.src='/static/uploads/logo.ico'">
             <div style="position:absolute;bottom:-3px;right:-3px;background:${accentColor};
                         width:16px;height:16px;border-radius:50%;display:flex;align-items:center;
                         justify-content:center;border:2px solid ${isDark ? '#16161a' : '#fff'};">
@@ -493,7 +493,7 @@ function solicitarPermisosNotificacion() {
     });
 }
 
-function lanzarNotificacionNativa(titulo, cuerpo, icono = '/static/uploads/logo.png') {
+function lanzarNotificacionNativa(titulo, cuerpo, icono = '/static/uploads/logo.ico') {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     try {
         new Notification(titulo, { body: cuerpo, icon: icono });
@@ -767,11 +767,13 @@ async function cargarNotificacionesAdmin() {
                     <small>${n.descripcion || ''}</small>
                 </div>
                 <div class="notif-item-actions">
-                    <button class="notif-status-dot ${n.estado ? 'active' : ''}"
-                            onclick="toggleNotifEstado('${n.id_publicidad}', !${n.estado})"
-                            title="${n.estado ? 'Desactivar' : 'Activar'}"></button>
-                    <button class="btn-notif-del" onclick="eliminarNotif('${n.id_publicidad}')" title="Eliminar">
-                        <i class="bi bi-x-lg"></i>
+                    <label class="notif-pub-toggle" title="${n.estado ? 'Desactivar' : 'Activar'}">
+                        <input type="checkbox" ${n.estado ? 'checked' : ''}
+                               onchange="event.stopPropagation();toggleNotifEstado('${n.id_publicidad}', this.checked)">
+                        <span class="notif-pub-slider"></span>
+                    </label>
+                    <button class="btn-notif-del" onclick="event.stopPropagation();eliminarNotif('${n.id_publicidad}')" title="Eliminar">
+                        <i class="bi bi-trash3-fill"></i>
                     </button>
                 </div>`;
             list.appendChild(li);
@@ -1088,7 +1090,7 @@ function _pushStockToSistemPanel(p, tipo) {
                         idUnico: `eliminado-${id}`,
                         url:     '/catalogo_page',
                     });
-                    _pushClientNotif({ tipo: 'agotado', titulo: '¡Producto eliminado!', mensaje: 'Un producto fue removido del catálogo', imagen: '/static/uploads/logo.png', url: '/catalogo_page' });
+                    _pushClientNotif({ tipo: 'agotado', titulo: '¡Producto eliminado!', mensaje: 'Un producto fue removido del catálogo', imagen: '/static/uploads/logo.ico', url: '/catalogo_page' });
                     _pushStockToSistemPanel({ id_producto: id, nombre: 'Producto eliminado', stock: 0, imagen_url: '' }, 'agotado');
                     _ringClientBell();
                     delete snap[id];
@@ -1107,7 +1109,7 @@ function _pushStockToSistemPanel(p, tipo) {
                     mostrarAlertaPublica({
                         titulo:  '¡Nuevo producto!',
                         mensaje: `${p.nombre} se añadió al catálogo` + (curr > 0 ? ` · ${curr} uds` : ''),
-                        imagen:  p.imagen_url || '/static/uploads/logo.png',
+                        imagen:  p.imagen_url || '/static/uploads/logo.ico',
                         tipo:    'success',
                         duracion: 6000,
                         idUnico: `nuevo-${id}`,
@@ -1126,7 +1128,7 @@ function _pushStockToSistemPanel(p, tipo) {
                     mostrarAlertaPublica({
                         titulo:  '¡Producto Agotado!',
                         mensaje: `${p.nombre} ya no tiene stock disponible`,
-                        imagen:  p.imagen_url || '/static/uploads/logo.png',
+                        imagen:  p.imagen_url || '/static/uploads/logo.ico',
                         tipo:    'error',
                         duracion: 6000,
                         idUnico: `agotado-${id}`,
@@ -1141,7 +1143,7 @@ function _pushStockToSistemPanel(p, tipo) {
                     mostrarAlertaPublica({
                         titulo:  '¡Disponible!',
                         mensaje: `${p.nombre} vuelve a tener stock (${curr} uds)`,
-                        imagen:  p.imagen_url || '/static/uploads/logo.png',
+                        imagen:  p.imagen_url || '/static/uploads/logo.ico',
                         tipo:    'success',
                         duracion: 6000,
                         idUnico: `disponible-${id}`,
@@ -1245,7 +1247,7 @@ async function _pollMisPedidos() {
                 tipo:    'pedido_' + est.toLowerCase().replace(/[^a-z]/g, ''),
                 titulo:  `Pedido ${est}`,
                 mensaje: `Tu pedido (${items})${total} — ${est}`,
-                imagen:  '/static/uploads/logo.png',
+                imagen:  '/static/uploads/logo.ico',
                 url:     '/historial_facturas_page',
             });
             if (!_isNotifMuted()) {
