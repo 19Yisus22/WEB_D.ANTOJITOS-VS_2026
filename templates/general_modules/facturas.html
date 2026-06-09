@@ -55,20 +55,17 @@
 
             <!-- ── Filtro por número de factura ── -->
             <div class="facturas-num-filter mb-3" id="filtroFacturaNumPanel">
-                <span class="fnf-label">
-                    <i class="bi bi-receipt-cutoff"></i>
-                    Factura (Año / Número)
-                </span>
-                <div class="fnf-group">
-                    <span class="fnf-prefix">F—</span>
-                    <select id="filtroAnioFactura" class="fnf-year-select">
-                        <option value="">Todos los años</option>
-                    </select>
-                    <span class="fnf-sep">—</span>
-                    <input type="text" id="filtroNumeroFactura" class="fnf-num-input"
-                           placeholder="001" maxlength="8" inputmode="numeric"
-                           autocomplete="off">
-                    <button class="fnf-clear" id="btnClearFiltroNum" title="Limpiar" style="display:none;">
+                <label class="facturas-num-label">
+                    <i class="bi bi-receipt-cutoff me-1"></i>Factura <span class="text-muted fw-normal">(Año / Número)</span>
+                </label>
+                <div class="input-group facturas-num-group">
+                    <span class="input-group-text fw-bold fng-prefix">F–</span>
+                    <select id="filtroAnioFactura" class="form-select fng-select"></select>
+                    <span class="input-group-text fng-sep">–</span>
+                    <input type="number" id="filtroNumeroFactura" class="form-control fng-input"
+                           placeholder="001" min="1" autocomplete="off">
+                    <button class="btn fng-clear" id="btnClearFiltroNum"
+                            type="button" title="Limpiar filtro">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>

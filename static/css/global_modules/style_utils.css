@@ -239,20 +239,31 @@ html, body {
     height: 100%;
     color: var(--theme-text);
     transition: color 0.25s ease;
+    overflow-x: hidden;
 }
 
 body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background: transparent !important;  /* el gradiente viene de html */
+    background: transparent !important;
+    max-width: 100%;
 }
 
 .page-wrapper { flex: 1 0 auto; padding-top: 14px; }
 
-/* Espacio entre navbar y la card de título de módulo */
+@media (max-width: 576px) {
+    .page-wrapper { padding-top: 6px; }
+}
+
 .card-title-marketing {
-    margin-top: 2rem !important;
+    margin-top: 1.5rem !important;
+}
+
+@media (max-width: 768px) {
+    .card-title-marketing {
+        margin-top: 0.5rem !important;
+    }
 }
 
 [data-theme="dark"] body,

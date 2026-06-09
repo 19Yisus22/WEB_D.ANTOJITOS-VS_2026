@@ -130,15 +130,8 @@ body { padding-top: 68px; }
     100% { background-position:  200% 0; }
 }
 
-.prof-img-loading {
-    animation: profileShimmer 1.2s linear infinite !important;
-    background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%) !important;
-    background-size: 200% 100% !important;
-}
-
-[data-theme="dark"] .prof-img-loading {
-    background: linear-gradient(90deg, #2a2838 25%, #3a3848 50%, #2a2838 75%) !important;
-    background-size: 200% 100% !important;
+#main-navbar-container .profile-img-container .avatar-initial {
+    transition: opacity 0.2s ease;
 }
 
 #main-navbar-container .profile-img-container {

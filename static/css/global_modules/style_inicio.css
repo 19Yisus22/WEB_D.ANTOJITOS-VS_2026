@@ -906,6 +906,7 @@ main { flex-grow: 1; width: 100%; }
     border: 1px solid var(--border);
     transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     box-shadow: var(--shadow-sm);
+    text-align: center;
 }
 
 .seccion-card:hover {
@@ -1268,7 +1269,6 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     height: 72px;
     position: relative;
     isolation: isolate;
-    contain: layout style;
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
 }

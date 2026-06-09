@@ -1750,35 +1750,39 @@ function _googleThumb(url, size = 80) {
 }
 
 function loadProfileImg(imgEl, rawUrl, name, thumbSize = 80) {
-    if (!imgEl) return;
+    if (!imgEl || !imgEl.parentNode) return;
     if (imgEl.dataset.profileLoaded) return;
+
+    const container = imgEl.parentNode;
+    const size = container.offsetWidth || 40;
+    const fs   = Math.max(10, Math.round(size * 0.42)) + 'px';
 
     const isDefault = !rawUrl
         || rawUrl.includes('default_icon_profile')
         || rawUrl === '/static/uploads/default_icon_profile.png';
 
-    if (isDefault) {
-        _applyAvatarFallback(imgEl, name);
-        return;
-    }
+    const avatarDiv = _buildAvatarDiv(name, fs);
+    avatarDiv.style.width        = '100%';
+    avatarDiv.style.height       = '100%';
+    avatarDiv.style.borderRadius = '50%';
+    container.replaceChild(avatarDiv, imgEl);
+
+    if (isDefault) return;
 
     let optimized = rawUrl;
-    if (rawUrl.includes('cloudinary.com'))            optimized = _cloudinaryThumb(rawUrl, thumbSize, thumbSize);
+    if (rawUrl.includes('cloudinary.com'))             optimized = _cloudinaryThumb(rawUrl, thumbSize, thumbSize);
     else if (rawUrl.includes('googleusercontent.com')) optimized = _googleThumb(rawUrl, thumbSize);
-
-    imgEl.classList.add('prof-img-loading');
 
     const tmp = new Image();
     tmp.onload = () => {
-        if (!imgEl.parentNode) return;
-        imgEl.src = optimized;
-        imgEl.dataset.profileLoaded = '1';
-        imgEl.classList.remove('prof-img-loading');
-        imgEl.onerror = () => { if (imgEl.parentNode) _applyAvatarFallback(imgEl, name); };
-    };
-    tmp.onerror = () => {
-        imgEl.classList.remove('prof-img-loading');
-        _applyAvatarFallback(imgEl, name);
+        if (!avatarDiv.parentNode) return;
+        const foto = document.createElement('img');
+        foto.src           = optimized;
+        foto.alt           = name || 'Perfil';
+        foto.dataset.profileLoaded = '1';
+        foto.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:50%;display:block;';
+        foto.onerror = () => { if (foto.parentNode) container.replaceChild(_buildAvatarDiv(name, fs), foto); };
+        container.replaceChild(foto, avatarDiv);
     };
     tmp.src = optimized;
 }

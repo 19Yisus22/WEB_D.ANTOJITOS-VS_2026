@@ -48,8 +48,12 @@ html, body {
     z-index: 1;
 }
 
+[data-theme="dark"] .chat-container {
+    background: rgba(22, 20, 38, 0.97) !important;
+}
+
 [data-theme="dark"] .chat-watermark-texto {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='120'%3E%3Ctext x='110' y='60' font-family='Segoe UI%2C sans-serif' font-size='14' font-weight='700' fill='rgba(240%2C136%2C62%2C0.07)' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 110 60)'%3ED%27Antojitos%C2%A9%3C/text%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='120'%3E%3Ctext x='110' y='60' font-family='Segoe UI%2C sans-serif' font-size='14' font-weight='700' fill='rgba(240%2C136%2C62%2C0.04)' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 110 60)'%3ED%27Antojitos%C2%A9%3C/text%3E%3C/svg%3E");
 }
 
 /* ── Panel público: flex column para que el input quede al pie ── */

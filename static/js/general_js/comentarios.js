@@ -704,7 +704,7 @@ async function _cargarHiloCliente() {
             box.innerHTML = `<div class="priv-hilo-empty"><i class="bi bi-chat-dots"></i><p data-i18n="chat.priv_empty">${t('chat.priv_empty')}</p></div>`;
             return;
         }
-        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, !m.es_vendedor, m.id)));
+        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_para === USER_CONFIG.userId, m.id)));
         box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -757,6 +757,8 @@ async function enviarMensajeLibreCliente() {
             _actualizarPreviewImagenes();
             if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
             await _cargarHiloCliente();
+        } else {
+            showMessage(t('notif.error_conn') || 'Error al enviar. Intenta de nuevo.', true);
         }
     } catch { showMessage(t('notif.error_conn'), true); }
 }
@@ -841,7 +843,7 @@ async function abrirConversacion(cedulaCliente, nombreCliente, fotoCliente) {
         const r = await fetch(`/mensajes_privados/hilo/${cedulaCliente}`);
         const msgs = await r.json();
         box.innerHTML = '';
-        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.es_vendedor, m.id)));
+        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_para === USER_CONFIG.userId, m.id)));
         box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -885,6 +887,8 @@ async function enviarRespuestaVendedor() {
             await abrirConversacion(_hiloSeleccionado,
                 document.querySelector('#privConvHeader strong')?.textContent || '',
                 document.querySelector('#privConvHeader .priv-conv-avatar')?.src || '');
+        } else {
+            showMessage(t('notif.error_conn') || 'Error al enviar. Intenta de nuevo.', true);
         }
     } catch { showMessage(t('notif.error_conn'), true); }
 }
@@ -960,7 +964,7 @@ async function abrirConversacionStaff(cedulaDest, nombre, foto, rolLabel) {
         const r = await fetch(`/mensajes_privados/staff/hilo/${cedulaDest}`);
         const msgs = await r.json();
         box.innerHTML = '';
-        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_remitente === USER_CONFIG.userId, m.id)));
+        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
         box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -1006,6 +1010,8 @@ async function enviarMensajeStaff() {
                 document.querySelector('#staffConvHeader strong')?.textContent || '',
                 document.querySelector('#staffConvHeader .priv-conv-avatar')?.src || '',
                 '');
+        } else {
+            showMessage(t('notif.error_conn') || 'Error al enviar. Intenta de nuevo.', true);
         }
     } catch { showMessage(t('notif.error_conn'), true); }
 }

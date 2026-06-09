@@ -344,6 +344,7 @@ html, body {
 }
 
 @media (max-width: 768px) {
+    .main-content { padding: 0.25rem 0; }
     .container-central { padding: 0 14px; }
     .storage-fixed-wrapper { bottom: 20px; left: 16px; right: auto; }
     .storage-container { width: 66px; height: 66px; }

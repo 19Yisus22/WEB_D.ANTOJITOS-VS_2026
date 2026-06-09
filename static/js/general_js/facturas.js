@@ -23,14 +23,16 @@ function _extraerNumFactura(numFac) {
 function _poblarAniosSelect() {
     const sel = document.getElementById('filtroAnioFactura');
     if (!sel) return;
+    const valorActual = sel.value;
+    const actual = new Date().getFullYear();
     const años = new Set();
+    for (let y = actual; y >= actual - 5; y--) años.add(String(y));
     facturasActuales.forEach(f => {
         const a = _extraerAnioFactura(f.numero_factura);
         if (/^\d{4}$/.test(a)) años.add(a);
     });
-    const valorActual = sel.value;
     sel.innerHTML = '<option value="">Todos los años</option>';
-    [...años].sort((a, b) => b - a).forEach(a => {
+    [...años].sort((a, b) => Number(b) - Number(a)).forEach(a => {
         const op = document.createElement('option');
         op.value = a;
         op.textContent = a;
@@ -41,10 +43,8 @@ function _poblarAniosSelect() {
 
 function _aplicarFiltroNum() {
     const panel = document.getElementById('filtroFacturaNumPanel');
-    const btnClear = document.getElementById('btnClearFiltroNum');
     const activo = _filtroNumFac.anio || _filtroNumFac.numero;
     if (panel) panel.classList.toggle('fnf-active', !!activo);
-    if (btnClear) btnClear.style.display = activo ? 'flex' : 'none';
     paginaActual = 1;
     mostrarFacturasBuscadas();
 }
@@ -1177,6 +1177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await cargarMetodosPago();
 
+    _poblarAniosSelect();
 
     const _roleInit = (window.FACTURA_ROLE || 'cliente').toLowerCase();
     if (_roleInit === 'vendedor' || _roleInit === 'admin') {
@@ -1267,8 +1268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let _timerNum;
         inputNumFac.addEventListener('input', function() {
             clearTimeout(_timerNum);
-            const val = this.value.replace(/\D/g, '');
-            this.value = val;
+            const val = this.value.trim();
             _timerNum = setTimeout(() => {
                 _filtroNumFac.numero = val;
                 _aplicarFiltroNum();

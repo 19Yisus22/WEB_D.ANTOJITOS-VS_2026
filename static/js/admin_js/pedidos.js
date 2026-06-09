@@ -207,7 +207,7 @@ async function cargarPedidos(isAutoRefresh = false) {
             let totalPendiente = 0;
             const itemsRows = (pedido.pedido_detalle || []).map((item, idx) => {
                 const itemId = `${pedido.id_pedido}-${idx}`;
-                const pagado = estadosPagoGuardados[itemId] ?? (item.pagado ?? pedido.pagado ?? false);
+                const pagado = estadosPagoGuardados[itemId] ?? (item.pagado ?? false);
                 const subtotalItem = Number(item.subtotal || 0);
                 if (!pagado) totalPendiente += subtotalItem;
 
@@ -235,7 +235,7 @@ async function cargarPedidos(isAutoRefresh = false) {
 
             const todosPagos = (pedido.pedido_detalle || []).every((_, i) => {
                 const id = `${pedido.id_pedido}-${i}`;
-                return estadosPagoGuardados[id] ?? (pedido.pedido_detalle[i]?.pagado ?? pedido.pagado ?? false);
+                return estadosPagoGuardados[id] ?? (pedido.pedido_detalle[i]?.pagado ?? false);
             });
 
             const esTerminado = pedido.estado === 'Entregado' && todosPagos;

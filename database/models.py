@@ -631,15 +631,19 @@ def mp_get_todos_hilos() -> list:
         .order("created_at", desc=True)
     ))
 
-def mp_create(cedula_de: str, cedula_para: str, es_vendedor: bool,
-              mensaje: str, es_predeterminado: bool = False) -> dict | None:
+def mp_create(cedula_cliente: str, cedula_remitente: str, es_vendedor: bool,
+              mensaje: str, es_predeterminado: bool = False,
+              adjuntos: list = None) -> dict | None:
+    payload = {
+        "cedula_de":   cedula_cliente,
+        "cedula_para": cedula_remitente,
+        "mensaje":     mensaje,
+        "tipo":        "cv",
+    }
+    if adjuntos:
+        payload["adjuntos"] = adjuntos
     return _single(_run(
-        _db().table("mensajes_privados").insert({
-            "cedula_de":   cedula_de,
-            "cedula_para": cedula_para,
-            "mensaje":     mensaje,
-            "tipo":        "cv",
-        })
+        _db().table("mensajes_privados").insert(payload)
     ))
 
 def mp_marcar_leidos(cedula_de: str, es_vendedor_leyendo: bool) -> None:
@@ -671,7 +675,7 @@ def mp_total_no_leidos_vendedor() -> int:
     return _count(res)
 
 def mp_staff_get_conversacion(cedula_a: str, cedula_b: str) -> list:
-    return _many(_run(
+    r1 = _many(_run(
         _db().table("mensajes_privados")
         .select(_MP_SELECT)
         .eq("cedula_de", cedula_a)
@@ -679,6 +683,15 @@ def mp_staff_get_conversacion(cedula_a: str, cedula_b: str) -> list:
         .eq("tipo", "staff")
         .order("created_at", desc=False)
     ))
+    r2 = _many(_run(
+        _db().table("mensajes_privados")
+        .select(_MP_SELECT)
+        .eq("cedula_de", cedula_b)
+        .eq("cedula_dest", cedula_a)
+        .eq("tipo", "staff")
+        .order("created_at", desc=False)
+    ))
+    return sorted(r1 + r2, key=lambda m: m.get("created_at") or "")
 
 def mp_staff_get_hilos_de(cedula: str) -> list:
     r1 = _many(_run(
@@ -697,14 +710,18 @@ def mp_staff_get_hilos_de(cedula: str) -> list:
     ))
     return r1 + r2
 
-def mp_staff_create(cedula_from: str, cedula_to: str, mensaje: str) -> dict | None:
+def mp_staff_create(cedula_from: str, cedula_to: str, mensaje: str,
+                    adjuntos: list = None) -> dict | None:
+    payload = {
+        "cedula_de":   cedula_from,
+        "cedula_dest": cedula_to,
+        "mensaje":     mensaje,
+        "tipo":        "staff",
+    }
+    if adjuntos:
+        payload["adjuntos"] = adjuntos
     return _single(_run(
-        _db().table("mensajes_privados").insert({
-            "cedula_de":   cedula_from,
-            "cedula_dest": cedula_to,
-            "mensaje":     mensaje,
-            "tipo":        "staff",
-        })
+        _db().table("mensajes_privados").insert(payload)
     ))
 
 def mp_staff_marcar_leidos(cedula_a: str, cedula_b: str, lector: str) -> None:

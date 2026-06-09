@@ -9,9 +9,6 @@
                 <img src="/static/uploads/logo.ico" alt="Logo" width="50" height="50" class="logo-img">
                 <div class="ms-2 d-flex flex-column" style="gap:1px;">
                     <span>D'Antojitos©</span>
-                    {% if session.get('user')%}
-                    <span class="nav-wm-credit" aria-hidden="true">2022 YisusPrime™</span>
-                    {% endif %}
                 </div>
             </a>
 
@@ -72,6 +69,9 @@
                                 <span id="statusDot" style="width:8px;height:8px;background-color:currentColor;border-radius:50%;display:inline-block;margin-right:5px;"></span>
                                 <span id="userStatusLabel">Online</span>
                             </div>
+                            {% if session.get('user')%}
+                                <span class="nav-wm-credit" aria-hidden="true">2022 YisusPrime™</span>
+                            {% endif %}
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 animate-dropdown mt-2">
