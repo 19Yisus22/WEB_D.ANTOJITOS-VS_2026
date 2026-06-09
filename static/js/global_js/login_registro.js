@@ -92,6 +92,8 @@ async function handleCredentialResponse(response) {
         if (data.ok) {
             showMessage('¡Bienvenido!', `Hola, ${data.user.nombre}`, true);
             setTimeout(() => { window.location.href = '/inicio'; }, 1200);
+        } else if (data.bloqueado_hasta && data.segundos) {
+            _showLockoutBanner(data.segundos, data.bloqueado_hasta);
         } else {
             showMessage('Error', data.error || 'Error con Google', false);
         }

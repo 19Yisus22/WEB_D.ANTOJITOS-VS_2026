@@ -292,6 +292,19 @@ function _getBankConfig(entidad) {
     };
 }
 
+const _BANCO_LOGOS = {
+    'Nequi':       '/static/uploads/nequi.logo.png',
+    'Daviplata':   '/static/uploads/daviplata.logo.png',
+    'Bancolombia': '/static/uploads/bancolombia.logo.png',
+    'NuBank':      '/static/uploads/nu.logo.png',
+};
+
+function _getBancoLogoTag(entidad, size) {
+    const src = _BANCO_LOGOS[entidad];
+    if (!src) return '';
+    return `<img src="${src}" alt="${entidad}" style="width:${size}px;height:${size}px;object-fit:contain;" onerror="this.style.display='none'">`;
+}
+
 function abrirModalPago(facturaNum, total) {
     const modalElement = document.getElementById('modalPago');
     const modalBody    = document.getElementById("modalPagoBody");
@@ -330,19 +343,23 @@ function abrirModalPago(facturaNum, total) {
             </div>
 
             <div class="payment-bank-subtitle" id="paymentBankSubtitle">
-                <i class="bi bi-building me-1"></i>${t('pay.with')} <strong>${first.entidad}</strong>
+                ${_getBancoLogoTag(first.entidad, 20)}
+                ${t('pay.with')} <strong>${first.entidad}</strong>
             </div>
 
             ${metodosPagoCache.length > 1 ? `
             <div class="payment-bank-pager" id="paymentBankPager">
                 ${metodosPagoCache.map((m, i) => {
-                    const cfg = _getBankConfig(m.entidad);
+                    const cfg    = _getBankConfig(m.entidad);
+                    const logoSrc = _BANCO_LOGOS[m.entidad];
                     return `
                     <button class="payment-pager-btn ${i === 0 ? 'active' : ''}"
                             onclick="_selectBanco(${i})" id="ptab-${i}" title="${m.entidad}">
                         <div class="payment-pager-initials"
                              style="background:${cfg.gradient};color:${cfg.textColor};border-color:${i === 0 ? cfg.color : 'rgba(0,0,0,0.08)'};">
-                            ${cfg.initials}
+                            ${logoSrc
+                                ? `<img src="${logoSrc}" alt="${m.entidad}" style="width:100%;height:100%;object-fit:contain;padding:5px;" onerror="this.style.display='none'">`
+                                : cfg.initials}
                         </div>
                         <span>${m.entidad}</span>
                     </button>`;
@@ -400,7 +417,7 @@ window._selectBanco = function(idx) {
     }
 
     const subtitle = document.getElementById('paymentBankSubtitle');
-    if (subtitle) subtitle.innerHTML = `<i class="bi bi-building me-1"></i>${t('pay.with')} <strong>${m.entidad}</strong>`;
+    if (subtitle) subtitle.innerHTML = `${_getBancoLogoTag(m.entidad, 20)} ${t('pay.with')} <strong>${m.entidad}</strong>`;
 
     document.querySelectorAll('.payment-pager-btn').forEach((t, i) => {
         t.classList.toggle('active', i === idx);
@@ -1161,7 +1178,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/js/workers/service-worker-zona_pagos.js')
-            .catch(() => {});
+        navigator.serviceWorker.register('/static/js/workers/sw-ui.js').catch(() => {});
     });
 }

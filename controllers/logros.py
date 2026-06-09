@@ -70,14 +70,28 @@ def get_contadores():
         return jsonify({}), 200
 
 
+_PREFIJOS_SERVIDOR = ("v_", "s_")
+_SUFIJOS_SERVIDOR  = ("_vd", "_sd")
+
+def _es_clave_servidor(k: str) -> bool:
+    return (
+        any(k.startswith(p) for p in _PREFIJOS_SERVIDOR)
+        or any(k.endswith(s) for s in _SUFIJOS_SERVIDOR)
+    )
+
+
 @logros_bp.route("/logros/contadores", methods=["POST"])
 @login_required
 def set_contadores():
     cedula = session.get("user_id")
     data   = request.get_json() or {}
     try:
-        actuales = db.logros_contadores_get(cedula)
-        fusionados = {k: max(int(v), int(actuales.get(k, 0))) for k, v in data.items() if isinstance(v, (int, float))}
+        actuales   = db.logros_contadores_get(cedula)
+        fusionados = {
+            k: max(int(v), int(actuales.get(k, 0)))
+            for k, v in data.items()
+            if isinstance(v, (int, float)) and not _es_clave_servidor(k)
+        }
         if fusionados:
             db.logros_contadores_upsert_many(cedula, fusionados)
         return jsonify({"ok": True, "guardados": len(fusionados)}), 200

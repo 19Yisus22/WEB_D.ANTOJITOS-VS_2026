@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
 <head>
+    <script>(function(){var t=localStorage.getItem('dantojitos_theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
@@ -20,6 +21,11 @@
     <div id="scrollProgressBar"></div>
 
     {% if session.get('rol') == 'admin' %}
+
+    <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()" title="Menú">
+        <i class="bi bi-list" id="menuToggleIcon"></i>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
     <a href="/inicio" class="btn-back-home" title="Volver al Inicio">
         <i class="bi bi-house-door-fill"></i>
@@ -133,13 +139,18 @@
                 <span style="font-weight: 700; color: var(--secondary);">D'ANTOJITOS</span>
             </div>
             <div class="footer-info">
-                <div class="copyright-text">2025 D'Antojitos© - Todos los derechos reservados</div>
-                <div class="author-credit">Created By: 2022 Yisusâ„¢</div>
+                <div class="copyright-text">2023 D'Antojitos© - Todos los derechos reservados</div>
+                <div class="author-credit">Created By: 2022 Yisus™</div>
             </div>
         </div>
     </footer>
 
     {% elif session.get('rol') == 'vendedor' %}
+
+    <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()" title="Menú">
+        <i class="bi bi-list" id="menuToggleIcon"></i>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
     <a href="/inicio" class="btn-back-home" title="Volver al Inicio">
         <i class="bi bi-house-door-fill"></i>
@@ -248,8 +259,8 @@
                 <span style="font-weight: 700; color: var(--secondary);">D'ANTOJITOS</span>
             </div>
             <div class="footer-info">
-                <div class="copyright-text">2025 D'Antojitos© - Todos los derechos reservados</div>
-                <div class="author-credit">Created By: 2022 Yisusâ„¢</div>
+                <div class="copyright-text">2023 D'Antojitos© - Todos los derechos reservados</div>
+                <div class="author-credit">Created By: 2022 Yisus™</div>
             </div>
         </div>
     </footer>

@@ -169,7 +169,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 48px 28px;
+    padding: 80px 28px 48px;
     overflow-y: auto;
 }
 
@@ -525,7 +525,7 @@
 
 @media (max-width: 767px) {
     .reg-left  { display: none; }
-    .reg-right { padding: 24px 14px; align-items: flex-start; }
+    .reg-right { padding: 80px 14px 28px; align-items: flex-start; }
     .reg-card  { padding: 28px 20px 22px; border-radius: 20px; max-width: 100%; overflow-x: hidden; }
     .reg-row   { grid-template-columns: 1fr; }
     .reg-header h2 { font-size: 1.4rem; }

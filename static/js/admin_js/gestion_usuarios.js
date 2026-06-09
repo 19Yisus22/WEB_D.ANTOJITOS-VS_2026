@@ -647,3 +647,8 @@ function _initFilesPanelDrop() {
         }
     });
 }
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/js/workers/sw-ui.js').catch(() => {});
+    });
+}

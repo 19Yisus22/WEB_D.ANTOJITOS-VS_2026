@@ -86,15 +86,15 @@ from flask import render_template as _rt
 
 @app.errorhandler(404)
 def pagina_no_encontrada(_):
-    return _rt("errors/404.html"), 404
+    return _rt("errors/404.html", codigo=404, mensaje="Página no encontrada"), 404
 
 @app.errorhandler(403)
 def acceso_denegado(_):
-    return _rt("errors/404.html"), 403
+    return _rt("errors/404.html", codigo=403, mensaje="Acceso denegado"), 403
 
 @app.errorhandler(500)
 def error_servidor(_):
-    return _rt("errors/404.html"), 500
+    return _rt("errors/404.html", codigo=500, mensaje="Error interno del servidor"), 500
 
 _RUTAS_PUBLICAS = frozenset({
     "/login", "/registro", "/registro-google", "/logout",
@@ -173,7 +173,7 @@ def _get_local_ip() -> str:
         s.close()
 
 if __name__ == "__main__":
-    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), False # Cambia a True para modo desarrollo con debug activado
+    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), True # Cambia a True para modo desarrollo con debug activado
 
     if debug_mode:
         print("\033[93m" + "MODE DEVELOPMENT - DEBUG" + "\033[0m")

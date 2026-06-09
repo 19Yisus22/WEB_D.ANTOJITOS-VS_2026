@@ -1,6 +1,8 @@
 from __future__ import annotations
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, timedelta
 import logging
+
+COLOMBIA_TZ = timezone(timedelta(hours=-5))
 
 logger = logging.getLogger(__name__)
 
@@ -301,7 +303,7 @@ def _es_hoy_cumpleanos(usuario: dict) -> bool:
     try:
         if isinstance(fn, str):
             fn = date.fromisoformat(fn[:10])
-        hoy = date.today()
+        hoy = datetime.now(COLOMBIA_TZ).date()
         return fn.month == hoy.month and fn.day == hoy.day
     except Exception:
         return False
@@ -389,8 +391,9 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     sistema_mensajes     = int(sis.get("sistema_mensajes", 0) or 0)
     sistema_facturas     = int(sis.get("sistema_facturas", 0) or 0)
 
-    hora_actual  = datetime.now(timezone.utc).hour
-    dia_semana   = datetime.now(timezone.utc).weekday()
+    _ahora_co    = datetime.now(COLOMBIA_TZ)
+    hora_actual  = _ahora_co.hour
+    dia_semana   = _ahora_co.weekday()
 
     num_prod_carrito = int(contexto.get("num_productos_carrito", 0) or 0)
     valor_carrito    = float(contexto.get("valor_carrito", 0) or 0)
@@ -410,9 +413,8 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     db_visit  = int(db_contadores.get(v_key, 0))
     db_streak = int(db_contadores.get(s_key, 0))
 
-    # Anti-cheat: server-side day tracking — counters increment at most once per calendar day.
-    # Keys {modulo}_vd = epoch-day of last visit, {modulo}_sd = epoch-day of last streak update.
-    hoy_epoch     = (date.today() - date(1970, 1, 1)).days
+    hoy_co        = datetime.now(COLOMBIA_TZ).date()
+    hoy_epoch     = (hoy_co - date(1970, 1, 1)).days
     vd_key        = f"{modulo_visita}_vd"
     sd_key        = f"{modulo_visita}_sd"
     last_visit_d  = int(db_contadores.get(vd_key, 0))

@@ -95,6 +95,19 @@ body { padding-top: 68px; }
     order: 2;
 }
 
+#main-navbar-container .nav-wm-credit {
+    font-size: 0.42rem;
+    color: rgba(211, 84, 0, 0.48);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    font-style: italic;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    line-height: 1;
+    display: block;
+}
+
 #main-navbar-container .profile-trigger {
     padding: 0.5rem 1.2rem !important;
     background: #fff0f5;
@@ -989,3 +1002,7 @@ body { padding-top: 68px; }
 }
 
 [data-theme="dark"] #versionLabel { color: #6a5f7a; }
+
+[data-theme="dark"] #main-navbar-container .nav-wm-credit {
+    color: rgba(240, 136, 62, 0.35);
+}

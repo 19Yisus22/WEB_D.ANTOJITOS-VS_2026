@@ -240,14 +240,10 @@ def usuario_touch(cedula: str, ts: str) -> None:
     _run_safe(_db().table("usuarios").update({"ultima_conexion": ts}).eq("cedula", cedula))
 
 _LOCKOUT_THRESHOLDS = [
-    (5,   5),
-    (15,  30),
-    (25,  120),
-    (35,  480),
-    (45,  1440),
-    (55,  4320),
-    (65,  10080),
-    (75,  14400),
+    (5,    15),
+    (10,   40),
+    (15,   300),
+    (20,   1440),
 ]
 
 def usuario_incrementar_intento(cedula: str) -> dict:

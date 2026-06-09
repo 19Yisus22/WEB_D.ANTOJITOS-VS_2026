@@ -260,16 +260,20 @@ function renderizarLista() {
     }
 
     metodosPagoArray.forEach((m, index) => {
-        const imgSrc = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
-        const badge = getBadgeClass(m.entidad);
+        const imgSrc  = m.file ? URL.createObjectURL(m.file) : (m.url_actual || IMG_DEFAULT);
+        const badge   = getBadgeClass(m.entidad);
+        const logoSrc = getEntidadLogo(m.entidad);
 
         lista.innerHTML += `
             <div class="col-12 col-md-6 mb-3">
                 <div class="metodo-card p-3 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-3">
-                        <img src="${imgSrc}" style="width:50px; height:50px; object-fit:cover;" class="rounded border">
+                        <img src="${imgSrc}" style="width:50px;height:50px;object-fit:cover;" class="rounded border" onerror="this.src='${IMG_DEFAULT}'">
                         <div>
-                            <span class="bank-badge ${badge} mb-1">${m.entidad}</span>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                ${logoSrc ? `<img src="${logoSrc}" alt="${m.entidad}" style="width:26px;height:26px;object-fit:contain;" onerror="this.style.display='none'">` : ''}
+                                <span class="bank-badge ${badge}">${m.entidad}</span>
+                            </div>
                             <h6 class="m-0 fw-bold">${m.titular}</h6>
                             <small class="text-muted">${m.numero}</small>
                         </div>
@@ -284,8 +288,11 @@ function renderizarLista() {
         preview.innerHTML += `
             <div class="col-6 text-center mb-3">
                 <div class="p-2 border rounded bg-light">
-                    <img src="${imgSrc}" class="img-fluid rounded mb-1" style="max-height:80px; object-fit:contain;">
-                    <p class="small fw-bold m-0" style="font-size:10px;">${m.entidad}</p>
+                    <img src="${imgSrc}" class="img-fluid rounded mb-1" style="max-height:80px;object-fit:contain;" onerror="this.style.display='none'">
+                    <div class="d-flex align-items-center justify-content-center gap-1 mt-1">
+                        ${logoSrc ? `<img src="${logoSrc}" alt="${m.entidad}" style="width:18px;height:18px;object-fit:contain;" onerror="this.style.display='none'">` : ''}
+                        <p class="small fw-bold m-0" style="font-size:10px;">${m.entidad}</p>
+                    </div>
                     <p class="text-muted m-0" style="font-size:9px;">${m.numero}</p>
                 </div>
             </div>`;
@@ -388,6 +395,17 @@ function getBadgeClass(entidad) {
         'NuBank': 'nubank-bg'
     };
     return map[entidad] || 'bg-secondary text-white';
+}
+
+const _BANCO_LOGOS = {
+    'Nequi':       '/static/uploads/nequi.logo.png',
+    'Daviplata':   '/static/uploads/daviplata.logo.png',
+    'Bancolombia': '/static/uploads/bancolombia.logo.png',
+    'NuBank':      '/static/uploads/nu.logo.png',
+};
+
+function getEntidadLogo(entidad) {
+    return _BANCO_LOGOS[entidad] || null;
 }
 
 (function() {

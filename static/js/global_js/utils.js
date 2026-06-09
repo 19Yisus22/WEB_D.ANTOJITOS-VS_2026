@@ -1,4 +1,142 @@
 ﻿
+(function() {
+    'use strict';
+    if (window.DA) return;
+
+    var _ua  = navigator.userAgent;
+    var _taq = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    var _disposit = {
+        esMovil:  /Mobi|Android|iPhone|iPod/i.test(_ua),
+        esTablet: /iPad|Tablet/i.test(_ua) || (_taq && !/Mobi|Android|iPhone|iPod/i.test(_ua) && window.screen.width >= 600),
+        esTV:     /TV|SmartTV|WebOS|Tizen|CrKey|SMART-TV/i.test(_ua) || (window.screen.width >= 1920 && !_taq && (window.devicePixelRatio || 1) <= 1),
+        esTactil: _taq,
+        esIOS:    /iPad|iPhone|iPod/.test(_ua) && !window.MSStream,
+        esAndroid:/Android/.test(_ua),
+        dpr:      window.devicePixelRatio || 1,
+    };
+    _disposit.tipo = _disposit.esTV ? 'tv'
+        : _disposit.esTablet ? 'tablet'
+        : _disposit.esMovil  ? 'movil'
+        : 'escritorio';
+
+    var _pantalla = {
+        ancho:        function() { return window.innerWidth; },
+        alto:         function() { return window.innerHeight; },
+        esHorizontal: function() { return window.innerWidth > window.innerHeight; },
+        punto: function() {
+            var w = window.innerWidth;
+            if (w < 360)  return 'xs';
+            if (w < 600)  return 'sm';
+            if (w < 1024) return 'md';
+            if (w < 1440) return 'lg';
+            if (w < 1920) return 'xl';
+            return '2xl';
+        },
+    };
+
+    function _actualizarVars() {
+        var r = document.documentElement;
+        r.style.setProperty('--da-1vh', (window.innerHeight * 0.01) + 'px');
+        r.setAttribute('data-da-bp', _pantalla.punto());
+    }
+
+    var _reducido = typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    var _obsAnim = (!_reducido && typeof IntersectionObserver !== 'undefined')
+        ? new IntersectionObserver(function(entries) {
+            entries.forEach(function(e) {
+                if (e.isIntersecting) {
+                    e.target.classList.add('da-visible');
+                    _obsAnim.unobserve(e.target);
+                }
+            });
+          }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' })
+        : null;
+
+    var _bus = {};
+
+    window.DA = {
+        dispositivo: _disposit,
+        pantalla:    _pantalla,
+        en: function(ev, fn) { (_bus[ev] = _bus[ev] || []).push(fn); },
+        emitir: function(ev, d) { (_bus[ev] || []).forEach(function(f) { f(d); }); },
+        quitar: function(ev, fn) {
+            if (!fn) { _bus[ev] = []; return; }
+            _bus[ev] = (_bus[ev] || []).filter(function(f) { return f !== fn; });
+        },
+        anim: {
+            observar: function(el) {
+                if (!_obsAnim || !el) return;
+                if (el.forEach) { el.forEach(function(e) { _obsAnim.observe(e); }); }
+                else { _obsAnim.observe(el); }
+            },
+            activar: function(sel) {
+                if (!_obsAnim) return;
+                document.querySelectorAll(sel || '[data-da-anim]').forEach(function(e) { _obsAnim.observe(e); });
+            },
+        },
+    };
+
+    function _clasesCuerpo() {
+        var b = document.body;
+        if (!b) return;
+        b.classList.add('da-' + _disposit.tipo);
+        if (_disposit.esTactil) b.classList.add('da-tactil');
+        if (_disposit.esIOS)    b.classList.add('da-ios');
+        if (_disposit.esAndroid) b.classList.add('da-android');
+        if (_disposit.esTV)     b.classList.add('da-tv');
+        b.setAttribute('data-da-bp', _pantalla.punto());
+    }
+
+    function _observarDinamicos() {
+        if (!_obsAnim || typeof MutationObserver === 'undefined') return;
+        new MutationObserver(function(mutations) {
+            mutations.forEach(function(m) {
+                m.addedNodes.forEach(function(n) {
+                    if (n.nodeType !== 1) return;
+                    if (n.hasAttribute && n.hasAttribute('data-da-anim')) _obsAnim.observe(n);
+                    if (n.querySelectorAll) n.querySelectorAll('[data-da-anim]').forEach(function(e) { _obsAnim.observe(e); });
+                });
+            });
+        }).observe(document.body, { childList: true, subtree: true });
+    }
+
+    _actualizarVars();
+
+    var _rt = null;
+    window.addEventListener('resize', function() {
+        clearTimeout(_rt);
+        _rt = setTimeout(function() {
+            _actualizarVars();
+            if (document.body) document.body.setAttribute('data-da-bp', _pantalla.punto());
+            window.DA.emitir('resize', { ancho: window.innerWidth, alto: window.innerHeight, punto: _pantalla.punto() });
+        }, 100);
+    }, { passive: true });
+
+    window.addEventListener('orientationchange', function() {
+        setTimeout(function() {
+            _actualizarVars();
+            window.DA.emitir('orientacion', { horizontal: _pantalla.esHorizontal() });
+        }, 350);
+    }, { passive: true });
+
+    function _iniciar() {
+        _clasesCuerpo();
+        window.DA.anim.activar();
+        _observarDinamicos();
+        window.DA.emitir('listo', { dispositivo: _disposit, pantalla: _pantalla });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _iniciar);
+    } else {
+        _iniciar();
+    }
+})();
+
+
 function fmtCOP(n) {
     return Number(n).toLocaleString('es-CO', {
         style: 'currency', currency: 'COP', maximumFractionDigits: 0
@@ -106,7 +244,22 @@ function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
 }
 
 
-const _notifIdSet = new Set();
+const _SS_NOTIF_IDS_KEY = '_dantojitos_snotif_ids';
+
+function _ssNotifIdSet() {
+    try { return new Set(JSON.parse(sessionStorage.getItem(_SS_NOTIF_IDS_KEY) || '[]')); }
+    catch { return new Set(); }
+}
+function _ssNotifIdAdd(id, duracion) {
+    const set = _ssNotifIdSet();
+    set.add(id);
+    try { sessionStorage.setItem(_SS_NOTIF_IDS_KEY, JSON.stringify([...set])); }
+    catch {}
+    setTimeout(() => {
+        const s2 = _ssNotifIdSet(); s2.delete(id);
+        try { sessionStorage.setItem(_SS_NOTIF_IDS_KEY, JSON.stringify([...s2])); } catch {}
+    }, duracion + 1500);
+}
 
 function mostrarAlertaPublica({
     mensaje    = '',
@@ -115,13 +268,11 @@ function mostrarAlertaPublica({
     tipo       = 'info',
     duracion   = 4000,
     idUnico    = null,
-    sonido     = true
+    sonido     = true,
+    url        = null
 } = {}) {
-    if (idUnico && _notifIdSet.has(idUnico)) return;
-    if (idUnico) {
-        _notifIdSet.add(idUnico);
-        setTimeout(() => _notifIdSet.delete(idUnico), duracion + 1000);
-    }
+    if (idUnico && _ssNotifIdSet().has(idUnico)) return;
+    if (idUnico) _ssNotifIdAdd(idUnico, duracion);
 
     let cont = document.getElementById('toastContainer');
     if (!cont) {
@@ -162,7 +313,7 @@ function mostrarAlertaPublica({
         backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
         transition:transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275),opacity 0.28s ease;
         transform:translateX(-110%);opacity:0;pointer-events:auto;
-        cursor:default;min-width:0;width:100%;box-sizing:border-box;`;
+        cursor:${url ? 'pointer' : 'default'};min-width:0;width:100%;box-sizing:border-box;`;
 
     toast.innerHTML = `
         <div style="position:relative;flex-shrink:0;">
@@ -176,12 +327,12 @@ function mostrarAlertaPublica({
                 <i class="bi ${iconClass}" style="color:#fff;font-size:0.5rem;line-height:1;"></i>
             </div>
         </div>
-        <div style="flex:1;min-width:0;overflow:hidden;">
+        <div style="flex:1;min-width:0;">
             <strong style="display:block;font-size:0.65rem;text-transform:uppercase;
                            color:${accentColor};letter-spacing:0.7px;font-weight:800;
-                           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tituloFinal}</strong>
-            <div style="font-size:0.8rem;font-weight:400;color:${textSub};line-height:1.3;
-                        overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${mensaje}</div>
+                           word-break:break-word;">${tituloFinal}</strong>
+            <div style="font-size:0.8rem;font-weight:400;color:${textSub};line-height:1.35;
+                        word-break:break-word;">${mensaje}</div>
         </div>
         <button class="btn-close-toast"
                 style="background:none;border:none;color:${textSub};cursor:pointer;
@@ -204,7 +355,15 @@ function mostrarAlertaPublica({
     const closeBtn = toast.querySelector('.btn-close-toast');
     closeBtn.onmouseenter = () => closeBtn.style.opacity = '1';
     closeBtn.onmouseleave = () => closeBtn.style.opacity = '0.6';
-    closeBtn.onclick = remove;
+    closeBtn.onclick = (e) => { e.stopPropagation(); remove(); };
+    if (url) {
+        toast.addEventListener('click', (e) => {
+            if (!e.target.closest('.btn-close-toast')) {
+                remove();
+                setTimeout(() => { window.location.href = url; }, 160);
+            }
+        });
+    }
     setTimeout(remove, duracion);
 }
 
@@ -883,8 +1042,15 @@ function _pushStockToSistemPanel(p, tipo) {
 }
 
 (function _initStockMonitor() {
-    let _stockSnapshot = {};
-    let _firstRun      = true;
+    const _SS_SNAP_KEY  = '_dantojitos_stock_snap';
+    const _SS_INIT_KEY  = '_dantojitos_stock_init';
+
+    function _loadSnap() {
+        try { return JSON.parse(sessionStorage.getItem(_SS_SNAP_KEY) || '{}'); } catch { return {}; }
+    }
+    function _saveSnap(snap) {
+        try { sessionStorage.setItem(_SS_SNAP_KEY, JSON.stringify(snap)); } catch {}
+    }
 
     function _ringClientBell() {
         const cb = document.getElementById('navClientBellBtn');
@@ -895,56 +1061,60 @@ function _pushStockToSistemPanel(p, tipo) {
 
     async function _checkStock() {
         try {
-            const res  = await fetch('/obtener_catalogo', { cache: 'no-store' });
-            const data = await res.json();
+            const res   = await fetch('/obtener_catalogo', { cache: 'no-store' });
+            const data  = await res.json();
             const prods = data.productos || data || [];
             if (!Array.isArray(prods)) return;
 
-            if (_firstRun) {
-                prods.forEach(p => { _stockSnapshot[String(p.id_producto)] = parseInt(p.stock ?? 0, 10); });
-                _firstRun = false;
+            const snap    = _loadSnap();
+            const firstRun = !sessionStorage.getItem(_SS_INIT_KEY);
+
+            if (firstRun) {
+                prods.forEach(p => { snap[String(p.id_producto)] = parseInt(p.stock ?? 0, 10); });
+                _saveSnap(snap);
+                sessionStorage.setItem(_SS_INIT_KEY, '1');
                 return;
             }
 
             const currIds = new Set(prods.map(p => String(p.id_producto)));
 
-            // Detect products removed from the catalog
-            Object.keys(_stockSnapshot).forEach(id => {
+            Object.keys(snap).forEach(id => {
                 if (!currIds.has(id)) {
                     mostrarAlertaPublica({
-                        titulo:   '¡Producto eliminado!',
-                        mensaje:  'Un producto fue removido del catálogo',
-                        tipo:     'error',
-                        duracion:  5000,
-                        idUnico:  `eliminado-${id}-${Date.now()}`,
+                        titulo:  '¡Producto eliminado!',
+                        mensaje: 'Un producto fue removido del catálogo',
+                        tipo:    'error',
+                        duracion: 5000,
+                        idUnico: `eliminado-${id}`,
+                        url:     '/catalogo_page',
                     });
-                    _pushClientNotif({ tipo: 'agotado', titulo: '¡Producto eliminado!', mensaje: 'Un producto fue removido del catálogo', imagen: '/static/uploads/logo.png' });
+                    _pushClientNotif({ tipo: 'agotado', titulo: '¡Producto eliminado!', mensaje: 'Un producto fue removido del catálogo', imagen: '/static/uploads/logo.png', url: '/catalogo_page' });
                     _pushStockToSistemPanel({ id_producto: id, nombre: 'Producto eliminado', stock: 0, imagen_url: '' }, 'agotado');
                     _ringClientBell();
-                    delete _stockSnapshot[id];
+                    delete snap[id];
                 }
             });
 
             prods.forEach(p => {
-                const id   = String(p.id_producto);
-                const curr = parseInt(p.stock ?? 0, 10);
-                const isNew = !Object.prototype.hasOwnProperty.call(_stockSnapshot, id);
-                const prev  = isNew ? null : _stockSnapshot[id];
+                const id    = String(p.id_producto);
+                const curr  = parseInt(p.stock ?? 0, 10);
+                const isNew = !Object.prototype.hasOwnProperty.call(snap, id);
+                const prev  = isNew ? null : snap[id];
 
-                _stockSnapshot[id] = curr;
+                snap[id] = curr;
 
                 if (isNew) {
-                    // Brand-new product added to catalog
                     mostrarAlertaPublica({
-                        titulo:   '¡Nuevo producto!',
-                        mensaje:  `${p.nombre} se añadió al catálogo` + (curr > 0 ? ` · ${curr} uds` : ''),
-                        imagen:   p.imagen_url || '/static/uploads/logo.png',
-                        tipo:     'success',
-                        duracion:  6000,
-                        idUnico:  `nuevo-${id}-${Date.now()}`,
-                        sonido:   true,
+                        titulo:  '¡Nuevo producto!',
+                        mensaje: `${p.nombre} se añadió al catálogo` + (curr > 0 ? ` · ${curr} uds` : ''),
+                        imagen:  p.imagen_url || '/static/uploads/logo.png',
+                        tipo:    'success',
+                        duracion: 6000,
+                        idUnico: `nuevo-${id}`,
+                        sonido:  true,
+                        url:     '/catalogo_page',
                     });
-                    _pushClientNotif({ tipo: 'disponible', titulo: '¡Nuevo producto!', mensaje: p.nombre + (curr > 0 ? ` · ${curr} uds` : ' — sin stock aún'), imagen: p.imagen_url });
+                    _pushClientNotif({ tipo: 'disponible', titulo: '¡Nuevo producto!', mensaje: p.nombre + (curr > 0 ? ` · ${curr} uds` : ' — sin stock aún'), imagen: p.imagen_url, url: '/catalogo_page' });
                     _pushStockToSistemPanel({ ...p, stock: curr }, 'disponible');
                     _ringClientBell();
                     return;
@@ -954,34 +1124,38 @@ function _pushStockToSistemPanel(p, tipo) {
 
                 if (prev > 0 && curr <= 0) {
                     mostrarAlertaPublica({
-                        titulo:   '¡Producto Agotado!',
-                        mensaje:  `${p.nombre} ya no tiene stock disponible`,
-                        imagen:   p.imagen_url || '/static/uploads/logo.png',
-                        tipo:     'error',
-                        duracion:  6000,
-                        idUnico:  `agotado-${id}-${Date.now()}`,
-                        sonido:   true,
+                        titulo:  '¡Producto Agotado!',
+                        mensaje: `${p.nombre} ya no tiene stock disponible`,
+                        imagen:  p.imagen_url || '/static/uploads/logo.png',
+                        tipo:    'error',
+                        duracion: 6000,
+                        idUnico: `agotado-${id}`,
+                        sonido:  true,
+                        url:     '/catalogo_page',
                     });
-                    _pushClientNotif({ tipo: 'agotado', titulo: '¡Agotado!', mensaje: p.nombre + ' sin stock', imagen: p.imagen_url });
+                    _pushClientNotif({ tipo: 'agotado', titulo: '¡Agotado!', mensaje: p.nombre + ' sin stock', imagen: p.imagen_url, url: '/catalogo_page' });
                     _pushStockToSistemPanel({ ...p, stock: curr }, 'agotado');
                     _ringClientBell();
 
                 } else if (prev <= 0 && curr > 0) {
                     mostrarAlertaPublica({
-                        titulo:   '¡Disponible!',
-                        mensaje:  `${p.nombre} vuelve a tener stock (${curr} uds)`,
-                        imagen:   p.imagen_url || '/static/uploads/logo.png',
-                        tipo:     'success',
-                        duracion:  6000,
-                        idUnico:  `disponible-${id}-${Date.now()}`,
-                        sonido:   true,
+                        titulo:  '¡Disponible!',
+                        mensaje: `${p.nombre} vuelve a tener stock (${curr} uds)`,
+                        imagen:  p.imagen_url || '/static/uploads/logo.png',
+                        tipo:    'success',
+                        duracion: 6000,
+                        idUnico: `disponible-${id}`,
+                        sonido:  true,
+                        url:     '/catalogo_page',
                     });
-                    _pushClientNotif({ tipo: 'disponible', titulo: '¡Disponible!', mensaje: p.nombre + ' · ' + curr + ' unidades', imagen: p.imagen_url });
+                    _pushClientNotif({ tipo: 'disponible', titulo: '¡Disponible!', mensaje: p.nombre + ' · ' + curr + ' unidades', imagen: p.imagen_url, url: '/catalogo_page' });
                     _pushStockToSistemPanel({ ...p, stock: curr }, 'disponible');
                     _ringClientBell();
                 }
             });
-        } catch { }
+
+            _saveSnap(snap);
+        } catch {}
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1297,8 +1471,7 @@ class PromoBannerTicker {
 
         const subEl = item.descripcion
             ? `<span style="font-size:0.66rem;color:rgba(253,210,150,0.6);
-                            font-weight:500;white-space:nowrap;
-                            overflow:hidden;text-overflow:ellipsis;max-width:240px;
+                            font-weight:500;word-break:break-word;
                             display:block;">${item.descripcion}</span>`
             : '';
 
@@ -1693,3 +1866,62 @@ document.addEventListener('DOMContentLoaded', function _checkProfileNotif() {
         setTimeout(() => bell && bell.classList.remove('ring-anim'), 2500);
     }, 1500);
 });
+
+(function _marcaDeAgua() {
+    var _patronCache = null;
+    var _moChat = false;
+
+    function _patronRepetido() {
+        if (_patronCache) return _patronCache;
+        var W = 220, H = 110;
+        var c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        var ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, W, H);
+        ctx.save();
+        ctx.translate(W / 2, H / 2);
+        ctx.rotate(-28 * (Math.PI / 180));
+        ctx.font = 'bold 13px system-ui,sans-serif';
+        ctx.fillStyle = '#d35400';
+        ctx.globalAlpha = 0.04;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText("D'Antojitos© 2023", 0, 0);
+        ctx.restore();
+        _patronCache = c.toDataURL('image/png');
+        return _patronCache;
+    }
+
+    var _IDS_CHAT = ['chatBox', 'privConvBox', 'staffConvBox', 'clienteHiloBox'];
+
+    function _aplicarACajas() {
+        var patron = _patronRepetido();
+        _IDS_CHAT.forEach(function(id) {
+            var box = document.getElementById(id);
+            if (!box || box._wmOk) return;
+            box._wmOk = true;
+            var pos = window.getComputedStyle(box).position;
+            if (!pos || pos === 'static') box.style.position = 'relative';
+            var capa = document.createElement('div');
+            capa.setAttribute('aria-hidden', 'true');
+            capa.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;user-select:none;' +
+                'background-image:url(' + patron + ');background-repeat:repeat;';
+            box.insertBefore(capa, box.firstChild);
+        });
+    }
+
+    function _inyectar() {
+        if (!document.querySelector('.chat-container')) return;
+        _aplicarACajas();
+        if (!_moChat && typeof MutationObserver !== 'undefined') {
+            _moChat = true;
+            new MutationObserver(_aplicarACajas).observe(document.body, { childList: true, subtree: true });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _inyectar);
+    } else {
+        _inyectar();
+    }
+})();

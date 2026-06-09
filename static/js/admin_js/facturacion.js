@@ -193,13 +193,18 @@ function renderizarLista() {
     let previewHTML = '';
 
     metodosPagoArray.forEach((m, index) => {
-        const imgSrc = m.file ? URL.createObjectURL(m.file) : (m.url_actual || '');
-        const badge = getBadgeClass(m.entidad);
+        const imgSrc    = m.file ? URL.createObjectURL(m.file) : (m.url_actual || '');
+        const badge     = getBadgeClass(m.entidad);
+        const logoSrc   = getEntidadLogo(m.entidad);
 
         const imgTag = imgSrc
             ? `<img src="${imgSrc}" style="width:50px;height:50px;object-fit:cover;" class="rounded border"
                     onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div style=\\'width:50px;height:50px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;color:#adb5bd;\\'><i class=\\'bi bi-image-slash\\'></i></div>')">`
             : `<div style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;color:#adb5bd;font-size:1.2rem;"><i class="bi bi-image-slash"></i></div>`;
+
+        const logoTag = logoSrc
+            ? `<img src="${logoSrc}" alt="${m.entidad}" style="width:28px;height:28px;object-fit:contain;" onerror="this.style.display='none'">`
+            : '';
 
         const previewTag = imgSrc
             ? `<img src="${imgSrc}" class="img-fluid rounded mb-1" style="max-height:80px;object-fit:contain;"
@@ -212,7 +217,10 @@ function renderizarLista() {
                     <div class="d-flex align-items-center gap-3 flex-grow-1">
                         ${imgTag}
                         <div>
-                            <span class="bank-badge ${badge} mb-1">${m.entidad}</span>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                ${logoTag}
+                                <span class="bank-badge ${badge}">${m.entidad}</span>
+                            </div>
                             <h6 class="m-0 fw-bold">${m.titular}</h6>
                             <small class="text-muted">${m.numero}</small>
                         </div>
@@ -226,7 +234,10 @@ function renderizarLista() {
 
         previewHTML += `
             <div class="invoice-metodo-card">
-                <div class="invoice-metodo-header">${m.entidad}</div>
+                <div class="invoice-metodo-header" style="display:flex;align-items:center;gap:8px;">
+                    ${logoSrc ? `<img src="${logoSrc}" alt="${m.entidad}" style="width:22px;height:22px;object-fit:contain;" onerror="this.style.display='none'">` : ''}
+                    ${m.entidad}
+                </div>
                 <div class="invoice-metodo-body">
                     <div class="invoice-qr-wrap">
                         ${imgSrc
@@ -400,6 +411,17 @@ function getBadgeClass(entidad) {
         'NuBank': 'nubank-bg'
     };
     return map[entidad] || 'bg-secondary text-white';
+}
+
+const _BANCO_LOGOS = {
+    'Nequi':       '/static/uploads/nequi.logo.png',
+    'Daviplata':   '/static/uploads/daviplata.logo.png',
+    'Bancolombia': '/static/uploads/bancolombia.logo.png',
+    'NuBank':      '/static/uploads/nu.logo.png',
+};
+
+function getEntidadLogo(entidad) {
+    return _BANCO_LOGOS[entidad] || null;
 }
 
 (function() {

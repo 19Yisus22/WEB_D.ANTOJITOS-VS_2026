@@ -96,7 +96,7 @@ def login():
                 "segundos":        segundos_restantes,
             }), 429
         else:
-            if intentos >= 75:
+            if intentos >= 20:
                 db.usuario_reset_intentos(cedula)
                 intentos = 0
 
@@ -125,7 +125,7 @@ def login():
             }), 429
 
         next_threshold = next(
-            (t for t in (5, 15, 25, 35, 45, 55, 65, 75) if t > new_intentos),
+            (t for t in (5, 10, 15, 20) if t > new_intentos),
             None
         )
         if next_threshold is not None:
@@ -162,10 +162,35 @@ def registro_google():
         )
         correo = idinfo["email"]
         ahora  = _now()
+        now    = datetime.now(timezone.utc)
 
         user = db.usuario_get_by_correo(correo)
         if user:
-            db.usuario_touch(user["cedula"], ahora)
+            cedula              = str(user["cedula"])
+            bloqueado_hasta_raw = user.get("bloqueado_hasta")
+
+            if bloqueado_hasta_raw:
+                bloqueado_hasta_dt = datetime.fromisoformat(
+                    bloqueado_hasta_raw.replace("Z", "+00:00")
+                )
+                if bloqueado_hasta_dt > now:
+                    segundos_restantes = int((bloqueado_hasta_dt - now).total_seconds())
+                    minutos            = math.ceil(segundos_restantes / 60)
+                    if minutos >= 1440:
+                        tiempo_str = f"{math.ceil(minutos / 1440)} día(s)"
+                    elif minutos >= 60:
+                        tiempo_str = f"{math.ceil(minutos / 60)} hora(s)"
+                    else:
+                        tiempo_str = f"{minutos} minuto(s)"
+                    return jsonify({
+                        "ok":              False,
+                        "error":           f"Cuenta bloqueada. Intenta en {tiempo_str}.",
+                        "bloqueado_hasta": bloqueado_hasta_raw,
+                        "segundos":        segundos_restantes,
+                    }), 429
+
+            db.usuario_reset_intentos(cedula)
+            db.usuario_touch(cedula, ahora)
         else:
             cedula_gen = f"G-{uuid.uuid4().hex[:8]}"
             db.usuario_create({

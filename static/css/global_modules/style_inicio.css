@@ -1200,7 +1200,7 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
 }
 .notif-item-img img { width: 100%; height: 100%; object-fit: cover; }
 .notif-item-info { flex: 1; min-width: 0; }
-.notif-item-info strong { display: block; font-size: 0.78rem; font-weight: 700; color: #1e272e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif-item-info strong { display: block; font-size: 0.78rem; font-weight: 700; color: #1e272e; word-break: break-word; }
 .notif-item-info small  { font-size: 0.7rem; color: #747d8c; }
 .notif-item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .btn-notif-del {

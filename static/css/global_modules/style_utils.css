@@ -1,4 +1,6 @@
-﻿/* ══════════════════════════════════════════════════════
+﻿@import url('./style_responsive.css');
+
+/* ══════════════════════════════════════════════════════
    RESET & NORMALIZACIÓN CROSS-PLATFORM
    Compatible: Windows · Linux · macOS · Android · iOS
    ══════════════════════════════════════════════════════ */
@@ -1928,4 +1930,184 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .color-disponible { color: var(--dk-success) !important; }
 [data-theme="dark"] .color-agotado    { color: var(--dk-danger)  !important; }
 [data-theme="dark"] .linea-disponible { background: linear-gradient(to right, var(--dk-success), transparent) !important; }
+
+/* ══════════════════════════════════════════════════════
+   ANIMACIONES GLOBALES — compatibles con móvil y escritorio
+   ══════════════════════════════════════════════════════ */
+
+@keyframes dantFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes dantFadeInUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dantFadeInDown {
+    from { opacity: 0; transform: translateY(-18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dantFadeInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes dantFadeInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes dantScaleIn {
+    from { opacity: 0; transform: scale(0.88); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@keyframes dantSlideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+@keyframes dantSlideDown {
+    from { transform: translateY(-100%); }
+    to   { transform: translateY(0); }
+}
+@keyframes dantPulseGlow {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%       { transform: scale(1.04); opacity: 0.88; }
+}
+@keyframes dantShake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-6px); }
+    40%       { transform: translateX(6px); }
+    60%       { transform: translateX(-4px); }
+    80%       { transform: translateX(4px); }
+}
+@keyframes dantSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+@keyframes dantBounce {
+    0%, 100% { transform: translateY(0); animation-timing-function: cubic-bezier(0.8,0,1,1); }
+    50%       { transform: translateY(-8px); animation-timing-function: cubic-bezier(0,0,0.2,1); }
+}
+@keyframes dantSkeleton {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+@keyframes dantRing {
+    0%   { transform: rotate(0deg); }
+    10%  { transform: rotate(14deg); }
+    20%  { transform: rotate(-10deg); }
+    30%  { transform: rotate(14deg); }
+    40%  { transform: rotate(-6deg); }
+    50%  { transform: rotate(10deg); }
+    60%  { transform: rotate(0deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.ant-fade-in        { animation: dantFadeIn      0.3s cubic-bezier(0.4,0,0.2,1) both; }
+.ant-fade-in-up     { animation: dantFadeInUp    0.42s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+.ant-fade-in-down   { animation: dantFadeInDown  0.42s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+.ant-fade-in-left   { animation: dantFadeInLeft  0.38s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+.ant-fade-in-right  { animation: dantFadeInRight 0.38s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+.ant-scale-in       { animation: dantScaleIn     0.35s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+.ant-slide-up       { animation: dantSlideUp     0.4s  cubic-bezier(0.22,1,0.36,1) both; }
+.ant-pulse          { animation: dantPulseGlow   1.8s  ease-in-out infinite; }
+.ant-shake          { animation: dantShake       0.48s cubic-bezier(0,0,0.2,1) both; }
+.ant-spin           { animation: dantSpin        0.9s  linear infinite; }
+.ant-bounce         { animation: dantBounce      1.6s  infinite; }
+.ant-ring           { animation: dantRing        1.2s  ease-in-out; }
+
+.ant-skeleton {
+    background: linear-gradient(90deg,
+        rgba(200,200,200,0.15) 25%,
+        rgba(220,220,220,0.28) 50%,
+        rgba(200,200,200,0.15) 75%
+    );
+    background-size: 400% 100%;
+    animation: dantSkeleton 1.6s ease-in-out infinite;
+}
+[data-theme="dark"] .ant-skeleton {
+    background: linear-gradient(90deg,
+        rgba(50,48,60,0.6) 25%,
+        rgba(70,68,82,0.7) 50%,
+        rgba(50,48,60,0.6) 75%
+    );
+    background-size: 400% 100%;
+}
+
+.ant-delay-1 { animation-delay: 0.06s; }
+.ant-delay-2 { animation-delay: 0.12s; }
+.ant-delay-3 { animation-delay: 0.20s; }
+.ant-delay-4 { animation-delay: 0.28s; }
+.ant-delay-5 { animation-delay: 0.38s; }
+.ant-delay-6 { animation-delay: 0.50s; }
+
+.ant-smooth {
+    transition:
+        transform 260ms cubic-bezier(0.4,0,0.2,1),
+        box-shadow 260ms cubic-bezier(0.4,0,0.2,1),
+        opacity    260ms ease;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.ant-hover-lift,
+.ant-hover-scale,
+.ant-hover-glow,
+.ant-hover-bright {
+    transition:
+        transform 180ms cubic-bezier(0.4,0,0.2,1),
+        box-shadow 180ms ease,
+        filter     150ms ease;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .ant-hover-lift:hover  { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.13); }
+    .ant-hover-scale:hover { transform: scale(1.025); }
+    .ant-hover-glow:hover  { box-shadow: 0 0 0 3px rgba(211,84,0,0.22), 0 6px 20px rgba(211,84,0,0.15); }
+    .ant-hover-bright:hover { filter: brightness(1.07); }
+}
+
+.ant-hover-lift:active,
+.ant-hover-scale:active {
+    transform: scale(0.97) !important;
+    transition-duration: 80ms !important;
+}
+
+.ant-no-flicker {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-perspective: 1000;
+    perspective: 1000;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+@media (max-width: 600px) {
+    .ant-fade-in-up    { animation-duration: 0.35s; }
+    .ant-fade-in-left,
+    .ant-fade-in-right { animation-duration: 0.32s; }
+    .ant-scale-in      { animation-duration: 0.3s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ant-fade-in, .ant-fade-in-up, .ant-fade-in-down,
+    .ant-fade-in-left, .ant-fade-in-right, .ant-scale-in,
+    .ant-slide-up, .ant-shake, .ant-ring {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+    .ant-pulse, .ant-bounce, .ant-spin, .ant-skeleton {
+        animation-duration: 0.01ms !important;
+    }
+    .ant-smooth,
+    .ant-hover-lift, .ant-hover-scale,
+    .ant-hover-glow, .ant-hover-bright {
+        transition: none !important;
+    }
+}
 

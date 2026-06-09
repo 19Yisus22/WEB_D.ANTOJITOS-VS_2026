@@ -303,6 +303,45 @@ footer {
     max-width: 500px;
 }
 
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 300;
+    background: var(--secondary);
+    color: var(--white);
+    border: none;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+    transition: var(--transition);
+    -webkit-tap-highlight-color: transparent;
+}
+.menu-toggle:hover { background: var(--primary); transform: scale(1.06); }
+.menu-toggle:active { transform: scale(0.95); }
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.48);
+    z-index: 250;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: fadeOverlay .25s ease both;
+}
+@keyframes fadeOverlay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.sidebar-overlay.activo { display: block; }
+
 @media (max-width: 1200px) {
     aside { width: 100px; }
     aside span, aside h1 { display: none; }
@@ -310,8 +349,21 @@ footer {
     .card-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
-    aside { display: none; }
-    main { padding: 1.5rem 1rem; }
+    aside {
+        position: fixed;
+        left: -300px;
+        top: 0;
+        height: 100vh;
+        width: 270px;
+        z-index: 260;
+        overflow-y: auto;
+        transition: left 0.38s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    aside span, aside h1 { display: initial; }
+    .nav-item { justify-content: flex-start; padding: 14px 20px; }
+    aside.abierto { left: 0; }
+    .menu-toggle { display: flex; }
+    main { padding: 1.5rem 1rem; padding-top: 4.5rem; }
     h2 { font-size: 1.6rem; gap: 12px; }
     .intro-text { font-size: 1rem; margin-bottom: 2rem; }
     .card { padding: 1.4rem; min-height: 0; border-radius: 20px; }
@@ -321,7 +373,7 @@ footer {
     .footer-content { flex-direction: column; text-align: center; gap: 10px; padding: 0 1rem; }
 }
 @media (max-width: 480px) {
-    main { padding: 1rem 0.75rem; }
+    main { padding: 1rem 0.75rem; padding-top: 4.5rem; }
     h2 { font-size: 1.35rem; }
     .card { padding: 1.1rem; }
     .feature-list li { font-size: 0.92rem; padding-left: 28px; }

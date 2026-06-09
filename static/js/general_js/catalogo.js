@@ -245,53 +245,46 @@ function renderProductos(filterText = '') {
 
 function crearCardProductoHTML(p, prefix = "") {
     const col = document.createElement("div");
-    col.className = `col-md-6 col-lg-4 mb-2 fade-in`;
+    col.className = `col-6 col-md-4 col-lg-3 mb-3 fade-in`;
     col.dataset.id = p.id_producto;
     const isAgotado = p.stock <= 0;
-    const esFav = favoritos.includes(p.id_producto.toString());
     const imgUrl = (p.imagen_url && p.imagen_url.startsWith('http')) ? p.imagen_url : '';
-    const uniqueId = `${prefix}-${p.id_producto}`;
     const imgHTML = imgUrl
         ? `<img src="${imgUrl}" alt="${p.nombre}" loading="lazy"
-               style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s ease;"
-               onload="this.style.opacity='1';this.nextElementSibling&&(this.nextElementSibling.style.display='none')"
-               onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')">
-           <div class="img-not-available" style="display:flex;position:absolute;inset:0;"><i class="bi bi-image-slash"></i><span>${t('status.no_image')}</span></div>`
-        : `<div class="img-not-available" style="position:absolute;inset:0;"><i class="bi bi-image-slash"></i><span>${t('status.no_image')}</span></div>`;
+               style="width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .35s ease;"
+               onload="this.style.opacity='1'"
+               onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')">`
+        : '';
     col.innerHTML = `
-        <div class="card h-100 product-card shadow-sm ${isAgotado ? 'producto-gris' : ''}" style="border-radius: 20px; border: 1px solid rgba(0,0,0,0.05);">
-            <div class="img-wrapper position-relative overflow-hidden" style="height: 200px; border-radius: 20px 20px 0 0;">
-                <button class="btn-favorito-floating btn-fav-toggle" id="fav-btn-${uniqueId}" data-id="${p.id_producto}">
-                    <i class="bi ${esFav ? 'bi-heart-fill text-danger' : 'bi-heart text-muted'}"></i>
-                </button>
+        <div class="card product-card ${isAgotado ? 'producto-gris' : ''}" style="cursor:pointer;border-radius:20px;border:1px solid rgba(0,0,0,0.05);">
+            <div class="img-wrapper position-relative overflow-hidden" style="border-radius:20px 20px 0 0;">
                 ${imgHTML}
+                <div class="img-not-available" style="${imgUrl ? 'display:none;' : ''}position:absolute;inset:0;">
+                    <i class="bi bi-image-slash"></i><span>${t('status.no_image')}</span>
+                </div>
                 ${isAgotado ? `<div class="letrero-agotado">${t('cat.out_stock')}</div>` : ''}
             </div>
-            <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="fw-bold mb-0">${p.nombre}</h6>
-                    <span class="badge bg-light text-warning shadow-sm">${fmtCOP(p.precio)}</span>
-                </div>
-                <div class="text-muted small mb-3">${p.description || p.descripcion || ''}</div>
-                <div class="mb-3">
-                    <small class="${p.stock < 5 ? 'text-danger' : 'text-success'} fw-bold">${t('cat.stock')}: ${p.stock}</small>
-                </div>
+            <div class="card-body p-2 d-flex flex-column gap-1">
+                <h6 class="fw-bold mb-0" style="font-size:0.85rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;">${p.nombre}</h6>
+                <span class="badge mb-1" style="background:rgba(243,156,18,0.12);color:var(--primary-color,#d35400);font-size:0.82rem;font-weight:700;align-self:flex-start;">${fmtCOP(p.precio)}</span>
                 ${!isAgotado ? `
-                    <div class="d-flex gap-2 align-items-center">
-                        <div class="modern-quantity-control">
-                            <button class="qty-btn btn-disminuir">-</button>
-                            <input type="number" readonly value="1" class="cantidad" style="width: 30px; border: none; text-align: center; background: transparent;">
-                            <button class="qty-btn btn-aumentar">+</button>
-                        </div>
-                        <button class="btn btn-warning flex-grow-1 text-white fw-bold btn-agregar-modern">${t('cat.add')} <i class="bi bi-cart-plus"></i></button>
+                    <div class="modern-quantity-control mx-auto mt-1">
+                        <button class="qty-btn btn-disminuir">-</button>
+                        <input type="number" readonly value="1" class="cantidad" style="width:28px;border:none;text-align:center;background:transparent;font-size:0.85rem;">
+                        <button class="qty-btn btn-aumentar">+</button>
                     </div>
-                ` : `<button class="btn btn-secondary w-100 disabled" disabled>${t('cat.out_stock')}</button>`}
+                    <button class="btn btn-warning text-white fw-bold btn-agregar-modern py-1 mt-1" style="font-size:0.78rem;border-radius:12px;">
+                        ${t('cat.add')} <i class="bi bi-cart-plus"></i>
+                    </button>
+                ` : `<button class="btn btn-secondary w-100 disabled py-1 mt-1" style="font-size:0.78rem;border-radius:12px;" disabled>${t('cat.out_stock')}</button>`}
             </div>
         </div>`;
-    col.querySelector(".btn-fav-toggle").onclick = (e) => {
-        e.preventDefault();
-        toggleFavorito(p.id_producto);
-    };
+    const card = col.querySelector('.product-card');
+    card._prodData = p;
+    card.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-agregar-modern,.qty-btn,.cantidad,.btn-disminuir,.btn-aumentar,.btn-secondary')) return;
+        abrirModalProducto(this._prodData);
+    });
     return col;
 }
 
@@ -372,6 +365,172 @@ function agregarEventosProductos() {
             if (parseInt(input.value) > 1) input.value = parseInt(input.value) - 1;
         };
     });
+}
+
+function _crearModalCatalogo() {
+    if (document.getElementById('modalDetalleProd')) return;
+    const el = document.createElement('div');
+    el.id = 'modalDetalleProd';
+    el.className = 'modal fade';
+    el.setAttribute('tabindex', '-1');
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = `
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header border-0 pb-0 px-4 pt-3">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 pt-2">
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <div class="modal-prod-img-wrap">
+                                <img id="mprodImg" alt="" style="width:100%;height:100%;object-fit:contain;">
+                                <div id="mprodImgNo" class="mprod-no-img" style="display:none;">
+                                    <i class="bi bi-image-slash" style="font-size:2.5rem;"></i>
+                                    <small>Sin imagen</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7 d-flex flex-column gap-3">
+                            <div>
+                                <h4 id="mprodNombre" class="fw-bold mb-1"></h4>
+                                <div id="mprodPrecio" class="fs-5 fw-bold" style="color:var(--primary-color,#d35400);"></div>
+                            </div>
+                            <small id="mprodStock" class="fw-bold"></small>
+                            <p id="mprodDesc" class="text-muted mb-0" style="font-size:0.9rem;line-height:1.6;white-space:pre-wrap;"></p>
+                            <div id="mprodCtrl" class="d-flex flex-column gap-2 mt-auto">
+                                <div class="modern-quantity-control">
+                                    <button class="qty-btn" id="mprodMenos">-</button>
+                                    <input type="number" readonly value="1" id="mprodCant" class="cantidad" style="width:40px;border:none;text-align:center;background:transparent;font-weight:700;font-size:1rem;">
+                                    <button class="qty-btn" id="mprodMas">+</button>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button id="mprodFav" class="btn btn-outline-danger flex-shrink-0" style="border-radius:12px;padding:0.5rem 0.9rem;">
+                                        <i class="bi bi-heart"></i>
+                                    </button>
+                                    <button id="mprodAgregar" class="btn btn-warning text-white fw-bold flex-grow-1" style="border-radius:12px;font-size:0.9rem;">
+                                        ${t('cat.add')} <i class="bi bi-cart-plus ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="mprodAgotado" style="display:none;">
+                                <button class="btn btn-secondary w-100 disabled" disabled>${t('cat.out_stock')}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    document.body.appendChild(el);
+    document.getElementById('mprodMenos').onclick = () => {
+        const inp = document.getElementById('mprodCant');
+        if (parseInt(inp.value) > 1) inp.value = parseInt(inp.value) - 1;
+    };
+    document.getElementById('mprodMas').onclick = () => {
+        const inp = document.getElementById('mprodCant');
+        const max = parseInt(inp.dataset.stock || 99);
+        if (parseInt(inp.value) < max) inp.value = parseInt(inp.value) + 1;
+        else showMessage(t('cat.no_stock') || 'Sin stock suficiente', true);
+    };
+}
+
+function abrirModalProducto(p) {
+    _crearModalCatalogo();
+    const prod = productos.find(x => x.id_producto == p.id_producto) || p;
+    const isAgotado = prod.stock <= 0;
+
+    document.getElementById('mprodNombre').textContent = prod.nombre;
+    document.getElementById('mprodPrecio').textContent = fmtCOP(prod.precio);
+    document.getElementById('mprodDesc').textContent = prod.description || prod.descripcion || '';
+
+    const stockEl = document.getElementById('mprodStock');
+    stockEl.textContent = `${t('cat.stock')}: ${prod.stock}`;
+    stockEl.className = `fw-bold ${prod.stock < 5 ? 'text-danger' : 'text-success'}`;
+
+    const imgEl = document.getElementById('mprodImg');
+    const imgNo  = document.getElementById('mprodImgNo');
+    if (prod.imagen_url && prod.imagen_url.startsWith('http')) {
+        imgEl.src = prod.imagen_url;
+        imgEl.style.display = 'block';
+        imgNo.style.display = 'none';
+        imgEl.onerror = () => { imgEl.style.display = 'none'; imgNo.style.display = 'flex'; };
+    } else {
+        imgEl.style.display = 'none';
+        imgNo.style.display = 'flex';
+    }
+
+    const cantEl = document.getElementById('mprodCant');
+    cantEl.value = 1;
+    cantEl.dataset.stock = prod.stock;
+
+    document.getElementById('mprodCtrl').style.display   = isAgotado ? 'none' : 'flex';
+    document.getElementById('mprodAgotado').style.display = isAgotado ? 'block' : 'none';
+
+    const btnFav = document.getElementById('mprodFav');
+    const esFav  = favoritos.includes(prod.id_producto.toString());
+    btnFav.innerHTML = `<i class="bi ${esFav ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i>`;
+    btnFav.onclick = () => {
+        toggleFavorito(prod.id_producto);
+        const ahora = favoritos.includes(prod.id_producto.toString());
+        btnFav.innerHTML = `<i class="bi ${ahora ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i>`;
+    };
+
+    const btnAgregar = document.getElementById('mprodAgregar');
+    btnAgregar.onclick = async () => {
+        if (isProcessingPurchase) return;
+        initAudioContext();
+        if (!userLogged || userLogged === "false") {
+            showMessage("Inicie sesión para comprar", true);
+            return;
+        }
+        const cantidad = parseInt(cantEl.value);
+        if (cantidad <= 0) return;
+        isProcessingPurchase = true;
+        const original = btnAgregar.innerHTML;
+        btnAgregar.disabled = true;
+        btnAgregar.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
+        try {
+            const res = await fetch("/guardar_catalogo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productos: [{ id_producto: prod.id_producto, cantidad }] })
+            });
+            if (res.ok) {
+                prod.stock -= cantidad;
+                actualizarContadorCarrito(cantidad);
+                mostrarToastPublicidad(
+                    prod.imagen_url || '/static/uploads/logo.png',
+                    '🛒 Añadido al carrito',
+                    `${cantidad}x ${prod.nombre} — ${fmtCOP(prod.precio * cantidad)}`
+                );
+                if (prod.stock <= 0) {
+                    mostrarAlertaPublica({
+                        titulo:   '¡Producto Agotado!',
+                        mensaje:  `${prod.nombre} ya no tiene stock disponible`,
+                        imagen:   prod.imagen_url || '/static/uploads/logo.png',
+                        tipo:     'error',
+                        duracion: 6000,
+                        idUnico:  `agotado-${prod.id_producto}-${Date.now()}`,
+                        sonido:   true,
+                    });
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalDetalleProd'))?.hide();
+                renderProductos(searchInput.value);
+            } else {
+                const err = await res.json();
+                showMessage(err.message || 'Error al añadir', true);
+                await cargarProductos();
+            }
+        } catch {
+            showMessage('Error de conexión', true);
+        } finally {
+            isProcessingPurchase = false;
+            btnAgregar.disabled = false;
+            btnAgregar.innerHTML = original;
+        }
+    };
+
+    new bootstrap.Modal(document.getElementById('modalDetalleProd')).show();
 }
 
 window.addEventListener('stockActualizado', (e) => {

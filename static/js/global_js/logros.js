@@ -136,58 +136,15 @@
     }
 
 
-    async function _sincContadores(contadores) {
-        if (!contadores || !Object.keys(contadores).length) return;
-        try {
-            await fetch('/logros/contadores', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(contadores),
-            });
-        } catch (_) {}
+    function _colombiaHoy() {
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
     }
 
-
-    async function _cargarYFusionarContadores(modulo) {
+    async function _cargarContadoresDB() {
         try {
             const r = await fetch('/logros/contadores');
             if (!r.ok) return null;
-            const db = await r.json();
-
-
-            const todosModulos = Object.values(_RUTAS_MODULO.reduce((acc, [, m]) => { acc[m] = m; return acc; }, { inicio: 'inicio' }));
-            const modulosUnicos = [...new Set([...todosModulos, modulo])];
-
-            const actualizar = {};
-            for (const m of modulosUnicos) {
-                const vKey = `v_${m}`;
-                const sKey = `s_${m}`;
-                const dbVisit  = parseInt(db[vKey] || 0);
-                const dbStreak = parseInt(db[sKey] || 0);
-                const lsDays   = _lsGetDays(m);
-                const lsSD     = _lsGetStreak(m);
-
-                if (dbVisit > lsDays.length) {
-
-                    const fechasNecesarias = dbVisit - lsDays.length;
-                    for (let i = fechasNecesarias; i >= 1; i--) {
-                        const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
-                        if (!lsDays.includes(d)) lsDays.push(d);
-                    }
-                    _lsSetDays(m, lsDays);
-                }
-                if (dbStreak > (lsSD.streak || 0)) {
-                    _lsSetStreak(m, { streak: dbStreak, lastDay: lsSD.lastDay || new Date().toISOString().slice(0, 10) });
-                }
-
-                const nuevoVisit  = Math.max(dbVisit, lsDays.length);
-                const nuevoStreak = Math.max(dbStreak, lsSD.streak || 0);
-                if (nuevoVisit > dbVisit)  actualizar[vKey] = nuevoVisit;
-                if (nuevoStreak > dbStreak) actualizar[sKey] = nuevoStreak;
-            }
-
-            if (Object.keys(actualizar).length) _sincContadores(actualizar);
-            return db;
+            return await r.json();
         } catch (_) {
             return null;
         }
@@ -203,10 +160,9 @@
     (function () {
         const modulo = _moduloActual();
         if (!modulo) return;
-        const hoy = new Date().toISOString().slice(0, 10);
+        const hoy = _colombiaHoy();
 
-
-        _cargarYFusionarContadores(modulo).then(() => {
+        _cargarContadoresDB().then((dbContadores) => {
             let days = _lsGetDays(modulo);
             const esDiaNuevo = !days.includes(hoy);
             if (esDiaNuevo) {
@@ -217,18 +173,17 @@
             let sd = _lsGetStreak(modulo);
             let streak = sd.streak || 0;
             if (esDiaNuevo) {
-                const ayer = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-                streak = sd.lastDay === ayer ? streak + 1 : 1;
+                const ayer = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                ayer.setDate(ayer.getDate() - 1);
+                const ayerStr = ayer.toLocaleDateString('en-CA');
+                streak = sd.lastDay === ayerStr ? streak + 1 : 1;
                 _lsSetStreak(modulo, { streak, lastDay: hoy });
             }
 
-            const visitCount  = days.length;
-            const streakCount = streak;
-
-
-            if (esDiaNuevo) {
-                _sincContadores({ [`v_${modulo}`]: visitCount, [`s_${modulo}`]: streakCount });
-            }
+            const dbVisit  = dbContadores ? parseInt(dbContadores[`v_${modulo}`] || 0) : 0;
+            const dbStreak = dbContadores ? parseInt(dbContadores[`s_${modulo}`] || 0) : 0;
+            const visitCount  = Math.max(days.length, dbVisit);
+            const streakCount = Math.max(streak, dbStreak);
 
             setTimeout(() => {
                 window.verificarLogros({ tipo: 'visita', modulo, visit_count: visitCount, streak_count: streakCount });
@@ -262,19 +217,8 @@
 
     function _valorCampo(campo, stats, rolStats, contadores) {
         if (!campo) return 0;
-        if (campo.startsWith('v_')) {
-            const modulo = campo.slice(2);
-            const dbVal  = parseInt((contadores || {})[campo] || 0);
-            let lsVal = 0;
-            try { lsVal = _lsGetDays(modulo).length; } catch (_) {}
-            return Math.max(dbVal, lsVal);
-        }
-        if (campo.startsWith('s_')) {
-            const modulo = campo.slice(2);
-            const dbVal  = parseInt((contadores || {})[campo] || 0);
-            let lsVal = 0;
-            try { lsVal = _lsGetStreak(modulo).streak || 0; } catch (_) {}
-            return Math.max(dbVal, lsVal);
+        if (campo.startsWith('v_') || campo.startsWith('s_')) {
+            return parseInt((contadores || {})[campo] || 0);
         }
         if (campo in (stats || {})) return Number(stats[campo]) || 0;
         if (campo in (rolStats || {})) return Number(rolStats[campo]) || 0;
