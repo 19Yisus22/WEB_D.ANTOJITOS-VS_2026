@@ -1297,6 +1297,8 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     display: flex;
     align-items: center;
     flex-shrink: 0;
+    width: max-content;
+    min-width: max-content;
     animation: ciScroll 28s linear infinite;
     -webkit-animation: ciScroll 28s linear infinite;
     will-change: transform;
