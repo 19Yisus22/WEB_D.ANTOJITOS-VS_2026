@@ -270,6 +270,7 @@ function crearCardProductoHTML(p, prefix = "") {
             <div class="card-body p-2 d-flex flex-column gap-1 align-items-center text-center">
                 <h6 class="fw-bold mb-0 w-100" style="font-size:0.85rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;">${p.nombre}</h6>
                 <span class="badge mb-1" style="background:rgba(243,156,18,0.12);color:var(--primary-color,#d35400);font-size:0.82rem;font-weight:700;">${fmtCOP(p.precio)}</span>
+                <span class="badge mb-1" style="background:${p.stock <= 0 ? 'rgba(231,76,60,0.1)' : p.stock < 5 ? 'rgba(243,156,18,0.1)' : 'rgba(39,174,96,0.1)'};color:${p.stock <= 0 ? '#c0392b' : p.stock < 5 ? '#e67e22' : '#27ae60'};font-size:0.72rem;font-weight:700;"><i class="bi bi-box-seam me-1"></i>${p.stock} uds.</span>
                 ${!isAgotado ? `
                     <div class="modern-quantity-control mx-auto mt-1">
                         <button class="qty-btn btn-disminuir">-</button>

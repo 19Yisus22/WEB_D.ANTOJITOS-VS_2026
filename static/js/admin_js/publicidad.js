@@ -252,29 +252,33 @@ function agregarCarrusel(url = "", titulo = "", desc = "", id = "") {
     div.dataset.cambioImagen = "false";
     div.dataset.urlActual = url;
     div.innerHTML = `
-        <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
-        <div class="section-content row g-3 m-0 w-100 align-items-center">
+        <div class="drag-handle"><i class="bi bi-grip-vertical fs-5"></i></div>
+        <div class="section-content row g-3 m-0 w-100 align-items-start">
             <div class="col-md-3">
-                <div class="preview-img-box mb-2 border rounded overflow-hidden shadow-sm d-flex align-items-center justify-content-center" style="height:120px;background:#f1f3f5;position:relative;">
+                <div class="preview-img-box mb-2 d-flex align-items-center justify-content-center" style="height:110px;position:relative;">
                     <img src="${url}" class="w-100 h-100 ${!url ? "d-none" : ""}" style="object-fit:cover;"
                         onload="this.classList.remove('d-none');this.nextElementSibling.classList.add('d-none')"
                         onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none')">
                     <div class="placeholder-icon text-center text-muted ${url ? "d-none" : ""}">
-                        <i class="bi bi-image-fill" style="font-size:2.5rem;opacity:0.4;"></i>
-                        <div style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;margin-top:-5px;">Sin Imagen</div>
+                        <i class="bi bi-image-fill" style="font-size:2rem;opacity:0.3;"></i>
+                        <div class="extra-small fw-bold mt-1" style="text-transform:uppercase;letter-spacing:0.5px;">Sin Imagen</div>
                     </div>
                 </div>
-                <input type="file" class="form-control form-control-sm mt-2 shadow-none" accept="image/*" onchange="cambioImg(this)">
+                <input type="file" class="form-control form-control-sm shadow-none" accept="image/*" onchange="cambioImg(this)">
             </div>
             <div class="col-md-9">
-                <div class="pe-3">
-                    <label class="extra-small fw-bold text-muted text-uppercase mb-1">Título</label>
-                    <input type="text" class="form-control mb-2 t-tit fw-bold" placeholder="Título..." value="${titulo}" oninput="actualizarPreview()">
-                    <label class="extra-small fw-bold text-muted text-uppercase mb-1">Descripción</label>
-                    <textarea class="form-control t-des" placeholder="Descripción..." rows="2" oninput="actualizarPreview()">${desc}</textarea>
+                <div class="d-flex flex-column gap-2">
+                    <div>
+                        <label class="extra-small fw-bold text-uppercase mb-1">Título</label>
+                        <input type="text" class="form-control t-tit fw-bold" placeholder="Título de la diapositiva..." value="${titulo}" oninput="actualizarPreview()">
+                    </div>
+                    <div>
+                        <label class="extra-small fw-bold text-uppercase mb-1">Descripción</label>
+                        <textarea class="form-control t-des" placeholder="Descripción..." rows="2" oninput="actualizarPreview()">${desc}</textarea>
+                    </div>
                 </div>
                 <div class="d-flex justify-content-end mt-3">
-                    <button class="btn btn-sm btn-danger px-4 rounded-pill" onclick="borrarSec(this)"><i class="bi bi-trash-fill me-2"></i> ELIMINAR</button>
+                    <button class="btn btn-sm btn-danger px-3 rounded-pill" onclick="borrarSec(this)"><i class="bi bi-trash3-fill me-1"></i> Eliminar</button>
                 </div>
             </div>
         </div>`;
@@ -292,23 +296,29 @@ function agregarSeccion(url = "", titulo = "", id = "") {
     div.dataset.cambioImagen = "false";
     div.dataset.urlActual = url;
     div.innerHTML = `
-        <div class="drag-handle"><i class="bi bi-grip-vertical fs-3"></i></div>
-        <div class="section-content d-flex align-items-center gap-4 w-100 p-2">
-            <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:90px;height:90px;border-radius:50%;min-width:90px;overflow:hidden;background:#f1f3f5;position:relative;">
+        <div class="drag-handle"><i class="bi bi-grip-vertical fs-5"></i></div>
+        <div class="section-content d-flex align-items-center gap-3 w-100">
+            <div class="preview-img-box d-flex align-items-center justify-content-center flex-shrink-0" style="width:82px;height:82px;border-radius:50%;min-width:82px;overflow:hidden;position:relative;">
                 <img src="${url}" class="w-100 h-100 ${!url ? "d-none" : ""}" style="object-fit:cover;"
                     onload="this.classList.remove('d-none');this.nextElementSibling.classList.add('d-none')"
                     onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none')">
-                <div class="placeholder-icon text-center text-muted ${url ? "d-none" : ""}">
-                    <i class="bi bi-image" style="font-size:1.8rem;opacity:0.4;"></i>
+                <div class="placeholder-icon text-muted d-flex flex-column align-items-center justify-content-center ${url ? "d-none" : ""}">
+                    <i class="bi bi-image" style="font-size:1.6rem;opacity:0.35;"></i>
                 </div>
             </div>
             <div class="flex-grow-1">
                 <div class="row g-2 align-items-end">
-                    <div class="col-md-5"><label class="extra-small fw-bold text-muted text-uppercase">Imagen</label><input type="file" class="form-control form-control-sm" accept="image/*" onchange="cambioImg(this)"></div>
-                    <div class="col-md-7"><label class="extra-small fw-bold text-muted text-uppercase">Nombre</label><input type="text" class="form-control t-tit fw-bold" placeholder="Nombre..." value="${titulo}" oninput="actualizarPreview()"></div>
+                    <div class="col-md-5">
+                        <label class="extra-small fw-bold text-uppercase mb-1">Imagen</label>
+                        <input type="file" class="form-control form-control-sm" accept="image/*" onchange="cambioImg(this)">
+                    </div>
+                    <div class="col-md-7">
+                        <label class="extra-small fw-bold text-uppercase mb-1">Nombre</label>
+                        <input type="text" class="form-control t-tit fw-bold" placeholder="Nombre de la tarjeta..." value="${titulo}" oninput="actualizarPreview()">
+                    </div>
                 </div>
             </div>
-            <button class="btn btn-outline-danger border-0 flex-shrink-0" onclick="borrarSec(this)"><i class="bi bi-trash3-fill fs-5"></i></button>
+            <button class="btn btn-outline-danger border-0 flex-shrink-0 rounded-pill px-2" onclick="borrarSec(this)" title="Eliminar"><i class="bi bi-trash3-fill"></i></button>
         </div>`;
     document.getElementById("seccionesContainer").appendChild(div);
     actualizarPreview();
@@ -356,23 +366,23 @@ function agregarInicioCinta(url = "", titulo = "", id = "") {
     div.dataset.cambioImagen = "false";
     div.dataset.urlActual = url;
     div.innerHTML = `
-        <div class="drag-handle"><i class="bi bi-grip-vertical fs-4"></i></div>
-        <div class="section-content d-flex align-items-center gap-3 w-100 py-2 px-3 border rounded" style="background:#fff8f0;">
-            <div class="preview-img-box shadow-sm border d-flex align-items-center justify-content-center" style="width:56px;height:56px;border-radius:50%;min-width:56px;overflow:hidden;background:#fff3e0;position:relative;">
+        <div class="drag-handle"><i class="bi bi-grip-vertical fs-5"></i></div>
+        <div class="section-content d-flex align-items-center gap-3 w-100">
+            <div class="preview-img-box d-flex align-items-center justify-content-center flex-shrink-0" style="width:52px;height:52px;border-radius:50%;min-width:52px;overflow:hidden;background:rgba(211,84,0,0.06);position:relative;">
                 <img src="${url}" class="w-100 h-100 ${!url ? "d-none" : ""}" style="object-fit:cover;"
                     onload="this.classList.remove('d-none');if(this.nextElementSibling)this.nextElementSibling.classList.add('d-none');"
                     onerror="this.classList.add('d-none');if(this.nextElementSibling)this.nextElementSibling.classList.remove('d-none');">
-                <div class="placeholder-icon text-muted ${url ? "d-none" : ""}">
-                    <i class="bi bi-image" style="font-size:1.4rem;opacity:0.5;color:#d35400;"></i>
+                <div class="placeholder-icon d-flex align-items-center justify-content-center ${url ? "d-none" : ""}">
+                    <i class="bi bi-image" style="font-size:1.3rem;opacity:0.45;color:#d35400;"></i>
                 </div>
             </div>
             <div class="flex-grow-1">
                 <div class="row g-2 align-items-center">
                     <div class="col-md-5"><input type="file" class="form-control form-control-sm" accept="image/*" onchange="cambioImg(this)"></div>
-                    <div class="col-md-7"><input type="text" class="form-control form-control-sm t-tit fw-bold" placeholder="Nombre (ej: Nequi)..." value="${titulo}"></div>
+                    <div class="col-md-7"><input type="text" class="form-control form-control-sm t-tit fw-bold" placeholder="Descripción..." value="${titulo}"></div>
                 </div>
             </div>
-            <button class="btn btn-sm text-danger border-0" onclick="borrarSec(this)"><i class="bi bi-x-circle-fill fs-5"></i></button>
+            <button class="btn btn-sm text-danger border-0 rounded-circle p-1" onclick="borrarSec(this)" title="Eliminar"><i class="bi bi-x-circle-fill" style="font-size:1.1rem;"></i></button>
         </div>`;
     document.getElementById("inicioCintaContainer").appendChild(div);
 }

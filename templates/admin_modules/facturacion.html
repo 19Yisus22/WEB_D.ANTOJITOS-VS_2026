@@ -70,7 +70,8 @@
 
                             <label class="form-label d-flex align-items-center gap-2">
                                 <img src="{{ url_for('static', filename='uploads/bre-b.logo.png') }}"
-                                     alt="BRE-B" style="height:20px;width:auto;object-fit:contain;flex-shrink:0;">
+                                     alt="BRE-B" style="height:22px;width:auto;object-fit:contain;flex-shrink:0;border-radius:4px;padding:1px 3px;background:rgba(211,84,0,0.08);border:1px solid rgba(211,84,0,0.2);"
+                                     onerror="this.style.display='none'">
                                 Llaves BRE-B
                             </label>
                             <select id="tieneClave" class="form-select mb-2" onchange="toggleCampoClave(this)">

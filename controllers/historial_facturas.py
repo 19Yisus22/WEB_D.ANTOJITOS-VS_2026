@@ -73,6 +73,7 @@ def todas_facturas_page():
             enr = _enriquecer_factura(f)
             enr["cliente_nombre"]   = f"{usr.get('nombre','')} {usr.get('apellido','')}".strip()
             enr["username_cliente"] = str(usr.get("username") or "")
+            enr["correo"]           = str(usr.get("correo") or "")
             enr["telefono"]         = str(usr.get("telefono") or "")
             enr["direccion"]        = str(usr.get("direccion") or "")
             resultado.append(enr)
@@ -94,6 +95,7 @@ def obtener_facturas_page():
             enriquecida = _enriquecer_factura(f)
             enriquecida["cliente_nombre"]   = f"{user_data.get('nombre','')} {user_data.get('apellido','')}".strip()
             enriquecida["username_cliente"] = str(user_data.get("username") or "")
+            enriquecida["correo"]           = str(user_data.get("correo") or "")
             enriquecida["telefono"]         = str(user_data.get("telefono") or "")
             enriquecida["direccion"]        = str(user_data.get("direccion") or "")
             resultado.append(enriquecida)
@@ -136,6 +138,7 @@ def buscar_facturas_page():
                 enr = _enriquecer_factura(f)
                 enr["cliente_nombre"]   = nombre_completo
                 enr["username_cliente"] = str(user_data.get("username") or "")
+                enr["correo"]           = str(user_data.get("correo") or "")
                 enr["telefono"]         = str(user_data.get("telefono") or "")
                 enr["direccion"]        = str(user_data.get("direccion") or "")
                 resultado.append(enr)
@@ -167,6 +170,7 @@ def buscar_facturas_page():
             enr = _enriquecer_factura(f)
             enr["cliente_nombre"]   = nombre_completo
             enr["username_cliente"] = str(usuario.get("username") or "")
+            enr["correo"]           = str(usuario.get("correo") or "")
             enr["telefono"]         = str(usuario.get("telefono") or "")
             enr["direccion"]        = str(usuario.get("direccion") or "")
             resultado.append(enr)
@@ -216,6 +220,7 @@ def buscar_facturas_por_numero_page():
                 enr = _enriquecer_factura(f)
                 enr["cliente_nombre"]   = f"{usr.get('nombre','')} {usr.get('apellido','')}".strip()
                 enr["username_cliente"] = str(usr.get("username") or "")
+                enr["correo"]           = str(usr.get("correo") or "")
                 enr["telefono"]         = str(usr.get("telefono") or "")
                 enr["direccion"]        = str(usr.get("direccion") or "")
                 resultado.append(enr)
@@ -229,6 +234,7 @@ def buscar_facturas_por_numero_page():
                 enr = _enriquecer_factura(f)
                 enr["cliente_nombre"]   = nombre_c
                 enr["username_cliente"] = str(user_data.get("username") or "")
+                enr["correo"]           = str(user_data.get("correo") or "")
                 enr["telefono"]         = str(user_data.get("telefono") or "")
                 enr["direccion"]        = str(user_data.get("direccion") or "")
                 resultado.append(enr)

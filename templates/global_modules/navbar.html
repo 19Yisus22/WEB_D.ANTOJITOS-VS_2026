@@ -13,6 +13,7 @@
             </a>
 
             <div class="navbar-actions">
+
                 {% if session.get('user') and session.get('rol') == 'cliente' %}
                 <button id="navClientBellBtn" title="Mis notificaciones"
                         onclick="toggleClientNotifPanel()"
@@ -162,7 +163,7 @@
                     </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link nav-icon-link" href="/comentarios_page">
+                        <a id="navSugLink" class="nav-link nav-icon-link" href="/comentarios_page">
                             <i class="bi bi-chat-dots"></i>
                             <span class="nav-label" data-i18n="nav.suggest">Sugerencias</span>
                             <span id="navSugerenciasBadge" class="cart-badge-overlap" style="display:none;">0</span>

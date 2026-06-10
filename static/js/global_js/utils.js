@@ -295,7 +295,7 @@ function mostrarAlertaPublica({
                           tipo === 'success'    ? '#27ae60' : '#d35400';
     const iconClass     = esError            ? 'bi-exclamation-triangle-fill' :
                           tipo === 'favorito' ? 'bi-heart-fill'               :
-                          tipo === 'bienvenida'? 'bi-emoji-smile-fill'        :
+                          tipo === 'bienvenida'? 'bi-stars'        :
                           tipo === 'success'  ? 'bi-check-circle-fill'        : 'bi-megaphone-fill';
     const tituloFinal   = titulo || (esError ? 'Aviso' : "D'Antojitos");
     const bgToast       = isDark ? 'rgba(22,22,26,0.97)' : 'rgba(255,255,255,0.97)';
@@ -706,7 +706,6 @@ async function cargarNotificacionesSistema() {
             li.style.cursor = 'pointer';
             li.dataset.pedidoId    = id;
             li.dataset.pedidoClave = clave;
-            li.onclick = (e) => { if (!e.target.closest('.btn-notif-visto')) { _savePedidoVisto(clave); window.location.href = '/pedidos_page'; } };
             li.innerHTML = `
                 <div class="notif-item-img" style="background:${cfg.bg};">
                     <i class="bi ${cfg.icon}" style="color:${cfg.color};font-size:1rem;"></i>
@@ -726,6 +725,18 @@ async function cargarNotificacionesSistema() {
                         <i class="bi bi-check2"></i>
                     </button>
                 </div>`;
+            li.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-notif-visto')) return;
+                _savePedidoVisto(li.dataset.pedidoClave);
+                li.style.transition = 'opacity 0.2s, transform 0.2s';
+                li.style.opacity = '0';
+                li.style.transform = 'translateX(18px)';
+                setTimeout(() => {
+                    li.remove();
+                    _updateSistemBadge();
+                }, 220);
+                setTimeout(() => { window.location.href = '/pedidos_page'; }, 260);
+            });
             list.appendChild(li);
         });
     } catch {  }
@@ -1378,9 +1389,12 @@ window._serverConfigPromise = fetch('/api/inicio/config')
     .catch(() => ({}));
 
 function _aplicarVelocidadCintas(speed) {
+    document.documentElement.style.setProperty('--ticker-speed', speed);
     document.querySelectorAll('.payment-track, .promo-track, .ci-track').forEach(track => {
         const base = parseFloat(track.dataset.baseDuration || '25');
         track.style.animationDuration = (base / speed).toFixed(1) + 's';
+        track.style.willChange = 'transform';
+        track.style.webkitAnimationDuration = (base / speed).toFixed(1) + 's';
     });
 }
 
@@ -1391,6 +1405,13 @@ window.setTickerSpeed = function(speed) {
         btn.classList.toggle('active', parseFloat(btn.dataset.speed) === speed);
     });
 };
+
+window.addEventListener('storage', (e) => {
+    if (e.key === '_dantojitos_ticker_speed') {
+        const spd = parseFloat(e.newValue || '1');
+        _aplicarVelocidadCintas(spd);
+    }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     window._serverConfigPromise.then(cfg => {
@@ -1688,6 +1709,11 @@ async function _pollPrivMsgs() {
         const d     = await r.json();
         const cv    = d.cv    || 0;
         const staff = d.staff || 0;
+        const total = cv + staff;
+
+        const _prevKnown  = _lastPrivCv >= 0;
+        const _prevTotal  = Math.max(_lastPrivCv, 0) + Math.max(_lastPrivStaff, 0);
+        const _newMsgs    = _prevKnown && total > _prevTotal && !_isNotifMuted();
 
         _privResetIfZero('cv',       _lastPrivCv,    cv);
         _privResetIfZero('staff',    _lastPrivStaff, staff);
@@ -1699,11 +1725,36 @@ async function _pollPrivMsgs() {
             _updatePrivNotifSistem('staff', staff);
         }
 
+        if (_newMsgs) {
+            const _sugLink = document.getElementById('navSugLink');
+            if (_sugLink) {
+                _sugLink.classList.add('ring-anim');
+                setTimeout(() => _sugLink.classList.remove('ring-anim'), 2500);
+            }
+
+            const _sysBtn = document.getElementById('navBellBtn');
+            if (_sysBtn) {
+                _sysBtn.classList.add('ring-anim');
+                setTimeout(() => _sysBtn.classList.remove('ring-anim'), 2500);
+            }
+
+            const _diff = total - _prevTotal;
+            mostrarAlertaPublica({
+                titulo:  t('chat.new_msg') || 'Chat Privado',
+                mensaje: `${_diff} ${_diff === 1 ? 'mensaje nuevo' : 'mensajes nuevos'} sin leer`,
+                tipo:    'info',
+                duracion: 6000,
+                imagen:  '/static/uploads/logo.ico',
+                idUnico: `priv_msg_${Date.now()}`,
+                sonido:  true,
+                url:     '/comentarios_page',
+            });
+        }
+
         const _navSugBadge = document.getElementById('navSugerenciasBadge');
         if (_navSugBadge) {
-            const _sugTot = cv + staff;
-            _navSugBadge.textContent = _sugTot > 9 ? '9+' : _sugTot;
-            _navSugBadge.style.display = _sugTot > 0 ? 'flex' : 'none';
+            _navSugBadge.textContent = total > 9 ? '9+' : total;
+            _navSugBadge.style.display = total > 0 ? 'flex' : 'none';
         }
         const _cBadge = document.getElementById('subtabClientesBadge');
         if (_cBadge) {

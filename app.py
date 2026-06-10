@@ -8,13 +8,31 @@ import logging
 import cloudinary
 
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
+logging.getLogger('httpx').setLevel(logging.WARNING)
+logging.getLogger('httpcore').setLevel(logging.WARNING)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s — %(name)s — %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
+class _ColorFormatter(logging.Formatter):
+    _RESET = '\033[0m'
+    _BOLD  = '\033[1m'
+    _COLORS = {
+        logging.DEBUG:    '\033[36m',
+        logging.INFO:     '\033[32m',
+        logging.WARNING:  '\033[33m',
+        logging.ERROR:    '\033[31m',
+        logging.CRITICAL: '\033[35m',
+    }
+    def format(self, record):
+        color = self._COLORS.get(record.levelno, self._RESET)
+        level = f'{color}{self._BOLD}{record.levelname:<8}{self._RESET}'
+        module = f'\033[90m{record.name:<20}{self._RESET}'
+        msg = super().format(record)
+        msg_only = record.getMessage()
+        time_str = self.formatTime(record, self.datefmt)
+        return f'\033[90m[{time_str}]{self._RESET} {level} {module} {msg_only}'
+
+_handler = logging.StreamHandler(sys.stdout)
+_handler.setFormatter(_ColorFormatter(datefmt='%H:%M:%S'))
+logging.basicConfig(level=logging.INFO, handlers=[_handler], force=True)
 _logger = logging.getLogger('dantojitos')
 try:
     import flask.cli
@@ -112,6 +130,10 @@ def error_servidor(e):
     _logger.error("500 — %s %s — %s", request.method, request.path, str(e), exc_info=True)
     return _rt("errors/404.html", codigo=500, mensaje="Error interno del servidor"), 500
 
+@app.route("/offline")
+def offline_page():
+    return _rt("errors/offline.html"), 200
+
 @app.route("/admin/preview-error")
 def preview_error_page():
     from flask import session as _s, abort
@@ -128,7 +150,7 @@ def preview_error_page():
 
 _RUTAS_PUBLICAS = frozenset({
     "/login", "/registro", "/registro-google", "/logout",
-    "/refresh", "/obtener-cliente-id",
+    "/refresh", "/obtener-cliente-id", "/offline",
 })
 
 @app.before_request

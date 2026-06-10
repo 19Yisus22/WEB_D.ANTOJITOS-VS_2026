@@ -1304,8 +1304,10 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     will-change: transform;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    transform-style: flat;
-    -webkit-transform-style: flat;
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+    contain: layout style;
+    isolation: isolate;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -1392,6 +1394,13 @@ body.editing [data-config-key]:hover::after { opacity: 1; }
     .ci-item-label { font-size: 0.74rem; }
     .cinta-inicio-marquee::before,
     .cinta-inicio-marquee::after { width: 48px; }
+    .ci-track {
+        -webkit-animation: ciScroll 28s linear infinite;
+        animation: ciScroll 28s linear infinite;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+    }
+    .ci-divider { display: none; }
 }
 
 #btnCampanaNotif {

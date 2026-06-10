@@ -599,26 +599,63 @@ async function cargarPedidos(isAutoRefresh = false) {
     }
 }
 
+function _tasaExito(arr) {
+    const e = arr.filter(p => p.estado === 'Entregado').length;
+    const c = arr.filter(p => p.estado === 'Cancelado').length;
+    const r = e + c;
+    return r > 0 ? Math.round((e / r) * 100) : -1;
+}
+
 function actualizarStatsVentas(pedidos) {
     if (!Array.isArray(pedidos) || !pedidos.length) return;
     const total      = pedidos.length;
     const entregados = pedidos.filter(p => p.estado === 'Entregado').length;
-    const cancelados = pedidos.filter(p => p.estado === 'Cancelado').length;
-    const resueltos  = entregados + cancelados;
     const ventas     = pedidos.filter(p => p.estado === 'Entregado').reduce((s, p) => s + Number(p.total || 0), 0);
-    const porcentaje = resueltos > 0 ? Math.round((entregados / resueltos) * 100) : 0;
 
-    const elTotal = document.getElementById('svTotalPedidos');
-    const elVentas = document.getElementById('svTotalVentas');
+    const ahora    = new Date();
+    const mesAct   = ahora.getMonth();
+    const anioAct  = ahora.getFullYear();
+    const prevDate = new Date(anioAct, mesAct - 1, 1);
+    const mesPrev  = prevDate.getMonth();
+    const anioPrev = prevDate.getFullYear();
+
+    const _filtrarMes = (arr, m, a) => arr.filter(p => {
+        const d = new Date(p.fecha_pedido);
+        return d.getMonth() === m && d.getFullYear() === a;
+    });
+
+    const tasaActual   = _tasaExito(_filtrarMes(pedidos, mesAct,  anioAct));
+    const tasaAnterior = _tasaExito(_filtrarMes(pedidos, mesPrev, anioPrev));
+    const tasaGlobal   = _tasaExito(pedidos);
+
+    const elTotal      = document.getElementById('svTotalPedidos');
+    const elVentas     = document.getElementById('svTotalVentas');
     const elEntregados = document.getElementById('svEntregados');
-    const elPorc = document.getElementById('svPorcentaje');
+    const elPorc       = document.getElementById('svPorcentaje');
 
-    if (elTotal)     elTotal.textContent = total;
+    if (elTotal)      elTotal.textContent = total;
     if (elEntregados) elEntregados.textContent = entregados;
-    if (elVentas)    elVentas.textContent = ventas.toLocaleString('es-CO', { style:'currency', currency:'COP', maximumFractionDigits:0 });
+    if (elVentas)     elVentas.textContent = ventas.toLocaleString('es-CO', { style:'currency', currency:'COP', maximumFractionDigits:0 });
+
     if (elPorc) {
-        elPorc.textContent = `↑ ${porcentaje}%`;
-        elPorc.className = `badge-porcentaje-verde${porcentaje < 50 ? ' badge-porcentaje-bajo' : ''}`;
+        if (tasaActual >= 0 && tasaAnterior >= 0) {
+            const diff   = tasaActual - tasaAnterior;
+            const flecha = diff >= 0 ? '↑' : '↓';
+            elPorc.textContent = `${flecha} ${Math.abs(diff)}%`;
+            elPorc.title       = `Este mes: ${tasaActual}% · Mes anterior: ${tasaAnterior}%`;
+            elPorc.className   = `badge-porcentaje-verde${diff < 0 ? ' badge-porcentaje-bajo' : ''}`;
+        } else if (tasaActual >= 0) {
+            elPorc.textContent = `${tasaActual}%`;
+            elPorc.title       = `Tasa de éxito este mes`;
+            elPorc.className   = `badge-porcentaje-verde${tasaActual < 50 ? ' badge-porcentaje-bajo' : ''}`;
+        } else if (tasaGlobal >= 0) {
+            elPorc.textContent = `${tasaGlobal}%`;
+            elPorc.title       = `Tasa de éxito global`;
+            elPorc.className   = `badge-porcentaje-verde${tasaGlobal < 50 ? ' badge-porcentaje-bajo' : ''}`;
+        } else {
+            elPorc.textContent = '—';
+            elPorc.className   = 'badge-porcentaje-verde';
+        }
     }
 }
 
@@ -1016,16 +1053,52 @@ async function generarReporteConfigurado() {
     doc.setLineWidth(0.5);
     doc.line(resX, finalY + 15, resX + 55, finalY + 15);
 
+    const tasaLista = _tasaExito(lista);
+    let comparacionTxt = '';
+    if (config.mes !== "Todos") {
+        const anioNum = parseInt(config.anio);
+        const mesNum  = parseInt(config.mes);
+        const prevM   = new Date(anioNum, mesNum - 1, 1);
+        const periodoAnterior = pedidosDatosRaw.filter(p => {
+            const d = new Date(p.fecha_pedido);
+            return d.getMonth() === prevM.getMonth() && d.getFullYear() === prevM.getFullYear();
+        });
+        const tasaAnteriorPDF = _tasaExito(periodoAnterior);
+        if (tasaLista >= 0 && tasaAnteriorPDF >= 0) {
+            const diffPDF = tasaLista - tasaAnteriorPDF;
+            comparacionTxt = ` (${diffPDF >= 0 ? '↑' : '↓'} ${Math.abs(diffPDF)}% vs mes ant.)`;
+        }
+    } else {
+        const prevAnio = parseInt(config.anio) - 1;
+        const periodoAnterior = pedidosDatosRaw.filter(p => new Date(p.fecha_pedido).getFullYear() === prevAnio);
+        const tasaAnteriorPDF = _tasaExito(periodoAnterior);
+        if (tasaLista >= 0 && tasaAnteriorPDF >= 0) {
+            const diffPDF = tasaLista - tasaAnteriorPDF;
+            comparacionTxt = ` (${diffPDF >= 0 ? '↑' : '↓'} ${Math.abs(diffPDF)}% vs ${prevAnio})`;
+        }
+    }
+
     doc.setFont(undefined, 'bold');
     doc.setFontSize(10);
     doc.text("RESUMEN CONTABLE", resX, finalY + 22);
     doc.setFontSize(13);
     doc.setTextColor(colorPrimario[0], colorPrimario[1], colorPrimario[2]);
     doc.text(totalVendido.toLocaleString('es-CO', { style: 'currency', currency: 'COP' }), resX, finalY + 32);
-    doc.setFontSize(7);
-    doc.setTextColor(120);
-    doc.setFont(undefined, 'italic');
-    doc.text("* Precio con descuento de cumpleaños aplicado.", resX, finalY + 40);
+    if (tasaLista >= 0) {
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(tasaLista >= 50 ? 35 : 176, tasaLista >= 50 ? 155 : 58, tasaLista >= 50 ? 86 : 46);
+        doc.text(`Tasa de exito: ${tasaLista}%${comparacionTxt}`, resX, finalY + 40);
+        doc.setFont(undefined, 'italic');
+        doc.setFontSize(7);
+        doc.setTextColor(120);
+        if (hayDescuentos) doc.text("* Precio con descuento de cumpleanos aplicado.", resX, finalY + 46);
+    } else {
+        doc.setFontSize(7);
+        doc.setTextColor(120);
+        doc.setFont(undefined, 'italic');
+        if (hayDescuentos) doc.text("* Precio con descuento de cumpleanos aplicado.", resX, finalY + 40);
+    }
     doc.setFont(undefined, 'normal');
 
     const paginas = doc.internal.getNumberOfPages();

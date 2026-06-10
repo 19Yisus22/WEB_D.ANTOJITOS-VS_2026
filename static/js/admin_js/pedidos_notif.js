@@ -45,18 +45,24 @@ function _syncNavBell() {
 }
 
 function _renderNavSistemPanel() {
-    const list  = document.getElementById('sistemList');
+    const list = document.getElementById('sistemList');
     const empty = document.getElementById('sistemEmpty');
     if (!list) return;
+    list.querySelectorAll('[data-notif-id]').forEach(el => el.remove());
     if (_notifLog.length === 0) {
-        list.innerHTML = '';
-        if (empty) empty.style.display = 'flex';
+        if (!list.querySelector('.notif-item')) {
+            if (empty) empty.style.display = 'flex';
+        }
         return;
     }
     if (empty) empty.style.display = 'none';
-    list.innerHTML = _notifLog.map(n => `
-        <li class="notif-item" data-notif-id="${n.id}" style="cursor:pointer;"
-            onclick="_pedidosNotifNav(event,${n.id})">
+    const frag = document.createDocumentFragment();
+    _notifLog.forEach(n => {
+        const li = document.createElement('li');
+        li.className = 'notif-item';
+        li.dataset.notifId = String(n.id);
+        li.style.cursor = 'pointer';
+        li.innerHTML = `
             <div class="notif-item-img">
                 <i class="bi ${PEDIDOS_ICONS[n.tipo] || PEDIDOS_ICONS.info}" style="font-size:1rem;"></i>
             </div>
@@ -65,13 +71,18 @@ function _renderNavSistemPanel() {
                 <small>${n.hora}</small>
             </div>
             <div class="notif-item-actions">
-                <button class="btn-notif-visto"
-                        onclick="event.stopPropagation();_pedidosMarcarVisto(${n.id})"
-                        title="Marcar como visto">
+                <button class="btn-notif-visto" title="Marcar como visto">
                     <i class="bi bi-check2"></i>
                 </button>
-            </div>
-        </li>`).join('');
+            </div>`;
+        li.querySelector('.btn-notif-visto').addEventListener('click', e => {
+            e.stopPropagation();
+            _pedidosMarcarVisto(n.id);
+        });
+        li.addEventListener('click', () => _pedidosNotifNav({target: li}, n.id));
+        frag.appendChild(li);
+    });
+    list.insertBefore(frag, list.firstChild);
 }
 
 window._pedidosNotifNav = function(e, notifId) {
@@ -129,5 +140,4 @@ window.addNotifLog = addNotifLog;
 document.addEventListener('DOMContentLoaded', () => {
     _syncNavBell();
     _renderNavSistemPanel();
-    window.cargarNotificacionesSistema = function() { _renderNavSistemPanel(); };
 });

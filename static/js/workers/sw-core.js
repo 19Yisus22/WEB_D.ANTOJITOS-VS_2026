@@ -90,7 +90,7 @@ async function networkFirst(req, cacheName, timeoutMs = API_TIMEOUT_MS) {
             );
         }
         if (isNav) {
-            const offlineAsset = await caches.match('/static/offline.html');
+            const offlineAsset = await caches.match('/offline');
             if (offlineAsset) return offlineAsset;
         }
         return new Response(offlinePage(isNav), {

@@ -418,7 +418,6 @@ function abrirModalPago(facturaNum, total) {
             </div>
 
             <div class="payment-bank-subtitle" id="paymentBankSubtitle">
-                ${_getBancoLogoTag(first.entidad, 20)}
                 ${t('pay.with')} <strong>${first.entidad}</strong>
             </div>
 
@@ -442,11 +441,19 @@ function abrirModalPago(facturaNum, total) {
             </div>` : ''}
 
             <div id="paymentAccountPanels">
-                ${metodosPagoCache.map((m, i) => `
+                ${metodosPagoCache.map((m, i) => {
+                const _cfg = _getBankConfig(m.entidad);
+                const _logo = _BANCO_LOGOS[m.entidad];
+                return `
                     <div class="payment-account-panel ${i === 0 ? 'active' : ''}" id="bpanel-${i}">
                         <div class="payment-account-info">
                             <div class="payment-account-row">
-                                <span class="payment-account-label">${tDB(m.tipo_cuenta) || t('bill.account')}</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    ${_logo
+                                        ? `<img src="${_logo}" alt="${m.entidad}" style="height:20px;width:auto;object-fit:contain;" onerror="this.style.display='none'">`
+                                        : `<span class="payment-bank-initials-sm" style="background:${_cfg.gradient};color:${_cfg.textColor};">${_cfg.initials}</span>`}
+                                    <span class="payment-account-label">${tDB(m.tipo_cuenta) || t('bill.account')}</span>
+                                </div>
                                 <span class="payment-account-val">${m.titular}</span>
                             </div>
                             <div class="payment-number-row">
@@ -458,7 +465,11 @@ function abrirModalPago(facturaNum, total) {
                             </div>
                             ${m.clave_pago ? `
                             <div class="payment-clave-row">
-                                <img src="/static/uploads/bre-b.logo.png" alt="BRE-B" class="payment-clave-icon" style="height:16px;width:auto;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'">
+                                <img src="/static/uploads/bre-b.logo.png" alt="BRE-B"
+                                     class="payment-clave-icon"
+                                     style="height:18px;width:auto;object-fit:contain;flex-shrink:0;border-radius:3px;"
+                                     onerror="this.parentElement.querySelector('.payment-clave-fallback').style.display='inline-flex';this.style.display='none'">
+                                <span class="payment-clave-fallback" style="display:none;align-items:center;justify-content:center;width:18px;height:18px;background:#2d9e5f;border-radius:3px;font-size:0.6rem;font-weight:900;color:#fff;flex-shrink:0;">B</span>
                                 <span class="payment-clave-label">BRE-B</span>
                                 <span class="payment-number font-monospace">${m.clave_pago}</span>
                                 <button class="payment-copy-btn"
@@ -467,7 +478,8 @@ function abrirModalPago(facturaNum, total) {
                                 </button>
                             </div>` : ''}
                         </div>
-                    </div>`).join('')}
+                    </div>`;
+            }).join('')}
             </div>
 
             <div class="payment-notice">
@@ -502,7 +514,7 @@ window._selectBanco = function(idx) {
     }
 
     const subtitle = document.getElementById('paymentBankSubtitle');
-    if (subtitle) subtitle.innerHTML = `${_getBancoLogoTag(m.entidad, 20)} ${t('pay.with')} <strong>${m.entidad}</strong>`;
+    if (subtitle) subtitle.innerHTML = `${t('pay.with')} <strong>${m.entidad}</strong>`;
 
     document.querySelectorAll('.payment-pager-btn').forEach((t, i) => {
         t.classList.toggle('active', i === idx);
@@ -947,6 +959,7 @@ function mostrarFacturasBuscadas() {
 
         const clienteNombre  = f.cliente_nombre  || '—';
         const clienteCedula  = f.cedula         || '—';
+        const clienteCorreo  = f.correo         || '—';
         const clienteTel     = f.telefono       || '—';
         const clienteDir     = f.direccion      || '—';
         const clienteMetodo  = f.metodo_pago    || '—';
@@ -1012,6 +1025,10 @@ function mostrarFacturasBuscadas() {
                         <div class="inv-client-item">
                             <span class="inv-client-label"><i class="bi bi-telephone-fill"></i> ${t('prof.phone')}</span>
                             <span class="inv-client-val">${clienteTel}</span>
+                        </div>
+                        <div class="inv-client-item">
+                            <span class="inv-client-label"><i class="bi bi-envelope-fill"></i> ${t('prof.email')}</span>
+                            <span class="inv-client-val">${clienteCorreo}</span>
                         </div>
                         <div class="inv-client-item">
                             <span class="inv-client-label"><i class="bi bi-wallet2"></i> ${t('ord.payment')}</span>

@@ -255,6 +255,7 @@ function initLoginForm() {
         if (btn)    btn.disabled = true;
         if (textEl) textEl.style.display = 'none';
         if (loadEl) loadEl.style.display = 'inline-flex';
+        await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 
         try {
             const res  = await fetch('/login', {

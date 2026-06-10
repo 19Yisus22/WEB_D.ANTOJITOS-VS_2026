@@ -328,25 +328,28 @@ function showMessage(msg, isError = false) {
 async function toggleLike(id) {
     if (!USER_CONFIG.isLogged) return showMessage("Inicia sesión para dar like", true);
     const container = document.querySelector(`#msg-${id}`);
-    if(!container) return;
+    if (!container) return;
     const icon = container.querySelector('.btn-like-mini i');
     const span = container.querySelector('.btn-like-mini small');
-    let currentCount = parseInt(span.innerText);
-
-    if (icon.classList.contains('bi-heart')) {
-        icon.classList.replace('bi-heart', 'bi-heart-fill');
-        icon.classList.add('text-danger');
-        span.innerText = currentCount + 1;
-    } else {
-        icon.classList.replace('bi-heart-fill', 'bi-heart');
-        icon.classList.remove('text-danger');
-        span.innerText = Math.max(0, currentCount - 1);
-    }
-
+    const wasLiked = icon.classList.contains('bi-heart-fill');
+    icon.classList.toggle('bi-heart-fill', !wasLiked);
+    icon.classList.toggle('bi-heart', wasLiked);
+    icon.classList.toggle('text-danger', !wasLiked);
+    span.innerText = !wasLiked ? parseInt(span.innerText) + 1 : Math.max(0, parseInt(span.innerText) - 1);
     try {
         const res = await fetch(`/comentarios/${id}/like`, { method: "POST" });
-        if (!res.ok) await cargarComentarios();
-    } catch (e) {
+        if (res.ok) {
+            const data = await res.json();
+            const likes = data.likes || [];
+            const liked = likes.map(String).includes(String(USER_CONFIG.userId));
+            icon.classList.toggle('bi-heart-fill', liked);
+            icon.classList.toggle('bi-heart', !liked);
+            icon.classList.toggle('text-danger', liked);
+            span.innerText = likes.length;
+        } else {
+            await cargarComentarios();
+        }
+    } catch {
         await cargarComentarios();
     }
 }
@@ -358,7 +361,7 @@ function renderComentario(c) {
     const foto = info.foto_perfil || '';
     const nombre = info.nombre ? `${info.nombre} ${info.apellido || ''}` : 'Usuario';
     const fecha = new Date(c.updated_at || c.created_at).toLocaleString('es-CO', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-    const haDadoLike = (c.likes_usuarios || []).includes(USER_CONFIG.userId);
+    const haDadoLike = (c.likes_usuarios || []).map(String).includes(String(USER_CONFIG.userId));
     const wrapper = document.createElement("div");
     wrapper.className = `d-flex mb-4 ${esMio ? 'flex-row-reverse' : 'flex-row'} align-items-end gap-2`;
     wrapper.id = `msg-${c.id}`;
@@ -396,11 +399,8 @@ function renderComentario(c) {
                         `<img src="${a.data}" class="chat-bubble-img" alt="${a.nombre||'imagen'}" onclick="_abrirImagenAmpliada('${a.data}')">`
                       ).join('')}</div>`
                     : ''}
-                ${c.updated_at ? '<span class="text-muted" style="font-size:0.6rem;">(editado)</span>' : ''}
             </div>
-            <!-- Acciones bajo la burbuja: corazón + responder (independientes) -->
             <div class="d-flex align-items-center gap-2 mt-1">
-                <!-- Like -->
                 <div class="btn-like-mini d-flex align-items-center gap-1"
                      onclick="toggleLike('${c.id}')"
                      style="cursor:pointer;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.85);
@@ -408,7 +408,6 @@ function renderComentario(c) {
                     <i class="bi ${haDadoLike ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="font-size:0.9rem;${haDadoLike ? '' : 'color:#888;'}"></i>
                     <small class="fw-bold" style="font-size:0.72rem;color:#555;">${(c.likes_usuarios || []).length}</small>
                 </div>
-                <!-- Responder individualmente (solo admin, independiente del like) -->
                 ${USER_CONFIG.userRol === 'admin' && !esMio ? `
                 <div class="btn-reply-pub d-flex align-items-center gap-1"
                      onclick="responderPublicamente('${c.id}', \`${(nombre).replace(/`/g,"'")}\`, \`${(c.mensaje || '').replace(/`/g,"'").substring(0,60)}\`)"
@@ -902,8 +901,11 @@ async function abrirConversacion(cedulaCliente, nombreCliente, fotoCliente) {
     try {
         const r = await fetch(`/mensajes_privados/hilo/${cedulaCliente}`);
         const msgs = await r.json();
+        const _clearKey = `cv_clear_${USER_CONFIG.userId}_${cedulaCliente}`;
+        const _clearedAt = localStorage.getItem(_clearKey);
+        const _filtrados = _clearedAt ? msgs.filter(m => new Date(m.created_at) > new Date(_clearedAt)) : msgs;
         box.innerHTML = '';
-        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_para === USER_CONFIG.userId, m.id)));
+        _filtrados.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_para === USER_CONFIG.userId, m.id)));
         box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -972,18 +974,16 @@ async function enviarRespuestaVendedor() {
     }
 }
 
-async function limpiarHiloCV(cedulaCliente, ev) {
+function limpiarHiloCV(cedulaCliente, ev) {
     ev?.stopPropagation();
-    mostrarConfirmacionApp(t('confirm.title'), t('confirm.delete'), async () => {
-        try {
-            await fetch(`/mensajes_privados/hilo/${cedulaCliente}/limpiar`, { method: 'DELETE' });
-            _hiloSeleccionado = null;
-            await _cargarHilosVendedor();
-            ['privConvEmpty','privConvHeader','privConvBox','privConvInput'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = id === 'privConvEmpty' ? '' : 'none';
-            });
-        } catch { showMessage(t('notif.error_conn'), true); }
+    mostrarConfirmacionApp(t('confirm.title'), t('confirm.delete'), () => {
+        localStorage.setItem(`cv_clear_${USER_CONFIG.userId}_${cedulaCliente}`, new Date().toISOString());
+        _hiloSeleccionado = null;
+        _cargarHilosVendedor();
+        ['privConvEmpty','privConvHeader','privConvBox','privConvInput'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = id === 'privConvEmpty' ? '' : 'none';
+        });
     });
 }
 
@@ -1050,8 +1050,11 @@ async function abrirConversacionStaff(cedulaDest, nombre, foto, rolLabel) {
     try {
         const r = await fetch(`/mensajes_privados/staff/hilo/${cedulaDest}`);
         const msgs = await r.json();
+        const _staffClearKey = `staff_clear_${USER_CONFIG.userId}_${cedulaDest}`;
+        const _staffClearedAt = localStorage.getItem(_staffClearKey);
+        const _staffFiltrados = _staffClearedAt ? msgs.filter(m => new Date(m.created_at) > new Date(_staffClearedAt)) : msgs;
         box.innerHTML = '';
-        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
+        _staffFiltrados.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
         box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -1121,17 +1124,15 @@ async function enviarMensajeStaff() {
     }
 }
 
-async function limpiarHiloStaff(cedulaDest) {
-    mostrarConfirmacionApp(t('confirm.title'), t('confirm.delete'), async () => {
-        try {
-            await fetch(`/mensajes_privados/staff/hilo/${cedulaDest}/limpiar`, { method: 'DELETE' });
-            _staffSeleccionado = null;
-            await _cargarContactosStaff();
-            ['staffConvEmpty','staffConvHeader','staffConvBox','staffConvInput'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = id === 'staffConvEmpty' ? '' : 'none';
-            });
-        } catch { showMessage(t('notif.error_conn'), true); }
+function limpiarHiloStaff(cedulaDest) {
+    mostrarConfirmacionApp(t('confirm.title'), t('confirm.delete'), () => {
+        localStorage.setItem(`staff_clear_${USER_CONFIG.userId}_${cedulaDest}`, new Date().toISOString());
+        _staffSeleccionado = null;
+        _cargarContactosStaff();
+        ['staffConvEmpty','staffConvHeader','staffConvBox','staffConvInput'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = id === 'staffConvEmpty' ? '' : 'none';
+        });
     });
 }
 
@@ -1168,7 +1169,7 @@ function _renderMsgPrivado(m, esMio, msgId) {
                 <span class="priv-msg-time">${hora}</span>
                 <div class="d-flex gap-1">
                     ${esMio && !m.es_predeterminado ? `<button class="priv-msg-edit" onclick="editarMsgPrivado('${msgId}')" title="${t('btn.edit')}"><i class="bi bi-pencil"></i></button>` : ''}
-                    ${esMio || USER_CONFIG.userRol !== 'cliente' ? `<button class="priv-msg-del" onclick="eliminarMsgPrivado('${msgId}', this)" title="${t('btn.delete')}"><i class="bi bi-trash3"></i></button>` : ''}
+                    ${esMio ? `<button class="priv-msg-del" onclick="eliminarMsgPrivado('${msgId}', this)" title="${t('btn.delete')}"><i class="bi bi-trash3"></i></button>` : ''}
                 </div>
             </div>
         </div>

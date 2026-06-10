@@ -321,6 +321,7 @@ async function finalizarCompra() {
     const originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
     try {
         const res = await fetch("/finalizar_compra", {
             method: "POST",

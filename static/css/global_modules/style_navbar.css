@@ -227,6 +227,8 @@ body { padding-top: 68px; }
     flex-shrink: 0;
 }
 
+#main-navbar-container a.navbar-action-btn { text-decoration: none; }
+
 #main-navbar-container .navbar-action-btn:hover {
     background: #d35400;
     color: #fff;

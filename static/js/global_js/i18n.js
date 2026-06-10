@@ -408,6 +408,7 @@ const LANG_DATA = {
     'pay.ref':           'Referencia de Pago',
     'pay.with':          'Pagar con',
     'pay.send_receipt':  'Envía tu comprobante por',
+    'pay.send_or':       'o',
     'pay.after':         'tras realizar la transferencia',
     'pay.unavailable':   'Canales de pago no disponibles',
     'pay.updating':      'Estamos actualizando nuestras cuentas.',
@@ -432,6 +433,7 @@ const LANG_DATA = {
     'nav.notif_pub':     'Alertas de publicidad',
     'nav.mark_read':     'Marcar todo leído',
     'nav.widgets_edit':  'Organizar widgets',
+    'chat.new_msg':      'Chat Privado',
 
     'pub.title':         'Panel de Publicidad',
     'pub.subtitle':      'Gestiona y filtra todo el contenido de tu marketing digital.',
@@ -1003,6 +1005,7 @@ const LANG_DATA = {
     'pay.ref':           'Payment Reference',
     'pay.with':          'Pay with',
     'pay.send_receipt':  'Send your receipt via',
+    'pay.send_or':       'or',
     'pay.after':         'after completing the transfer',
     'pay.unavailable':   'Payment channels unavailable',
     'pay.updating':      'We\'re updating our accounts.',
@@ -1026,6 +1029,7 @@ const LANG_DATA = {
     'nav.notif_system':  'System Notifications',
     'nav.notif_pub':     'Advertising Alerts',
     'nav.mark_read':     'Mark all as read',
+    'chat.new_msg':      'Private Chat',
     'nav.widgets_edit':  'Arrange Widgets',
 
     'pub.title':         'Advertising Panel',
