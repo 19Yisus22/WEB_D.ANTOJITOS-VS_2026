@@ -371,9 +371,9 @@ function renderComentario(c) {
         .replace(/_(.*?)_/gs,       '<em>$1</em>');
 
     const _comentAvatarEl = foto
-        ? `<img src="" data-profile="${foto}" data-profile-name="${nombre}" data-profile-size="80"
-                alt="${nombre}" class="rounded-circle border shadow-sm" width="38" height="38" style="object-fit:cover;display:block;">`
-        : `<div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;color:#fff;background:linear-gradient(135deg,#d35400,#e67e22);">${nombre.charAt(0).toUpperCase()}</div>`;
+        ? `<img src="" data-profile="${foto}" data-profile-name="${nombre}" data-profile-size="28"
+                alt="${nombre}" class="rounded-circle border shadow-sm" width="28" height="28" style="object-fit:cover;display:block;">`
+        : `<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.8rem;color:#fff;background:linear-gradient(135deg,#d35400,#e67e22);">${nombre.charAt(0).toUpperCase()}</div>`;
 
     wrapper.innerHTML = `
         <div class="contenedor-foto-estado">
@@ -742,6 +742,8 @@ async function enviarMensajeLibreCliente() {
                 _editandoMsgPrivado = null;
                 if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
                 await _cargarHiloCliente();
+            } else {
+                showMessage(t('notif.error_conn') || 'Error al editar. Intenta de nuevo.', true);
             }
             return;
         }
@@ -765,8 +767,6 @@ async function enviarMensajeLibreCliente() {
             body: JSON.stringify(body)
         });
         if (r.ok) {
-            const data = await r.json().catch(() => ({}));
-            if (data.logros_nuevos?.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
             await _cargarHiloCliente();
         } else {
             document.querySelector(`[data-temp-id="${tempId}"]`)?.remove();
@@ -893,6 +893,8 @@ async function enviarRespuestaVendedor() {
                 await abrirConversacion(_hiloSeleccionado,
                     document.querySelector('#privConvHeader strong')?.textContent || '',
                     document.querySelector('#privConvHeader .priv-conv-avatar')?.src || '');
+            } else {
+                showMessage(t('notif.error_conn') || 'Error al editar. Intenta de nuevo.', true);
             }
             return;
         }
@@ -918,8 +920,6 @@ async function enviarRespuestaVendedor() {
             body: JSON.stringify(body)
         });
         if (r.ok) {
-            const data = await r.json().catch(() => ({}));
-            if (data.logros_nuevos?.length > 0 && window.mostrarLogros) window.mostrarLogros(data.logros_nuevos);
             await abrirConversacion(_hiloSeleccionado, nombre, foto);
         } else {
             document.querySelector(`[data-temp-id="${tempId}"]`)?.remove();

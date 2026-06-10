@@ -23,14 +23,9 @@ function setLoading(btn, isLoading, originalText) {
 }
 
 function esCuentaGoogle(usuario) {
+    if (usuario.google_account) return true;
     const authMethod = String(usuario.auth_method || '').toLowerCase();
-    if (authMethod) return authMethod === 'google';
-
-    const contrasena = String(usuario.contrasena || '').trim();
-    if (contrasena.toUpperCase() === 'GOOGLE_AUTH_EXTERNAL') return true;
-    if (contrasena.includes('$') && /^[0-9a-f]{64}\$[0-9a-f]{64}$/i.test(contrasena)) return false;
-
-    return Boolean(usuario.google_id || String(usuario.metodo_auth || '').toLowerCase() === 'google');
+    return authMethod === 'google' || authMethod === 'both';
 }
 
 const passInput = document.getElementById("nuevaContrasena");
@@ -137,11 +132,6 @@ if (btnEliminarMiCuenta) {
 async function ejecutarAutoeleminacion() {
     const btn = document.getElementById("btnEliminarMiCuenta");
     const originalText = btn.innerHTML;
-    const correoUsuario = document.getElementById("correoPerfil")?.value;
-    if (!correoUsuario) {
-        showMessage("No se pudo obtener el correo para eliminar la cuenta", true);
-        return;
-    }
     setLoading(btn, true, originalText);
     try {
         const res = await fetch("/eliminar_mi_cuenta", {
@@ -322,7 +312,7 @@ function _actualizarPassCooldownUI() {
 
 function _habilitarEdicion() {
     inputs.forEach(i => {
-        if (i.id === "correoPerfil" || i.readOnly) return;
+        if (i.readOnly) return;
         i.disabled = false;
     });
     const fechaNac = document.getElementById("fechaNacimientoPerfil");
@@ -663,7 +653,8 @@ function renderUserTable() {
             const rol = u.roles?.nombre_role || u.rol || 'cliente';
             const esYo = String(u.cedula) === String(USER_ID);
             const esGoogle = esCuentaGoogle(u);
-            const metodoRegistro = esGoogle ? 'Google' : 'Email';
+            const esAmbos = String(u.auth_method || '') === 'both';
+            const metodoRegistro = esAmbos ? 'Google + D\'Antojitos' : (esGoogle ? 'Google' : 'Email');
             const _uln = (u.nombre || '?');
             const _uli = _uln.split('').reduce((h,c) => (h<<5)-h+c.charCodeAt(0), 0);
             const _ulp = [['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],['#6d28d9','#8b5cf6'],['#b91c1c','#ef4444'],['#0e7490','#06b6d4']];
@@ -798,6 +789,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+function _vincularConGoogle(response) {
+    const div = document.getElementById('googleVincularBtnDiv');
+    fetch('/perfil/vincular_google', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({credential: response.credential})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            showMessage('Cuenta vinculada con Google correctamente');
+            setTimeout(() => location.reload(), 1800);
+        } else {
+            showMessage(data.error || 'Error al vincular con Google', true);
+            if (div) div.innerHTML = '';
+            _initVincularGoogleBtn();
+        }
+    })
+    .catch(() => showMessage('Error de conexión', true));
+}
+
+function _initVincularGoogleBtn() {
+    if (typeof USER_AUTH_GOOGLE !== 'undefined' && USER_AUTH_GOOGLE) return;
+    const div = document.getElementById('googleVincularBtnDiv');
+    if (!div) return;
+    if (!window.google?.accounts?.id) return;
+    fetch('/obtener-cliente-id')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.client_id) return;
+            google.accounts.id.initialize({
+                client_id: data.client_id,
+                callback:  _vincularConGoogle,
+                context:   'use',
+            });
+            google.accounts.id.renderButton(div, {
+                theme:  'outline',
+                size:   'large',
+                text:   'signin_with',
+                locale: 'es',
+            });
+        })
+        .catch(() => {});
+}
+
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-perfil.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
+    window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-perfil.js').then(() => {}).catch(() => {});});
 }

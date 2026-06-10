@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-gestion-prod-v7';
+const CACHE_NAME = 'dantojitos-gestion-prod-v9';
 
 const PRECACHE = [
     '/gestionar_productos_page',

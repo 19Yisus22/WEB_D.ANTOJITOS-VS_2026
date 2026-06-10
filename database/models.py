@@ -76,7 +76,7 @@ _USR_SELECT = (
     'cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,'
     'direccion,metodo_pago,fecha_creacion,ultima_conexion,contrasena,roles(nombre_role),'
     'last_change_cedula,last_change_username,last_change_nombre,last_change_apellido,'
-    'last_change_contrasena,fecha_nacimiento,intentos_fallidos,bloqueado_hasta,"letraAcc"'
+    'last_change_contrasena,fecha_nacimiento,intentos_fallidos,bloqueado_hasta,google_account'
 )
 
 def usuario_get(cedula: str) -> dict | None:
@@ -94,6 +94,12 @@ def usuario_get_by_username(username: str) -> dict | None:
         .ilike("username", username).limit(1)
     ))
 
+def usuario_get_by_google_account(google_account: str) -> dict | None:
+    return _single(_run(
+        _db().table("usuarios").select(_USR_SELECT)
+        .ilike("google_account", google_account.strip()).limit(1)
+    ))
+
 def usuario_get_by_identifier(identifier: str) -> dict | None:
 
     if not identifier:
@@ -102,6 +108,9 @@ def usuario_get_by_identifier(identifier: str) -> dict | None:
 
     if '@' in raw:
         u = usuario_get_by_correo(raw.lower())
+        if u:
+            return u
+        u = usuario_get_by_google_account(raw.lower())
         if u:
             return u
         return usuario_get_by_username(raw)
@@ -135,7 +144,7 @@ def usuario_buscar_por_nombre(nombre: str) -> dict | None:
 
 def usuario_get_all() -> list:
     return _many(_run(
-        _db().table("usuarios").select('cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,direccion,metodo_pago,fecha_nacimiento,fecha_creacion,ultima_conexion,contrasena,"letraAcc",roles(nombre_role)')
+        _db().table("usuarios").select('cedula,username,imagen_url,nombre,apellido,telefono,correo,id_role,direccion,metodo_pago,fecha_nacimiento,fecha_creacion,ultima_conexion,contrasena,google_account,roles(nombre_role)')
     ))
 
 def usuario_get_web_token(cedula: str) -> dict | None:

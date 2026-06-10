@@ -245,13 +245,13 @@ body {
     position: relative;
     display: flex;
     align-items: center;
-    flex: 1;
-    min-width: 200px;
-    max-width: 400px;
+    flex: 1 1 260px;
+    min-width: 220px;
     background: #f6f2ee;
     border: 1.5px solid #e8e2d9;
     border-radius: 50px;
-    height: 42px;
+    height: 44px;
+    min-height: 44px;
     overflow: hidden;
     transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
 }
@@ -1256,7 +1256,7 @@ body {
     .action-btn { padding: 5px 7px; font-size: 0.75rem; }
     .table-card table tbody td:nth-child(8) .d-flex { gap: 3px !important; flex-wrap: nowrap; }
 
-    .gu-search-wrap { max-width: 100%; }
+    .gu-search-wrap { min-width: 0; width: 100%; flex: 0 0 auto; }
     .gu-toolbar { flex-direction: column; align-items: stretch; }
     .gu-filters { flex-wrap: wrap; }
     .gu-select-wrap { min-width: 130px; flex: 1; }

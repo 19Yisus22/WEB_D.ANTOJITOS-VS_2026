@@ -142,10 +142,10 @@ html, body {
 
 .punto-estado {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 10px;
-    height: 10px;
+    bottom: 1px;
+    right: 1px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     border: 2px solid var(--white);
     z-index: 2;

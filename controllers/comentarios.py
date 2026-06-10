@@ -111,16 +111,7 @@ def crear_comentario():
             "likes_usuarios": [],
             "adjuntos":       adjuntos,
         })
-        try:
-            from helpers.logros_utils import verificar_y_otorgar
-            ctx = {"tipo": "comentario"}
-            if adjuntos:
-                ctx["foto_chat"] = True
-            nuevos = verificar_y_otorgar(usuario["cedula"], ctx)
-        except Exception:
-            nuevos = []
         resp = result[0] if result else {}
-        resp["logros_nuevos"] = nuevos
         return jsonify(resp)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -152,8 +143,7 @@ def eliminar_comentario(id):
         comentario = db.comentario_get(id)
         if not comentario:
             return jsonify({"error": "Comentario no encontrado"}), 404
-        rol = session.get("rol", "")
-        if comentario.get("cedula") != session.get("user_id") and rol != "admin":
+        if comentario.get("cedula") != session.get("user_id"):
             return jsonify({"error": "Sin permiso"}), 403
         db.comentario_delete(id)
         return jsonify({"ok": True})
@@ -241,11 +231,11 @@ def mi_hilo():
 @login_required
 def todos_los_hilos():
     rol = session.get("rol", "")
-    if rol != "vendedor":
+    if rol not in ("vendedor", "admin"):
         return jsonify({"error": "Sin permiso"}), 403
     try:
         mensajes = db.mp_get_todos_hilos()
-        cedulas  = list({m["cedula_cliente"] for m in mensajes})
+        cedulas  = list({m["cedula_de"] for m in mensajes})
         usuarios = db.usuario_get_all()
         info_map = {
             u["cedula"]: {"nombre": f"{u.get('nombre','')} {u.get('apellido','')}".strip(), "imagen": u.get("imagen_url")}
@@ -253,7 +243,7 @@ def todos_los_hilos():
         }
         hilos = {}
         for m in mensajes:
-            cc = m["cedula_cliente"]
+            cc = m["cedula_de"]
             if cc not in hilos:
                 hilos[cc] = {
                     "cedula_cliente": cc,
@@ -262,7 +252,8 @@ def todos_los_hilos():
                     "ultimo_at":      m["created_at"],
                     "no_leidos":      0,
                 }
-            if not m["es_vendedor"] and not m["leido"]:
+            es_msg_cliente = m["cedula_para"] == m["cedula_de"]
+            if es_msg_cliente and not m["leido"]:
                 hilos[cc]["no_leidos"] += 1
         return jsonify(list(hilos.values()))
     except Exception as e:
@@ -273,7 +264,7 @@ def todos_los_hilos():
 @login_required
 def hilo_detalle(cedula_cliente):
     rol = session.get("rol", "")
-    if rol != "vendedor":
+    if rol not in ("vendedor", "admin"):
         return jsonify({"error": "Sin permiso"}), 403
     try:
         mensajes = db.mp_get_conversacion(cedula_cliente)
@@ -314,15 +305,7 @@ def enviar_mensaje_privado():
             es_predeterminado = es_pred,
             adjuntos          = adjuntos,
         )
-        try:
-            from helpers.logros_utils import verificar_y_otorgar
-            ctx = {"tipo": "mensaje_privado"}
-            if adjuntos:
-                ctx["foto_chat"] = True
-            nuevos = verificar_y_otorgar(cedula, ctx)
-        except Exception:
-            nuevos = []
-        return jsonify({"ok": True, "mensaje": nuevo, "logros_nuevos": nuevos})
+        return jsonify({"ok": True, "mensaje": nuevo})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -458,15 +441,7 @@ def staff_enviar():
         return jsonify({"error": "Datos incompletos"}), 400
     try:
         nuevo = db.mp_staff_create(cedula_from=cedula, cedula_to=cedula_to, mensaje=msg or "", adjuntos=adjuntos or None)
-        try:
-            from helpers.logros_utils import verificar_y_otorgar
-            ctx = {"tipo": "mensaje_privado"}
-            if adjuntos:
-                ctx["foto_chat"] = True
-            nuevos = verificar_y_otorgar(cedula, ctx)
-        except Exception:
-            nuevos = []
-        return jsonify({"ok": True, "mensaje": nuevo, "logros_nuevos": nuevos})
+        return jsonify({"ok": True, "mensaje": nuevo})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

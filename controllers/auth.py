@@ -100,9 +100,9 @@ def login():
                 db.usuario_reset_intentos(cedula)
                 intentos = 0
 
-    stored_pw = user.get("contrasena", "")
-    if stored_pw == "GOOGLE_AUTH_EXTERNAL":
-        return jsonify({"ok": False, "error": "Esta cuenta aún no tiene contraseña. Ve a tu perfil → Seguridad y establece una para ingresar manualmente."}), 401
+    stored_pw = user.get("contrasena") or ""
+    if not stored_pw:
+        return jsonify({"ok": False, "error": "Esta cuenta solo puede ingresar con Google. Usa el botón 'Iniciar sesión con Google'."}), 401
 
     if not verify_password(contrasena, stored_pw):
         result = db.usuario_incrementar_intento(cedula)
@@ -160,11 +160,17 @@ def registro_google():
         idinfo = id_token.verify_oauth2_token(
             token, google_requests.Request(), client_id, clock_skew_in_seconds=60
         )
-        correo = idinfo["email"]
+        correo = idinfo["email"].lower()
         ahora  = _now()
         now    = datetime.now(timezone.utc)
 
-        user = db.usuario_get_by_correo(correo)
+        user = db.usuario_get_by_google_account(correo)
+        if not user:
+            user = db.usuario_get_by_correo(correo)
+            if user and not user.get("google_account"):
+                db.usuario_update(str(user["cedula"]), {"google_account": correo})
+                user = db.usuario_get(str(user["cedula"]))
+
         if user:
             cedula              = str(user["cedula"])
             bloqueado_hasta_raw = user.get("bloqueado_hasta")
@@ -194,17 +200,15 @@ def registro_google():
         else:
             cedula_gen = f"G-{uuid.uuid4().hex[:8]}"
             db.usuario_create({
-                "cedula":           cedula_gen,
-                "nombre":           idinfo.get("given_name", ""),
-                "apellido":         idinfo.get("family_name", ""),
-                "correo":           correo,
-                "contrasena":       "GOOGLE_AUTH_EXTERNAL",
-                "metodo_pago":      "Efectivo",
-                "imagen_url":       idinfo.get("picture") or None,
-                "ultima_conexion":  ahora,
-                "letraAcc":         "G",
+                "cedula":          cedula_gen,
+                "nombre":          idinfo.get("given_name", ""),
+                "apellido":        idinfo.get("family_name", ""),
+                "google_account":  correo,
+                "metodo_pago":     "Efectivo",
+                "imagen_url":      idinfo.get("picture") or None,
+                "ultima_conexion": ahora,
             })
-            user = db.usuario_get_by_correo(correo)
+            user = db.usuario_get_by_google_account(correo)
 
         resp = make_response(jsonify({"ok": True, "user": user}))
         _emit_tokens_and_session(user, resp)
@@ -319,7 +323,6 @@ def registro():
             "metodo_pago":     "Efectivo",
             "imagen_url":      None,
             "ultima_conexion": _now(),
-            "letraAcc":        "D",
         }
         if username:
             row["username"] = username
@@ -365,7 +368,6 @@ def logout():
     if user_id:
         try:
             db.usuario_clear_web_token(user_id)
-            db.usuario_touch(user_id, "2000-01-01T00:00:00Z")
         except Exception:
             pass
     session.clear()

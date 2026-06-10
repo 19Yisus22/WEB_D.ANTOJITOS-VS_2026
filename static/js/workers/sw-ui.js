@@ -1,6 +1,6 @@
 ﻿importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-ui-v1';
+const CACHE_NAME = 'dantojitos-ui-v6';
 
 const PRECACHE = [
     '/gestion_usuarios_page',
@@ -22,7 +22,7 @@ const PRECACHE = [
     '/static/js/compiled/design-system.js',
     '/static/js/compiled/theme.js',
     '/static/uploads/logo.ico',
-    '/static/uploads/logo.ico',
+    '/static/uploads/googlogo.ico',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',

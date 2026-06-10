@@ -42,7 +42,7 @@
                         type="search"
                         id="buscarFactura"
                         class="facturas-search-input"
-                        placeholder="{% if rol in ('admin', 'vendedor') %}Buscar por nombre, cédula o @usuario...{% else %}Buscar mis facturas...{% endif %}"
+                        placeholder="{% if rol in ('admin', 'vendedor') %}Buscar por @usuario, cédula o nombre completo...{% else %}Buscar mis facturas...{% endif %}"
                         autocomplete="off">
                 </div>
                 <select id="filtroEstadoFactura" class="facturas-filtro-select">

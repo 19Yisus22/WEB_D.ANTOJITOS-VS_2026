@@ -41,14 +41,15 @@ def listar_usuarios():
         for u in usuarios:
             u["nombre_completo"] = f"{u.get('nombre','')} {u.get('apellido','')}".strip()
             u["rol"]             = u.get("roles", {}).get("nombre_role") if u.get("roles") else None
-            contrasena           = u.pop("contrasena", "")
-            letra_acc            = str(u.get("letraAcc") or "").upper()
-            is_google            = (
-                letra_acc == "G"
-                or str(contrasena).upper() == "GOOGLE_AUTH_EXTERNAL"
-                or str(u.get("cedula", "")).startswith("G-")
-            )
-            u["auth_method"]     = "google" if is_google else "email"
+            u.pop("contrasena", "")
+            has_google           = bool(u.get("google_account"))
+            is_pure_google       = has_google and str(u.get("cedula", "")).startswith("G-")
+            if is_pure_google:
+                u["auth_method"] = "google"
+            elif has_google:
+                u["auth_method"] = "both"
+            else:
+                u["auth_method"] = "email"
             resultado.append(u)
         return jsonify(resultado)
     except Exception as e:
@@ -213,12 +214,18 @@ def download_archivo_usuario(cedula):
 @admin_required
 def eliminar_usuario_admin():
     data   = request.get_json() or {}
+    cedula = (data.get("cedula") or "").strip()
     correo = (data.get("correo") or "").strip().lower()
-    if not correo:
-        return jsonify({"ok": False, "error": "Correo requerido"}), 400
+
+    if not cedula and not correo:
+        return jsonify({"ok": False, "error": "Identificador requerido"}), 400
 
     try:
-        usuario = db.usuario_get_by_correo(correo)
+        if cedula:
+            usuario = db.usuario_get(cedula)
+        else:
+            usuario = db.usuario_get_by_correo(correo)
+
         if not usuario:
             return jsonify({"ok": False, "error": "Usuario no encontrado"}), 404
 

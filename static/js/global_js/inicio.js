@@ -76,8 +76,11 @@ async function monitorearCambiosCatalogo() {
 
 async function cargarMarketing() {
     try {
-        const res = await fetch("/api/publicidad/activa", { cache: "no-store" });
-        const arr = await res.json();
+        const [arr, cfg] = await Promise.all([
+            fetch("/api/publicidad/activa", { cache: "no-store" }).then(r => r.json()),
+            window._serverConfigPromise || Promise.resolve({})
+        ]);
+        const _cintas_speed = parseFloat(cfg.velocidad_cinta || '1');
         if (!Array.isArray(arr)) return;
 
         const secAlFrente  = document.getElementById("seccionesAlFrente");
@@ -104,7 +107,7 @@ async function cargarMarketing() {
 
                 const looped = [...fifoQueue, ...fifoQueue];
                 const baseDuration = Math.max(28, fifoQueue.length * 6);
-                const speed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
+                const speed = _cintas_speed;
                 const duration = (baseDuration / speed).toFixed(1);
 
                 const buildItem = (i, showDivider) => {
@@ -124,6 +127,10 @@ async function cargarMarketing() {
 
                 cintaInicioEl.innerHTML = `<div class="ci-track" data-base-duration="${baseDuration}" style="animation-duration:${duration}s;">${itemsHTML}</div>`;
                 cintaInicioEl.style.display = 'flex';
+                if (_cintas_speed !== 1) {
+                    const _t = cintaInicioEl.querySelector('.ci-track');
+                    if (_t) _t.style.animationDuration = (baseDuration / _cintas_speed).toFixed(1) + 's';
+                }
             } else {
                 cintaInicioEl.style.display = 'none';
             }

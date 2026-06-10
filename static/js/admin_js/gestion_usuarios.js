@@ -9,7 +9,11 @@ const ROLES_CLASS = { admin:'role-admin', vendedor:'role-vendedor', cliente:'rol
 
 function _fecha(iso) {
     if (!iso) return '-';
-    try { return new Date(iso).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' }); } catch { return '-'; }
+    try {
+        const d = new Date(iso);
+        if (d.getFullYear() < 2001) return '—';
+        return d.toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+    } catch { return '-'; }
 }
 
 async function cargarUsuarios() {
@@ -20,7 +24,7 @@ async function cargarUsuarios() {
             ...u,
             rol: u.rol || 'cliente',
 
-            auth_method: String(u.letraAcc || '').toUpperCase() === 'G' ? 'google' : 'email',
+            auth_method: u.auth_method || 'email',
         }));
         _actualizarStats();
         filtrarUsuarios();
@@ -32,7 +36,7 @@ function _actualizarStats() {
     document.getElementById('statAdmins').textContent    = _usuarios.filter(u => u.rol === 'admin').length;
     document.getElementById('statVendedores').textContent= _usuarios.filter(u => u.rol === 'vendedor').length;
     document.getElementById('statClientes').textContent  = _usuarios.filter(u => u.rol === 'cliente').length;
-    document.getElementById('statGoogle').textContent    = _usuarios.filter(u => u.auth_method === 'google').length;
+    document.getElementById('statGoogle').textContent    = _usuarios.filter(u => u.auth_method === 'google' || u.auth_method === 'both').length;
 }
 
 function filtrarUsuarios() {
@@ -41,7 +45,8 @@ function filtrarUsuarios() {
     const auth = document.getElementById('filtroAuth').value;
     const filtrados = _usuarios.filter(u => {
         const texto = `${u.nombre_completo} ${u.correo} ${u.cedula}`.toLowerCase();
-        return (!q || texto.includes(q)) && (!rol || u.rol === rol) && (!auth || u.auth_method === auth);
+        const authMatch = !auth || u.auth_method === auth || u.auth_method === 'both';
+        return (!q || texto.includes(q)) && (!rol || u.rol === rol) && authMatch;
     });
     _paginaUsuarios = 1;
     _renderTabla(filtrados);
@@ -157,21 +162,25 @@ function _renderTabla(lista) {
             <td><span class="font-monospace text-muted" style="font-size:0.78rem;">${u.cedula || '—'}</span></td>
             <td>
                 <div class="d-flex align-items-center gap-1">
-                    <span style="font-size:0.83rem;">${u.correo || '—'}</span>
-                    <button class="btn btn-sm p-0 border-0 text-muted btn-copiar-correo" title="Copiar correo" data-correo="${u.correo || ''}">
+                    <span style="font-size:0.83rem;">${u.correo || u.google_account || '—'}</span>
+                    <button class="btn btn-sm p-0 border-0 text-muted btn-copiar-correo" title="Copiar correo" data-correo="${u.correo || u.google_account || ''}">
                         <i class="bi bi-clipboard" style="font-size:0.72rem;"></i>
                     </button>
                 </div>
             </td>
             <td><span class="role-badge ${ROLES_CLASS[u.rol] || 'role-cliente'}">${u.rol || 'cliente'}</span></td>
             <td>
-                ${u.auth_method === 'google'
-                    ? `<span class="badge rounded-pill text-bg-danger d-inline-flex align-items-center gap-1" style="font-size:0.72rem;font-weight:700;letter-spacing:0.3px;">
-                           <i class="bi bi-google"></i>Google
-                       </span>`
-                    : `<span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="font-size:0.72rem;font-weight:700;letter-spacing:0.3px;background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;">
-                           <img src="/static/uploads/logo.ico" style="width:12px;height:12px;object-fit:contain;border-radius:2px;filter:brightness(0) invert(1);" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><i class="bi bi-shop" style="display:none;font-size:0.7rem;"></i>D'Antojitos
-                       </span>`}
+                ${(() => {
+                    const _sq = (img, border) =>
+                        `<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:#fff;border:1.5px solid ${border};box-shadow:0 1px 4px rgba(0,0,0,0.15);flex-shrink:0;">
+                            <img src="${img}" style="width:15px;height:15px;object-fit:contain;" onerror="this.style.display='none'">
+                        </span>`;
+                    const _goo = _sq('/static/uploads/googlogo.ico', '#dadce0');
+                    const _dan = _sq('/static/uploads/logo.ico',     '#e67e22');
+                    if (u.auth_method === 'both')   return `<span style="display:inline-flex;align-items:center;gap:3px;">${_goo}${_dan}</span>`;
+                    if (u.auth_method === 'google') return _goo;
+                    return _dan;
+                })()}
             </td>
             <td class="text-nowrap">
                 <span class="badge text-bg-light border" style="font-size:0.72rem;font-weight:600;">
@@ -201,7 +210,7 @@ function _renderTabla(lista) {
                         <i class="bi bi-folder2-open"></i>
                     </button>
                     <button class="btn btn-outline-danger action-btn"
-                            onclick="eliminarUsuario('${u.correo}','${u.nombre_completo}')"
+                            onclick="eliminarUsuario('${u.cedula}','${u.nombre_completo}')"
                             title="Eliminar usuario"
                             data-bs-toggle="tooltip" data-bs-placement="top">
                         <i class="bi bi-trash-fill"></i>
@@ -276,7 +285,7 @@ async function guardarRol() {
     }
 }
 
-function eliminarUsuario(correo, nombre) {
+function eliminarUsuario(cedula, nombre) {
     mostrarConfirmacionApp(
         'Eliminar Usuario',
         `¿Deseas eliminar permanentemente a <strong>${nombre}</strong>? Esta acción no se puede deshacer.`,
@@ -285,7 +294,7 @@ function eliminarUsuario(correo, nombre) {
                 const res  = await fetch('/eliminar_usuario_admin', {
                     method: 'DELETE',
                     headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ correo })
+                    body: JSON.stringify({ cedula })
                 });
                 const data = await res.json();
                 if (data.ok) { mostrarAlerta('Usuario eliminado'); cargarUsuarios(); }
@@ -296,14 +305,18 @@ function eliminarUsuario(correo, nombre) {
 }
 
 function mostrarDetalleUsuario(u) {
-    const esGoogle = u.auth_method === 'google';
+    const esGoogle = u.auth_method === 'google' || u.auth_method === 'both';
+    const esAmbos  = u.auth_method === 'both';
     const rol      = u.rol || 'cliente';
     const ROL_ICONS  = { admin:'bi-shield-fill-check', vendedor:'bi-shop', cliente:'bi-person-fill' };
     const ROL_COLORS = { admin:'#856404', vendedor:'#084298', cliente:'#0a3622' };
     const ROL_BKGS   = { admin:'#fff3cd', vendedor:'#cfe2ff', cliente:'#d1e7dd' };
-    const fmtDate  = iso => iso
-        ? new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
-        : '—';
+    const fmtDate  = iso => {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        if (d.getFullYear() < 2001) return '—';
+        return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    };
     const row = (icon, label, value) => `
         <div class="udet-row">
             <span class="udet-row-label"><i class="bi ${icon}"></i>${label}</span>
@@ -331,7 +344,7 @@ function mostrarDetalleUsuario(u) {
                             ? `<img src=""
                                     data-profile="${u.imagen_url}"
                                     data-profile-name="${u.nombre_completo || ''}"
-                                    data-profile-size="160"
+                                    data-profile-size="96"
                                     alt="${u.nombre_completo || ''}"
                                     class="udet-avatar udet-avatar-lg"
                                     style="display:block;object-fit:cover;border-radius:50%;"
@@ -346,9 +359,14 @@ function mostrarDetalleUsuario(u) {
                                 <i class="bi ${ROL_ICONS[rol]||'bi-person'} me-1"></i>${rol.charAt(0).toUpperCase()+rol.slice(1)}
                             </span>
                             <span class="udet-method-badge">
-                                ${esGoogle
-                                    ? '<img src="/static/uploads/googlogo.ico" style="width:13px;height:13px;margin-right:4px;" onerror="this.style.display=\'none\'">Google'
-                                    : '<img src="/static/uploads/logo.ico" style="width:13px;height:13px;object-fit:contain;margin-right:4px;border-radius:3px;" onerror="this.style.display=\'none\'">D\'Antojitos'}
+                                ${esAmbos
+                                    ? `<span style="display:inline-flex;align-items:center;gap:4px;">
+                                           <img src="/static/uploads/googlogo.ico" style="width:14px;height:14px;" onerror="this.style.display='none'">
+                                           <img src="/static/uploads/logo.ico" style="width:14px;height:14px;object-fit:contain;" onerror="this.style.display='none'">
+                                       </span>`
+                                    : esGoogle
+                                        ? '<img src="/static/uploads/googlogo.ico" style="width:13px;height:13px;margin-right:4px;" onerror="this.style.display=\'none\'">Google'
+                                        : '<img src="/static/uploads/logo.ico" style="width:13px;height:13px;object-fit:contain;margin-right:4px;" onerror="this.style.display=\'none\'">D\'Antojitos'}
                             </span>
                         </div>
                     </div>
@@ -358,6 +376,7 @@ function mostrarDetalleUsuario(u) {
                     ${row('bi-card-text',          'Cédula',              `<span class="font-monospace">${u.cedula||'—'}</span>`)}
                     ${row('bi-at',                 'Usuario',             u.username ? `@${u.username}` : null)}
                     ${row('bi-envelope-fill',       'Correo',              `<span style="word-break:break-all;">${u.correo||'—'}</span>`)}
+                    ${u.google_account ? row('bi-google',              'Cuenta Google',       `<span style="word-break:break-all;">${u.google_account}</span>`) : ''}
                     ${row('bi-telephone-fill',      'Teléfono',            u.telefono)}
                     ${row('bi-geo-alt-fill',        'Dirección',           u.direccion)}
                     ${row('bi-wallet2',             'Método de Pago',      u.metodo_pago)}
@@ -368,7 +387,7 @@ function mostrarDetalleUsuario(u) {
 
                 <div class="udet-footer">
                     <button class="udet-btn udet-btn-ghost"
-                            onclick="navigator.clipboard.writeText('${u.correo||''}').then(()=>mostrarAlerta('Correo copiado'))">
+                            onclick="navigator.clipboard.writeText('${u.correo||u.google_account||''}').then(()=>mostrarAlerta('Correo copiado'))">
                         <i class="bi bi-clipboard-fill"></i>Copiar correo
                     </button>
                     <button class="udet-btn udet-btn-warning"
@@ -376,7 +395,7 @@ function mostrarDetalleUsuario(u) {
                         <i class="bi bi-shield-shaded"></i>Cambiar rol
                     </button>
                     <button class="udet-btn udet-btn-danger"
-                            onclick="eliminarUsuario('${u.correo}','${u.nombre_completo}');bootstrap.Modal.getInstance(document.getElementById('modalDetalleUsuario'))?.hide()">
+                            onclick="eliminarUsuario('${u.cedula}','${u.nombre_completo}');bootstrap.Modal.getInstance(document.getElementById('modalDetalleUsuario'))?.hide()">
                         <i class="bi bi-trash3-fill"></i>Eliminar
                     </button>
                 </div>

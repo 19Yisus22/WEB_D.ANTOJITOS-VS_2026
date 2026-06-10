@@ -783,12 +783,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const pubBtn = document.getElementById('navPubBtn');
     if (pubBtn) pubBtn.style.display = '';
 
-    const currentSpeed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
+    fetch('/api/inicio/config')
+        .then(r => r.json())
+        .then(cfg => {
+            const serverSpeed = parseFloat(cfg.velocidad_cinta || '1');
+            if (typeof window.saveTickerSpeed === 'function') window.saveTickerSpeed(serverSpeed);
+            document.querySelectorAll('.ticker-speed-btn').forEach(btn => {
+                btn.classList.toggle('active', parseFloat(btn.dataset.speed) === serverSpeed);
+            });
+        })
+        .catch(() => {
+            const currentSpeed = window.getTickerSpeed ? window.getTickerSpeed() : 1;
+            document.querySelectorAll('.ticker-speed-btn').forEach(btn => {
+                btn.classList.toggle('active', parseFloat(btn.dataset.speed) === currentSpeed);
+            });
+        });
+
     document.querySelectorAll('.ticker-speed-btn').forEach(btn => {
-        btn.classList.toggle('active', parseFloat(btn.dataset.speed) === currentSpeed);
         btn.addEventListener('click', () => {
             const speed = parseFloat(btn.dataset.speed);
             if (typeof setTickerSpeed === 'function') setTickerSpeed(speed);
+            fetch('/api/inicio/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ velocidad_cinta: String(speed) })
+            }).catch(() => {});
             mostrarAlerta(`Velocidad ajustada a ${speed}× — guardada automáticamente`);
         });
     });

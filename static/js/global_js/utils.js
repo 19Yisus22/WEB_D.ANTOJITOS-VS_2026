@@ -670,20 +670,21 @@ async function cargarNotificacionesSistema() {
         const res  = await fetch('/api/admin/notificaciones_sistema', { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
-        list.innerHTML = '';
+
+        list.querySelectorAll('.notif-item[data-pedido-clave]').forEach(li => li.remove());
 
         const vistos = _getPedidosVistos();
 
         const pendientes = (Array.isArray(data) ? data : [])
             .filter((n, i) => !vistos.includes(_makePedidoKey(n.id_pedido ?? i, n.estado)));
 
-        const total   = pendientes.length;
-        const activos = pendientes.filter(p => ['Pendiente','Emitida','Emitido'].includes(p.estado)).length;
-        const muted   = _isNotifMuted();
+        const otros = list.querySelectorAll('.notif-item').length;
+        const total = pendientes.length + otros;
+        const muted = _isNotifMuted();
 
         if (count) { count.textContent = total || ''; count.style.display = (!muted && total > 0) ? 'inline-flex' : 'none'; }
         if (empty) empty.style.display = total === 0 ? 'flex' : 'none';
-        if (badge) { badge.textContent = activos > 9 ? '9+' : activos; badge.style.display = (!muted && activos > 0) ? 'flex' : 'none'; }
+        if (badge) { badge.textContent = total > 9 ? '9+' : total; badge.style.display = (!muted && total > 0) ? 'flex' : 'none'; }
 
         const ESTADO_CFG = {
             'Pendiente': { color:'#b45309', bg:'#fef3c7', icon:'bi-hourglass-split'        },
@@ -702,14 +703,15 @@ async function cargarNotificacionesSistema() {
             const cfg   = ESTADO_CFG[n.estado] || { color:'#888', bg:'#f0f0f0', icon:'bi-bell' };
             const li    = document.createElement('li');
             li.className = 'notif-item';
+            li.style.cursor = 'pointer';
             li.dataset.pedidoId    = id;
             li.dataset.pedidoClave = clave;
+            li.onclick = (e) => { if (!e.target.closest('.btn-notif-visto')) window.location.href = '/pedidos_page'; };
             li.innerHTML = `
                 <div class="notif-item-img" style="background:${cfg.bg};">
                     <i class="bi ${cfg.icon}" style="color:${cfg.color};font-size:1rem;"></i>
                 </div>
-                <div class="notif-item-info" onclick="window.location.href='/pedidos_page'"
-                     style="flex:1;min-width:0;cursor:pointer;">
+                <div class="notif-item-info" style="flex:1;min-width:0;">
                     <strong>${n.titulo}</strong>
                     <small style="display:block;margin-top:2px;">
                         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;
@@ -1231,7 +1233,7 @@ async function _pollMisPedidos() {
         const prevEstados  = _getMisPedidosEstado();
         const nuevoEstados = {};
         const vistos       = _getMisPedidosVistos();
-        const estadosFinales = ['anulada', 'cancelado', 'cancelada', 'emitida', 'emitido'];
+        const estadosFinales = ['pagado ✓', 'anulada', 'cancelado', 'cancelada'];
         pedidos.forEach(p => {
             const id    = p.id_pedido;
             const est   = p.estado;
@@ -1301,7 +1303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (document.getElementById('navClientBellBadge')) {
         setTimeout(_pollMisPedidos, 6000);
-        setInterval(_pollMisPedidos, 30000);
+        setInterval(_pollMisPedidos, 15000);
     }
 
 
@@ -1341,36 +1343,31 @@ const _TICKER_SPEED_KEY = '_dantojitos_ticker_speed';
 window.getTickerSpeed  = () => parseFloat(localStorage.getItem(_TICKER_SPEED_KEY) || '1');
 window.saveTickerSpeed = (v) => localStorage.setItem(_TICKER_SPEED_KEY, String(v));
 
-window.setTickerSpeed  = function(speed) {
+window._serverConfigPromise = fetch('/api/inicio/config')
+    .then(r => r.ok ? r.json() : {})
+    .catch(() => ({}));
+
+function _aplicarVelocidadCintas(speed) {
+    document.querySelectorAll('.payment-track, .promo-track, .ci-track').forEach(track => {
+        const base = parseFloat(track.dataset.baseDuration || '25');
+        track.style.animationDuration = (base / speed).toFixed(1) + 's';
+    });
+}
+
+window.setTickerSpeed = function(speed) {
     window.saveTickerSpeed(speed);
-
-
-    document.querySelectorAll('.promo-track').forEach(track => {
-        const base = parseFloat(track.dataset.baseDuration || '25');
-        track.style.animationDuration = (base / speed).toFixed(1) + 's';
-    });
-
-
-    document.querySelectorAll('.ci-track, .payment-track').forEach(track => {
-        const base = parseFloat(track.dataset.baseDuration || '25');
-        track.style.animationDuration = (base / speed).toFixed(1) + 's';
-    });
-
-
+    _aplicarVelocidadCintas(speed);
     document.querySelectorAll('.ticker-speed-btn').forEach(btn => {
         btn.classList.toggle('active', parseFloat(btn.dataset.speed) === speed);
     });
 };
 
-
 document.addEventListener('DOMContentLoaded', () => {
-    const savedSpeed = window.getTickerSpeed();
-    if (savedSpeed !== 1) {
-        document.querySelectorAll('.payment-track, .promo-track, .ci-track').forEach(track => {
-            const base = parseFloat(track.dataset.baseDuration || '25');
-            track.style.animationDuration = (base / savedSpeed).toFixed(1) + 's';
-        });
-    }
+    window._serverConfigPromise.then(cfg => {
+        const speed = parseFloat(cfg.velocidad_cinta || '1');
+        window.saveTickerSpeed(speed);
+        if (speed !== 1) _aplicarVelocidadCintas(speed);
+    });
 });
 
 class PromoBannerTicker {
@@ -1666,6 +1663,24 @@ async function _pollPrivMsgs() {
             _updatePrivNotifSistem('cv', cv);
             _updatePrivNotifSistem('staff', staff);
         }
+
+        const _tabBadge = document.getElementById('tabPrivadoBadge');
+        if (_tabBadge) {
+            const _tot = cv + staff;
+            _tabBadge.textContent = _tot > 9 ? '9+' : _tot;
+            _tabBadge.style.display = _tot > 0 ? 'inline-flex' : 'none';
+        }
+        const _cBadge = document.getElementById('subtabClientesBadge');
+        if (_cBadge) {
+            _cBadge.textContent = cv > 9 ? '9+' : cv;
+            _cBadge.style.display = cv > 0 ? 'inline-flex' : 'none';
+        }
+        const _eBadge = document.getElementById('subtabEquipoBadge');
+        if (_eBadge) {
+            _eBadge.textContent = staff > 9 ? '9+' : staff;
+            _eBadge.style.display = staff > 0 ? 'inline-flex' : 'none';
+        }
+
         _lastPrivCv    = cv;
         _lastPrivStaff = staff;
     } catch {}

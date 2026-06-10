@@ -3,7 +3,7 @@ from database.models import (
     supabase, _run, _run_safe, _single, _many,
     rol_get_all, rol_get_by_nombre, rol_get_id,
     usuario_get, usuario_get_by_correo, usuario_get_by_username,
-    usuario_get_by_identifier, usuario_buscar_por_nombre,
+    usuario_get_by_google_account, usuario_get_by_identifier, usuario_buscar_por_nombre,
     usuario_get_all, usuario_create, usuario_update, usuario_delete,
     usuario_set_role, usuario_touch, usuario_count_por_rol,
     usuario_get_pass_cooldown, usuario_incrementar_intento, usuario_reset_intentos,

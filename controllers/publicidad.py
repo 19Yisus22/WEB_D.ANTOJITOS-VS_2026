@@ -2,7 +2,7 @@ import json
 from flask import Blueprint, request, jsonify, session, render_template
 
 import helpers.models as db
-from helpers.auth import sin_cache, admin_required
+from helpers.auth import sin_cache, admin_required, vendedor_required
 from helpers.cloudinary import upload_image, upload_base64, delete_image, list_all_folders_images, delete_image_by_public_id
 from helpers.validators import TIPOS_PUBLICIDAD
 
@@ -186,34 +186,41 @@ def gestor_imagenes():
 
 
 @publicidad_bp.route("/api/admin/notificaciones_sistema")
-@admin_required
+@vendedor_required
 def notificaciones_sistema():
-    """Retorna los últimos pedidos como notificaciones de sistema."""
     try:
-        pedidos   = db.pedido_get_all()[:30]
+        rol     = session.get("rol", "")
+        pedidos = db.pedido_get_all()[:50]
+
+        estados_admin    = {"Pagado ✓", "Cancelado", "Anulada"}
+        estados_vendedor = {"Emitida", "Emitido", "Cancelado", "Anulada"}
+        estados_filter   = estados_admin if rol == "admin" else estados_vendedor
+
         resultado = []
         for p in pedidos:
-            u       = p.get("usuarios") or {}
-            nombre  = f"{u.get('nombre', '')} {u.get('apellido', '')}".strip() or str(p.get("cedula", "?"))
-            estado  = p.get("estado", "Pendiente")
-            pagado  = p.get("pagado", False)
+            u          = p.get("usuarios") or {}
+            nombre     = f"{u.get('nombre', '')} {u.get('apellido', '')}".strip() or str(p.get("cedula", "?"))
+            estado     = p.get("estado", "Pendiente")
+            pagado     = p.get("pagado", False)
             estado_str = "Pagado ✓" if pagado else estado
-            detalles   = p.get("pedido_detalle") or []
-            total      = sum(float(d.get("subtotal") or 0) for d in detalles)
-            num_items  = sum(int(d.get("cantidad") or 0) for d in detalles)
+            if estado_str not in estados_filter:
+                continue
+            detalles  = p.get("pedido_detalle") or []
+            total     = sum(float(d.get("subtotal") or 0) for d in detalles)
+            num_items = sum(int(d.get("cantidad") or 0) for d in detalles)
             resultado.append({
-                "id":           str(p.get("id_pedido", "")),
-                "tipo":         "pedido",
-                "estado":       estado_str,
-                "pagado":       pagado,
-                "titulo":       f"Pedido — {nombre}",
-                "descripcion":  f"{num_items} ítem(s) · ${total:,.0f} COP",
-                "telefono":     u.get("telefono", ""),
-                "direccion":    u.get("direccion", ""),
-                "metodo_pago":  u.get("metodo_pago", ""),
-                "fecha":        str(p.get("fecha_pedido", ""))[:10],
-                "cedula":       str(p.get("cedula", "")),
-                "id_pedido":    str(p.get("id_pedido", "")),
+                "id":          str(p.get("id_pedido", "")),
+                "tipo":        "pedido",
+                "estado":      estado_str,
+                "pagado":      pagado,
+                "titulo":      f"Pedido — {nombre}",
+                "descripcion": f"{num_items} ítem(s) · ${total:,.0f} COP",
+                "telefono":    u.get("telefono", ""),
+                "direccion":   u.get("direccion", ""),
+                "metodo_pago": u.get("metodo_pago", ""),
+                "fecha":       str(p.get("fecha_pedido", ""))[:10],
+                "cedula":      str(p.get("cedula", "")),
+                "id_pedido":   str(p.get("id_pedido", "")),
             })
         return jsonify(resultado), 200
     except Exception as e:

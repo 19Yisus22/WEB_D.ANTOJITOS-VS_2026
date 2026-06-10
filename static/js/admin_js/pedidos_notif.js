@@ -9,6 +9,10 @@ const PEDIDOS_ICONS = {
 };
 
 function addNotifLog(tipo, mensaje, datos = {}) {
+    const esAdmin = !!document.getElementById('navPubBtn');
+    if (esAdmin  && !['pago', 'cancelado'].includes(tipo)) return;
+    if (!esAdmin && tipo === 'pago') return;
+
     const entry = {
         id:     Date.now(),
         tipo, mensaje, datos,
@@ -124,4 +128,12 @@ document.addEventListener('DOMContentLoaded', () => {
     _syncNavBell();
     _renderNavSistemPanel();
     window.cargarNotificacionesSistema = function() { _renderNavSistemPanel(); };
+    setTimeout(() => {
+        if (_notifLog.length > 0) {
+            _notifLog = [];
+            localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
+            _syncNavBell();
+            _renderNavSistemPanel();
+        }
+    }, 2000);
 });

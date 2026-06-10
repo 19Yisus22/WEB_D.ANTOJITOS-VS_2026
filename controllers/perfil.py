@@ -338,6 +338,48 @@ def cambiar_contrasena():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+@perfil_bp.route("/perfil/vincular_google", methods=["POST"])
+@login_required
+def vincular_google():
+    import os
+    from google.oauth2 import id_token
+    from google.auth.transport import requests as google_requests
+
+    user_id    = session.get("user_id")
+    data       = request.get_json() or {}
+    credential = (data.get("credential") or "").strip()
+
+    if not credential:
+        return jsonify({"ok": False, "error": "Credencial requerida"}), 400
+
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    try:
+        idinfo        = id_token.verify_oauth2_token(credential, google_requests.Request(), client_id, clock_skew_in_seconds=60)
+        correo_google = (idinfo.get("email") or "").lower()
+
+        usuario = db.usuario_get(str(user_id))
+        if not usuario:
+            return jsonify({"ok": False, "error": "Usuario no encontrado"}), 404
+
+        if usuario.get("google_account"):
+            return jsonify({"ok": True, "ya_vinculado": True, "google_account": usuario.get("google_account")})
+
+        otro = db.usuario_get_by_google_account(correo_google)
+        if otro and str(otro.get("cedula")) != str(user_id):
+            return jsonify({"ok": False, "error": "Este correo de Google ya está vinculado a otra cuenta."}), 400
+
+        db.usuario_update(str(user_id), {"google_account": correo_google})
+
+        user_sess = session.get("user") or {}
+        user_sess["google_account"] = correo_google
+        session["user"]  = user_sess
+        session.modified = True
+
+        return jsonify({"ok": True, "google_account": correo_google})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 401
+
+
 @perfil_bp.route("/cloudinary_storage_info")
 @login_required
 def cloudinary_storage_info():

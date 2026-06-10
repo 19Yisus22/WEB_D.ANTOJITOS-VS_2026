@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-publicidad-v7';
+const CACHE_NAME = 'dantojitos-publicidad-v10';
 
 const PRECACHE = [
     '/publicidad_page',
