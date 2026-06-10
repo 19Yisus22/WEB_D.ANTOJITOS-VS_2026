@@ -672,9 +672,9 @@ La imagen Docker usa **Gunicorn con 2 workers** en el puerto **7860**.
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:8B5A2B,50:E07A5F,100:FFB6B9&height=140&section=footer&text=Hecho%20con%20amor%20desde%20casa&fontSize=22&fontColor=ffffff&fontAlignY=72&animation=fadeIn" width="100%" alt="footer"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:8B5A2B,50:E07A5F,100:FFB6B9&height=140&section=footer&text=HECHO%20C9N%20AMOR%20DESDE%20CASA♥️&fontSize=22&fontColor=ffffff&fontAlignY=72&animation=fadeIn" width="100%" alt="footer"/>
 
-**2025 D'Antojitos© — HECHO CON AMOR DESDE CASA♥️**<br>
+**2025 D'Antojitos© - TERESA RUBIO GARCÍA**<br>
 **Created By: 2022 YisusPrime™**
 
 </div>
