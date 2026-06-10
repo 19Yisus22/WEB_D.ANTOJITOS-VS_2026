@@ -674,7 +674,7 @@ La imagen Docker usa **Gunicorn con 2 workers** en el puerto **7860**.
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:8B5A2B,50:E07A5F,100:FFB6B9&height=140&section=footer&text=Hecho%20con%20amor%20desde%20casa&fontSize=22&fontColor=ffffff&fontAlignY=72&animation=fadeIn" width="100%" alt="footer"/>
 
-**2025 D'Antojitos© — Hecho con amor desde casa♥️**
+**2025 D'Antojitos© — Hecho con amor desde casa♥️**<br>
 **Created By: 2022 YisusPrime™**
 
 </div>
