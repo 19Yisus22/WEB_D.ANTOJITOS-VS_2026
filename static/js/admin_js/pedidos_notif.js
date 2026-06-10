@@ -55,8 +55,8 @@ function _renderNavSistemPanel() {
     }
     if (empty) empty.style.display = 'none';
     list.innerHTML = _notifLog.map(n => `
-        <li class="notif-item" data-notif-id="${n.id}"
-            onclick="_pedidosNotifNav(event,'${n.datos?.id_pedido || ''}')">
+        <li class="notif-item" data-notif-id="${n.id}" style="cursor:pointer;"
+            onclick="_pedidosNotifNav(event,${n.id})">
             <div class="notif-item-img">
                 <i class="bi ${PEDIDOS_ICONS[n.tipo] || PEDIDOS_ICONS.info}" style="font-size:1rem;"></i>
             </div>
@@ -74,8 +74,10 @@ function _renderNavSistemPanel() {
         </li>`).join('');
 }
 
-window._pedidosNotifNav = function(e, idPedido) {
+window._pedidosNotifNav = function(e, notifId) {
     if (e.target.closest('.btn-notif-visto')) return;
+    _notifLog = _notifLog.filter(x => x.id !== notifId);
+    localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
     window.location.href = '/pedidos_page';
 };
 
@@ -128,12 +130,4 @@ document.addEventListener('DOMContentLoaded', () => {
     _syncNavBell();
     _renderNavSistemPanel();
     window.cargarNotificacionesSistema = function() { _renderNavSistemPanel(); };
-    setTimeout(() => {
-        if (_notifLog.length > 0) {
-            _notifLog = [];
-            localStorage.setItem('pedidos_notif_log', JSON.stringify(_notifLog));
-            _syncNavBell();
-            _renderNavSistemPanel();
-        }
-    }, 2000);
 });

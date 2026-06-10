@@ -365,19 +365,56 @@ def limpiar_hilo_cv(cedula_hilo):
 def no_leidos_count():
     cedula = session.get("user_id")
     rol    = session.get("rol", "")
+    ecv    = request.args.get("ecv",  "").strip()
+    estf   = request.args.get("estf", "").strip()
     try:
         cv_n    = 0
         staff_n = 0
         if rol == "cliente":
-            cv_n = db.mp_no_leidos(cedula, para_vendedor=False)
+            cv_n = db.mp_no_leidos(cedula) if not ecv else 0
         elif rol == "vendedor":
-            cv_n    = db.mp_total_no_leidos_vendedor()
-            staff_n = db.mp_staff_no_leidos(cedula)
+            cv_n    = db.mp_total_no_leidos_vendedor(excluir=ecv)
+            staff_n = db.mp_staff_no_leidos(cedula, excluir=estf)
         elif rol == "admin":
-            staff_n = db.mp_staff_no_leidos(cedula)
+            staff_n = db.mp_staff_no_leidos(cedula, excluir=estf)
         return jsonify({"count": cv_n + staff_n, "cv": cv_n, "staff": staff_n})
     except Exception:
         return jsonify({"count": 0, "cv": 0, "staff": 0})
+
+
+@comentarios_bp.route("/mensajes_privados/marcar_leidos", methods=["POST"])
+@login_required
+def marcar_leidos():
+    cedula = session.get("user_id")
+    rol    = session.get("rol", "")
+    data   = request.get_json() or {}
+    try:
+        if rol == "cliente":
+            db.mp_marcar_leidos(cedula, es_vendedor_leyendo=False)
+        elif rol in ("vendedor", "admin"):
+            cc = (data.get("cedula_cliente") or "").strip()
+            if cc:
+                db.mp_marcar_leidos(cc, es_vendedor_leyendo=True)
+        return jsonify({"ok": True})
+    except Exception:
+        return jsonify({"ok": False})
+
+
+@comentarios_bp.route("/mensajes_privados/staff/marcar_leidos", methods=["POST"])
+@login_required
+def staff_marcar_leidos():
+    cedula = session.get("user_id")
+    rol    = session.get("rol", "")
+    if rol not in ("vendedor", "admin"):
+        return jsonify({"error": "Sin permiso"}), 403
+    data       = request.get_json() or {}
+    cedula_otro = (data.get("cedula_otro") or "").strip()
+    try:
+        if cedula_otro:
+            db.mp_staff_marcar_leidos(cedula_otro, cedula, lector=cedula)
+        return jsonify({"ok": True})
+    except Exception:
+        return jsonify({"ok": False})
 
 
 
@@ -390,17 +427,23 @@ def staff_contactos():
         return jsonify({"error": "Sin permiso"}), 403
     try:
         todos = db.usuario_get_all()
-        contactos = [
-            {
-                "cedula":  u["cedula"],
-                "nombre":  f"{u.get('nombre','')} {u.get('apellido','')}".strip(),
-                "imagen":  u.get("imagen_url"),
-                "rol":     (u.get("roles") or {}).get("nombre_role", "cliente"),
-            }
-            for u in todos
-            if (u.get("roles") or {}).get("nombre_role") in ("vendedor", "admin")
-            and u["cedula"] != cedula
-        ]
+        contactos = []
+        for u in todos:
+            if (u.get("roles") or {}).get("nombre_role") not in ("vendedor", "admin"):
+                continue
+            if u["cedula"] == cedula:
+                continue
+            try:
+                no_leidos = db.mp_staff_no_leidos_por_cedula(cedula, u["cedula"])
+            except Exception:
+                no_leidos = 0
+            contactos.append({
+                "cedula":    u["cedula"],
+                "nombre":    f"{u.get('nombre','')} {u.get('apellido','')}".strip(),
+                "imagen":    u.get("imagen_url"),
+                "rol":       (u.get("roles") or {}).get("nombre_role", "cliente"),
+                "no_leidos": no_leidos,
+            })
         return jsonify(contactos)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -415,7 +458,7 @@ def staff_hilo(cedula_otro):
         return jsonify({"error": "Sin permiso"}), 403
     try:
         mensajes = db.mp_staff_get_conversacion(cedula, cedula_otro)
-        db.mp_staff_marcar_leidos(cedula, cedula_otro, lector=cedula)
+        db.mp_staff_marcar_leidos(cedula_otro, cedula, lector=cedula)
         return jsonify(mensajes)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

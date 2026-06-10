@@ -1,6 +1,6 @@
 ﻿importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-ui-v6';
+const CACHE_NAME = 'dantojitos-ui-v7';
 
 const PRECACHE = [
     '/gestion_usuarios_page',

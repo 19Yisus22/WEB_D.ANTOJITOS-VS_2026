@@ -541,7 +541,7 @@ window.onload = () => {
     setInterval(cargarComentarios, 15000);
     if (USER_CONFIG.isLogged) {
         _iniciarPrivado();
-        setInterval(_pollNoLeidos, 20000);
+        setInterval(_pollNoLeidos, 18000);
     }
 };
 
@@ -613,6 +613,9 @@ function switchTab(tab) {
         tabPub?.classList.add('active');
         tabPriv?.classList.remove('active');
         if (titleEl) titleEl.textContent = 'Muro de Sugerencias';
+        window._chatCV_abierto    = null;
+        window._chatStaff_abierto = null;
+        if (_convPoller) { clearInterval(_convPoller); _convPoller = null; }
     } else {
         panelPub?.style.setProperty('display', 'none');
         if (panelPriv) { panelPriv.style.display = 'flex'; panelPriv.style.flex = '1'; }
@@ -620,31 +623,26 @@ function switchTab(tab) {
         tabPriv?.classList.add('active');
         if (titleEl) titleEl.textContent = 'Mensajes Privados';
         _cargarPanelPrivado();
-
-        _setBadgePrivado(0);
     }
-}
-
-function _setBadgePrivado(n) {
-    const badge = document.getElementById('tabPrivadoBadge');
-    if (!badge) return;
-    badge.textContent = n > 9 ? '9+' : n;
-    badge.style.display = n > 0 ? 'inline-flex' : 'none';
 }
 
 async function _pollNoLeidos() {
     try {
-        const r = await fetch('/mensajes_privados/no_leidos');
-        if (!r.ok) return;
-        const d = await r.json();
-        _setBadgePrivado(d.count || 0);
+        if (USER_CONFIG.userRol !== 'cliente' && !_hiloSeleccionado) {
+            const lista = document.getElementById('hilosLista');
+            if (lista && lista.children.length > 0) await _cargarHilosVendedor();
+        }
+        if (!_staffSeleccionado) {
+            const staffLista = document.getElementById('staffContactosLista');
+            if (staffLista && staffLista.children.length > 0) await _cargarContactosStaff();
+        }
     } catch {}
 }
 
 function _iniciarPrivado() {
-    _pollNoLeidos();
     if (USER_CONFIG.userRol === 'cliente') {
         _cargarMensajesPredeterminados();
+        _iniciarConvPoller('clienteCV');
     }
 }
 
@@ -695,17 +693,20 @@ async function _cargarMensajesPredeterminados() {
 async function _cargarHiloCliente() {
     const box = document.getElementById('clienteHiloBox');
     if (!box) return;
+    window._chatCV_abierto    = USER_CONFIG.userId;
+    window._chatStaff_abierto = null;
     try {
         const r = await fetch('/mensajes_privados/mi_hilo');
         if (!r.ok) return;
         const msgs = await r.json();
+        const eraAbajo = box.scrollHeight - box.scrollTop <= box.clientHeight + 120;
         box.innerHTML = '';
         if (!msgs.length) {
             box.innerHTML = `<div class="priv-hilo-empty"><i class="bi bi-chat-dots"></i><p data-i18n="chat.priv_empty">${t('chat.priv_empty')}</p></div>`;
             return;
         }
         msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_para === USER_CONFIG.userId, m.id)));
-        box.scrollTop = box.scrollHeight;
+        if (eraAbajo) box.scrollTop = box.scrollHeight;
     } catch {}
 }
 
@@ -784,6 +785,39 @@ async function enviarMensajeLibreCliente() {
 
 let _hiloSeleccionado    = null;
 let _editandoMsgPrivado  = null;
+let _convPoller          = null;
+
+window._chatCV_abierto    = null;
+window._chatStaff_abierto = null;
+
+function _iniciarConvPoller(tipo) {
+    if (_convPoller) clearInterval(_convPoller);
+    _convPoller = setInterval(() => _marcarLeidosConvAbierta(tipo), 12000);
+}
+
+async function _marcarLeidosConvAbierta(tipo) {
+    try {
+        if (tipo === 'cv' && _hiloSeleccionado) {
+            await fetch('/mensajes_privados/marcar_leidos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cedula_cliente: _hiloSeleccionado })
+            });
+        } else if (tipo === 'clienteCV') {
+            await fetch('/mensajes_privados/marcar_leidos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+        } else if (tipo === 'staff' && _staffSeleccionado) {
+            await fetch('/mensajes_privados/staff/marcar_leidos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cedula_otro: _staffSeleccionado })
+            });
+        }
+    } catch {}
+}
 
 function editarMsgPrivado(id) {
     const msgEl = document.querySelector(`.priv-msg[data-id="${id}"]`);
@@ -839,7 +873,10 @@ async function _cargarHilosVendedor() {
 }
 
 async function abrirConversacion(cedulaCliente, nombreCliente, fotoCliente) {
-    _hiloSeleccionado = cedulaCliente;
+    _hiloSeleccionado             = cedulaCliente;
+    window._chatCV_abierto        = cedulaCliente;
+    window._chatStaff_abierto     = null;
+    _iniciarConvPoller('cv');
     const empty  = document.getElementById('privConvEmpty');
     const header = document.getElementById('privConvHeader');
     const box    = document.getElementById('privConvBox');
@@ -967,6 +1004,7 @@ async function _cargarContactosStaff() {
             const div  = document.createElement('div');
             div.className = 'priv-hilo-item';
             div.dataset.cedula = c.cedula;
+            if (c.no_leidos > 0) div.classList.add('has-unread');
             const foto = c.imagen || '/static/uploads/default_icon_profile.png';
             const rolLabel = c.rol === 'admin' ? t('state.admin') : t('state.vendedor');
             div.innerHTML = `
@@ -975,6 +1013,7 @@ async function _cargarContactosStaff() {
                     <span class="priv-hilo-name">${c.nombre}</span>
                     <span class="priv-hilo-last" style="color:${c.rol==='admin'?'#d35400':'#27ae60'};">${rolLabel}</span>
                 </div>
+                ${c.no_leidos > 0 ? `<span class="priv-hilo-badge">${c.no_leidos}</span>` : ''}
             `;
             div.onclick = () => abrirConversacionStaff(c.cedula, c.nombre, foto, rolLabel);
             lista.appendChild(div);
@@ -983,7 +1022,10 @@ async function _cargarContactosStaff() {
 }
 
 async function abrirConversacionStaff(cedulaDest, nombre, foto, rolLabel) {
-    _staffSeleccionado = cedulaDest;
+    _staffSeleccionado            = cedulaDest;
+    window._chatStaff_abierto     = cedulaDest;
+    window._chatCV_abierto        = null;
+    _iniciarConvPoller('staff');
     const empty  = document.getElementById('staffConvEmpty');
     const header = document.getElementById('staffConvHeader');
     const box    = document.getElementById('staffConvBox');
@@ -999,9 +1041,12 @@ async function abrirConversacionStaff(cedulaDest, nombre, foto, rolLabel) {
     }
     if (box)   box.style.display = 'block';
     if (input) input.style.display = 'flex';
-    document.querySelectorAll('#staffContactosLista .priv-hilo-item').forEach(el =>
-        el.classList.toggle('active', el.dataset.cedula === cedulaDest)
-    );
+    document.querySelectorAll('#staffContactosLista .priv-hilo-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.cedula === cedulaDest);
+        if (el.dataset.cedula === cedulaDest) {
+            el.querySelector('.priv-hilo-badge')?.remove();
+        }
+    });
     try {
         const r = await fetch(`/mensajes_privados/staff/hilo/${cedulaDest}`);
         const msgs = await r.json();

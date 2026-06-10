@@ -58,6 +58,18 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+@carrito_bp.route("/api/carrito/cantidad")
+@login_required
+def carrito_cantidad():
+    user_id = session.get("user_id")
+    try:
+        items = db.carrito_get(user_id)
+        total = sum(int(i.get("cantidad", 1)) for i in items) if items else 0
+        return jsonify({"cantidad": total})
+    except Exception:
+        return jsonify({"cantidad": 0})
+
+
 @carrito_bp.route("/carrito_page")
 @sin_cache
 @login_required

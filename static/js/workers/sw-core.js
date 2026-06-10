@@ -1,6 +1,6 @@
 ﻿
 
-const SW_VERSION      = 'v4';
+const SW_VERSION      = 'v5';
 const PREFS_CACHE     = 'dantojitos-prefs-v4';
 const API_TIMEOUT_MS  = 3500;
 const FAST_TIMEOUT_MS = 2000;
@@ -83,18 +83,20 @@ async function networkFirst(req, cacheName, timeoutMs = API_TIMEOUT_MS) {
         if (cached) return cached;
         const isNav = req.mode === 'navigate';
         const isApi = req.url.includes('/api/');
-        return new Response(
-            isApi
-                ? JSON.stringify({ ok: false, offline: true, error: 'Sin conexión' })
-                : offlinePage(isNav),
-            {
-                status: isApi ? 503 : 200,
-                headers: {
-                    'Content-Type': isApi ? 'application/json' : 'text/html; charset=utf-8',
-                    'X-Offline': '1',
-                },
-            }
-        );
+        if (isApi) {
+            return new Response(
+                JSON.stringify({ ok: false, offline: true, error: 'Sin conexión' }),
+                { status: 503, headers: { 'Content-Type': 'application/json', 'X-Offline': '1' } }
+            );
+        }
+        if (isNav) {
+            const offlineAsset = await caches.match('/static/offline.html');
+            if (offlineAsset) return offlineAsset;
+        }
+        return new Response(offlinePage(isNav), {
+            status: 200,
+            headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Offline': '1' },
+        });
     }
 }
 

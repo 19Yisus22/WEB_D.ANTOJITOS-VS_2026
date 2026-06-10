@@ -97,6 +97,11 @@ def pagina_no_encontrada(_):
     _logger.warning("404 — %s %s", request.method, request.path)
     return _rt("errors/404.html", codigo=404, mensaje="Página no encontrada"), 404
 
+@app.errorhandler(401)
+def no_autorizado(_):
+    _logger.warning("401 — %s %s — usuario: %s", request.method, request.path, request.remote_addr)
+    return _rt("errors/404.html", codigo=401, mensaje="No autorizado"), 401
+
 @app.errorhandler(403)
 def acceso_denegado(_):
     _logger.warning("403 — %s %s — usuario: %s", request.method, request.path, request.remote_addr)
@@ -113,7 +118,12 @@ def preview_error_page():
     if _s.get('rol') != 'admin':
         abort(403)
     codigo = request.args.get('codigo', 404, type=int)
-    mensajes = {404: 'Página no encontrada', 403: 'Acceso denegado', 500: 'Error interno del servidor'}
+    mensajes = {
+        404: 'Página no encontrada',
+        403: 'Acceso denegado',
+        401: 'No autorizado',
+        500: 'Error interno del servidor',
+    }
     return _rt("errors/404.html", codigo=codigo, mensaje=mensajes.get(codigo, 'Error'))
 
 _RUTAS_PUBLICAS = frozenset({
@@ -193,7 +203,7 @@ def _get_local_ip() -> str:
         s.close()
 
 if __name__ == "__main__":
-    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), True # Cambia a True para modo desarrollo con debug activado
+    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), False # Cambia a True para modo desarrollo con debug activado
 
     if debug_mode:
         print("\033[93m" + "MODE DEVELOPMENT - DEBUG" + "\033[0m")

@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-registro-v8';
+const CACHE_NAME = 'dantojitos-registro-v9';
 
 const PRECACHE = [
     '/registro',

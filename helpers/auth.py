@@ -109,6 +109,10 @@ def clear_auth_cookies(response) -> None:
     response.delete_cookie(_RT_COOKIE, path="/")
 
 
+def _sesion_expirada() -> bool:
+    return bool(request.cookies.get(_AT_COOKIE) or request.cookies.get(_RT_COOKIE))
+
+
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -118,6 +122,8 @@ def login_required(f):
             return f(*args, **kwargs)
         if _is_ajax_or_api():
             return jsonify({"error": "No autorizado", "code": "UNAUTHENTICATED"}), 401
+        if _sesion_expirada():
+            return render_template("errors/404.html", codigo=401, mensaje="Sesión expirada"), 401
         return render_template("errors/blocked.html", metodos=[], login_required=True)
     return decorated
 
@@ -128,11 +134,13 @@ def admin_required(f):
         if not _ensure_authenticated():
             if _is_ajax_or_api():
                 return jsonify({"error": "No autorizado", "code": "UNAUTHENTICATED"}), 401
+            if _sesion_expirada():
+                return render_template("errors/404.html", codigo=401, mensaje="Sesión expirada"), 401
             return render_template("errors/blocked.html", metodos=[])
         if session.get("rol") != "admin":
             if _is_ajax_or_api():
                 return jsonify({"error": "Acceso denegado", "code": "FORBIDDEN"}), 403
-            return render_template("errors/blocked.html", metodos=[])
+            return render_template("errors/404.html", codigo=403, mensaje="Acceso denegado"), 403
         return f(*args, **kwargs)
     return decorated
 
@@ -143,11 +151,13 @@ def vendedor_required(f):
         if not _ensure_authenticated():
             if _is_ajax_or_api():
                 return jsonify({"error": "No autorizado", "code": "UNAUTHENTICATED"}), 401
+            if _sesion_expirada():
+                return render_template("errors/404.html", codigo=401, mensaje="Sesión expirada"), 401
             return render_template("errors/blocked.html", metodos=[])
         if session.get("rol") not in ("admin", "vendedor"):
             if _is_ajax_or_api():
                 return jsonify({"error": "Acceso denegado", "code": "FORBIDDEN"}), 403
-            return render_template("errors/blocked.html", metodos=[])
+            return render_template("errors/404.html", codigo=403, mensaje="Acceso denegado"), 403
         return f(*args, **kwargs)
     return decorated
 

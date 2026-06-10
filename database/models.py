@@ -658,32 +658,53 @@ def mp_create(cedula_cliente: str, cedula_remitente: str, es_vendedor: bool,
     ))
 
 def mp_marcar_leidos(cedula_de: str, es_vendedor_leyendo: bool) -> None:
-    _run_safe(
-        _db().table("mensajes_privados")
-        .update({"leido": True})
-        .eq("cedula_para", cedula_de)
-        .eq("tipo", "cv")
-        .eq("leido", False)
-    )
+    if es_vendedor_leyendo:
+        _run_safe(
+            _db().table("mensajes_privados")
+            .update({"leido": True})
+            .eq("cedula_de", cedula_de)
+            .eq("cedula_para", cedula_de)
+            .eq("tipo", "cv")
+            .eq("leido", False)
+        )
+    else:
+        msgs = _many(_run(
+            _db().table("mensajes_privados")
+            .select("id,cedula_para")
+            .eq("cedula_de", cedula_de)
+            .eq("tipo", "cv")
+            .eq("leido", False)
+        ))
+        ids = [m["id"] for m in msgs if m.get("cedula_para") != cedula_de]
+        if ids:
+            _run_safe(
+                _db().table("mensajes_privados")
+                .update({"leido": True})
+                .in_("id", ids)
+            )
 
-def mp_no_leidos(cedula_para: str, para_vendedor: bool) -> int:
-    res = _run(
+def mp_no_leidos(cedula_de: str) -> int:
+    msgs = _many(_run(
         _db().table("mensajes_privados")
-        .select("id", count=CountMethod.exact)
-        .eq("cedula_para", cedula_para)
+        .select("id,cedula_para")
+        .eq("cedula_de", cedula_de)
         .eq("tipo", "cv")
         .eq("leido", False)
-    )
-    return _count(res)
+    ))
+    return sum(1 for m in msgs if m.get("cedula_para") != cedula_de)
 
-def mp_total_no_leidos_vendedor() -> int:
-    res = _run(
+def mp_total_no_leidos_vendedor(excluir: str = "") -> int:
+    msgs = _many(_run(
         _db().table("mensajes_privados")
-        .select("id", count=CountMethod.exact)
+        .select("id,cedula_de,cedula_para")
         .eq("tipo", "cv")
         .eq("leido", False)
+    ))
+    return sum(
+        1 for m in msgs
+        if m.get("cedula_para") == m.get("cedula_de")
+        and (not excluir or m.get("cedula_de") != excluir)
     )
-    return _count(res)
 
 def mp_staff_get_conversacion(cedula_a: str, cedula_b: str) -> list:
     r1 = _many(_run(
@@ -746,24 +767,28 @@ def mp_staff_marcar_leidos(cedula_a: str, cedula_b: str, lector: str) -> None:
         .eq("leido", False)
     )
 
-def mp_staff_no_leidos(cedula_lector: str) -> int:
-    r1 = _run(
+def mp_staff_no_leidos(cedula_lector: str, excluir: str = "") -> int:
+    q = (
         _db().table("mensajes_privados")
         .select("id", count=CountMethod.exact)
         .eq("cedula_dest", cedula_lector)
         .eq("tipo", "staff")
         .eq("leido", False)
     )
-    r2 = _run(
+    if excluir:
+        q = q.neq("cedula_de", excluir)
+    return _count(_run(q))
+
+def mp_staff_no_leidos_por_cedula(cedula_lector: str, cedula_otro: str) -> int:
+    res = _run(
         _db().table("mensajes_privados")
         .select("id", count=CountMethod.exact)
-        .eq("cedula_de", cedula_lector)
+        .eq("cedula_de", cedula_otro)
+        .eq("cedula_dest", cedula_lector)
         .eq("tipo", "staff")
         .eq("leido", False)
     )
-    c1 = _count(r1)
-    c2 = _count(r2)
-    return c1 + c2
+    return _count(res)
 
 
 def usuarios_activos_desde(desde_iso: str) -> int:

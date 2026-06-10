@@ -706,7 +706,7 @@ async function cargarNotificacionesSistema() {
             li.style.cursor = 'pointer';
             li.dataset.pedidoId    = id;
             li.dataset.pedidoClave = clave;
-            li.onclick = (e) => { if (!e.target.closest('.btn-notif-visto')) window.location.href = '/pedidos_page'; };
+            li.onclick = (e) => { if (!e.target.closest('.btn-notif-visto')) { _savePedidoVisto(clave); window.location.href = '/pedidos_page'; } };
             li.innerHTML = `
                 <div class="notif-item-img" style="background:${cfg.bg};">
                     <i class="bi ${cfg.icon}" style="color:${cfg.color};font-size:1rem;"></i>
@@ -1296,14 +1296,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    if (document.getElementById('navClientBellBadge') || document.getElementById('navBellBadge')) {
-        setTimeout(_pollPrivMsgs, 4000);
-        setInterval(_pollPrivMsgs, 20000);
+    if (document.getElementById('navClientBellBadge') || document.getElementById('navBellBadge') || document.getElementById('navSugerenciasBadge')) {
+        setTimeout(_pollPrivMsgs, 500);
+        setInterval(_pollPrivMsgs, 6000);
     }
 
     if (document.getElementById('navClientBellBadge')) {
         setTimeout(_pollMisPedidos, 6000);
         setInterval(_pollMisPedidos, 15000);
+    }
+
+    if (document.getElementById('contadorCarritoBadge')) {
+        _syncCartBadge(localStorage.getItem('cant_carrito') || '0');
+        setTimeout(_pollCartCount, 1000);
+        setInterval(_pollCartCount, 10000);
     }
 
 
@@ -1336,6 +1342,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }, true);
 });
 
+
+
+function _syncCartBadge(count) {
+    const badge = document.getElementById('contadorCarritoBadge');
+    if (!badge) return;
+    const n = parseInt(count) || 0;
+    badge.textContent = n > 99 ? '99+' : n;
+    badge.style.display = n > 0 ? 'flex' : 'none';
+}
+
+async function _pollCartCount() {
+    try {
+        const r = await fetch('/api/carrito/cantidad', { cache: 'no-store' });
+        if (!r.ok) return;
+        const d = await r.json();
+        const n = d.cantidad ?? 0;
+        localStorage.setItem('cant_carrito', n);
+        _syncCartBadge(n);
+    } catch {}
+}
+
+window.addEventListener('storage', (e) => {
+    if (e.key === 'cant_carrito') _syncCartBadge(e.newValue || '0');
+});
 
 
 const _TICKER_SPEED_KEY = '_dantojitos_ticker_speed';
@@ -1648,7 +1678,12 @@ function _updatePrivClientNotif(count) {
 
 async function _pollPrivMsgs() {
     try {
-        const r = await fetch('/mensajes_privados/no_leidos', { cache: 'no-store' });
+        const _ecv  = window._chatCV_abierto    || '';
+        const _estf = window._chatStaff_abierto || '';
+        const _qs   = (_ecv || _estf)
+            ? '?ecv=' + encodeURIComponent(_ecv) + '&estf=' + encodeURIComponent(_estf)
+            : '';
+        const r = await fetch('/mensajes_privados/no_leidos' + _qs, { cache: 'no-store' });
         if (!r.ok) return;
         const d     = await r.json();
         const cv    = d.cv    || 0;
@@ -1664,11 +1699,11 @@ async function _pollPrivMsgs() {
             _updatePrivNotifSistem('staff', staff);
         }
 
-        const _tabBadge = document.getElementById('tabPrivadoBadge');
-        if (_tabBadge) {
-            const _tot = cv + staff;
-            _tabBadge.textContent = _tot > 9 ? '9+' : _tot;
-            _tabBadge.style.display = _tot > 0 ? 'inline-flex' : 'none';
+        const _navSugBadge = document.getElementById('navSugerenciasBadge');
+        if (_navSugBadge) {
+            const _sugTot = cv + staff;
+            _navSugBadge.textContent = _sugTot > 9 ? '9+' : _sugTot;
+            _navSugBadge.style.display = _sugTot > 0 ? 'flex' : 'none';
         }
         const _cBadge = document.getElementById('subtabClientesBadge');
         if (_cBadge) {

@@ -233,7 +233,7 @@
         </div>
         <div id="suggestions"></div>
 
-        <div class="btn-group">
+        <div class="btn-group" id="btnGroup">
             <button class="btn btn-primary" onclick="irA('/inicio')">
                 <i class="bi bi-house-door-fill"></i> Inicio
             </button>
@@ -268,6 +268,11 @@
                 titulo: 'Error interno del servidor',
                 desc: 'Algo falló en el servidor. El equipo ya fue notificado.<br>Intentalo de nuevo en unos momentos.',
             },
+            401: {
+                emoji: '🔑',
+                titulo: 'Sesión expirada',
+                desc: 'Tu sesión ha expirado o no tenés autorización para ver este contenido.<br>Volvé a iniciar sesión para continuar.',
+            },
             offline: {
                 emoji: '📡',
                 titulo: 'Sin conexión a internet',
@@ -291,12 +296,27 @@
             { label:'Gestión de usuarios',    url:'/gestion_usuarios_page',         icon:'bi-people-fill',       rol:'admin' },
         ];
 
+        const BOTONES = {
+            default: `
+                <button class="btn btn-primary" onclick="irA('/inicio')"><i class="bi bi-house-door-fill"></i> Inicio</button>
+                <button class="btn btn-outline" onclick="irA('/catalogo_page')"><i class="bi bi-shop"></i> Catálogo</button>
+                <button class="btn btn-outline" onclick="history.back()"><i class="bi bi-arrow-left"></i> Volver</button>`,
+            401: `
+                <button class="btn btn-primary" onclick="irA('/login')"><i class="bi bi-box-arrow-in-right"></i> Iniciar sesión</button>
+                <button class="btn btn-outline" onclick="irA('/inicio')"><i class="bi bi-house-door-fill"></i> Inicio</button>`,
+            offline: `
+                <button class="btn btn-primary" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> Reintentar</button>
+                <button class="btn btn-outline" onclick="irA('/inicio')"><i class="bi bi-house-door-fill"></i> Inicio</button>`,
+        };
+
         function aplicarTipo(tipo) {
             const t = TIPOS[tipo] || TIPOS[404];
             document.getElementById('errEmoji').textContent = t.emoji;
             document.getElementById('errEmoji').className = 'error-emoji' + (tipo === 'offline' ? ' sin-internet' : '');
             document.getElementById('errTitulo').textContent = t.titulo;
             document.getElementById('errDesc').innerHTML = t.desc;
+            const bg = document.getElementById('btnGroup');
+            if (bg) bg.innerHTML = BOTONES[tipo] || BOTONES.default;
         }
 
         function actualizarOffline(offline) {
@@ -312,7 +332,13 @@
             }
         }
 
-        aplicarTipo(navigator.onLine ? CODIGO : 'offline');
+        const _urlTipo = new URLSearchParams(location.search).get('tipo');
+        if (_urlTipo && TIPOS[_urlTipo]) {
+            aplicarTipo(_urlTipo);
+            document.getElementById('errCodigo').textContent = _urlTipo.toUpperCase();
+        } else {
+            aplicarTipo(navigator.onLine ? CODIGO : 'offline');
+        }
         actualizarOffline(!navigator.onLine);
 
         window.addEventListener('offline', () => actualizarOffline(true));

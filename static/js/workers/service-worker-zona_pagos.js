@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-pagos-v8';
+const CACHE_NAME = 'dantojitos-pagos-v9';
 
 const PRECACHE = [
     '/gestionar_facturas_page',
