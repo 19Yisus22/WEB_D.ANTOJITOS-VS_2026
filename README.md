@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:FFB6B9,50:E07A5F,100:8B5A2B&height=220&section=header&text=D'Antojitos%C2%A9&fontSize=68&fontColor=ffffff&animation=fadeIn&fontAlignY=36&desc=Dulcer%C3%ADa%20Artesanal%20- Teresita&descAlignY=58&descSize=20&descAlign=50" width="100%" alt="D'Antojitos© banner"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:FFB6B9,50:E07A5F,100:8B5A2B&height=220&section=header&text=D'Antojitos%C2%A9&fontSize=68&fontColor=ffffff&animation=fadeIn&fontAlignY=36&desc=Dulcer%C3%ADa%20Artesanal%20Teresita&descAlignY=58&descSize=20&descAlign=50" width="100%" alt="D'Antojitos© banner"/>
 
 **Aplicación web full-stack para la gestión integral de una tienda de postres artesanales.**
 Cubre el ciclo completo de venta: catálogo, carrito, pedidos, facturación, mensajería privada y panel administrativo.
