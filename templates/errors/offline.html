@@ -227,7 +227,7 @@
         aplicarTipo(tipo);
 
         const p = document.getElementById('errPath');
-        const ruta = location.pathname === '/static/offline.html' ? '' : location.pathname;
+        const ruta = location.pathname === '/offline' ? '' : location.pathname;
         if (p && ruta) p.textContent = '📍 ' + ruta;
         else if (p) p.style.display = 'none';
 
