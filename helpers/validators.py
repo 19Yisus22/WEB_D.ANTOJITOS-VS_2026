@@ -23,7 +23,11 @@ def is_valid_email(value: str, max_len: int = 150) -> bool:
 def is_valid_password(value: str) -> bool:
     if not value or not isinstance(value, str):
         return False
-    return len(value) >= 5 and bool(re.search(r"[A-Za-z0-9_*+\-.@$%&]", value))
+    return (
+        len(value) >= 8
+        and bool(re.search(r"[A-Za-z]", value))
+        and bool(re.search(r"[0-9]", value))
+    )
 
 def is_valid_username(value: str) -> bool:
     if not value or not isinstance(value, str):

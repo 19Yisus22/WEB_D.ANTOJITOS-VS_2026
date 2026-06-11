@@ -1,10 +1,26 @@
 import os
 import uuid
 import math
+import threading
+from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 
 from flask import (Blueprint, request, jsonify, session,
                    redirect, render_template, make_response)
+
+_ip_login_log: dict[str, list] = defaultdict(list)
+_ip_lock = threading.Lock()
+
+def _ip_rate_ok(ip: str, max_req: int = 10, window_s: int = 60) -> bool:
+    now    = datetime.now(timezone.utc)
+    cutoff = now - timedelta(seconds=window_s)
+    with _ip_lock:
+        _ip_login_log[ip] = [t for t in _ip_login_log[ip] if t > cutoff]
+        if len(_ip_login_log[ip]) >= max_req:
+            return False
+        _ip_login_log[ip].append(now)
+        return True
+
 from google.oauth2               import id_token
 from google.auth.transport       import requests as google_requests
 
@@ -54,6 +70,10 @@ def login():
             slides = []
         return render_template("global_modules/login.html", slides=slides)
 
+    client_ip = request.headers.get("X-Forwarded-For", request.remote_addr or "").split(",")[0].strip()
+    if not _ip_rate_ok(client_ip):
+        return jsonify({"ok": False, "error": "Demasiadas solicitudes. Espera un momento e intenta de nuevo."}), 429
+
     session.clear()
     data       = request.get_json() or {}
     identifier = (data.get("identifier") or data.get("correo") or "").strip()
@@ -68,7 +88,7 @@ def login():
         return jsonify({"ok": False, "error": "Error de conexión con la base de datos"}), 500
 
     if not user:
-        return jsonify({"ok": False, "error": "Este usuario no está registrado"}), 404
+        return jsonify({"ok": False, "error": "Credenciales incorrectas"}), 401
 
     cedula = str(user["cedula"])
     now    = datetime.now(timezone.utc)
@@ -213,8 +233,8 @@ def registro_google():
         resp = make_response(jsonify({"ok": True, "user": user}))
         _emit_tokens_and_session(user, resp)
         return resp
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 401
+    except Exception:
+        return jsonify({"ok": False, "error": "Error de autenticación. Verifica tu cuenta de Google."}), 401
 
 
 @auth_bp.route("/refresh", methods=["POST"])
@@ -300,7 +320,7 @@ def registro():
     if not is_valid_email(correo):
         return jsonify({"ok": False, "error": "Correo inválido. Usa el formato usuario@dominio.com"}), 400
     if not is_valid_password(password):
-        return jsonify({"ok": False, "error": "Contraseña inválida (mín. 5 caracteres)."}), 400
+        return jsonify({"ok": False, "error": "Contraseña inválida (mín. 8 caracteres, debe incluir al menos una letra y un número)."}), 400
     if username and not is_valid_username(username):
         return jsonify({"ok": False, "error": "Username inválido (3–30 caracteres, letras/números)."}), 400
 
