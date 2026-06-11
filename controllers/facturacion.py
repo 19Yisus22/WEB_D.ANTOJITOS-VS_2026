@@ -8,7 +8,6 @@ from helpers.validators import ENTIDADES_PAGO, TIPOS_CUENTA
 
 facturacion_bp = Blueprint("facturacion", __name__)
 
-
 @facturacion_bp.route("/facturacion_page", methods=["GET", "POST"])
 @sin_cache
 @admin_required
@@ -67,7 +66,6 @@ def facturacion_page():
     metodos = db.metodo_pago_get_all()
     return render_template("admin_modules/facturacion.html", metodos=metodos)
 
-
 @facturacion_bp.route("/actualizar_metodo_pago/<id_pago>", methods=["POST"])
 @admin_required
 def actualizar_metodo_pago(id_pago):
@@ -100,7 +98,6 @@ def actualizar_metodo_pago(id_pago):
         return jsonify({"ok": True, "data": result})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @facturacion_bp.route("/eliminar_metodo_pago/<id_pago>", methods=["DELETE"])
 @admin_required

@@ -394,7 +394,6 @@ assert len(LOGROS_DEFINIDOS) == 330, f"Se esperaban 330 logros, hay {len(LOGROS_
 
 LOGROS_MAP: dict[str, dict] = {l["codigo"]: l for l in LOGROS_DEFINIDOS}
 
-
 def _es_hoy_cumpleanos(usuario: dict) -> bool:
     fn = usuario.get("fecha_nacimiento")
     if not fn:
@@ -406,7 +405,6 @@ def _es_hoy_cumpleanos(usuario: dict) -> bool:
         return fn.month == hoy.month and fn.day == hoy.day
     except Exception:
         return False
-
 
 def _tiene_foto_personalizada(usuario: dict) -> bool:
     img = usuario.get("imagen_url") or ""
@@ -420,7 +418,6 @@ def _tiene_foto_personalizada(usuario: dict) -> bool:
         return False
     return True
 
-
 def _perfil_completo(usuario: dict) -> bool:
     campos = ["nombre", "apellido", "telefono", "correo", "direccion",
               "metodo_pago", "username", "imagen_url", "fecha_nacimiento"]
@@ -431,7 +428,6 @@ def _perfil_completo(usuario: dict) -> bool:
         if c == "imagen_url" and not _tiene_foto_personalizada(usuario):
             return False
     return True
-
 
 def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]:
     import helpers.models as db
@@ -520,18 +516,16 @@ def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]
     last_streak_d = int(db_contadores.get(sd_key, 0))
 
     if es_visita and modulo_visita:
-        # Visit counter: increment only on a new calendar day
         visit_count = db_visit + 1 if last_visit_d < hoy_epoch else db_visit
 
-        # Streak: continue if yesterday was visited, reset if gap > 1 day, hold if already today
         if last_streak_d == hoy_epoch:
-            streak_count = db_streak                  # already counted today
+            streak_count = db_streak
         elif last_streak_d == hoy_epoch - 1:
-            streak_count = db_streak + 1              # yesterday → continue streak
+            streak_count = db_streak + 1
         elif last_streak_d == 0:
-            streak_count = 1                          # first ever visit
+            streak_count = 1
         else:
-            streak_count = 1                          # gap > 1 day → streak reset
+            streak_count = 1
 
         save_patch: dict = {v_key: visit_count, s_key: streak_count}
         if last_visit_d < hoy_epoch:

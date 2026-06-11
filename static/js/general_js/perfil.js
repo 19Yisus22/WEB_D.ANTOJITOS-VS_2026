@@ -374,7 +374,6 @@ cargarRestricciones().then(() => {
     }
 });
 
-
 (function () {
     const cedInput = document.getElementById('cedulaPerfil');
     if (!cedInput) return;

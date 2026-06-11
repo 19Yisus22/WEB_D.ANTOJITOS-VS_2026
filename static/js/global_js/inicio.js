@@ -93,48 +93,6 @@ async function cargarMarketing() {
         if (carouselInner) carouselInner.innerHTML = "";
 
         notificacionesDisponibles = arr.filter(i => i.tipo === 'notificacion');
-        const cintaInicioEl = document.getElementById('cintaInicio');
-
-        if (cintaInicioEl) {
-            let rawCinta = arr.filter(i => i.tipo === 'inicio_cinta' && i.estado !== false);
-            if (!rawCinta.length) rawCinta = arr.filter(i => i.tipo === 'cinta' && i.estado !== false);
-
-            if (rawCinta.length > 0) {
-                const fifoQueue = rawCinta.slice().sort((a, b) =>
-                    new Date(a.created_at || 0) - new Date(b.created_at || 0)
-                );
-
-
-                const looped = [...fifoQueue, ...fifoQueue];
-                const baseDuration = Math.max(28, fifoQueue.length * 6);
-                const speed = _cintas_speed;
-                const duration = (baseDuration / speed).toFixed(1);
-
-                const buildItem = (i, showDivider) => {
-                    const validImg = i.imagen_url && i.imagen_url.startsWith('http');
-                    return `<div class="ci-item">${
-                        validImg
-                            ? `<img src="${i.imagen_url}" alt="${i.titulo || ''}" loading="lazy" onerror="this.style.display='none'">`
-                            : `<i class="bi bi-megaphone ci-item-icon"></i>`
-                    }<span class="ci-item-label">${i.titulo || ''}</span></div>${showDivider ? '<div class="ci-divider"></div>' : ''}`;
-                };
-
-
-                const half = looped.length / 2;
-                const itemsHTML = looped.map((i, idx) =>
-                    buildItem(i, (idx + 1) === half || (idx + 1) === looped.length)
-                ).join('');
-
-                cintaInicioEl.innerHTML = `<div class="ci-track" data-base-duration="${baseDuration}" style="animation-duration:${duration}s;">${itemsHTML}</div>`;
-                cintaInicioEl.style.display = 'flex';
-                if (_cintas_speed !== 1) {
-                    const _t = cintaInicioEl.querySelector('.ci-track');
-                    if (_t) _t.style.animationDuration = (baseDuration / _cintas_speed).toFixed(1) + 's';
-                }
-            } else {
-                cintaInicioEl.style.display = 'none';
-            }
-        }
 
         arr.filter(i => i.tipo === 'seccion' && i.estado !== false).forEach((item, idx) => {
             const imgSrc = (item.imagen_url && item.imagen_url.startsWith('http'))
@@ -371,17 +329,21 @@ function iniciarSortable() {
 
     _sortableMain = Sortable.create(document.getElementById('sortable-main'), {
         handle: '.widget-handle',
-        animation: 180,
+        animation: 120,
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
-        dragClass: 'sortable-drag'
+        dragClass: 'sortable-drag',
+        forceFallback: false,
+        delay: 0
     });
 
     _sortableSidebar = Sortable.create(document.getElementById('sortable-sidebar'), {
         handle: '.widget-handle',
-        animation: 180,
+        animation: 120,
         ghostClass: 'sortable-ghost',
-        chosenClass: 'sortable-chosen'
+        chosenClass: 'sortable-chosen',
+        forceFallback: false,
+        delay: 0
     });
 }
 
@@ -409,15 +371,18 @@ function abrirModalEditor(configKey, etiqueta, valorActual) {
     const label    = document.getElementById('modalEditorLabel');
     if (!modal || !textarea) return;
 
-    label.textContent    = `Editar: ${etiqueta}`;
-    textarea.value       = valorActual || '';
-    modal.style.display  = 'flex';
-    textarea.focus();
+    label.textContent = etiqueta;
+    textarea.value    = valorActual || '';
+    modal.classList.add('open');
+    requestAnimationFrame(() => {
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+    });
 }
 
 function cerrarModalEditor() {
     const modal = document.getElementById('modalEditorTexto');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.classList.remove('open');
     _targetConfigKey = null;
 }
 
@@ -598,7 +563,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-
 (function _initLogrosProgressBar() {
     const bar   = document.getElementById('logrosProgresoBar');
     const label = document.getElementById('logrosProgresoLabel');
@@ -620,7 +584,6 @@ if ('serviceWorker' in navigator) {
             }));
         } catch (_) {}
     }
-
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => setTimeout(_cargarProgreso, 600));

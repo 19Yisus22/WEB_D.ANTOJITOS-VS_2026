@@ -64,7 +64,6 @@ async function comprimirImagen(file) {
 function actualizarPreview() {
     let anyContent = false;
 
-
     const pCar = document.querySelector("#previewCarrusel .carousel-inner");
     const blockCar = document.getElementById("prevBlockCarrusel");
     if (pCar) {
@@ -96,7 +95,6 @@ function actualizarPreview() {
         }
     }
 
-
     const pCintaTrack = document.getElementById("previewCintaTrack");
     const blockCinta  = document.getElementById("prevBlockCinta");
     if (pCintaTrack) {
@@ -121,7 +119,6 @@ function actualizarPreview() {
         }
     }
 
-
     const pSec     = document.getElementById("previewSecciones");
     const blockSec = document.getElementById("prevBlockSecciones");
     if (pSec) {
@@ -144,7 +141,6 @@ function actualizarPreview() {
         if (blockSec) blockSec.style.display = hasSec ? '' : 'none';
         if (hasSec) anyContent = true;
     }
-
 
     const emptyEl = document.getElementById("prevEmpty");
     if (emptyEl) emptyEl.style.display = anyContent ? 'none' : 'flex';
@@ -571,7 +567,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-
 let _previewLoaded = false;
 
 function toggleLivePreview() {
@@ -633,10 +628,7 @@ function recargarPreviewInicio() {
 
 function _initLivePreviewScroll() {
 
-
 }
-
-
 
 let _gestorData = {};
 let _carpetaActual = 'publicidad';
@@ -812,7 +804,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.ticker-speed-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const speed = parseFloat(btn.dataset.speed);
-            if (typeof setTickerSpeed === 'function') setTickerSpeed(speed);
+            if (typeof window.setTickerSpeed === 'function') window.setTickerSpeed(speed);
+            document.querySelectorAll('.ticker-speed-btn').forEach(b => {
+                b.classList.toggle('active', parseFloat(b.dataset.speed) === speed);
+            });
             fetch('/api/inicio/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

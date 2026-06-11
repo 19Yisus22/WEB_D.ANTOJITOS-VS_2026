@@ -5,13 +5,11 @@ from helpers.cloudinary import upload_image, upload_base64, delete_image
 
 gestion_productos_bp = Blueprint("gestion_productos", __name__)
 
-
 @gestion_productos_bp.route("/gestionar_productos_page")
 @sin_cache
 @vendedor_required
 def gestionar_productos_page():
     return render_template("admin_modules/gestion_productos.html")
-
 
 @gestion_productos_bp.route("/gestionar_productos", methods=["GET", "POST"])
 @login_required
@@ -47,7 +45,6 @@ def gestionar_productos():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
-
 @gestion_productos_bp.route("/actualizar_producto/<id_producto>", methods=["PUT", "OPTIONS"])
 @login_required
 def actualizar_producto(id_producto):
@@ -80,7 +77,6 @@ def actualizar_producto(id_producto):
         return jsonify({"ok": True, "producto": prod})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
-
 
 @gestion_productos_bp.route("/eliminar_producto/<id_producto>", methods=["DELETE", "OPTIONS"])
 @login_required

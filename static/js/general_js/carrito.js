@@ -37,7 +37,6 @@ function mostrarToastPublicidad(imagen, titulo, descripcion, isError = false) {
     mostrarAlertaPublica({ imagen, titulo, mensaje: descripcion, tipo: isError ? 'error' : 'info' });
 }
 
-
 function recalcularTotal() {
     let total = 0;
     document.querySelectorAll('.cart-item[data-subtotal]').forEach(r => {
@@ -62,7 +61,6 @@ function recalcularTotal() {
     document.querySelectorAll('.cart-qty-badge').forEach(b => { totalQty += parseInt(b.textContent) || 0; });
     actualizarContadorBadge(totalQty);
 }
-
 
 async function ajustarCantidad(id_carrito, delta, row, idProducto) {
     if (isRequesting) return;

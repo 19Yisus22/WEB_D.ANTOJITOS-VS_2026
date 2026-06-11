@@ -5,11 +5,9 @@ from helpers.logros_utils import LOGROS_DEFINIDOS, verificar_y_otorgar
 
 logros_bp = Blueprint("logros", __name__)
 
-
 @logros_bp.route("/logros/todos")
 def todos_los_logros():
     return jsonify(LOGROS_DEFINIDOS)
-
 
 @logros_bp.route("/logros/mis_logros")
 @login_required
@@ -45,7 +43,6 @@ def mis_logros():
             "rol_stats": {}, "contadores": {}, "error": str(e),
         })
 
-
 @logros_bp.route("/logros/verificar", methods=["POST"])
 @login_required
 def verificar_logros():
@@ -59,7 +56,6 @@ def verificar_logros():
     except Exception as e:
         return jsonify({"nuevos": [], "ok": False, "error": str(e)})
 
-
 @logros_bp.route("/logros/contadores", methods=["GET"])
 @login_required
 def get_contadores():
@@ -69,7 +65,6 @@ def get_contadores():
     except Exception:
         return jsonify({}), 200
 
-
 _PREFIJOS_SERVIDOR = ("v_", "s_")
 _SUFIJOS_SERVIDOR  = ("_vd", "_sd")
 
@@ -78,7 +73,6 @@ def _es_clave_servidor(k: str) -> bool:
         any(k.startswith(p) for p in _PREFIJOS_SERVIDOR)
         or any(k.endswith(s) for s in _SUFIJOS_SERVIDOR)
     )
-
 
 @logros_bp.route("/logros/contadores", methods=["POST"])
 @login_required
@@ -97,5 +91,4 @@ def set_contadores():
         return jsonify({"ok": True, "guardados": len(fusionados)}), 200
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 200
-
 

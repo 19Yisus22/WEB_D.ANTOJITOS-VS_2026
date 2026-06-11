@@ -21,7 +21,6 @@ def catalogo_page():
     except Exception as e:
         return f"Error cargando catálogo: {e}", 500
 
-
 @catalogo_productos_bp.route("/obtener_catalogo")
 def obtener_catalogo():
     try:

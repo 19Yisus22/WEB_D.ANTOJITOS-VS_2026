@@ -76,7 +76,6 @@ function mostrarNotificacionBienvenida() {
     } catch (e) {}
 }
 
-
 const _pedidosNotifSet = new Set(
     JSON.parse(sessionStorage.getItem('_pedidosNotifSet') || '[]')
 );
@@ -474,11 +473,9 @@ async function cargarPedidos(isAutoRefresh = false) {
                     </div><!-- /.collapse-content -->
                 </div>`;
 
-            // Eventos
             card.querySelectorAll(".toggle-pago-item-switch").forEach(sw => {
                 sw.onchange = async () => {
                     if (bloqueado) { sw.checked = !sw.checked; return; }
-                    // ... (mantengo tu lógica original de pago)
                     const itemId = sw.dataset.itemId;
                     const indice = parseInt(sw.dataset.indice);
                     const subtotalValor = parseFloat(sw.dataset.subtotal);

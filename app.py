@@ -225,7 +225,7 @@ def _get_local_ip() -> str:
         s.close()
 
 if __name__ == "__main__":
-    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), False # Cambia a True para modo desarrollo con debug activado
+    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), False
 
     if debug_mode:
         print("\033[93m" + "MODE DEVELOPMENT - DEBUG" + "\033[0m")

@@ -748,7 +748,6 @@ async function procesarAnulacion(numFactura) {
     });
 }
 
-
 let _monitorFacturaLock = false;
 const _facturaEstadosNotif = new Map();
 
@@ -797,7 +796,6 @@ async function monitorearCambiosFacturas() {
         }
 
         facturasLocalesCache = JSON.parse(JSON.stringify(facturasServidor));
-
 
         const term = criterio.toLowerCase().replace(/^@/, '');
 
@@ -1046,8 +1044,6 @@ function mostrarFacturasBuscadas() {
                     const esVendedor = role === 'vendedor';
                     const esAdmin    = role === 'admin';
                     const esCliente  = !esVendedor && !esAdmin;
-
-                    /* Botón pagar: visible para cliente y admin en facturas activas */
                     const btnPagar = (!esFinal && !esVendedor)
                         ? `<button class="btn btn-primary w-100 rounded-pill py-2 fw-bold inv-btn-pagar">
                                <i class="bi bi-qr-code-scan me-2"></i>${t('inv.proceed')}
@@ -1183,7 +1179,6 @@ function paginar(totalItems) {
     nav.appendChild(frag);
 }
 
-
 async function cargarTodasFacturasPage() {
     try {
         const res = await fetch('/todas_facturas_page');
@@ -1198,7 +1193,6 @@ async function cargarTodasFacturasPage() {
         mostrarFacturasBuscadas();
     } catch (e) { console.error(e); }
 }
-
 
 async function cargarFacturasCliente() {
     try {

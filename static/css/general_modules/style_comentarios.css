@@ -56,13 +56,12 @@ html, body {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='120'%3E%3Ctext x='110' y='60' font-family='Segoe UI%2C sans-serif' font-size='13' font-weight='700' fill='rgba(240%2C136%2C62%2C0.07)' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 110 60)'%3ED%27Antojitos%C2%A9%3C/text%3E%3C/svg%3E");
 }
 
-/* ── Panel público: flex column para que el input quede al pie ── */
 #panelPublico {
     display: flex;
     flex-direction: column;
     flex: 1;
     overflow: hidden;
-    min-height: 0;   /* evita que flex-child ignore overflow */
+    min-height: 0;
 }
 
 .chat-header {
@@ -83,7 +82,7 @@ html, body {
 
 #chatBox {
     flex: 1;
-    min-height: 0;        /* clave: permite que flex-child haga scroll */
+    min-height: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -107,7 +106,7 @@ html, body {
     color: #1a1a2e;
     font-size: 0.95rem;
 }
-/* Fuerza color legible en todos los nodos hijo (elimina estilos inline de copypaste) */
+
 .mensaje-texto *,
 .priv-msg-text * {
     background-color: transparent !important;
@@ -131,8 +130,8 @@ html, body {
     display: inline-block;
 }
 
-.emoji-item:hover { 
-    transform: scale(1.3); 
+.emoji-item:hover {
+    transform: scale(1.3);
 }
 
 .contenedor-foto-estado {
@@ -151,13 +150,13 @@ html, body {
     z-index: 2;
 }
 
-.estado-conectado { 
-    background-color: var(--success); 
+.estado-conectado {
+    background-color: var(--success);
     box-shadow: 0 0 8px rgba(46, 204, 113, 0.6);
 }
 
-.estado-desconectado { 
-    background-color: var(--gray-muted); 
+.estado-desconectado {
+    background-color: var(--gray-muted);
 }
 
 .form-control {
@@ -193,8 +192,8 @@ html, body {
     gap: 4px;
 }
 
-.btn-like-mini:active { 
-    transform: scale(1.4); 
+.btn-like-mini:active {
+    transform: scale(1.4);
 }
 
 @keyframes heartBeat {
@@ -283,7 +282,6 @@ html, body {
     to   { opacity:1; transform: translateY(0); }
 }
 
-/* Barra de categorías */
 .emoji-panel-categories {
     display: flex;
     gap: 4px;
@@ -331,7 +329,6 @@ html, body {
     transform: scale(1.25);
 }
 
-/* Preview de imágenes antes de enviar */
 .chat-img-preview-area {
     display: flex;
     flex-wrap: wrap;
@@ -393,7 +390,6 @@ html, body {
     background: rgba(211,84,0,0.88);
 }
 
-/* Imágenes dentro de la burbuja de chat */
 .chat-bubble-images {
     display: flex;
     flex-wrap: wrap;
@@ -437,7 +433,6 @@ html, body {
     border-color: rgba(255,255,255,0.06);
 }
 
-/* Modal de imagen ampliada */
 #chatImgModal {
     position: fixed;
     inset: 0;
@@ -461,10 +456,6 @@ html, body {
 [data-theme="dark"] .emoji-panel-grid .emoji-item:hover { background: rgba(255,255,255,0.1); }
 [data-theme="dark"] .ep-cat-btn:hover, [data-theme="dark"] .ep-cat-btn.active { background: rgba(240,136,62,0.15); }
 [data-theme="dark"] .emoji-panel-categories { border-bottom-color: rgba(255,255,255,0.08); }
-
-/* ═══════════════════════════════════════════════════
-   SISTEMA DE TABS
-   ═══════════════════════════════════════════════════ */
 
 .chat-tabs {
     display: flex;
@@ -493,7 +484,6 @@ html, body {
 .chat-tab:hover { color: #d35400; background: rgba(211,84,0,0.03); }
 .chat-tab.active { color: #d35400; border-bottom-color: #d35400; }
 
-/* Badge en tab privado */
 .tab-badge {
     min-width: 18px;
     height: 18px;
@@ -508,7 +498,6 @@ html, body {
     padding: 0 4px;
 }
 
-/* ── Cita de respuesta pública ── */
 .reply-quote {
     display: flex;
     align-items: center;
@@ -527,7 +516,6 @@ html, body {
 .reply-quote-close { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 2px 4px; border-radius: 4px; font-size: 0.7rem; flex-shrink: 0; transition: color 0.15s; }
 .reply-quote-close:hover { color: #e74c3c; }
 
-/* Bloque de cita en mensajes públicos ya enviados */
 .pub-reply-quote {
     font-size: 0.75rem;
     color: #d35400;
@@ -542,7 +530,6 @@ html, body {
     white-space: nowrap;
 }
 
-/* Botón responder individual */
 .btn-reply-pub { transition: background 0.15s; }
 .btn-reply-pub:hover { background: rgba(211,84,0,0.12) !important; }
 
@@ -550,10 +537,6 @@ html, body {
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-
-/* ═══════════════════════════════════════════════════
-   PANEL PRIVADO — layout común
-   ═══════════════════════════════════════════════════ */
 
 #panelPrivado {
     flex: 1;
@@ -563,7 +546,6 @@ html, body {
     flex-direction: column;
 }
 
-/* ── Layout vendedor: sidebar + conversación ── */
 .priv-layout {
     display: flex;
     flex: 1;
@@ -596,7 +578,6 @@ html, body {
 }
 .priv-loading { display: flex; align-items: center; justify-content: center; padding: 24px; color: #aaa; }
 
-/* Ítem de hilo en sidebar */
 .priv-hilo-item {
     display: flex;
     align-items: center;
@@ -632,7 +613,6 @@ html, body {
     padding: 0 4px; flex-shrink: 0;
 }
 
-/* ── Panel derecho de conversación (vendedor) ── */
 .priv-conv-wrap {
     flex: 1;
     min-height: 0;
@@ -665,7 +645,7 @@ html, body {
 
 .priv-conv-box {
     flex: 1;
-    min-height: 0;       /* permite scroll dentro del flex */
+    min-height: 0;
     overflow-y: auto;
     padding: 12px 16px;
     display: flex;
@@ -680,7 +660,7 @@ html, body {
     padding: 10px 14px;
     border-top: 1px solid #eef1f6;
     background: #fafbfc;
-    flex-shrink: 0;   /* no encoge — siempre visible al pie */
+    flex-shrink: 0;
 }
 .priv-textarea {
     flex: 1;
@@ -712,7 +692,6 @@ html, body {
 .priv-send-btn:hover { transform: scale(1.08); box-shadow: 0 5px 16px rgba(211,84,0,0.4); }
 .priv-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-/* ── Layout cliente: flex column, mensajes arriba, predefinidos al pie ── */
 .priv-client-wrap {
     display: flex;
     flex-direction: column;
@@ -731,7 +710,7 @@ html, body {
     gap: 6px;
     flex-shrink: 0;
 }
-/* Hilo del cliente: crece y hace scroll */
+
 .priv-conv-box--client {
     background: #fafbfc;
     flex: 1;
@@ -739,7 +718,6 @@ html, body {
     overflow-y: auto;
 }
 
-/* ── Mensajes predeterminados (cliente) — siempre al pie ── */
 .priv-predefined-area {
     border-top: 1px solid #eef1f6;
     padding: 12px 14px;
@@ -786,7 +764,6 @@ html, body {
 }
 .priv-pred-icon { font-size: 1rem; line-height: 1; }
 
-/* ── Bubbles de mensajes privados ── */
 .priv-msg {
     display: flex;
     margin-bottom: 4px;
@@ -832,7 +809,6 @@ html, body {
 }
 .priv-hilo-empty i { font-size: 2rem; }
 
-/* ── Dark mode ── */
 [data-theme="dark"] .chat-tabs { background: var(--dk-card, #1a1826) !important; border-color: var(--dk-border, #2a2838) !important; }
 [data-theme="dark"] .chat-tab  { color: var(--dk-text-muted, #7878a0) !important; }
 [data-theme="dark"] .chat-tab.active { color: var(--dk-accent, #f0883e) !important; border-color: var(--dk-accent, #f0883e) !important; }
@@ -860,7 +836,6 @@ html, body {
 [data-theme="dark"] .reply-quote { background: rgba(240,136,62,0.08) !important; }
 [data-theme="dark"] .pub-reply-quote { background: rgba(240,136,62,0.08) !important; }
 
-/* ── Sub-tabs (Clientes / Equipo) para vendedor ── */
 .priv-subtabs-bar {
     display: flex;
     border-bottom: 2px solid #eef1f6;
@@ -889,7 +864,6 @@ html, body {
 .priv-subtab:hover { color: var(--primary); background: rgba(211,84,0,0.04); }
 .priv-subtab.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(211,84,0,0.06); }
 
-/* ── Delete buttons on thread items and messages ── */
 .priv-hilo-delete {
     background: transparent;
     border: none;
@@ -940,18 +914,12 @@ html, body {
 [data-theme="dark"] .priv-hilo-delete { color: var(--dk-border, #2a2838) !important; }
 [data-theme="dark"] .priv-hilo-delete:hover { color: #fc8181 !important; }
 
-/* ═══════════════════════════════════════════════════
-   EDITOR WYSIWYG — barra de herramientas + área
-   ═══════════════════════════════════════════════════ */
-
-/* ── Chat input area — siempre al pie del panel ── */
 .chat-input-area {
-    flex-shrink: 0;          /* no encoge aunque el chatBox sea pequeño */
+    flex-shrink: 0;
     background: var(--white);
     border-top: 1px solid #f0f3f6;
 }
 
-/* ── Barra de herramientas ── */
 .editor-toolbar {
     display: flex;
     align-items: center;
@@ -963,7 +931,6 @@ html, body {
     flex-wrap: wrap;
 }
 
-/* Separador vertical */
 .fmt-sep {
     width: 1px;
     height: 20px;
@@ -972,7 +939,6 @@ html, body {
     flex-shrink: 0;
 }
 
-/* ── Botón de formato ── */
 .fmt-btn {
     display: inline-flex;
     align-items: center;
@@ -997,7 +963,6 @@ html, body {
 }
 .fmt-btn:active { transform: scale(0.9); }
 
-/* Botón activo — cuando la selección tiene ese formato */
 .fmt-btn.is-active {
     background: rgba(211,84,0,0.12);
     color: #d35400;
@@ -1005,7 +970,6 @@ html, body {
     box-shadow: inset 0 0 0 1.5px rgba(211,84,0,0.3);
 }
 
-/* Emoji trigger más ancho */
 .fmt-btn.emoji-trigger {
     width: auto;
     padding: 0 10px;
@@ -1023,7 +987,6 @@ html, body {
     color: #d35400;
 }
 
-/* ── Editor contenteditable ── */
 .rich-editor {
     min-height: 64px;
     max-height: 150px;
@@ -1042,7 +1005,6 @@ html, body {
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* Neutraliza cualquier color/fondo inline que venga de contenido pegado */
 .rich-editor *,
 .rich-editor span,
 .rich-editor p,
@@ -1057,7 +1019,6 @@ html, body {
     box-shadow: 0 0 0 3px rgba(211,84,0,0.08);
 }
 
-/* Placeholder via CSS (contenteditable no tiene nativo) */
 .rich-editor:empty::before {
     content: attr(data-placeholder);
     color: #b0bec5;
@@ -1065,12 +1026,10 @@ html, body {
     user-select: none;
 }
 
-/* Elementos inline formateados en el editor */
 .rich-editor strong, .rich-editor b { font-weight: 800; color: inherit; }
 .rich-editor em, .rich-editor i    { font-style: italic; color: inherit; }
 .rich-editor u                      { text-decoration: underline; color: inherit; }
 
-/* ── Items de lista — indentados sin espacio automático ── */
 .rich-editor .chat-list-item,
 .mensaje-texto .chat-list-item {
     display: block;
@@ -1088,12 +1047,10 @@ html, body {
     font-weight: 700;
 }
 
-/* Scrollbar del editor */
 .rich-editor::-webkit-scrollbar { width: 4px; }
 .rich-editor::-webkit-scrollbar-track { background: transparent; }
 .rich-editor::-webkit-scrollbar-thumb { background: rgba(211,84,0,0.2); border-radius: 4px; }
 
-/* ── Dark mode ── */
 [data-theme="dark"] .chat-input-area {
     background: var(--dk-card, #1a1826) !important;
     border-color: var(--dk-border, #2a2838) !important;

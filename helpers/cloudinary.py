@@ -13,7 +13,6 @@ _cache: dict = {
     "last_updated": 0.0,
 }
 
-
 def get_storage_info() -> dict:
     now = time.monotonic()
     if now - _cache["last_updated"] > 60:
@@ -85,7 +84,6 @@ def delete_image(public_url: str) -> bool:
         return False
 
 def delete_image_by_public_id(public_id: str) -> bool:
-    """Elimina una imagen de Cloudinary usando su public_id directamente."""
     if not public_id:
         return False
     try:
@@ -101,7 +99,6 @@ def allowed_extension(filename: str) -> bool:
     return ext in allowed
 
 def list_images_by_folder(folder: str, max_results: int = 50) -> list:
-    """Lista imágenes de una carpeta Cloudinary. Devuelve lista de dicts con url, nombre, tamaño."""
     try:
         result = _api.resources(
             type="upload",
@@ -127,7 +124,6 @@ def list_images_by_folder(folder: str, max_results: int = 50) -> list:
         return []
 
 def list_all_folders_images() -> dict:
-    """Lista imágenes de las carpetas reales en Cloudinary."""
     return {
         "publicidad": list_images_by_folder("publicidad_DAntojitos"),
         "pagos_qr":   list_images_by_folder("pagos_qr"),

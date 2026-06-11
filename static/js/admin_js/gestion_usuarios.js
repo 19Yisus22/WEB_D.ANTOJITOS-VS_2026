@@ -242,7 +242,7 @@ function abrirModalRol(cedula, nombre, rolActual) {
     document.getElementById('modalRolNombre').textContent = nombre;
     document.getElementById('selectNuevoRol').value       = rolActual || 'cliente';
     document.getElementById('btnGuardarRol').onclick      = guardarRol;
-    // Limpiar error previo y spinner al reabrir
+    
     const errorEl = document.getElementById('modalRolError');
     if (errorEl) errorEl.style.display = 'none';
     const btn = document.getElementById('btnGuardarRol');
@@ -270,7 +270,7 @@ async function guardarRol() {
             bootstrap.Modal.getInstance(document.getElementById('modalRol'))?.hide();
             cargarUsuarios();
         } else {
-            // Mostrar error dentro del modal
+            
             if (errorEl) {
                 errorEl.textContent    = data.error || 'Error al actualizar';
                 errorEl.style.display  = 'block';

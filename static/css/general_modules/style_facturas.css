@@ -80,9 +80,6 @@ body {
     margin: 0 auto 1.5rem;
 }
 
-/* ══════════════════════════════════════
-   BARRA DE BÚSQUEDA
-   ══════════════════════════════════════ */
 .facturas-search-wrap {
     display: flex;
     gap: 12px;
@@ -156,7 +153,6 @@ body {
 [data-theme="dark"] .facturas-search-input { color: #e8e8e8 !important; }
 [data-theme="dark"] .facturas-filtro-select { background-color: #1a1a1a !important; border-color: #2a2a2a !important; color: #e8e8e8 !important; }
 
-/* ── Filtro por número de factura ── */
 .facturas-num-filter {
     display: flex;
     flex-direction: column;
@@ -277,9 +273,6 @@ body {
     border-color: #f0883e;
 }
 
-/* ══════════════════════════════════════
-   CABECERA DE SECCIÓN
-   ══════════════════════════════════════ */
 .facturas-section-head {
     display: flex;
     align-items: flex-start;
@@ -341,9 +334,6 @@ body {
     color: #fff;
 }
 
-/* ══════════════════════════════════════
-   PANEL DE BÚSQUEDA
-   ══════════════════════════════════════ */
 .facturas-search-card {
     background: var(--surface);
     border-radius: 20px;
@@ -450,9 +440,6 @@ body {
     box-shadow: 0 0 0 3px rgba(211,84,0,0.1);
 }
 
-/* ══════════════════════════════════════
-   ESTADO VACÍO
-   ══════════════════════════════════════ */
 .facturas-empty-state {
     background: var(--surface);
     border-radius: 20px;
@@ -488,7 +475,6 @@ body {
     .facturas-section-head { flex-direction: column; align-items: flex-start; }
 }
 
-/* old .search-panel kept for compatibility */
 .search-panel {
     width: 100%;
     background: var(--surface);
@@ -631,7 +617,7 @@ body {
         padding: 1rem;
         margin-bottom: 2.5rem;
     }
-    
+
     .search-panel input#buscarFactura {
         height: 48px;
         font-size: 1rem;
@@ -672,9 +658,6 @@ body {
     font-size: 0.95rem;
 }
 
-/* ══════════════════════════════════════════
-   INVOICE LIST — estilo recibo oscuro
-   ══════════════════════════════════════════ */
 .invoice-list { display: flex; flex-direction: column; gap: 12px; }
 
 .inv-item {
@@ -693,14 +676,12 @@ body {
     box-shadow: 0 14px 50px rgba(0,0,0,0.6);
 }
 
-/* Quita el borde lateral de color — la identidad está en el badge */
 .inv-item.inv-info,
 .inv-item.inv-success,
 .inv-item.inv-danger,
 .inv-item.inv-warning,
 .inv-item.inv-primary { border-left: 1px solid rgba(255,255,255,0.07); }
 
-/* ── Cabecera ── */
 .inv-header {
     display: flex;
     align-items: center;
@@ -712,7 +693,6 @@ body {
     border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
-/* Lado izquierdo: logo + marca */
 .inv-brand-side {
     display: flex;
     align-items: center;
@@ -744,7 +724,6 @@ body {
     letter-spacing: -0.2px;
 }
 
-/* Lado derecho: número + fecha + badge */
 .inv-meta-side {
     display: flex;
     flex-direction: column;
@@ -769,7 +748,6 @@ body {
     white-space: nowrap;
 }
 
-/* Chevron toggle */
 .inv-chevron {
     font-size: 0.82rem;
     color: #7878a0;
@@ -779,7 +757,6 @@ body {
 }
 .inv-item.expanded .inv-chevron { transform: rotate(180deg); }
 
-/* ── Badge de estado ── */
 .inv-badge {
     display: inline-flex;
     align-items: center;
@@ -796,7 +773,6 @@ body {
 .badge-warning { background: rgba(243,156,18,0.15);  color: #f0a500;  border: 1px solid rgba(243,156,18,0.3); }
 .badge-primary { background: rgba(240,136,62,0.15);  color: #f0883e;  border: 1px solid rgba(240,136,62,0.25); }
 
-/* ── Productos (siempre visibles) ── */
 .inv-products-box {
     padding: 4px 18px 2px;
     background: transparent;
@@ -842,7 +818,6 @@ body {
     white-space: nowrap;
 }
 
-/* ── Fila de total (siempre visible) ── */
 .inv-total-row {
     display: flex;
     justify-content: space-between;
@@ -867,7 +842,6 @@ body {
     color: #e4e4ef;
 }
 
-/* ── Descuento de cumpleaños ── */
 .inv-total-row.inv-total-birthday {
     align-items: flex-start;
     padding-bottom: 14px;
@@ -919,7 +893,6 @@ body {
 [data-theme="dark"] .inv-original-price  { color: #666688; }
 [data-theme="dark"] .inv-total-amount.inv-total-discount { color: #4ade80; }
 
-/* ── Cuerpo expandible (detalles cliente + acciones) ── */
 .inv-body {
     max-height: 0;
     overflow: hidden;
@@ -931,13 +904,11 @@ body {
     border-top-color: rgba(255,255,255,0.08);
 }
 
-/* botón PROCEDER AL PAGO */
 .inv-btn-pagar {
     margin: 4px 18px 0 !important;
     width: calc(100% - 36px) !important;
 }
 
-/* ── Banner estado final (anulada / completada) ── */
 .inv-final-estado {
     display: flex;
     align-items: center;
@@ -982,7 +953,6 @@ body {
     color: #4ade80 !important;
 }
 
-/* ── Sección datos del cliente ── */
 .inv-client-section {
     margin: 0 18px 10px;
     background: linear-gradient(135deg, #f9fafb 0%, #f3f6fa 100%);
@@ -1061,7 +1031,6 @@ body {
     padding: 10px 18px 14px;
 }
 
-/* ── Payment modal redesign ── */
 .payment-modal-header {
     display: flex;
     flex-direction: column;
@@ -1129,7 +1098,6 @@ body {
 .payment-bank-panel { display: none; }
 .payment-bank-panel.active { display: block; }
 
-/* ── QR único central ── */
 .payment-qr-area { text-align: center; padding: 16px 0 8px; }
 .payment-qr-box {
     width: 220px;
@@ -1165,7 +1133,6 @@ body {
 .payment-qr-container { text-align: center; margin-bottom: 16px; }
 .payment-qr-instructions { font-size: 0.78rem; color: #888; }
 
-/* ── Subtítulo banco activo ── */
 .payment-bank-subtitle {
     text-align: center;
     padding: 10px 0 6px;
@@ -1176,7 +1143,6 @@ body {
 }
 .payment-bank-subtitle strong { color: #d35400; font-weight: 800; }
 
-/* ── Paginación de bancos ── */
 .payment-bank-pager {
     display: flex;
     justify-content: center;
@@ -1223,7 +1189,6 @@ body {
 }
 .payment-pager-btn.active span { color: #d35400; }
 
-/* Iniciales de banco en selector del modal (reemplaza la miniatura QR) */
 .payment-pager-initials {
     width: 50px;
     height: 50px;
@@ -1243,7 +1208,6 @@ body {
     box-shadow: 0 4px 14px rgba(0,0,0,0.22);
 }
 
-/* ── Paneles de cuenta por banco ── */
 .payment-account-panel { display: none; }
 .payment-account-panel.active { display: block; animation: pmFadeIn 0.22s ease both; }
 
@@ -1339,7 +1303,6 @@ body {
 }
 .payment-notice a { color: #d35400; text-decoration: underline; font-weight: 600; }
 
-/* ── Search panel hint text ── */
 #facturasContainer:empty::before {
     content: "Busca por nombre completo, usuario o cédula";
 }
@@ -1443,8 +1406,6 @@ body {
 [data-theme="dark"] .payment-notice { background: rgba(255,193,7,0.05) !important; border-color: rgba(255,193,7,0.15) !important; color: #888 !important; }
 [data-theme="dark"] .search-panel { background: #1a1a1a !important; border-color: #2a2a2a !important; }
 
-
-/* ── Botón orden fecha ── */
 .btn-sort-toggle {
     display: inline-flex;
     align-items: center;
@@ -1476,7 +1437,6 @@ body {
 [data-theme="dark"] .btn-sort-toggle:hover,
 [data-theme="dark"] .btn-sort-toggle.active { background: #2980b9 !important; border-color: #2980b9 !important; color: #fff !important; }
 
-/* ── Botón PDF — color rojo corporativo mejorado ── */
 .inv-btn-pdf {
     background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
     color: #fff !important;

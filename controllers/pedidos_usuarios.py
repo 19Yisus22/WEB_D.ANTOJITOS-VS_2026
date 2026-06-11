@@ -6,13 +6,11 @@ from helpers.validators import ESTADOS_PEDIDO, ESTADOS_FACTURA
 
 pedidos_usuarios_bp = Blueprint("pedidos_usuarios", __name__)
 
-
 @pedidos_usuarios_bp.route("/pedidos_page")
 @sin_cache
 @vendedor_required
 def pedidos_page():
     return render_template("admin_modules/pedidos.html")
-
 
 @pedidos_usuarios_bp.route("/obtener_pedidos")
 @vendedor_required
@@ -33,7 +31,6 @@ def obtener_pedidos():
         return jsonify(pedidos), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @pedidos_usuarios_bp.route("/actualizar_estado/<uuid:id_pedido>", methods=["PUT"])
 @vendedor_required
@@ -65,7 +62,6 @@ def actualizar_estado(id_pedido):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @pedidos_usuarios_bp.route("/actualizar_pago_item/<uuid:id_pedido>", methods=["PUT"])
 @vendedor_required
 def actualizar_pago_item(id_pedido):
@@ -81,7 +77,6 @@ def actualizar_pago_item(id_pedido):
         return jsonify({"ok": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @pedidos_usuarios_bp.route("/actualizar_pago_general/<uuid:id_pedido>", methods=["PUT"])
 @vendedor_required
@@ -112,7 +107,6 @@ def actualizar_pago_general(id_pedido):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @pedidos_usuarios_bp.route("/eliminar_pedidos", methods=["DELETE"])
 @vendedor_required
 def eliminar_pedidos():
@@ -137,7 +131,6 @@ def eliminar_pedidos():
     if not result:
         return jsonify({"success": False, "message": "No se pudo eliminar"}), 404
     return jsonify({"success": True}), 200
-
 
 @pedidos_usuarios_bp.route("/api/mis_pedidos/recientes")
 @login_required

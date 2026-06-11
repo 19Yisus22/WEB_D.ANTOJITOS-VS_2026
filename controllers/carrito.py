@@ -9,10 +9,8 @@ from helpers.validators import METODOS_PAGO_VALIDOS
 
 _TZ_COL = timezone(timedelta(hours=-5))
 
-
 def _hoy_colombia() -> date:
     return datetime.now(_TZ_COL).date()
-
 
 def _get_descuento_pct() -> float:
     try:
@@ -23,7 +21,6 @@ def _get_descuento_pct() -> float:
     except Exception:
         pass
     return 0.05
-
 
 def _es_cumpleanos(usuario: dict) -> bool:
     fn = usuario.get("fecha_nacimiento")
@@ -37,9 +34,7 @@ def _es_cumpleanos(usuario: dict) -> bool:
     except Exception:
         return False
 
-
 def _ya_uso_descuento_hoy(user_id: str) -> bool:
-    """Verifica si el usuario ya usó el descuento de cumpleaños hoy (hora Colombia)."""
     try:
         hoy = _hoy_colombia().isoformat()
         facturas = db.factura_get_by_user(user_id)
@@ -53,10 +48,8 @@ def _ya_uso_descuento_hoy(user_id: str) -> bool:
 
 carrito_bp = Blueprint("carrito", __name__)
 
-
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
-
 
 @carrito_bp.route("/api/carrito/cantidad")
 @login_required
@@ -69,7 +62,6 @@ def carrito_cantidad():
     except Exception:
         return jsonify({"cantidad": 0})
 
-
 @carrito_bp.route("/carrito_page")
 @sin_cache
 @login_required
@@ -77,7 +69,6 @@ def carrito_page():
     user_id    = session.get("user_id")
     userLogged = bool(user_id)
     return render_template("general_modules/carrito.html", userLogged=userLogged)
-
 
 @carrito_bp.route("/obtener_carrito")
 @login_required
@@ -117,7 +108,6 @@ def obtener_carrito():
     except Exception as e:
         return jsonify({"productos": [], "message": str(e)}), 500
 
-
 @carrito_bp.route("/guardar_catalogo", methods=["POST"])
 @carrito_bp.route("/agregar_al_carrito", methods=["POST"])
 @login_required
@@ -153,7 +143,6 @@ def agregar_al_carrito():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @carrito_bp.route("/carrito_quitar/<id_carrito>", methods=["DELETE"])
 @login_required
 def carrito_quitar(id_carrito):
@@ -179,12 +168,9 @@ def carrito_quitar(id_carrito):
     except Exception as e:
         return jsonify({"ok": False, "message": str(e)}), 500
 
-
 @carrito_bp.route("/carrito_cantidad/<id_carrito>", methods=["PATCH"])
 @login_required
 def carrito_ajustar_cantidad(id_carrito):
-    """Incrementa o decrementa la cantidad de un ítem del carrito en ±1.
-    Ajusta el stock del producto en tiempo real."""
     user_id = session.get("user_id")
     data    = request.get_json() or {}
     delta   = int(data.get("delta", 0))
@@ -234,7 +220,6 @@ def carrito_ajustar_cantidad(id_carrito):
         }), 200
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
-
 
 @carrito_bp.route("/finalizar_compra", methods=["POST"])
 @login_required
@@ -333,7 +318,6 @@ def finalizar_compra():
     except Exception as e:
         return jsonify({"message": str(e), "ok": False}), 500
 
-
 @carrito_bp.route("/carrito/cumpleanos")
 @login_required
 def cumpleanos_info():
@@ -349,7 +333,6 @@ def cumpleanos_info():
     except Exception:
         return jsonify({"es_cumpleanos": False, "descuento_pct": 0})
 
-
 @carrito_bp.route("/api/config/descuento_cumpleanos", methods=["GET"])
 @login_required
 def get_descuento_config():
@@ -359,7 +342,6 @@ def get_descuento_config():
         return jsonify({"pct": val})
     except Exception:
         return jsonify({"pct": 5.0})
-
 
 @carrito_bp.route("/api/config/descuento_cumpleanos", methods=["PUT"])
 @admin_required

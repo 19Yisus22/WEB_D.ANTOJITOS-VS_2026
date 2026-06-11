@@ -1,7 +1,3 @@
-/* ══════════════════════════════════════════════════════
-   SISTEMA DE LOGROS — Notificaciones estilo Steam (esquina)
-   ══════════════════════════════════════════════════════ */
-
 #logros-container {
     position: fixed;
     bottom: 24px;
@@ -159,7 +155,6 @@
     to   { transform: rotate(360deg); }
 }
 
-/* ── Vista de logros en el perfil ── */
 .logros-modulo-header {
     display: flex;
     align-items: center;
@@ -255,7 +250,6 @@
     color: #b0b0c0;
 }
 
-/* ── Mini barra de progreso en tarjetas bloqueadas ── */
 .logro-progreso {
     height: 5px;
     background: rgba(0,0,0,0.08);
@@ -277,7 +271,6 @@
     margin-top: 2px;
 }
 
-/* Dark mode */
 [data-theme="dark"] .logro-card { background: #1e1e3a; border-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .logro-card:not(.bloqueado) { border-color: rgba(211,84,0,0.3); }
 [data-theme="dark"] .logro-card-nombre { color: #e8e8f0; }

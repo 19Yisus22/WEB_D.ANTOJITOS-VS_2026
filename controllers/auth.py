@@ -1,12 +1,15 @@
 import os
 import uuid
 import math
+import logging
 import threading
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 
 from flask import (Blueprint, request, jsonify, session,
                    redirect, render_template, make_response)
+
+_logger = logging.getLogger(__name__)
 
 _ip_login_log: dict[str, list] = defaultdict(list)
 _ip_lock = threading.Lock()
@@ -39,10 +42,8 @@ from helpers.validators import (
 
 auth_bp = Blueprint("auth", __name__)
 
-
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
-
 
 def _emit_tokens_and_session(user: dict, response):
     cedula = str(user["cedula"])
@@ -57,7 +58,6 @@ def _emit_tokens_and_session(user: dict, response):
     db.usuario_set_web_token(cedula, token_hash, exp_dt.isoformat())
     _build_session_data(user)
     set_auth_cookies(response, access_token, refresh_token)
-
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -164,7 +164,6 @@ def login():
     db.usuario_touch(cedula, _now())
     return resp
 
-
 @auth_bp.route("/registro-google", methods=["POST", "OPTIONS"])
 def registro_google():
     if request.method == "OPTIONS":
@@ -176,10 +175,19 @@ def registro_google():
         return jsonify({"ok": False, "error": "Credencial ausente"}), 400
 
     client_id = os.getenv("GOOGLE_CLIENT_ID")
+
     try:
         idinfo = id_token.verify_oauth2_token(
-            token, google_requests.Request(), client_id, clock_skew_in_seconds=60
+            token, google_requests.Request(), client_id, clock_skew_in_seconds=300
         )
+    except ValueError as e:
+        _logger.warning("Google token inválido: %s", e)
+        return jsonify({"ok": False, "error": "El token de Google es inválido o expiró. Intenta iniciar sesión de nuevo."}), 401
+    except Exception as e:
+        _logger.error("Error al verificar token Google (%s): %s", type(e).__name__, e)
+        return jsonify({"ok": False, "error": "No se pudo conectar con Google para verificar tu cuenta. Revisa tu conexión e intenta de nuevo."}), 401
+
+    try:
         correo = idinfo["email"].lower()
         ahora  = _now()
         now    = datetime.now(timezone.utc)
@@ -219,23 +227,32 @@ def registro_google():
             db.usuario_touch(cedula, ahora)
         else:
             cedula_gen = f"G-{uuid.uuid4().hex[:8]}"
+            nombre_raw   = (idinfo.get("given_name")  or "").strip()
+            apellido_raw = (idinfo.get("family_name") or "").strip()
             db.usuario_create({
                 "cedula":          cedula_gen,
-                "nombre":          idinfo.get("given_name", ""),
-                "apellido":        idinfo.get("family_name", ""),
+                "nombre":          nombre_raw   or "Usuario",
+                "apellido":        apellido_raw or "Google",
+                "correo":          correo,
                 "google_account":  correo,
                 "metodo_pago":     "Efectivo",
                 "imagen_url":      idinfo.get("picture") or None,
                 "ultima_conexion": ahora,
             })
             user = db.usuario_get_by_google_account(correo)
+            if not user:
+                user = db.usuario_get(cedula_gen)
+
+        if not user:
+            _logger.error("Google auth: usuario no encontrado ni creado para correo=%s", correo)
+            return jsonify({"ok": False, "error": "No se pudo crear tu cuenta. Intenta de nuevo."}), 500
 
         resp = make_response(jsonify({"ok": True, "user": user}))
         _emit_tokens_and_session(user, resp)
         return resp
-    except Exception:
-        return jsonify({"ok": False, "error": "Error de autenticación. Verifica tu cuenta de Google."}), 401
-
+    except Exception as e:
+        _logger.error("Error interno en registro-google (%s): %s", type(e).__name__, e)
+        return jsonify({"ok": False, "error": "Error interno al procesar tu cuenta de Google. Intenta de nuevo."}), 500
 
 @auth_bp.route("/refresh", methods=["POST"])
 def refresh_token():
@@ -291,7 +308,6 @@ def refresh_token():
 
     except Exception as e:
         return jsonify({"ok": False, "error": "Error interno"}), 500
-
 
 @auth_bp.route("/registro", methods=["GET", "POST"])
 def registro():
@@ -359,7 +375,6 @@ def registro():
             return jsonify({"ok": False, "error": "Error de permisos en la BD."}), 500
         return jsonify({"ok": False, "error": "Error interno al crear la cuenta."}), 500
 
-
 @auth_bp.route("/inicio")
 @sin_cache
 def inicio():
@@ -380,7 +395,6 @@ def inicio():
     except Exception:
         return render_template("inicio.html", user=None)
 
-
 @auth_bp.route("/logout")
 @sin_cache
 def logout():
@@ -395,7 +409,6 @@ def logout():
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     clear_auth_cookies(resp)
     return resp
-
 
 @auth_bp.route("/obtener-cliente-id")
 def obtener_cliente_id():

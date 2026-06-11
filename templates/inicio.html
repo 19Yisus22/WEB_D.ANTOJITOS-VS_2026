@@ -20,13 +20,13 @@
 <body class="body-fondo-logo">
 
 {% set is_admin = session.get('rol') == 'admin' %}
-<script>const IS_ADMIN = {{ 'true' if is_admin else 'false' }};</script>
+<script>window.IS_ADMIN = ("{{ 'true' if is_admin else 'false' }}" === 'true');</script>
 
 {% include 'global_modules/navbar.html' %}
 
 {% if is_admin %}
 <div id="saveBar" class="save-bar">
-    <span class="save-info"><i class="bi bi-info-circle me-1"></i> Modo edición — arrastra secciones, doble clic para editar textos</span>
+    <span class="save-info"><i class="bi bi-info-circle me-1"></i> Modo edición — Arrastre las secciones, doble clic para editar el texto.</span>
     <div class="save-actions">
         <button class="btn-cancel-edit" onclick="cancelarEdicion()"><i class="bi bi-x me-1"></i>Cancelar</button>
         <button class="btn-save" onclick="guardarEdicion()"><i class="bi bi-cloud-check me-1"></i>Guardar Cambios</button>
@@ -105,14 +105,14 @@
                     </div>
                     <section id="section-historia" data-reveal>
                         <h3 class="fw-bold h5 text-uppercase text-center"
-                            data-config-key="historia_titulo">Nuestra historia y pasión</h3>
+                            data-config-key="historia_titulo">Nuestra Historia Y Pasión</h3>
                         <div class="divider" style="width:120px;height:3px;margin:5px auto 12px;background:#d6336c;"></div>
                         <div class="mt-2 content-text">
-                            <p class="descripcion-postre" data-config-key="historia_p1">Le damos la bienvenida a <strong>D'Antojitos</strong>, un proyecto que nació en 2023 en la calidez del hogar. Nuestra fundadora, <strong>Teresa Rubio García</strong>, transformó su pasión por la repostería artesanal en una promesa de calidad, donde cada postre es elaborado con dedicación, ingredientes seleccionados y el toque auténtico de lo hecho en casa.</p>
-                            <p class="descripcion-postre" data-config-key="historia_p2">En <strong>D'Antojitos</strong>, creemos que los momentos más simples se convierten en recuerdos extraordinarios con un toque de dulzura. Hemos mantenido viva la esencia de la repostería tradicional, asegurando que cada bocado entregue ese sabor único y reconfortante que solo una receta familiar puede ofrecer.</p>
-                            <p class="descripcion-postre" data-config-key="historia_p3">Nuestro compromiso va más allá de ofrecer un producto; buscamos ser parte de tus celebraciones. Por ello, en 2025 dimos un paso fundamental hacia la modernización con el lanzamiento de nuestra plataforma web. Esta evolución responde a nuestro deseo constante de mejorar la eficiencia y brindarte un servicio más ágil, cómodo y personalizado.</p>
-                            <h4 id="tituloInicio" class="mt-4 fw-bold">Nuestra Evolución Digital</h4>
-                            <p class="descripcion-postre" id="infoInicioTexto">Gracias a esta nueva experiencia digital, ahora puedes explorar nuestras especialidades, realizar tus pedidos con total facilidad y disfrutar de la misma calidad artesanal de siempre, con la rapidez y el soporte que mereces. Gracias por ser parte de esta historia y permitirnos endulzar tus días.</p>
+                            <p class="descripcion-postre" style="text-align: justify;" data-config-key="historia_p1">Le damos la bienvenida a <strong>D'Antojitos</strong>, un proyecto que nació en 2023 en la calidez del hogar. Nuestra fundadora, <strong>Teresa Rubio García</strong>, transformó su pasión por la repostería artesanal en una promesa de calidad, donde cada postre es elaborado con dedicación, ingredientes seleccionados y el toque auténtico de lo hecho en casa.</p>
+                            <p class="descripcion-postre" style="text-align: justify;" data-config-key="historia_p2">En <strong>D'Antojitos</strong>, creemos que los momentos más simples se convierten en recuerdos extraordinarios con un toque de dulzura. Hemos mantenido viva la esencia de la repostería tradicional, asegurando que cada bocado entregue ese sabor único y reconfortante que solo una receta familiar puede ofrecer.</p>
+                            <p class="descripcion-postre" style="text-align: justify;" data-config-key="historia_p3">Nuestro compromiso va más allá de ofrecer un producto; buscamos ser parte de tus celebraciones. Por ello, en 2025 dimos un paso fundamental hacia la modernización con el lanzamiento de nuestra plataforma web. Esta evolución responde a nuestro deseo constante de mejorar la eficiencia y brindarte un servicio más ágil, cómodo y personalizado.</p>
+                            <h4 id="tituloInicio" class="mt-4 fw-bold">Evolución Digital D'Antojitos</h4>
+                            <p class="descripcion-postre" style="text-align: justify;" id="infoInicioTexto">Gracias a esta nueva experiencia digital que se inició recientemente, ahora puedes explorar nuestras especialidades desde casa, realizar tus pedidos con total facilidad y disfrutar de la misma calidad artesanal de siempre, con la rapidez y el soporte que mereces.</p>
                         </div>
                     </section>
                 </div>
@@ -170,14 +170,6 @@
                                 </div>
                             </div>
                         </div>
-                        <style>
-                        @keyframes logros-bar-shine {
-                            0%   { background-position: 200% 0; }
-                            100% { background-position: -200% 0; }
-                        }
-                        [data-theme="dark"] #logrosProgresoWrap > div:first-child span:first-child { color:#9ca3af; }
-                        [data-theme="dark"] #logrosProgresoWrap > div:last-child > div:first-child { background:#2a2a2a; }
-                        </style>
                         {% endif %}
                         <nav class="d-flex flex-column gap-2" id="navExplorar">
                             <a href="/catalogo_page" class="nav-card ds-card p-3 d-flex align-items-center text-decoration-none border rounded-3">
@@ -248,7 +240,6 @@
         </section>
     </div>
 
-    <div id="cintaInicio" class="cinta-inicio-marquee" style="display:none;"></div>
 
 </main>
 
@@ -271,19 +262,18 @@
     </div>
 </div>
 
-<div id="modalEditorTexto" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:20000;align-items:center;justify-content:center;">
-    <div style="background:#fff;width:95%;max-width:540px;border-radius:20px;padding:28px;box-shadow:0 25px 60px rgba(0,0,0,0.4);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-            <h5 id="modalEditorLabel" style="margin:0;font-weight:800;color:#1e272e;"></h5>
-            <button onclick="cerrarModalEditor()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#747d8c;">Ã—</button>
+<div id="modalEditorTexto" class="modal-editor-overlay" role="dialog" aria-modal="true">
+    <div class="modal-editor-box">
+        <div class="modal-editor-header">
+            <div class="modal-editor-icon"><i class="bi bi-pencil-square"></i></div>
+            <h5 id="modalEditorLabel" class="modal-editor-title"></h5>
+            <button class="modal-editor-close" onclick="cerrarModalEditor()" aria-label="Cerrar">&times;</button>
         </div>
-        <textarea id="modalEditorTextarea" style="width:100%;min-height:120px;border:2px solid #dee2e6;border-radius:12px;padding:12px;font-size:0.95rem;resize:vertical;outline:none;" placeholder="Escribe el contenido aquí..."></textarea>
-        <small style="color:#a4b0be;display:block;margin-top:6px;">Puedes usar HTML básico: &lt;strong&gt;, &lt;em&gt;</small>
-        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-            <button onclick="cerrarModalEditor()" style="padding:10px 22px;border-radius:12px;border:2px solid #dee2e6;background:#fff;font-weight:700;cursor:pointer;">Cancelar</button>
-            <button onclick="aplicarCambioTexto()" style="padding:10px 22px;border-radius:12px;border:none;background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;font-weight:700;cursor:pointer;">
-                <i class="bi bi-check2 me-1"></i>Aplicar
-            </button>
+        <textarea id="modalEditorTextarea" class="modal-editor-textarea" placeholder="Escribe el contenido aquí..."></textarea>
+        <small class="modal-editor-hint"><i class="bi bi-info-circle me-1"></i>HTML básico permitido: <code>&lt;strong&gt;</code>, <code>&lt;em&gt;</code>, <code>&lt;br&gt;</code></small>
+        <div class="modal-editor-actions">
+            <button onclick="cerrarModalEditor()" class="modal-editor-cancel"><i class="bi bi-x me-1"></i>Cancelar</button>
+            <button onclick="aplicarCambioTexto()" class="modal-editor-apply"><i class="bi bi-check2 me-1"></i>Aplicar cambio</button>
         </div>
     </div>
 </div>

@@ -1,5 +1,4 @@
 
-
 (function () {
     'use strict';
 
@@ -18,7 +17,6 @@
         publicidad:        'Publicidad',
         gestion_usuarios:  'Gestión de Usuarios',
     };
-
 
     const _RUTAS_MODULO = [
         ['/catalogo',           'catalogo'],
@@ -46,7 +44,6 @@
         return null;
     }
 
-
     let _contenedor = null;
 
     function _getContenedor() {
@@ -60,7 +57,6 @@
         }
         return _contenedor;
     }
-
 
     function _mostrarLogro(logro) {
         const cont = _getContenedor();
@@ -121,7 +117,6 @@
         lista.forEach((l, i) => setTimeout(() => _mostrarLogro(l), i * 320));
     };
 
-
     function _lsGetDays(modulo) {
         try { return JSON.parse(localStorage.getItem(`_dantojitos_days_${modulo}`) || '[]'); } catch (_) { return []; }
     }
@@ -134,7 +129,6 @@
     function _lsSetStreak(modulo, obj) {
         localStorage.setItem(`_dantojitos_streak_${modulo}`, JSON.stringify(obj));
     }
-
 
     function _colombiaHoy() {
         return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
@@ -150,12 +144,10 @@
         }
     }
 
-
     if (!sessionStorage.getItem('_logros_login_ok')) {
         sessionStorage.setItem('_logros_login_ok', '1');
         setTimeout(() => window.verificarLogros({ tipo: 'login' }), 1500);
     }
-
 
     (function () {
         const modulo = _moduloActual();
@@ -212,8 +204,6 @@
         epico:      { bg: 'linear-gradient(135deg,#6d28d9,#a855f7)', text: '#e879f9' },
         legendario: { bg: 'linear-gradient(135deg,#c2410c,#f59e0b)', text: '#fbbf24' },
     };
-
-
 
     function _valorCampo(campo, stats, rolStats, contadores) {
         if (!campo) return 0;

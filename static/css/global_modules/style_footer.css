@@ -1,5 +1,3 @@
-/* Estilos del footer — scoped bajo #main-footer-container para inmunidad total */
-
 #main-footer-container {
     background-color: #050505;
     background-image: linear-gradient(to bottom, #080808 0%, #0d0d0d 100%);
@@ -113,6 +111,15 @@
 @keyframes footerScrollMarquee {
     0%   { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
     100% { -webkit-transform: translate3d(calc(-200px * 4), 0, 0); transform: translate3d(calc(-200px * 4), 0, 0); }
+}
+
+@media (max-width: 768px) {
+    #main-footer-container .payment-track {
+        -webkit-animation: footerScrollMarquee 25s linear infinite !important;
+        animation: footerScrollMarquee 25s linear infinite !important;
+        -webkit-animation-play-state: running !important;
+        animation-play-state: running !important;
+    }
 }
 
 #main-footer-container .app-badge {

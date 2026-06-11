@@ -5,14 +5,12 @@ from helpers.auth import admin_required
 
 inicio_bp = Blueprint("inicio", __name__)
 
-
 @inicio_bp.route("/api/inicio/config", methods=["GET"])
 def obtener_config():
     try:
         return jsonify(db.inicio_config_get()), 200
     except Exception:
         return jsonify({}), 200
-
 
 @inicio_bp.route("/api/inicio/config", methods=["POST"])
 @admin_required
@@ -23,7 +21,6 @@ def guardar_config():
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
-
 
 @inicio_bp.route("/api/inicio/imagenes")
 def imagenes_inicio():

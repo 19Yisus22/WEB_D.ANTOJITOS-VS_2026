@@ -10,7 +10,6 @@ LIMITE_ALMACENAMIENTO = 100 * 1024 * 1024
 
 perfil_usuarios_bp = Blueprint("perfil_usuarios", __name__)
 
-
 def _archivo_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -24,13 +23,11 @@ def _archivo_required(f):
         return f(*args, **kwargs)
     return decorated
 
-
 @perfil_usuarios_bp.route("/gestion_usuarios_page")
 @sin_cache
 @admin_required
 def gestion_usuarios_page():
     return render_template("admin_modules/gestion_usuarios.html")
-
 
 @perfil_usuarios_bp.route("/listar_usuarios")
 @login_required
@@ -54,7 +51,6 @@ def listar_usuarios():
         return jsonify(resultado)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 _LIMITES_ROL = {
     "admin":    2,
@@ -93,7 +89,6 @@ def actualizar_rol_usuario():
     db.usuario_set_role(cedula, id_role)
     return jsonify({"ok": True})
 
-
 @perfil_usuarios_bp.route("/api/usuarios/<cedula>/archivos", methods=["GET"])
 @login_required
 @_archivo_required
@@ -101,7 +96,6 @@ def get_archivos_usuario(cedula):
     if not db.usuario_get(cedula):
         return jsonify({"error": "Usuario no encontrado"}), 404
     return jsonify({"cedula": cedula, "archivos": db.usuario_get_block_folder(cedula)})
-
 
 @perfil_usuarios_bp.route("/api/usuarios/<cedula>/archivos", methods=["POST"])
 @login_required
@@ -142,7 +136,6 @@ def upload_archivo_usuario(cedula):
     db.usuario_set_block_folder(cedula, archivos)
     return jsonify({"ok": True, "archivo": entrada})
 
-
 @perfil_usuarios_bp.route("/api/usuarios/<cedula>/archivos/<path:public_id>", methods=["PUT"])
 @login_required
 @_archivo_required
@@ -163,7 +156,6 @@ def rename_archivo_usuario(cedula, public_id):
     db.usuario_set_block_folder(cedula, archivos)
     return jsonify({"ok": True, "archivo": archivo})
 
-
 @perfil_usuarios_bp.route("/api/usuarios/<cedula>/archivos/<path:public_id>", methods=["DELETE"])
 @login_required
 @_archivo_required
@@ -179,7 +171,6 @@ def delete_archivo_usuario(cedula, public_id):
     delete_raw_file(public_id)
     db.usuario_set_block_folder(cedula, [a for a in archivos if a.get("public_id") != public_id])
     return jsonify({"ok": True})
-
 
 @perfil_usuarios_bp.route("/api/usuarios/<cedula>/descargar", methods=["GET"])
 @login_required
@@ -208,7 +199,6 @@ def download_archivo_usuario(cedula):
         )
     except Exception:
         return jsonify({"error": "Error al descargar el archivo"}), 500
-
 
 @perfil_usuarios_bp.route("/eliminar_usuario_admin", methods=["DELETE"])
 @admin_required

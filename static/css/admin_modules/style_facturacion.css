@@ -647,7 +647,6 @@ html, body {
     .invoice-preview-meta { text-align: center; }
 }
 
-/* Dark mode overrides for invoice preview */
 [data-theme="dark"] .invoice-preview-card {
     background: #1a1a1a !important;
     border-color: #2a2a2a !important;
@@ -667,7 +666,7 @@ html, body {
 [data-theme="dark"] .invoice-preview-footer { background: rgba(255,193,7,0.05) !important; border-color: rgba(255,193,7,0.15) !important; color: #888 !important; }
 
 [data-theme="dark"] body {
-    background: transparent !important;  /* hereda degradado de html en style_utils.css */
+    background: transparent !important;
 }
 
 [data-theme="dark"] .main-content,

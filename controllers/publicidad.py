@@ -8,7 +8,6 @@ from helpers.validators import TIPOS_PUBLICIDAD
 
 publicidad_bp = Blueprint("publicidad", __name__)
 
-
 @publicidad_bp.route("/publicidad_page", methods=["GET", "POST"])
 @sin_cache
 @admin_required
@@ -68,7 +67,6 @@ def publicidad_page():
 
     return render_template("admin_modules/publicidad.html")
 
-
 @publicidad_bp.route("/api/admin/publicidad/delete/<id_publicidad>", methods=["DELETE"])
 @admin_required
 def eliminar_publicidad(id_publicidad):
@@ -82,7 +80,6 @@ def eliminar_publicidad(id_publicidad):
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @publicidad_bp.route("/api/admin/notificaciones", methods=["GET", "POST"])
 @admin_required
@@ -111,7 +108,6 @@ def admin_notificaciones():
         logging.getLogger(__name__).error("publicidad_get_notificaciones error: %s", e)
         return jsonify([]), 200
 
-
 @publicidad_bp.route("/api/admin/notificaciones/estado/<id_publicidad>", methods=["POST"])
 @admin_required
 def cambiar_estado_notificacion(id_publicidad):
@@ -122,7 +118,6 @@ def cambiar_estado_notificacion(id_publicidad):
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @publicidad_bp.route("/api/admin/notificaciones/<id_publicidad>", methods=["PUT", "DELETE"])
 @admin_required
@@ -154,14 +149,12 @@ def gestionar_notificacion(id_publicidad):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @publicidad_bp.route("/api/publicidad/activa")
 def publicidad_activa():
     try:
         return jsonify(db.publicidad_get_activa())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @publicidad_bp.route("/api/publicidad/gestor")
 @admin_required
@@ -183,7 +176,6 @@ def gestor_imagenes():
         return jsonify({"ok": True, "directorios": por_tipo})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
-
 
 @publicidad_bp.route("/api/admin/notificaciones_sistema")
 @vendedor_required
@@ -226,21 +218,17 @@ def notificaciones_sistema():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @publicidad_bp.route("/api/cloudinary/gestor")
 @admin_required
 def cloudinary_gestor():
-    """Lista todas las imágenes de Cloudinary organizadas por carpeta."""
     try:
         return jsonify({"ok": True, "carpetas": list_all_folders_images()})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
-
 @publicidad_bp.route("/api/cloudinary/gestor/delete", methods=["DELETE"])
 @admin_required
 def cloudinary_gestor_delete():
-    """Elimina una imagen de Cloudinary por su public_id."""
     data      = request.get_json(silent=True) or {}
     public_id = (data.get("public_id") or "").strip()
     if not public_id:

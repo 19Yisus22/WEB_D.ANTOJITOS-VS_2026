@@ -1,12 +1,11 @@
 :root {
-    /* ── Brand base ── */
+
     --ds-primary:        #d35400;
     --ds-primary-light:  #e67e22;
     --ds-primary-dark:   #b34500;
     --ds-primary-soft:   rgba(211,84,0,0.08);
     --ds-primary-mid:    rgba(211,84,0,0.16);
 
-    /* ── Gradientes suaves D'Antojitos ── */
     --grad-hero:          linear-gradient(135deg, #1a0a02 0%, #3d1602 30%, #d35400 65%, #f0883e 100%);
     --grad-hero-soft:     linear-gradient(135deg, #fff9f5 0%, #ffecd8 50%, #ffd4b0 100%);
     --grad-btn-primary:   linear-gradient(135deg, #c04a00, #d35400 50%, #e67e22);
@@ -95,7 +94,6 @@
     --ds-primary-soft:  rgba(240,136,62,0.10);
     --ds-primary-mid:   rgba(240,136,62,0.18);
 
-    /* Gradientes dark */
     --grad-hero:          linear-gradient(135deg, #090600 0%, #1a0800 30%, #8a2f00 65%, #b84000 100%);
     --grad-hero-soft:     linear-gradient(135deg, #1c1000 0%, #2a1500 50%, #3d2200 100%);
     --grad-btn-primary:   linear-gradient(135deg, #b84000, #d35400 50%, #e67e22);

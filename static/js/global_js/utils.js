@@ -136,13 +136,11 @@
     }
 })();
 
-
 function fmtCOP(n) {
     return Number(n).toLocaleString('es-CO', {
         style: 'currency', currency: 'COP', maximumFractionDigits: 0
     });
 }
-
 
 const _alertaDedup = new Map();
 
@@ -242,7 +240,6 @@ function mostrarAlerta(mensaje, esError = false, duracionMs = 4000) {
     toast.querySelector('.btn-close-toast').onclick = eliminar;
     setTimeout(eliminar, duracionMs);
 }
-
 
 const _SS_NOTIF_IDS_KEY = '_dantojitos_snotif_ids';
 
@@ -367,7 +364,6 @@ function mostrarAlertaPublica({
     setTimeout(remove, duracion);
 }
 
-
 function mostrarConfirmacionApp(titulo, mensaje, onConfirm) {
     const existing = document.getElementById('appModalConfirm');
     if (existing) existing.remove();
@@ -482,7 +478,6 @@ function initScrollProgressBar() {
     update();
 }
 
-
 function solicitarPermisosNotificacion() {
     if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') return;
@@ -500,14 +495,12 @@ function lanzarNotificacionNativa(titulo, cuerpo, icono = '/static/uploads/logo.
     } catch (e) { console.warn('Notificación nativa no disponible'); }
 }
 
-
 function _playNotifSound(type = 'default') {
     if (_isNotifMuted()) return;
     try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
         const ctx = new AudioCtx();
-
 
         const _nota = (freq, start, dur, vol = 0.07) => {
             [['sine', 1.0], ['triangle', 0.35]].forEach(([type, amp]) => {
@@ -539,7 +532,6 @@ function _playNotifSound(type = 'default') {
     } catch (_) {}
 }
 
-
 function _swPost(data) {
     try {
         if (navigator.serviceWorker?.controller) {
@@ -547,7 +539,6 @@ function _swPost(data) {
         }
     } catch (_) {}
 }
-
 
 let _swSyncBusy = false;
 if ('serviceWorker' in navigator) {
@@ -560,7 +551,6 @@ if ('serviceWorker' in navigator) {
         } finally { _swSyncBusy = false; }
     });
 }
-
 
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
@@ -596,8 +586,6 @@ function toggleTheme() {
     setTheme(current === 'dark' ? 'light' : 'dark');
 }
 
-
-
 let _notifPanelOpenGlobal = false;
 let _sistemPanelOpen = false;
 
@@ -629,7 +617,6 @@ function toggleSistemPanel() {
         _notifPanelOpenGlobal = _togglePanel('notifAdminPanel','notifAdminBody','notifChevron','navPubBtn', true, null);
     }
 }
-
 
 const _PEDIDOS_VISTOS_KEY = '_dantojitos_pedidos_vistos';
 function _getPedidosVistos() {
@@ -756,7 +743,6 @@ async function cargarNotificacionesAdmin() {
         if (count) count.textContent = total;
         if (empty) empty.style.display = total ? 'none' : 'flex';
 
-
         const pubCount = document.getElementById('notifCount');
         const pubBadge = document.getElementById('navPubBadge');
         const activas  = Array.isArray(data) ? data.filter(n => n.estado).length : 0;
@@ -817,7 +803,6 @@ async function eliminarNotif(id) {
     });
 }
 
-
 function _notifImgFallback(img, icon, color) {
     if (!img || !img.parentNode) return;
     const i = document.createElement('i');
@@ -832,7 +817,6 @@ function _notifImgFallbackCover(img, icon, color) {
     i.style.cssText = `color:${color};font-size:1rem;width:100%;height:100%;display:flex;align-items:center;justify-content:center;`;
     img.parentNode.replaceChild(i, img);
 }
-
 
 const _CLIENT_NOTIF_KEY = '_dantojitos_client_notifs';
 const _CLIENT_SEEN_KEY  = '_dantojitos_client_seen';
@@ -1018,9 +1002,6 @@ function toggleClientNotifPanel() {
     _clientPanelOpen = _togglePanel('clientNotifPanel','clientNotifBody','clientNotifChevron','navClientBellBtn', _clientPanelOpen, _renderClientNotifs);
 }
 
-
-
-
 function _pushStockToSistemPanel(p, tipo) {
     const list = document.getElementById('sistemList');
     if (!list) return;
@@ -1179,7 +1160,6 @@ function _pushStockToSistemPanel(p, tipo) {
     });
 })();
 
-
 function _animateBadge(badgeEl) {
     if (!badgeEl || _isNotifMuted()) return;
     badgeEl.style.transition = 'none';
@@ -1190,7 +1170,6 @@ function _animateBadge(badgeEl) {
         badgeEl.style.transform  = 'scale(1)';
     }, 80);
 }
-
 
 let _lastBellCount = 0;
 let _lastPrivCv    = -1;
@@ -1204,7 +1183,6 @@ async function _pollSistemNotif() {
     if (cnt > _lastBellCount) _animateBadge(badge);
     _lastBellCount = cnt;
 }
-
 
 const _MIS_PEDIDOS_KEY  = '_dantojitos_mis_pedidos_estado';
 const _MIS_PEDIDOS_SEEN = '_dantojitos_mis_pedidos_vistos';
@@ -1274,7 +1252,6 @@ async function _pollMisPedidos() {
     } catch {}
 }
 
-
 function _cerrarTodosPaneles(exceptId) {
     if (_clientPanelOpen && exceptId !== 'clientNotifPanel') {
         _clientPanelOpen = _togglePanel('clientNotifPanel','clientNotifBody','clientNotifChevron','navClientBellBtn', true, null);
@@ -1295,17 +1272,14 @@ document.addEventListener('DOMContentLoaded', () => {
     _syncMuteUI();
     if (document.getElementById('notifAdminPanel')) cargarNotificacionesAdmin();
 
-
     if (document.getElementById('navBellBadge')) {
         setTimeout(_pollSistemNotif, 2000);
         setInterval(_pollSistemNotif, 12000);
     }
 
-
     if (document.getElementById('clientNotifList')) {
         _renderClientNotifs();
     }
-
 
     if (document.getElementById('navClientBellBadge') || document.getElementById('navBellBadge') || document.getElementById('navSugerenciasBadge')) {
         setTimeout(_pollPrivMsgs, 500);
@@ -1323,7 +1297,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(_pollCartCount, 10000);
     }
 
-
     (function () {
         const _vl = document.getElementById('versionLabel');
         if (!_vl) return;
@@ -1334,7 +1307,6 @@ document.addEventListener('DOMContentLoaded', () => {
             _vl.style.color = _vc[Math.floor(Math.random() * _vc.length)];
         }, 2200);
     })();
-
 
     document.addEventListener('click', function(e) {
         const pares = [
@@ -1352,8 +1324,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, true);
 });
-
-
 
 function _syncCartBadge(count) {
     const badge = document.getElementById('contadorCarritoBadge');
@@ -1377,7 +1347,6 @@ async function _pollCartCount() {
 window.addEventListener('storage', (e) => {
     if (e.key === 'cant_carrito') _syncCartBadge(e.newValue || '0');
 });
-
 
 const _TICKER_SPEED_KEY = '_dantojitos_ticker_speed';
 
@@ -1454,7 +1423,6 @@ class PromoBannerTicker {
         if (!this._track || !this._items.length) return;
         const item = this._items[idx % this._items.length];
 
-
         const el = document.createElement('div');
         el.className = 'promo-ticker-item';
         el.innerHTML = this._html(item);
@@ -1468,12 +1436,10 @@ class PromoBannerTicker {
             pointer-events:none;`;
         this._track.appendChild(el);
 
-
         requestAnimationFrame(() => requestAnimationFrame(() => {
             el.style.transform = 'translateX(0)';
             el.style.opacity   = '1';
         }));
-
 
         const dwell = this._DWELL / this._speed;
         this._timer = setTimeout(() => {
@@ -1482,7 +1448,6 @@ class PromoBannerTicker {
             el.style.transform  = 'translateX(-65%)';
             el.style.opacity    = '0';
             setTimeout(() => { if (el.parentNode) el.remove(); }, this._EXIT + 80);
-
 
             this._idx = (idx + 1) % this._items.length;
             this._timer = setTimeout(() => this._show(this._idx), 60);
@@ -1534,7 +1499,6 @@ class PromoBannerTicker {
     }
 }
 
-
 window._marcarVistoPedido = function(btn, id) {
     _savePedidoVisto(id);
     const li = btn.closest('.notif-item');
@@ -1552,7 +1516,6 @@ window._pedidosMarcarTodo = function() {
     const claves = items.map(li => li.dataset.pedidoClave || li.dataset.pedidoId).filter(Boolean);
     _saveAllPedidosVistos(claves);
 
-
     items.forEach((li, i) => {
         setTimeout(() => {
             li.style.transition = 'opacity 0.2s, transform 0.2s';
@@ -1561,7 +1524,6 @@ window._pedidosMarcarTodo = function() {
             setTimeout(() => { li.remove(); if (i === items.length - 1) _updateSistemBadge(); }, 220);
         }, i * 45);
     });
-
 
     const readAllBtn = document.getElementById('sistemReadAllBtn');
     if (readAllBtn) {
@@ -1576,20 +1538,16 @@ window._pedidosMarcarTodo = function() {
     }
 };
 
-
-
 const _PRIV_STATE_KEY = '_dantojitos_priv_state';
 function _getPrivState() {
     try { return JSON.parse(localStorage.getItem(_PRIV_STATE_KEY) || '{}'); } catch { return {}; }
 }
 function _savePrivState(s) { localStorage.setItem(_PRIV_STATE_KEY, JSON.stringify(s)); }
 
-
 function _privShouldShow(tipo, count) {
     if (count <= 0) return false;
     return count > ((_getPrivState()[tipo] || {}).dismissedAtCount ?? -1);
 }
-
 
 function _privResetIfZero(tipo, prev, curr) {
     if (curr === 0 && prev > 0) {
@@ -1793,7 +1751,6 @@ window._publicidadMarcarTodo = async function() {
     const navPub = document.getElementById('navPubBadge');
     if (navPub) navPub.style.display = 'none';
 };
-
 
 const _AVATAR_PALETTES = [
     ['#d35400','#e67e22'],

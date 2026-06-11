@@ -6,7 +6,6 @@ from helpers.validators import ESTADOS_FACTURA
 
 historial_facturas_bp = Blueprint("historial_facturas", __name__)
 
-
 def _enriquecer_factura(f: dict) -> dict:
     detalles  = db.detalle_get(f.get("id_pedido", ""))
     productos = []
@@ -33,14 +32,11 @@ def _enriquecer_factura(f: dict) -> dict:
         "archivada":      bool(f.get("archivada", False)),
     }
 
-
 def _rol_de_usuario(usuario: dict) -> str:
-    """Extrae el nombre_role del usuario, sea dict plano o con join."""
     roles_obj = usuario.get("roles") or {}
     if isinstance(roles_obj, dict):
         return str(roles_obj.get("nombre_role") or "").lower()
     return ""
-
 
 @historial_facturas_bp.route("/gestionar_facturas_page")
 @sin_cache
@@ -48,13 +44,9 @@ def _rol_de_usuario(usuario: dict) -> str:
 def gestionar_facturas_page():
     return render_template("general_modules/facturas.html")
 
-
 @historial_facturas_bp.route("/todas_facturas_page")
 @login_required
 def todas_facturas_page():
-    """Carga todas las facturas para admin/vendedor.
-    Vendedor ve todas excepto las de usuarios con rol admin.
-    Admin ve todas sin excepción."""
     rol = session.get("rol", "")
     if rol not in ("admin", "vendedor"):
         return jsonify({"error": "Sin permisos"}), 403
@@ -82,7 +74,6 @@ def todas_facturas_page():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @historial_facturas_bp.route("/obtener_facturas_page")
 @login_required
 def obtener_facturas_page():
@@ -102,7 +93,6 @@ def obtener_facturas_page():
         return jsonify(resultado), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @historial_facturas_bp.route("/buscar_facturas_page")
 @login_required
@@ -179,7 +169,6 @@ def buscar_facturas_page():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @historial_facturas_bp.route("/buscar_facturas_por_numero_page")
 @login_required
 def buscar_facturas_por_numero_page():
@@ -242,7 +231,6 @@ def buscar_facturas_por_numero_page():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @historial_facturas_bp.route("/archivar_factura_page/<numero_factura>", methods=["PUT"])
 @login_required
 def archivar_factura_page(numero_factura):
@@ -259,7 +247,6 @@ def archivar_factura_page(numero_factura):
         return jsonify({"archivada": nuevo}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-
 
 @historial_facturas_bp.route("/anular_factura_page/<numero_factura>", methods=["PUT"])
 @login_required
@@ -294,7 +281,6 @@ def anular_factura_page(numero_factura):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-
 @historial_facturas_bp.route("/actualizar_estado_factura_page/<numero_factura>", methods=["PUT"])
 @vendedor_required
 def actualizar_estado_factura(numero_factura):
@@ -314,7 +300,6 @@ def actualizar_estado_factura(numero_factura):
         return jsonify({"message": "Estado actualizado con éxito"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-
 
 @historial_facturas_bp.route("/obtener_metodos_pago")
 def obtener_metodos_pago():

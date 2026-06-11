@@ -458,7 +458,6 @@ main {
 .btn-card-view:hover { background: rgba(13,110,253,0.1); color: #0d6efd; }
 .btn-card-edit:hover { background: rgba(211,84,0,0.12); color: #d35400; }
 
-/* Modal image */
 .modal-img-container {
     height: 250px;
     overflow: hidden;
@@ -473,7 +472,6 @@ main {
     border-radius: 14px;
 }
 
-/* Broken image in products */
 .postre-img-broken {
     height: 175px;
     display: flex;

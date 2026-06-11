@@ -301,7 +301,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    /* Tabla scrollable en móvil */
+
     #carritoContainer {
         overflow-x: auto !important;
         overflow-y: visible !important;
@@ -346,7 +346,6 @@ body {
     color: #e8e8e8 !important;
 }
 
-/* ── New cart list design ── */
 .cart-list-wrap {
     width: 100%;
     border-radius: var(--radius);

@@ -384,9 +384,9 @@ main { flex-grow: 1; width: 100%; }
     border: 1px solid var(--border);
 }
 
-.swiper { 
-    width: 100%; 
-    height: 480px; 
+.swiper {
+    width: 100%;
+    height: 480px;
 }
 
 .carousel-item {
@@ -1108,4 +1108,3 @@ main { flex-grow: 1; width: 100%; }
     font-family: 'Lucida Handwriting', 'DM Sans', cursive;
     font-style: italic;
 }
-

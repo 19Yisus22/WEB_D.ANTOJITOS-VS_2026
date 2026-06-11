@@ -120,7 +120,7 @@
                             </p>
                         </div>
                     </div>
-                </div><!-- /#panelPublico -->
+                </div>
 
                 {% if session.get('user_id') %}
                 <div id="panelPrivado" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
@@ -210,7 +210,7 @@
 
                 </div>
                 {% endif %}
-            </div><!-- /.chat-container -->
+            </div>
         </div>
     </main>
 
@@ -219,9 +219,9 @@
     <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const USER_CONFIG = {
+        window.USER_CONFIG = {
             userId:   String("{{ session.get('user_id') or '' }}"),
-            isLogged: {{ 'true' if session.get('user_id') else 'false' }},
+            isLogged: ("{{ 'true' if session.get('user_id') else 'false' }}" === 'true'),
             userRol:  "{{ session.get('rol', 'cliente') }}",
             userName: "{{ session.get('nombre', '') }}"
         };

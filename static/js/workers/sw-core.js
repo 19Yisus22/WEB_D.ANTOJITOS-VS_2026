@@ -25,18 +25,14 @@ const SHARED_STATIC = [
     '/static/uploads/logo.ico',
 ];
 
-
-
 async function _openCache(name) { return caches.open(name); }
 
 function _isCacheable(res) { return res && res.status === 200 && res.type !== 'opaque'; }
-
 
 async function broadcastAll(data) {
     const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
     clients.forEach(c => c.postMessage(data));
 }
-
 
 async function cacheFirst(req, cacheName) {
     const cache  = await _openCache(cacheName);
@@ -50,7 +46,6 @@ async function cacheFirst(req, cacheName) {
         return new Response('', { status: 503, headers: { 'X-Offline': '1' } });
     }
 }
-
 
 async function cacheFirstWithUpdate(req, cacheName) {
     const cache  = await _openCache(cacheName);
@@ -67,7 +62,6 @@ async function cacheFirstWithUpdate(req, cacheName) {
         return new Response('', { status: 503, headers: { 'X-Offline': '1' } });
     }
 }
-
 
 async function networkFirst(req, cacheName, timeoutMs = API_TIMEOUT_MS) {
     const cache = await _openCache(cacheName);
@@ -100,7 +94,6 @@ async function networkFirst(req, cacheName, timeoutMs = API_TIMEOUT_MS) {
     }
 }
 
-
 async function staleWhileRevalidate(req, cacheName) {
     const cache  = await _openCache(cacheName);
     const cached = await cache.match(req);
@@ -110,7 +103,6 @@ async function staleWhileRevalidate(req, cacheName) {
     }).catch(() => cached);
     return cached ?? fetchPromise;
 }
-
 
 function offlinePage(isNav = true) {
     if (!isNav) return '';
@@ -145,7 +137,6 @@ document.documentElement.setAttribute('data-theme',t);
 </body></html>`;
 }
 
-
 async function precacheAssets(cacheName, assets) {
     const cache = await _openCache(cacheName);
     return Promise.allSettled(
@@ -157,7 +148,6 @@ async function precacheAssets(cacheName, assets) {
     );
 }
 
-
 async function cleanOldCaches(currentCache) {
     const keys    = await caches.keys();
     const prefix  = currentCache.replace(/-v\d+$/, '');
@@ -167,7 +157,6 @@ async function cleanOldCaches(currentCache) {
             .map(k => caches.delete(k))
     );
 }
-
 
 self.addEventListener('message', async event => {
     const { data } = event;

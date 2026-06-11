@@ -82,8 +82,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-
-
 let _pendingImages = [];
 
 function _actualizarPreviewImagenes() {
@@ -143,9 +141,6 @@ function _abrirImagenAmpliada(src) {
     modal.style.display = 'flex';
 }
 
-
-
-
 function _getParentListItem(node) {
     while (node && node !== mensajeInput) {
         if (node.nodeType === 1 && node.classList?.contains('chat-list-item')) return node;
@@ -154,13 +149,11 @@ function _getParentListItem(node) {
     return null;
 }
 
-
 function applyRichFormat(command) {
     mensajeInput.focus();
     document.execCommand(command, false, null);
     _updateToolbarState();
 }
-
 
 function insertListItem() {
     mensajeInput.focus();
@@ -201,7 +194,6 @@ function insertListItem() {
     _updateToolbarState();
 }
 
-
 mensajeInput.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' || e.shiftKey) return;
 
@@ -229,7 +221,6 @@ mensajeInput.addEventListener('keydown', function (e) {
     }
 });
 
-
 function _updateToolbarState() {
     ['bold', 'italic', 'underline'].forEach(cmd => {
         const btn = document.querySelector(`[data-format="${cmd}"]`);
@@ -248,10 +239,8 @@ mensajeInput.addEventListener('keyup',   _updateToolbarState);
 mensajeInput.addEventListener('mouseup', _updateToolbarState);
 mensajeInput.addEventListener('input',   ajustarAlturaInput);
 
-
 mensajeInput.addEventListener('paste', function(e) {
     const clipData = e.clipboardData || window.clipboardData;
-
 
     const items = clipData.items || [];
     for (const item of items) {
@@ -263,14 +252,12 @@ mensajeInput.addEventListener('paste', function(e) {
         }
     }
 
-
     e.preventDefault();
     let text = clipData.getData('text/plain') || '';
     text = text.replace(/<[^>]*>/g, '');
     document.execCommand('insertText', false, text);
     ajustarAlturaInput();
 });
-
 
 function insertEmoji(emoji) {
     mensajeInput.focus();
@@ -280,23 +267,19 @@ function insertEmoji(emoji) {
     if (panel) panel.style.display = 'none';
 }
 
-
 function ajustarAlturaInput() {
     mensajeInput.style.height = 'auto';
     mensajeInput.style.height = Math.min(mensajeInput.scrollHeight, 150) + 'px';
 }
 
-
 function _getEditorContent() {
     return mensajeInput.innerHTML.trim();
 }
-
 
 function _clearEditor() {
     mensajeInput.innerHTML = '';
     ajustarAlturaInput();
 }
-
 
 function _setEditorContent(html) {
     mensajeInput.innerHTML = html;
@@ -366,8 +349,6 @@ function renderComentario(c) {
     wrapper.className = `d-flex mb-4 ${esMio ? 'flex-row-reverse' : 'flex-row'} align-items-end gap-2`;
     wrapper.id = `msg-${c.id}`;
     const estadoClase = info.conectado ? 'estado-conectado' : 'estado-desconectado';
-
-
 
     const mensajeFormateado = c.mensaje
         .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
@@ -544,7 +525,6 @@ window.onload = () => {
     }
 };
 
-
 let _replyTargetId = null;
 
 function responderPublicamente(id, nombre, extracto) {
@@ -563,7 +543,6 @@ function cancelarRespuesta() {
     const quoteEl = document.getElementById('replyQuote');
     if (quoteEl) quoteEl.style.display = 'none';
 }
-
 
 const _origSendClick = sendBtn.onclick;
 sendBtn.onclick = async function() {
@@ -597,7 +576,6 @@ sendBtn.onclick = async function() {
     }
     _origSendClick.call(this);
 };
-
 
 function switchTab(tab) {
     const panelPub  = document.getElementById('panelPublico');

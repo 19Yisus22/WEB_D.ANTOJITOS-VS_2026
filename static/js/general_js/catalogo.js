@@ -131,7 +131,6 @@ function actualizarInterfazContador() {
     }
 }
 
-
 function toggleFavorito(id) {
     const idStr = id.toString();
     const index = favoritos.indexOf(idStr);

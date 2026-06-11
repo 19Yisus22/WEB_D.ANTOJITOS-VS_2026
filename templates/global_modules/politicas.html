@@ -150,30 +150,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/global_js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/global_js/i18n.js') }}" defer></script>
-    <script>
-        function acceptPrivacy() {
-            const btn = document.querySelector('.btn-accept');
-            btn.innerHTML = '<i class="bi bi-heart-fill me-2 animate-beat"></i>¡Gracias!';
-            btn.style.background = '#27ae60';
-            btn.disabled = true;
-            setTimeout(() => { window.location.href = "/login"; }, 1200);
-        }
-        (function() {
-            function syncLegal() {
-                const theme = document.documentElement.getAttribute('data-theme') || 'light';
-                const icon  = document.getElementById('legalThemeIcon');
-                const lbl   = document.getElementById('legalThemeLabel');
-                const llbl  = document.getElementById('legalLangLabel');
-                const lang  = document.documentElement.getAttribute('lang') || 'es';
-                if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-                if (lbl)  lbl.textContent = theme === 'dark' ? 'Claro' : 'Oscuro';
-                if (llbl) llbl.textContent = lang === 'es' ? 'EN' : 'ES';
-            }
-            syncLegal();
-            new MutationObserver(syncLegal).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme','lang'] });
-            document.addEventListener('langChanged', syncLegal);
-        })();
-    </script>
+    <script src="{{ url_for('static', filename='js/pages/politicas_page.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/compiled/design-system.js') }}" defer></script>
     <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
 </body>

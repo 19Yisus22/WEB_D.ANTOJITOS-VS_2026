@@ -16,10 +16,8 @@ REFRESH_TOKEN_TTL_DAYS    = 7
 _AT_COOKIE = "_at"
 _RT_COOKIE = "_rt"
 
-
 def _is_https() -> bool:
     return not os.getenv("FLASK_DEBUG", "").lower() in ("1", "true", "debug")
-
 
 def sin_cache(f):
     @wraps(f)
@@ -31,14 +29,12 @@ def sin_cache(f):
         return response
     return decorated
 
-
 def _is_ajax_or_api():
     return (
         request.headers.get("X-Requested-With") == "XMLHttpRequest"
         or request.path.startswith("/api/")
         or request.method in ("POST", "PUT", "DELETE", "PATCH")
     )
-
 
 def create_access_token(cedula: str, rol: str) -> str:
     payload = {
@@ -49,7 +45,6 @@ def create_access_token(cedula: str, rol: str) -> str:
         "exp":  datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_TTL_MINUTES),
     }
     return jwt.encode(payload, _ACCESS_SECRET, algorithm="HS256")
-
 
 def create_refresh_token(cedula: str) -> tuple[str, datetime]:
     expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_TTL_DAYS)
@@ -63,7 +58,6 @@ def create_refresh_token(cedula: str) -> tuple[str, datetime]:
     token = jwt.encode(payload, _REFRESH_SECRET, algorithm="HS256")
     return token, expires_at
 
-
 def verify_access_token(token: str) -> dict | None:
     try:
         return jwt.decode(token, _ACCESS_SECRET, algorithms=["HS256"])
@@ -72,17 +66,14 @@ def verify_access_token(token: str) -> dict | None:
     except jwt.InvalidTokenError:
         return None
 
-
 def verify_refresh_token(token: str) -> dict | None:
     try:
         return jwt.decode(token, _REFRESH_SECRET, algorithms=["HS256"])
     except jwt.InvalidTokenError:
         return None
 
-
 def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
-
 
 def set_auth_cookies(response, access_token: str, refresh_token: str) -> None:
     secure = _is_https()
@@ -103,15 +94,12 @@ def set_auth_cookies(response, access_token: str, refresh_token: str) -> None:
         path="/"
     )
 
-
 def clear_auth_cookies(response) -> None:
     response.delete_cookie(_AT_COOKIE, path="/")
     response.delete_cookie(_RT_COOKIE, path="/")
 
-
 def _sesion_expirada() -> bool:
     return bool(request.cookies.get(_AT_COOKIE) or request.cookies.get(_RT_COOKIE))
-
 
 def login_required(f):
     @wraps(f)
@@ -126,7 +114,6 @@ def login_required(f):
             return render_template("errors/404.html", codigo=401, mensaje="Sesión expirada"), 401
         return render_template("errors/blocked.html", metodos=[], login_required=True)
     return decorated
-
 
 def admin_required(f):
     @wraps(f)
@@ -144,7 +131,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
-
 def vendedor_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -161,7 +147,6 @@ def vendedor_required(f):
         return f(*args, **kwargs)
     return decorated
 
-
 def api_token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -177,7 +162,6 @@ def api_token_required(f):
         g.token_rol    = payload.get("rol", "cliente")
         return f(*args, **kwargs)
     return decorated
-
 
 def _try_rebuild_session_from_at() -> bool:
     at = request.cookies.get(_AT_COOKIE)
@@ -196,12 +180,10 @@ def _try_rebuild_session_from_at() -> bool:
     except Exception:
         return False
 
-
 def _ensure_authenticated() -> bool:
     if session.get("user_id"):
         return True
     return _try_rebuild_session_from_at()
-
 
 def _build_session_data(user: dict) -> None:
     rol = "cliente"
@@ -217,14 +199,12 @@ def _build_session_data(user: dict) -> None:
     session["user"]    = user
     session.modified   = True
 
-
 def hash_password(password: str, salt: str | None = None) -> str:
     if not salt:
         salt = os.urandom(16).hex()
     import hashlib
     hashed = hashlib.sha256((salt + password).encode()).hexdigest()
     return f"{salt}${hashed}"
-
 
 def verify_password(plain: str, hashed: str) -> bool:
     try:

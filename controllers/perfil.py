@@ -9,7 +9,6 @@ perfil_bp = Blueprint("perfil", __name__)
 
 COOLDOWN_DIAS = 10
 
-
 def _birthday_pct() -> int:
     try:
         cfg = db.inicio_config_get() or {}
@@ -24,7 +23,6 @@ def _ahora_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 def _ultima_edicion(usuario: dict):
-    """Retorna el datetime de la edición de perfil más reciente."""
     fechas = []
     for campo in ("nombre", "apellido", "cedula", "username"):
         v = usuario.get(f"last_change_{campo}")
@@ -36,7 +34,6 @@ def _ultima_edicion(usuario: dict):
     return max(fechas) if fechas else None
 
 def _puede_editar_perfil(usuario: dict) -> tuple:
-    """Retorna (puede_editar, disponible_en_iso)."""
     cedula = str(usuario.get("cedula") or "")
     if cedula.startswith("G-"):
         return True, None
@@ -50,7 +47,6 @@ def _puede_editar_perfil(usuario: dict) -> tuple:
     return False, siguiente.isoformat()
 
 def _puede_cambiar_contrasena(cedula: str) -> tuple:
-    """Retorna (puede_cambiar, disponible_en_iso) para el cooldown de contraseña."""
     v = db.usuario_get_pass_cooldown(str(cedula))
     if not v:
         return True, None
@@ -69,7 +65,6 @@ def _dias_restantes(siguiente_iso: str) -> int:
         return max(1, (sig - datetime.now(timezone.utc)).days + 1)
     except Exception:
         return COOLDOWN_DIAS
-
 
 @perfil_bp.route("/mi_perfil", methods=["GET", "POST"])
 @sin_cache
@@ -122,7 +117,6 @@ def perfil_usuarios():
 
     return render_template("general_modules/perfil.html", user=usuario, descuento_pct=_birthday_pct())
 
-
 @perfil_bp.route("/perfil/restricciones")
 @login_required
 def perfil_restricciones():
@@ -141,7 +135,6 @@ def perfil_restricciones():
         })
     except Exception:
         return jsonify({"bloqueado": False, "disponible_en": None, "pass_bloqueado": False, "pass_disponible_en": None}), 200
-
 
 @perfil_bp.route("/actualizar_perfil/<cedula>", methods=["PUT", "POST"])
 @login_required
@@ -281,7 +274,6 @@ def actualizar_perfil(cedula):
             return jsonify({"ok": False, "error": "No se puede cambiar la cédula porque tienes pedidos o facturas registrados con ella."}), 409
         return jsonify({"ok": False, "error": msg}), 500
 
-
 @perfil_bp.route("/eliminar_mi_cuenta", methods=["DELETE"])
 @login_required
 def eliminar_mi_cuenta():
@@ -309,7 +301,6 @@ def eliminar_mi_cuenta():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
-
 @perfil_bp.route("/cambiar_contrasena", methods=["PUT"])
 @login_required
 def cambiar_contrasena():
@@ -336,7 +327,6 @@ def cambiar_contrasena():
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
-
 
 @perfil_bp.route("/perfil/vincular_google", methods=["POST"])
 @login_required
@@ -378,7 +368,6 @@ def vincular_google():
         return jsonify({"ok": True, "google_account": correo_google})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 401
-
 
 @perfil_bp.route("/cloudinary_storage_info")
 @login_required

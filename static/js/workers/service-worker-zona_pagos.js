@@ -46,7 +46,7 @@ const NEVER_CACHE = [
 ];
 
 const CDN_RE = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com|cdnjs\.cloudflare\.com)/;
-const IMG_RE = /^https:\/\/res\.cloudinary\.com\//;
+const IMG_RE = /^https:\/\/res\.cloudinary\.com\
 self.addEventListener('install', e => {
     self.skipWaiting();
     e.waitUntil(precacheAssets(CACHE_NAME, PRECACHE));

@@ -273,7 +273,6 @@ body {
     min-height: 400px;
 }
 
-/* ── Panel de vista previa de cambios ── */
 .pub-preview-panel {
     background: #f8fafc;
     border: 1.5px solid #edf0f5;
@@ -322,7 +321,6 @@ body {
 [data-theme="dark"] .pub-prev-label { color: var(--dk-accent, #f0883e) !important; border-color: rgba(240,136,62,0.2) !important; }
 [data-theme="dark"] .pub-prev-empty { color: var(--dk-text-subtle, #4a4868) !important; }
 
-/* ── Vista en Vivo (iframe inicio) ── */
 .live-preview-wrapper {
     position: relative;
     width: 100%;
@@ -342,7 +340,6 @@ body {
 .live-preview-wrapper::-webkit-scrollbar-track { background: transparent; }
 .live-preview-wrapper::-webkit-scrollbar-thumb { background: rgba(211,84,0,0.35); border-radius: 6px; }
 
-/* Iframe en flujo normal — el wrapper scrollea sobre él */
 .live-preview-iframe {
     display: block;
     width: 100%;
@@ -351,7 +348,6 @@ body {
     pointer-events: none;
 }
 
-/* Overlay solo como indicador visual — no interfiere con scroll */
 .live-preview-overlay {
     display: none;
 }
@@ -646,7 +642,6 @@ body {
     position: relative;
 }
 
-/* ── Section editors (carousel, tarjetas, cinta, alertas) ── */
 .section-preview {
     background: #fff;
     border: 1.5px solid #e4eaf2;
@@ -698,7 +693,6 @@ body {
     color: #8a95a5;
 }
 
-/* Inputs inside editor rows */
 .section-preview .form-control,
 .section-preview .form-control-sm {
     border-radius: 10px;
@@ -712,7 +706,6 @@ body {
     box-shadow: 0 0 0 3px rgba(211,84,0,0.1);
 }
 
-/* Compact preview image box */
 .section-preview .preview-img-box {
     border-radius: 12px;
     border: 1.5px solid #dde3ec;
@@ -725,7 +718,6 @@ body {
     box-shadow: 0 3px 12px rgba(211,84,0,0.12);
 }
 
-/* Section action buttons compact */
 .section-preview .btn-danger,
 .section-preview .btn-outline-danger {
     padding: 5px 12px;
@@ -736,7 +728,6 @@ body {
 .section-preview .btn-danger:hover,
 .section-preview .btn-outline-danger:hover { transform: scale(1.04); }
 
-/* Alerts list */
 .alert-admin-lista {
     padding: 11px 14px;
     border-radius: 12px;
@@ -746,7 +737,6 @@ body {
 .alert-admin-lista .fw-bold { font-size: 0.88rem; }
 .alert-admin-lista small { font-size: 0.72rem; }
 
-/* Dark mode for section editors */
 [data-theme="dark"] .section-preview {
     background: linear-gradient(135deg, #1e1e24 0%, #1a1a20 100%) !important;
     border-color: #2a2a35 !important;
@@ -779,7 +769,6 @@ body {
     border-top-color: #2a2a2a !important;
 }
 
-/* ── Botones de velocidad de la cinta publicitaria ── */
 .ticker-speed-control {
     display: flex;
     align-items: center;
@@ -833,11 +822,6 @@ body {
 [data-theme="dark"] .ticker-speed-btn.active { background: linear-gradient(135deg,#d35400,#e67e22) !important; color: #fff !important; }
 [data-theme="dark"] .ticker-speed-control > span { color: #666 !important; }
 
-/* ══════════════════════════════════════════════
-   SISTEMA DE ALERTAS — Formulario de nueva alerta
-   Layout 2 columnas: campos izquierda | imagen derecha
-   ══════════════════════════════════════════════ */
-
 .notif-form-grid {
     display: grid;
     grid-template-columns: 1fr 280px;
@@ -845,7 +829,6 @@ body {
     align-items: start;
 }
 
-/* Columna izquierda: campos de texto */
 .notif-form-fields {
     display: flex;
     flex-direction: column;
@@ -856,7 +839,6 @@ body {
     min-height: 130px;
 }
 
-/* Columna derecha: imagen */
 .notif-form-image { display: flex; flex-direction: column; }
 
 .notif-img-preview-box {
@@ -930,7 +912,6 @@ body {
     border-radius: 14px;
 }
 
-/* Responsive: stack en mobile */
 @media (max-width: 768px) {
     .notif-form-grid {
         grid-template-columns: 1fr;
@@ -942,7 +923,6 @@ body {
     }
 }
 
-/* Dark mode overrides */
 [data-theme="dark"] .notif-img-preview-box {
     background: repeating-conic-gradient(#1a1a28 0% 25%, #111120 0% 50%) 0 0 / 16px 16px !important;
     border-color: var(--dk-border, #2a2838) !important;
@@ -954,4 +934,3 @@ body {
 [data-theme="dark"] .notif-img-placeholder { color: var(--dk-text-subtle, #4a4868) !important; }
 [data-theme="dark"] .notif-img-placeholder i { color: var(--dk-border, #2a2838) !important; }
 [data-theme="dark"] .notif-textarea { min-height: 130px; }
-

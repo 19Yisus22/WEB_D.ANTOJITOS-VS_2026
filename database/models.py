@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 _RETRY_EXCEPTIONS  = ("RemoteProtocolError", "ReadError", "WriteError", "TimeoutException")
 _NORETRY_EXCEPTIONS = ("ConnectError", "getaddrinfo", "WinError", "Network")
 
-
 def _db():
     if supabase is None:
         raise RuntimeError("Base de datos no configurada. Agrega SUPABASE_URL y SUPABASE_ANON_KEY en las variables de entorno.")
@@ -57,7 +56,6 @@ def _many(result) -> list:
 
 def _count(result) -> int:
     return int(getattr(result, "count", None) or 0)
-
 
 def rol_get_all() -> list:
     return _many(_run(_db().table("roles").select("*")))
@@ -193,7 +191,6 @@ def usuario_update(cedula: str, data: dict) -> list:
     return _many(_run(_db().table("usuarios").update(data).eq("cedula", cedula)))
 
 def cedula_cascade_update(old_cedula: str, new_cedula: str) -> None:
-    """Actualiza todas las FK dependientes antes de cambiar la PK cedula."""
     for table, col in [
         ("pedidos",           "cedula"),
         ("facturas",          "cedula"),
@@ -293,7 +290,6 @@ def usuario_reset_intentos(cedula: str) -> None:
         "bloqueado_hasta": None,
     }).eq("cedula", cedula))
 
-
 def producto_get_all() -> list:
     return _many(_run(
         _db().table("gestion_productos").select("*")
@@ -331,7 +327,6 @@ def producto_delete(id_producto: str) -> list:
         _db().table("gestion_productos").delete().eq("id_producto", id_producto)
     ))
 
-
 def carrito_get(cedula: str) -> list:
     return _many(_run(_db().table("carrito").select("*").eq("cedula", cedula)))
 
@@ -368,7 +363,6 @@ def carrito_delete_item(id_carrito: str, cedula: str) -> list:
 
 def carrito_clear(cedula: str) -> None:
     _run(_db().table("carrito").delete().eq("cedula", cedula))
-
 
 _PEDIDO_JOIN = (
     "*, "
@@ -410,7 +404,6 @@ def pedido_delete_many(ids: list[str]) -> list:
         return []
     return _many(_run(_db().table("pedidos").delete().in_("id_pedido", ids)))
 
-
 def detalle_get(id_pedido: str) -> list:
     return _many(_run(
         _db().table("pedido_detalle")
@@ -421,7 +414,6 @@ def detalle_get(id_pedido: str) -> list:
 def detalle_create_many(items: list[dict]) -> None:
     if items:
         _run(_db().table("pedido_detalle").insert(items))
-
 
 def factura_get_by_user(cedula: str) -> list:
     return _many(_run(
@@ -472,7 +464,6 @@ def factura_create(data: dict) -> None:
 def factura_update(numero: str, data: dict) -> None:
     _run(_db().table("facturas").update(data).eq("numero_factura", numero))
 
-
 def metodo_pago_get_all() -> list:
     return _many(_run(_db().table("metodos_pago").select("*")))
 
@@ -503,7 +494,6 @@ def metodo_pago_create_many(items: list[dict]) -> list:
     if not items:
         return []
     return _many(_run(_db().table("metodos_pago").insert(items)))
-
 
 def publicidad_get_activa() -> list:
     return _many(_run(_db().table("publicidad").select("*").eq("estado", True)))
@@ -558,7 +548,6 @@ def publicidad_delete_many(ids: list[str]) -> None:
     if ids:
         _run(_db().table("publicidad").delete().in_("id_publicidad", ids))
 
-
 def comentario_get_all() -> list:
     return _many(_run(
         _db().table("comentarios").select("*").order("created_at", desc=False)
@@ -584,7 +573,6 @@ def comentario_update_likes(id: str, likes: list) -> None:
 def comentario_delete_all() -> None:
     _run_safe(_db().table("comentarios").delete().neq("id", "00000000-0000-0000-0000-000000000000"))
 
-
 def inicio_config_get() -> dict:
     try:
         result = _db().table("inicio_config").select("clave,valor").execute()
@@ -602,7 +590,6 @@ def inicio_config_save(data: dict) -> None:
         _db().table("inicio_config").upsert(rows, on_conflict="clave").execute()
     except Exception as e:
         logger.warning("inicio_config_save error: %s", e)
-
 
 _MP_SELECT = "id,cedula_de,cedula_para,cedula_dest,mensaje,tipo,leido,adjuntos,created_at"
 
@@ -790,7 +777,6 @@ def mp_staff_no_leidos_por_cedula(cedula_lector: str, cedula_otro: str) -> int:
     )
     return _count(res)
 
-
 def usuarios_activos_desde(desde_iso: str) -> int:
     try:
         r = _db().table("usuarios").select("cedula", count=CountMethod.exact) \
@@ -798,7 +784,6 @@ def usuarios_activos_desde(desde_iso: str) -> int:
         return _count(r)
     except Exception:
         return 0
-
 
 def _logros_get(cedula: str) -> dict:
     rows = _many(_run_safe(
@@ -816,19 +801,16 @@ def _logros_get(cedula: str) -> dict:
             d = {}
     return {"cedula": row.get("cedula"), "id_role": row.get("id_role"), "data": d}
 
-
 def _logros_save(cedula: str, id_role, data: dict) -> None:
     _run(_db().table("logros").upsert(
         {"cedula": cedula, "id_role": id_role, "data": data},
         on_conflict="cedula",
     ))
 
-
 def usuario_logros_get(cedula: str) -> list:
     row = _logros_get(cedula)
     logros = row["data"].get("logros", [])
     return [{"codigo_logro": c, "fecha_desbloqueado": None} for c in logros]
-
 
 def usuario_logro_award(cedula: str, codigo: str, id_role=None) -> None:
     try:
@@ -842,7 +824,6 @@ def usuario_logro_award(cedula: str, codigo: str, id_role=None) -> None:
         _logros_save(cedula, id_role or row.get("id_role"), d)
     except Exception as e:
         logger.warning("usuario_logro_award error: %s", e)
-
 
 def logros_notificados_marcar(cedula: str, codigos: list) -> list:
     if not codigos:
@@ -860,7 +841,6 @@ def logros_notificados_marcar(cedula: str, codigos: list) -> list:
     except Exception as e:
         logger.warning("logros_notificados_marcar error: %s", e)
         return codigos
-
 
 def usuario_stats_logros(cedula: str) -> dict:
     stats: dict = {
@@ -943,7 +923,6 @@ def usuario_stats_logros(cedula: str) -> dict:
 
     return stats
 
-
 def sistema_stats_logros() -> dict:
     stats: dict = {
         "sistema_pedidos": 0,
@@ -998,7 +977,6 @@ def sistema_stats_logros() -> dict:
         pass
     return stats
 
-
 def usuario_pedido_repetido(cedula: str) -> bool:
     try:
         pedidos_r = _run_safe(
@@ -1029,12 +1007,9 @@ def usuario_pedido_repetido(cedula: str) -> bool:
     except Exception:
         return False
 
-
-
 def logros_contadores_get(cedula: str) -> dict:
     row = _logros_get(cedula)
     return {k: int(v) for k, v in row["data"].get("contadores", {}).items()}
-
 
 def logros_contadores_upsert_many(cedula: str, contadores: dict) -> None:
     if not contadores:

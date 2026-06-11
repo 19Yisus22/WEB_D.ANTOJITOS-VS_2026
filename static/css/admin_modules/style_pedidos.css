@@ -719,7 +719,6 @@ main {
     box-shadow: 0 4px 12px rgba(231,76,60,0.3);
 }
 
-/* ── Panel notificaciones de pedidos (bottom-left) ── */
 .widget-panel { margin-bottom: 1.5rem; }
 
 .notif-admin-pedidos {
@@ -764,10 +763,6 @@ main {
 #btnToggleNotifPedidos:hover:not(.panel-open) { transform:scale(1.1); }
 .notif-badge-pedidos { position:absolute; top:-4px; right:-4px; width:18px; height:18px; border-radius:50%; background:#e74c3c; color:#fff; font-size:0.6rem; font-weight:700; display:flex; align-items:center; justify-content:center; }
 
-/* ══════════════════════════════════════════════════════
-   PANEL DE INFORMACIÓN DEL USUARIO — cards de pedidos
-   ══════════════════════════════════════════════════════ */
-
 .pedido-user-panel {
     background: rgba(0,0,0,0.025);
     border: 1px solid rgba(0,0,0,0.06);
@@ -777,7 +772,6 @@ main {
     font-size: 0.87rem;
 }
 
-/* ── Cabecera con avatar y nombre ── */
 .pedido-user-panel-head {
     display: flex;
     align-items: center;
@@ -825,7 +819,6 @@ main {
     line-height: 1;
 }
 
-/* fallback en card-header (52px) */
 .card-header .pedido-avatar-fallback,
 span.pedido-avatar-fallback[style*="52px"] {
     width: 52px;
@@ -879,21 +872,18 @@ span.pedido-avatar-fallback[style*="52px"] {
     flex-shrink: 0;
 }
 
-/* ── Grid de grupos de campos ── */
 .pedido-user-fields {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0;
 }
 
-/* Columna individual */
 .pedido-field-group {
     padding: 0.85rem 1.1rem;
     border-right: 1px solid rgba(0,0,0,0.06);
 }
 .pedido-field-group:last-child { border-right: none; }
 
-/* Título del grupo */
 .pedido-field-group-title {
     display: flex;
     align-items: center;
@@ -908,7 +898,6 @@ span.pedido-avatar-fallback[style*="52px"] {
     border-bottom: 1px solid rgba(211,84,0,0.12);
 }
 
-/* Fila de campo: etiqueta + valor */
 .pedido-field-row {
     display: flex;
     flex-direction: column;
@@ -933,7 +922,6 @@ span.pedido-avatar-fallback[style*="52px"] {
     line-height: 1.3;
 }
 
-/* Responsive: stack en móvil */
 @media (max-width: 768px) {
     .pedido-user-fields {
         grid-template-columns: 1fr;
@@ -945,7 +933,6 @@ span.pedido-avatar-fallback[style*="52px"] {
     .pedido-field-group:last-child { border-bottom: none; }
 }
 
-/* ── Dark mode ── */
 [data-theme="dark"] .pedido-user-panel {
     background: rgba(255,255,255,0.03) !important;
     border-color: var(--dk-border, #2a2838) !important;
@@ -971,4 +958,3 @@ span.pedido-avatar-fallback[style*="52px"] {
 [data-theme="dark"] .pedido-field-label { color: var(--dk-text-subtle, #4a4868) !important; }
 [data-theme="dark"] .pedido-field-value { color: var(--dk-text, #e4e4ef) !important; }
 [data-theme="dark"] .pedido-user-avatar { border-color: rgba(240,136,62,0.3) !important; }
-

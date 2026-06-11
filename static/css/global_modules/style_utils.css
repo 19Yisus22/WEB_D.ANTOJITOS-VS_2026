@@ -1,29 +1,22 @@
 ﻿@import url('./style_responsive.css');
 
-/* ══════════════════════════════════════════════════════
-   RESET & NORMALIZACIÓN CROSS-PLATFORM
-   Compatible: Windows · Linux · macOS · Android · iOS
-   ══════════════════════════════════════════════════════ */
-
 *,
 *::before,
 *::after {
     box-sizing: border-box;
 }
 
-/* Tipografía sin antialiasing inconsistente entre plataformas */
 html {
-    -webkit-text-size-adjust: 100%;   /* iOS Safari */
+    -webkit-text-size-adjust: 100%;
     -moz-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    -webkit-tap-highlight-color: transparent; /* evita flash azul en Android */
+    -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
 }
 
-/* Fuentes del sistema como fallback antes de Google Fonts */
 body {
-    -webkit-font-smoothing: antialiased;   /* macOS / iOS */
-    -moz-osx-font-smoothing: grayscale;    /* Firefox macOS */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
 }
 
@@ -59,14 +52,12 @@ img.prof-img-loading {
     100% { background-position:  200% 0; }
 }
 
-/* Imágenes y media responsivos por defecto */
 img, video, canvas, svg {
     max-width: 100%;
     height: auto;
     display: block;
 }
 
-/* Inputs sin apariencia nativa diferente en cada SO */
 input, button, select, textarea {
     font-family: inherit;
     font-size: inherit;
@@ -75,13 +66,11 @@ input, button, select, textarea {
     appearance: none;
 }
 
-/* Botones: sin outline en click (Webkit/Blink) pero visible en teclado */
 button:focus:not(:focus-visible),
 a:focus:not(:focus-visible) {
     outline: none;
 }
 
-/* Scrollbar delgado en escritorio (Webkit / Firefox) */
 * {
     scrollbar-width: thin;
     scrollbar-color: rgba(211,84,0,0.25) transparent;
@@ -91,7 +80,6 @@ a:focus:not(:focus-visible) {
 *::-webkit-scrollbar-thumb { background: rgba(211,84,0,0.3); border-radius: 8px; }
 *::-webkit-scrollbar-thumb:hover { background: rgba(211,84,0,0.5); }
 
-/* Prevenir que iOS haga zoom en inputs al hacer focus */
 @supports (-webkit-touch-callout: none) {
     input[type="text"],
     input[type="email"],
@@ -105,22 +93,16 @@ a:focus:not(:focus-visible) {
     }
 }
 
-/* Asegurar que las tablas no se desborden en móvil */
 .table-responsive {
     -webkit-overflow-scrolling: touch;
     overflow-x: auto;
 }
 
-/* Safe areas para dispositivos con notch (iPhone X+) */
 .page-wrapper,
 .page-content {
     padding-left:  env(safe-area-inset-left,  0px);
     padding-right: env(safe-area-inset-right, 0px);
 }
-
-/* ══════════════════════════════════════════════════════
-   VARIABLES DE TEMA
-   ══════════════════════════════════════════════════════ */
 
 :root {
     --theme-bg:          #f9e8d5;
@@ -160,11 +142,6 @@ a:focus:not(:focus-visible) {
     --theme-table-row2:  #1a1826;
 }
 
-/* ── Degradado global de fondo — light mode ──────────────────────────
-   Se pone sobre html (no body) para que sea fijo mientras se scrollea.
-   body es transparente para que el degradado de html se vea a través.
-   !important asegura que ningún módulo lo sobreescriba.
-   ────────────────────────────────────────────────────────────────── */
 html {
     min-height: 100%;
     background-image: linear-gradient(160deg,
@@ -181,7 +158,6 @@ html {
     transition: color 0.25s ease;
 }
 
-/* Dark mode — degradado profundo índigo-violeta con calor naranja subyacente */
 html[data-theme="dark"] {
     background-image: linear-gradient(160deg,
         #0d0b14 0%,
@@ -194,9 +170,6 @@ html[data-theme="dark"] {
     background-color: #0d0b14 !important;
 }
 
-/* ── Superficie de contenedores — light mode ──────────────────────────
-   Blanco puro sobre el fondo cálido: contraste claro y sombra naranja.
-   ────────────────────────────────────────────────────────────────── */
 .card,
 .stats-venta-card,
 .stat-box,
@@ -216,7 +189,6 @@ html[data-theme="dark"] {
     box-shadow: 0 2px 14px rgba(211,84,0,0.09), 0 1px 3px rgba(0,0,0,0.05) !important;
 }
 
-/* Dark mode — superficies más claras para mayor contraste */
 [data-theme="dark"] .card,
 [data-theme="dark"] .stats-venta-card,
 [data-theme="dark"] .stat-box,
@@ -558,7 +530,7 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    /* Aura permanente suave — siempre visible cuando el botón está activo */
+
     box-shadow: 0 0 16px rgba(211,84,0,0.32),
                 0 4px 14px rgba(211,84,0,0.28),
                 inset 0 1px 0 rgba(255,255,255,0.22);
@@ -568,7 +540,7 @@ body {
                 box-shadow 0.25s ease, filter 0.2s ease;
     z-index: 1500;
     pointer-events: none;
-    /* Reflejo interior para dar apariencia 3D */
+
     overflow: hidden;
 }
 #scrollToTopBtn::before {
@@ -610,7 +582,6 @@ body {
     .custom-toast-alert, .custom-toast { min-width: 0; width: 100%; }
 }
 
-/* Variables tema oscuro — paleta unificada */
 [data-theme="dark"] {
     --dk-bg:          #0d0b14;
     --dk-bg2:         #12101a;
@@ -640,7 +611,6 @@ body {
     --dk-glass:       rgba(26,24,38,0.85);
 }
 
-/* Todas las superficies de página son transparentes — el gradiente viene del html */
 [data-theme="dark"] main,
 [data-theme="dark"] .page-wrapper,
 [data-theme="dark"] .main-content,
@@ -649,7 +619,6 @@ body {
     background: transparent !important;
 }
 
-/* Transiciones suaves al cambiar de tema */
 html { transition: background-color 0.3s ease; }
 body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ease; }
 
@@ -879,14 +848,12 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
 [data-theme="dark"] .blocked-title { color: var(--dk-text) !important; }
 [data-theme="dark"] .blocked-text { color: var(--dk-text-muted) !important; }
 
-/* Destello radial interno SIEMPRE visible — capa de luz fija */
 .btn {
     position: relative;
     overflow: hidden;
     transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
 }
 
-/* Reflejo interior en hover via ::after */
 .btn::after {
     content: '';
     position: absolute;
@@ -899,7 +866,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     z-index: 0;
 }
 
-/* Botones primarios — aura naranja permanente */
 .btn-primary {
     box-shadow: 0 2px 12px rgba(211,84,0,0.28),
                 inset 0 1px 0 rgba(255,255,255,0.2) !important;
@@ -911,7 +877,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     filter: brightness(1.05);
 }
 
-/* Botones warning con color */
 .btn-warning {
     box-shadow: 0 2px 12px rgba(255,193,7,0.25),
                 inset 0 1px 0 rgba(255,255,255,0.25) !important;
@@ -921,7 +886,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     transform: translateY(-2px);
 }
 
-/* Botones danger */
 .btn-danger {
     box-shadow: 0 2px 12px rgba(220,53,69,0.22),
                 inset 0 1px 0 rgba(255,255,255,0.18) !important;
@@ -932,7 +896,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     transform: translateY(-2px);
 }
 
-/* Botones success */
 .btn-success {
     box-shadow: 0 2px 12px rgba(39,174,96,0.22),
                 inset 0 1px 0 rgba(255,255,255,0.18) !important;
@@ -943,7 +906,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     transform: translateY(-2px);
 }
 
-/* Botones dark */
 .btn-dark {
     box-shadow: 0 2px 10px rgba(0,0,0,0.3),
                 inset 0 1px 0 rgba(255,255,255,0.1) !important;
@@ -954,7 +916,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     transform: translateY(-1px);
 }
 
-/* Botones outline primario */
 .btn-outline-primary {
     box-shadow: 0 0 10px rgba(211,84,0,0.12) !important;
 }
@@ -963,7 +924,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     transform: translateY(-1px);
 }
 
-/* Botones outline danger */
 .btn-outline-danger {
     box-shadow: 0 0 8px rgba(220,53,69,0.1) !important;
 }
@@ -971,7 +931,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     box-shadow: 0 4px 16px rgba(220,53,69,0.3) !important;
 }
 
-/* Botones outline success */
 .btn-outline-success {
     box-shadow: 0 0 8px rgba(39,174,96,0.1) !important;
 }
@@ -1089,7 +1048,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     transform: translateY(-1px);
 }
 
-/* Botones flotantes campana/editar — aura naranja permanente */
 #btnCampanaNotif,
 #widgetEditModeBtn,
 #pedidosEditBtn,
@@ -1133,20 +1091,17 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
 [data-theme="dark"] .page-wrapper { background: transparent !important; }
 [data-theme="dark"] main { background: transparent !important; }
 
-/* Header/banner de módulo oscuro también */
 [data-theme="dark"] .card-title-marketing::before,
 [data-theme="dark"] .card-title-marketing::after {
     background: rgba(255,255,255,0.04) !important;
 }
 
-/* Inputs type number en dark */
 [data-theme="dark"] input[type="number"] {
     background: var(--dk-input-bg) !important;
     color: var(--dk-text) !important;
     border-color: var(--dk-border) !important;
 }
 
-/* Notif panel pedidos en dark */
 [data-theme="dark"] .notif-admin-pedidos {
     background: #1a1a1a !important;
     border-color: #2a2a2a !important;
@@ -1157,7 +1112,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
 }
 [data-theme="dark"] .notif-item-row { color: #e8e8e8 !important; }
 
-/* Widget system en dark */
 [data-theme="dark"] .widget-handle-bar {
     background: linear-gradient(90deg,rgba(211,84,0,0.18),rgba(211,84,0,0.08)) !important;
     border-color: rgba(211,84,0,0.3) !important;
@@ -1198,7 +1152,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     transition: box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.2,1,0.3,1) !important;
 }
 
-/* Sortable ghost/drag en dark */
 [data-theme="dark"] .sortable-ghost {
     opacity: 0.25 !important;
     background: rgba(211,84,0,0.1) !important;
@@ -1209,12 +1162,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
                 0 10px 30px rgba(211,84,0,0.3) !important;
 }
 
-/* ══════════════════════════════════════════════════
-   CINTA PUBLICITARIA — estilos globales
-   (catálogo, inicio y cualquier módulo futuro)
-   ══════════════════════════════════════════════════ */
-
-/* Track: marquee continuo — entra desde el lateral derecho */
 .promo-track {
     display: flex;
     align-items: center;
@@ -1237,7 +1184,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     cursor: default;
 }
 
-/* Animación del banner al aparecer: slide desde la derecha */
 .promo-banner {
     animation: promoBannerIn 0.6s cubic-bezier(0.22,1,0.36,1) both;
 }
@@ -1247,7 +1193,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     to   { opacity: 1; transform: translateX(0); }
 }
 
-/* El scroll: los ítems fluyen de derecha a izquierda continuamente */
 @-webkit-keyframes promoScroll {
     from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
     to   { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
@@ -1257,7 +1202,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     to   { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
 }
 
-/* Ítem */
 .promo-item {
     display: flex;
     align-items: center;
@@ -1266,7 +1210,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     flex-shrink: 0;
 }
 
-/* Imagen */
 .promo-item-img-wrap {
     position: relative;
     width: 52px;
@@ -1312,7 +1255,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     opacity: 0.7;
 }
 
-/* Ícono fallback */
 .promo-item-fallback-icon {
     width: 52px;
     height: 52px;
@@ -1327,7 +1269,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     flex-shrink: 0;
 }
 
-/* Texto */
 .promo-item-info {
     display: flex;
     flex-direction: column;
@@ -1363,7 +1304,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     max-width: 200px;
 }
 
-/* Separador */
 .promo-sep {
     font-size: 0.68rem;
     color: rgba(251,146,60,0.32);
@@ -1378,7 +1318,6 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     50%       { opacity: 0.65; transform: scale(1.5) rotate(180deg); }
 }
 
-/* ── Botones de velocidad (módulo publicidad) ── */
 .ticker-speed-control {
     display: flex;
     align-items: center;
@@ -1433,21 +1372,12 @@ body, .card, .offcanvas { transition: background-color 0.25s ease, color 0.2s ea
     color: #fff;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   DARK MODE — OVERRIDES COMPLETOS DE MÓDULOS
-   Cubre todos los body/html backgrounds de módulos específicos,
-   formularios hardcodeados, tablas, cards y elementos de texto.
-   Cargado al final para máxima especificidad.
-   ══════════════════════════════════════════════════════════════ */
-
-/* ── Backgrounds de módulo (overrides de bg-gradient hardcodeado) ── */
 html[data-theme="dark"] body,
 [data-theme="dark"] body {
     background: transparent !important;
     color: var(--dk-text) !important;
 }
 
-/* ── Scrollbar en dark mode ── */
 [data-theme="dark"] * {
     scrollbar-color: rgba(240,136,62,0.3) rgba(26,24,38,0.5);
 }
@@ -1458,7 +1388,6 @@ html[data-theme="dark"] body,
 }
 [data-theme="dark"] *::-webkit-scrollbar-thumb:hover { background: rgba(240,136,62,0.45); }
 
-/* ── Tipografía general ── */
 [data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3,
 [data-theme="dark"] h4,[data-theme="dark"] h5,[data-theme="dark"] h6 {
     color: var(--dk-text) !important;
@@ -1473,7 +1402,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .text-dark, [data-theme="dark"] .text-body,
 [data-theme="dark"] .text-black { color: var(--dk-text) !important; }
 
-/* ── Cards y superficies ── */
 [data-theme="dark"] .card {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
@@ -1495,7 +1423,6 @@ html[data-theme="dark"] body,
     color: var(--dk-text) !important;
 }
 
-/* Backdrop/glass en modales */
 [data-theme="dark"] .modal-content {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
@@ -1517,7 +1444,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .modal-title { color: var(--dk-text) !important; }
 [data-theme="dark"] .modal-backdrop { background: rgba(0,0,0,0.8) !important; }
 
-/* ── Inputs y Formularios ── */
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select,
 [data-theme="dark"] input[type="text"],
@@ -1558,7 +1484,6 @@ html[data-theme="dark"] body,
     color: var(--dk-text);
 }
 
-/* ── Tablas ── */
 [data-theme="dark"] .table {
     --bs-table-bg:           var(--dk-card);
     --bs-table-striped-bg:   var(--dk-card2);
@@ -1583,7 +1508,6 @@ html[data-theme="dark"] body,
 }
 [data-theme="dark"] .table-responsive { background: transparent !important; border-color: var(--dk-border) !important; }
 
-/* ── Dropdowns ── */
 [data-theme="dark"] .dropdown-menu {
     background-color: var(--dk-card2) !important;
     border-color: var(--dk-border) !important;
@@ -1598,7 +1522,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .dropdown-divider { border-color: var(--dk-border) !important; opacity: 1; }
 [data-theme="dark"] .dropdown-header { color: var(--dk-text-muted) !important; }
 
-/* ── List groups ── */
 [data-theme="dark"] .list-group-item {
     background-color: var(--dk-card) !important;
     color: var(--dk-text) !important;
@@ -1609,7 +1532,6 @@ html[data-theme="dark"] body,
     background-color: var(--dk-card2) !important;
 }
 
-/* ── Nav tabs / pills ── */
 [data-theme="dark"] .nav-tabs { border-color: var(--dk-border) !important; }
 [data-theme="dark"] .nav-tabs .nav-link { color: var(--dk-text-muted) !important; }
 [data-theme="dark"] .nav-tabs .nav-link.active,
@@ -1625,7 +1547,6 @@ html[data-theme="dark"] body,
     box-shadow: 0 4px 14px var(--dk-accent-glow) !important;
 }
 
-/* ── Alertas ── */
 [data-theme="dark"] .alert {
     background: var(--dk-card2) !important;
     border-color: var(--dk-border) !important;
@@ -1657,7 +1578,6 @@ html[data-theme="dark"] body,
     color: var(--dk-text) !important;
 }
 
-/* ── Badges ── */
 [data-theme="dark"] .badge.bg-light,
 [data-theme="dark"] .badge.bg-white { background: var(--dk-card2) !important; color: var(--dk-text) !important; }
 [data-theme="dark"] .badge.bg-secondary { background: var(--dk-card3) !important; color: var(--dk-text-muted) !important; }
@@ -1666,7 +1586,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .bg-light-soft { background: var(--dk-card2) !important; }
 [data-theme="dark"] .bg-body { background: var(--dk-bg2) !important; }
 
-/* ── Borders y divisores ── */
 [data-theme="dark"] hr { border-color: var(--dk-border) !important; opacity: 1; }
 [data-theme="dark"] .border,
 [data-theme="dark"] .border-top,[data-theme="dark"] .border-bottom,
@@ -1674,7 +1593,6 @@ html[data-theme="dark"] body,
     border-color: var(--dk-border) !important;
 }
 
-/* ── Offcanvas ── */
 [data-theme="dark"] .offcanvas,
 [data-theme="dark"] .offcanvas-header,
 [data-theme="dark"] .offcanvas-body {
@@ -1683,7 +1601,6 @@ html[data-theme="dark"] body,
     color: var(--dk-text) !important;
 }
 
-/* ── Accordion ── */
 [data-theme="dark"] .accordion-item {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
@@ -1700,7 +1617,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .accordion-button::after { filter: invert(0.8) sepia(0.3) saturate(3) hue-rotate(340deg); }
 [data-theme="dark"] .accordion-body { background: var(--dk-card) !important; color: var(--dk-text) !important; }
 
-/* ── Paginación ── */
 [data-theme="dark"] .page-link {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
@@ -1717,29 +1633,23 @@ html[data-theme="dark"] body,
 }
 [data-theme="dark"] .page-item.disabled .page-link { color: var(--dk-text-subtle) !important; }
 
-/* ── Progress bars ── */
 [data-theme="dark"] .progress { background: var(--dk-card2) !important; }
 [data-theme="dark"] .progress-bar { background: var(--dk-accent) !important; }
 
-/* ── Spinner ── */
 [data-theme="dark"] .spinner-border,
 [data-theme="dark"] .spinner-grow {
     border-color: var(--dk-text-muted);
     border-right-color: transparent;
 }
 
-/* ── Botón close ── */
 [data-theme="dark"] .btn-close { filter: invert(1) brightness(0.8); }
 
-/* ── Placeholders (skeleton) ── */
 [data-theme="dark"] .placeholder { background: var(--dk-card2) !important; }
 
-/* ── Breadcrumb ── */
 [data-theme="dark"] .breadcrumb-item { color: var(--dk-text-muted) !important; }
 [data-theme="dark"] .breadcrumb-item.active { color: var(--dk-text) !important; }
 [data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before { color: var(--dk-border) !important; }
 
-/* ── Tooltips / Popovers ── */
 [data-theme="dark"] .tooltip-inner {
     background: var(--dk-card3) !important;
     color: var(--dk-text) !important;
@@ -1756,14 +1666,12 @@ html[data-theme="dark"] body,
 }
 [data-theme="dark"] .popover-body { color: var(--dk-text) !important; }
 
-/* ── Módulo perfil ── */
 [data-theme="dark"] .profile-img-wrapper {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
 }
 [data-theme="dark"] #previewImagen { border-color: var(--dk-border) !important; }
 
-/* ── Módulo carrito ── */
 [data-theme="dark"] .custom-table-carrito thead {
     background: var(--dk-bg2) !important;
     color: var(--dk-text) !important;
@@ -1774,7 +1682,6 @@ html[data-theme="dark"] body,
     color: var(--dk-text) !important;
 }
 
-/* ── Módulo pedidos / admin cards ── */
 [data-theme="dark"] .pedido-card,
 [data-theme="dark"] .message {
     background: var(--dk-card) !important;
@@ -1785,7 +1692,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .pedido-finalizado { border-left-color: var(--dk-success) !important; }
 [data-theme="dark"] .pedido-anulado { border-left-color: var(--dk-danger) !important; }
 
-/* ── Módulo gestión (tablas admin) ── */
 [data-theme="dark"] .table-card {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
@@ -1793,7 +1699,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .user-row { color: var(--dk-text) !important; }
 [data-theme="dark"] .user-row:hover { background: rgba(240,136,62,0.07) !important; }
 
-/* ── Módulo catálogo ── */
 [data-theme="dark"] .product-card {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
@@ -1811,13 +1716,11 @@ html[data-theme="dark"] body,
     border-color: transparent !important;
 }
 
-/* ── Form controls con background hardcodeado en módulos ── */
 [data-theme="dark"] .form-control[style*="background"],
 [data-theme="dark"] input[style*="background"] {
     background-color: var(--dk-input-bg) !important;
 }
 
-/* ── Card marketing header ── */
 [data-theme="dark"] .card-title-marketing {
     background: linear-gradient(135deg, #1c0e00 0%, #2e1800 55%, #3a2008 100%) !important;
     border: 1px solid rgba(240,136,62,0.2) !important;
@@ -1826,7 +1729,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .card-title-marketing h3,
 [data-theme="dark"] .card-title-marketing p { color: #e8e8e8 !important; }
 
-/* ── Sidebar y nav laterales ── */
 [data-theme="dark"] .sidebar,
 [data-theme="dark"] .sidebar-custom,
 [data-theme="dark"] .seccion-card {
@@ -1835,7 +1737,6 @@ html[data-theme="dark"] body,
     color: var(--dk-text) !important;
 }
 
-/* ── Stats / KPI cards ── */
 [data-theme="dark"] .stats-venta-card,
 [data-theme="dark"] .stat-box,
 [data-theme="dark"] .stats-card,
@@ -1849,7 +1750,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .stats-venta-lbl,
 [data-theme="dark"] .stat-box .lbl { color: var(--dk-text-muted) !important; }
 
-/* ── Imágenes y placeholders ── */
 [data-theme="dark"] .img-not-available,
 [data-theme="dark"] .img-placeholder {
     background: var(--dk-card2) !important;
@@ -1858,7 +1758,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .postre-img { filter: brightness(0.88) saturate(0.95); }
 [data-theme="dark"] .gris { filter: grayscale(100%) brightness(0.5) !important; }
 
-/* ── Switch y checkboxes ── */
 [data-theme="dark"] input[type="checkbox"],
 [data-theme="dark"] input[type="radio"] { accent-color: var(--dk-accent); }
 [data-theme="dark"] input[type="range"] { accent-color: var(--dk-accent); }
@@ -1871,7 +1770,6 @@ html[data-theme="dark"] body,
     border-color: var(--dk-accent) !important;
 }
 
-/* ── Panel de notificaciones ── */
 [data-theme="dark"] .notif-admin-panel {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
@@ -1900,7 +1798,6 @@ html[data-theme="dark"] body,
 [data-theme="dark"] .btn-notif-visto { background: rgba(46,204,113,0.12) !important; }
 [data-theme="dark"] .btn-notif-del { background: rgba(231,76,60,0.1) !important; }
 
-/* ── Chat ── */
 [data-theme="dark"] .chat-container {
     background: var(--dk-card) !important;
     border-color: var(--dk-border) !important;
@@ -1912,11 +1809,9 @@ html[data-theme="dark"] body,
     border-color: var(--dk-border) !important;
 }
 
-/* ── Promo banner ── */
 [data-theme="dark"] .promo-banner { background: rgba(10,8,18,0.95) !important; }
 [data-theme="dark"] .promo-img-container::before { opacity: 0.2; }
 
-/* ── Sección de facturación ── */
 [data-theme="dark"] .factura-card,
 [data-theme="dark"] .invoice-card {
     background: var(--dk-card) !important;
@@ -1924,7 +1819,6 @@ html[data-theme="dark"] body,
     color: var(--dk-text) !important;
 }
 
-/* ── Links ── */
 [data-theme="dark"] a:not(.btn):not(.nav-link):not(.dropdown-item):not(.navbar-brand):not(.notif-footer-link) {
     color: var(--dk-accent);
 }
@@ -1932,19 +1826,13 @@ html[data-theme="dark"] body,
     color: var(--dk-accent2);
 }
 
-/* ── Scroll progress bar ── */
 [data-theme="dark"] #scrollProgressBar {
     background: linear-gradient(90deg, var(--dk-accent), var(--dk-accent2));
 }
 
-/* ── Estilo de colores para texto de estado ── */
 [data-theme="dark"] .color-disponible { color: var(--dk-success) !important; }
 [data-theme="dark"] .color-agotado    { color: var(--dk-danger)  !important; }
 [data-theme="dark"] .linea-disponible { background: linear-gradient(to right, var(--dk-success), transparent) !important; }
-
-/* ══════════════════════════════════════════════════════
-   ANIMACIONES GLOBALES — compatibles con móvil y escritorio
-   ══════════════════════════════════════════════════════ */
 
 @keyframes dantFadeIn {
     from { opacity: 0; }
@@ -2121,4 +2009,3 @@ html[data-theme="dark"] body,
         transition: none !important;
     }
 }
-

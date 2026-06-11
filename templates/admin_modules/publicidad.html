@@ -105,29 +105,23 @@
             </div>
             <div class="card ds-card section-inicio-cinta mb-4" data-reveal>
                 <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                         <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-house-heart-fill fs-4" style="color:#d35400;"></i>
-                            <h4 class="m-0 fw-bold" data-i18n="pub.inicio_ticker">Cinta del Inicio</h4>
-                            <span class="badge bg-warning text-dark ms-1" data-i18n="pub.badge_home">Inicio</span>
+                            <i class="bi bi-megaphone-fill fs-4" style="color:#d35400;"></i>
+                            <h5 class="m-0 fw-bold">Cinta de Publicidad</h5>
                         </div>
-                        <div class="ticker-speed-control d-flex align-items-center gap-2">
-                            <span class="text-muted small fw-bold" style="white-space:nowrap;">
-                                <i class="bi bi-speedometer2 me-1"></i><span data-i18n="pub.speed">Velocidad</span>
-                            </span>
-                            <div class="ticker-speed-group" role="group">
-                                <button class="ticker-speed-btn" data-speed="1"   onclick="setTickerSpeed(1)">1×</button>
-                                <button class="ticker-speed-btn" data-speed="1.5" onclick="setTickerSpeed(1.5)">1.5×</button>
-                                <button class="ticker-speed-btn" data-speed="2"   onclick="setTickerSpeed(2)">2×</button>
-                                <button class="ticker-speed-btn" data-speed="2.5" onclick="setTickerSpeed(2.5)">2.5×</button>
-                                <button class="ticker-speed-btn" data-speed="3"   onclick="setTickerSpeed(3)">3×</button>
-                            </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="text-muted small me-1">Velocidad:</span>
+                            <button class="btn btn-sm btn-outline-secondary ticker-speed-btn" data-speed="1">1×</button>
+                            <button class="btn btn-sm btn-outline-secondary ticker-speed-btn" data-speed="1.5">1.5×</button>
+                            <button class="btn btn-sm btn-outline-secondary ticker-speed-btn" data-speed="2">2×</button>
+                            <button class="btn btn-sm btn-outline-secondary ticker-speed-btn" data-speed="2.5">2.5×</button>
+                            <button class="btn btn-sm btn-outline-secondary ticker-speed-btn" data-speed="3">3×</button>
                         </div>
                     </div>
-                    <p class="text-muted small mb-4" data-i18n="pub.inicio_ticker_desc">Agrega logos e imágenes que se muestran como marquee en la página de inicio (igual que los bancos del footer).</p>
                     <div id="inicioCintaContainer" class="row g-3"></div>
                     <button class="btn btn-outline-warning w-100 mt-4 fw-bold" onclick="agregarInicioCinta()">
-                        <i class="bi bi-plus-lg"></i> <span data-i18n="pub.add_init">Agregar a la Cinta del Inicio</span>
+                        <i class="bi bi-plus-lg"></i> Agregar elemento
                     </button>
                 </div>
             </div>
@@ -229,7 +223,7 @@
             </div>
         </div>
     </div>
-    </div><!-- /page-wrapper -->
+    </div>
     {% include 'global_modules/footer.html' %}
     <div id="toastContainer"></div>
     <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>

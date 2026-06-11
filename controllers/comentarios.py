@@ -19,10 +19,8 @@ MENSAJES_PREDETERMINADOS = [
 
 comentarios_bp = Blueprint("comentarios", __name__)
 
-
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
-
 
 @comentarios_bp.route("/comentarios_page")
 @sin_cache
@@ -52,7 +50,6 @@ def comentarios_page():
     except Exception:
         return render_template("general_modules/comentarios.html",
                                comentarios=[], user_id=session.get("user_id"))
-
 
 @comentarios_bp.route("/comentarios", methods=["GET"])
 def obtener_comentarios():
@@ -86,7 +83,6 @@ def obtener_comentarios():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @comentarios_bp.route("/comentarios", methods=["POST"])
 @login_required
 def crear_comentario():
@@ -116,7 +112,6 @@ def crear_comentario():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @comentarios_bp.route("/comentarios/<id>", methods=["PUT"])
 @login_required
 def editar_comentario(id):
@@ -135,7 +130,6 @@ def editar_comentario(id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @comentarios_bp.route("/comentarios/<id>", methods=["DELETE"])
 @login_required
 def eliminar_comentario(id):
@@ -150,7 +144,6 @@ def eliminar_comentario(id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @comentarios_bp.route("/comentarios/limpiar_todo", methods=["DELETE"])
 @login_required
 def limpiar_todos_comentarios():
@@ -161,7 +154,6 @@ def limpiar_todos_comentarios():
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @comentarios_bp.route("/comentarios/<id>/like", methods=["POST"])
 @login_required
@@ -183,7 +175,6 @@ def toggle_like(id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @comentarios_bp.route("/usuarios_activos_conteo")
 def usuarios_activos_conteo():
     try:
@@ -192,7 +183,6 @@ def usuarios_activos_conteo():
         return jsonify({"total": total}), 200
     except Exception as e:
         return jsonify({"total": 0}), 200
-
 
 @comentarios_bp.route("/actualizar_estado_comentarios", methods=["POST"])
 @login_required
@@ -204,13 +194,10 @@ def actualizar_estado_comentarios():
     except Exception:
         return jsonify({"error": "server_error"}), 500
 
-
-
 @comentarios_bp.route("/mensajes_privados/predeterminados")
 @login_required
 def mensajes_predeterminados():
     return jsonify(MENSAJES_PREDETERMINADOS)
-
 
 @comentarios_bp.route("/mensajes_privados/mi_hilo")
 @login_required
@@ -225,7 +212,6 @@ def mi_hilo():
         return jsonify(mensajes)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @comentarios_bp.route("/mensajes_privados/hilos")
 @login_required
@@ -259,7 +245,6 @@ def todos_los_hilos():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @comentarios_bp.route("/mensajes_privados/hilo/<cedula_cliente>")
 @login_required
 def hilo_detalle(cedula_cliente):
@@ -272,7 +257,6 @@ def hilo_detalle(cedula_cliente):
         return jsonify(mensajes)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @comentarios_bp.route("/mensajes_privados/enviar", methods=["POST"])
 @login_required
@@ -309,7 +293,6 @@ def enviar_mensaje_privado():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @comentarios_bp.route("/mensajes_privados/<id>", methods=["PUT"])
 @login_required
 def editar_mensaje_privado(id):
@@ -329,7 +312,6 @@ def editar_mensaje_privado(id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @comentarios_bp.route("/mensajes_privados/<id>", methods=["DELETE"])
 @login_required
 def eliminar_mensaje_privado(id):
@@ -346,7 +328,6 @@ def eliminar_mensaje_privado(id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @comentarios_bp.route("/mensajes_privados/hilo/<cedula_hilo>/limpiar", methods=["DELETE"])
 @login_required
 def limpiar_hilo_cv(cedula_hilo):
@@ -358,7 +339,6 @@ def limpiar_hilo_cv(cedula_hilo):
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @comentarios_bp.route("/mensajes_privados/no_leidos")
 @login_required
@@ -381,7 +361,6 @@ def no_leidos_count():
     except Exception:
         return jsonify({"count": 0, "cv": 0, "staff": 0})
 
-
 @comentarios_bp.route("/mensajes_privados/marcar_leidos", methods=["POST"])
 @login_required
 def marcar_leidos():
@@ -399,7 +378,6 @@ def marcar_leidos():
     except Exception:
         return jsonify({"ok": False})
 
-
 @comentarios_bp.route("/mensajes_privados/staff/marcar_leidos", methods=["POST"])
 @login_required
 def staff_marcar_leidos():
@@ -415,8 +393,6 @@ def staff_marcar_leidos():
         return jsonify({"ok": True})
     except Exception:
         return jsonify({"ok": False})
-
-
 
 @comentarios_bp.route("/mensajes_privados/staff/contactos")
 @login_required
@@ -448,7 +424,6 @@ def staff_contactos():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @comentarios_bp.route("/mensajes_privados/staff/hilo/<cedula_otro>")
 @login_required
 def staff_hilo(cedula_otro):
@@ -462,7 +437,6 @@ def staff_hilo(cedula_otro):
         return jsonify(mensajes)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @comentarios_bp.route("/mensajes_privados/staff/enviar", methods=["POST"])
 @login_required
@@ -487,7 +461,6 @@ def staff_enviar():
         return jsonify({"ok": True, "mensaje": nuevo})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @comentarios_bp.route("/mensajes_privados/staff/hilo/<cedula_otro>/limpiar", methods=["DELETE"])
 @login_required

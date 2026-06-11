@@ -41,7 +41,7 @@ const NETWORK_FIRST_PATHS = [
 ];
 
 const CDN_RE = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com)/;
-const IMG_RE = /^https:\/\/res\.cloudinary\.com\//;
+const IMG_RE = /^https:\/\/res\.cloudinary\.com\
 
 self.addEventListener('install', e => {
     self.skipWaiting();
