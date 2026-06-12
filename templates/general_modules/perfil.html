@@ -208,9 +208,14 @@
 
                         <div class="mt-4 p-4 border border-danger border-opacity-25 rounded-4 bg-danger bg-opacity-10">
                             <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
-                                <div>
-                                    <h5 class="text-danger mb-3 fw-bold"><i class="bi bi-exclamation-octagon me-2"></i> <span data-i18n="prof.danger_zone">¡Zona de Peligro!</span></h5>
-                                    <p class="small text-muted mb-1" data-i18n="prof.delete_warn">Se eliminarán todos tus registros de forma permanente una vez que confirmes la eliminación de tu cuenta.</p>
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="danger-zone-icon">
+                                        <i class="bi bi-exclamation-octagon-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-danger mb-1 fw-bold" data-i18n="prof.danger_zone">¡Zona de Peligro!</h5>
+                                        <p class="small text-muted mb-0" data-i18n="prof.delete_warn">Se eliminarán todos tus registros de forma permanente una vez que confirmes la eliminación de tu cuenta.</p>
+                                    </div>
                                 </div>
                                 <button type="button" class="btn btn-danger fw-bold px-4 py-2" id="btnEliminarMiCuenta" data-i18n="prof.delete_acc">Eliminar Cuenta</button>
                             </div>

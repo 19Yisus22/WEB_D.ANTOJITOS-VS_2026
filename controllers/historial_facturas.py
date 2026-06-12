@@ -17,7 +17,9 @@ def _enriquecer_factura(f: dict) -> dict:
             "precio_unitario": float(d.get("precio_unitario") or 0),
             "subtotal":        float(d.get("subtotal") or 0),
             "imagen":          str(prod.get("imagen_url") or "/static/uploads/default.png"),
+            "pagado":          bool(d.get("pagado", False)),
         })
+    todos_pagados = bool(productos) and all(p["pagado"] for p in productos)
     return {
         "id_factura":     str(f.get("id_factura", "")),
         "numero_factura": str(f.get("numero_factura", "")),
@@ -30,6 +32,7 @@ def _enriquecer_factura(f: dict) -> dict:
         "id_pedido":      str(f.get("id_pedido") or ""),
         "productos":      productos,
         "archivada":      bool(f.get("archivada", False)),
+        "todos_pagados":  todos_pagados,
     }
 
 def _rol_de_usuario(usuario: dict) -> str:

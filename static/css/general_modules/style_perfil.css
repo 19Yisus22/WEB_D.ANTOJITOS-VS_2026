@@ -190,8 +190,10 @@ body {
     #btnCambiarContrasena { font-size: 0.85rem; padding: 12px; }
 
     .border-danger.rounded-4 { padding: 1rem !important; border-radius: 14px !important; }
-    .border-danger.rounded-4 h5 { font-size: 0.95rem; }
-    #btnEliminarMiCuenta { width: 100%; margin-top: 0.25rem; }
+    .border-danger.rounded-4 h5 { font-size: 1.05rem; }
+    #btnEliminarMiCuenta { width: 100%; margin-top: 0.5rem; }
+    .danger-zone-icon { width: 40px; height: 40px; min-width: 40px; border-radius: 10px; }
+    .danger-zone-icon i { font-size: 1.3rem; }
 
     .pf-file-name { max-width: 180px; }
     .pf-file-rename-input { max-width: 180px; }
@@ -221,6 +223,24 @@ body {
 
 .shadow-inner { box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
 .bg-light-soft { background-color: #fbfbfb; }
+
+.danger-zone-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 12px;
+    background: rgba(220, 53, 69, 0.12);
+    border: 1.5px solid rgba(220, 53, 69, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.danger-zone-icon i {
+    font-size: 1.5rem;
+    color: #dc3545;
+    line-height: 1;
+}
 
 .pf-header {
     display: flex;

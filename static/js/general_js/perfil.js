@@ -4,6 +4,9 @@ let filteredUsers = [];
 let currentPage = 1;
 const recordsPerPage = 7;
 
+const USER_ID         = (window.PAGE_DATA && window.PAGE_DATA.userId)    ? String(window.PAGE_DATA.userId)    : '';
+const USER_AUTH_GOOGLE = !!(window.PAGE_DATA && window.PAGE_DATA.authGoogle);
+
 function showMessage(msg, isError = false) {
     mostrarAlerta(msg, isError);
 }

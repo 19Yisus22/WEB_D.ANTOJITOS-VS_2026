@@ -1,5 +1,5 @@
 (function () {
-    var SPEED_PX_S = 85;
+    var SPEED_PX_S = 42;
     var _speed = 1;
 
     function buildHTML(items) {

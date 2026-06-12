@@ -97,14 +97,30 @@ html, body {
     transition: var(--transition-base);
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     border: 1px solid rgba(0,0,0,0.02);
+    min-width: 0;
+    overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .mensaje-texto {
     white-space: pre-wrap;
     word-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     line-height: 1.6;
     color: #1a1a2e;
     font-size: 0.95rem;
+    min-width: 0;
+}
+.mensaje-texto ul,
+.mensaje-texto ol {
+    padding-left: 1.4em;
+    margin: 4px 0 0;
+}
+.mensaje-texto li {
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .mensaje-texto *,
@@ -190,6 +206,8 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    flex-shrink: 0;
+    max-width: 100%;
 }
 
 .btn-like-mini:active {
@@ -640,8 +658,28 @@ html, body {
     border-bottom: 1px solid #eef1f6;
     background: #fafbfc;
     flex-shrink: 0;
+    overflow: hidden;
 }
-.priv-conv-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; object-fit: cover; border: 2px solid #eef1f6; }
+.priv-conv-header > div:not(:last-child):not(:first-child) {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+.priv-conv-header strong {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.priv-conv-header small {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 100%;
+}
+.priv-conv-avatar { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; overflow: hidden; object-fit: cover; border: 2px solid #eef1f6; }
 
 .priv-conv-box {
     flex: 1;
@@ -784,7 +822,7 @@ html, body {
 .priv-msg--mio  .priv-msg-bubble { background: linear-gradient(135deg, #d35400, #e67e22); color: #fff; border-radius: 14px 14px 4px 14px; }
 .priv-msg--otro .priv-msg-bubble { background: #f1f5f9; color: #2d3436; border-radius: 14px 14px 14px 4px; }
 
-.priv-msg-text { word-break: break-word; }
+.priv-msg-text { word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; }
 .priv-msg-time { font-size: 0.65rem; opacity: 0.65; align-self: flex-end; }
 .priv-pred-tag {
     font-size: 0.62rem;

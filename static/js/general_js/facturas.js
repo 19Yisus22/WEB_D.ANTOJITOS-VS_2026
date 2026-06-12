@@ -819,15 +819,17 @@ async function monitorearCambiosFacturas() {
     }
 }
 
-function _configVisual(estadoLower) {
+function _configVisual(estadoLower, todosPagados) {
     if (['anulada','cancelado','cancelada'].includes(estadoLower))
         return { color: 'danger',  icono: 'bi-x-octagon-fill',       label: (t('state.Anulada') || 'ANULADA').toUpperCase() };
-    if (['pagada','pagado','finalizado','entregado','completada','completado'].includes(estadoLower))
+    if (['pagada','pagado','finalizado','entregado','completada','completado'].includes(estadoLower) && todosPagados)
         return { color: 'success', icono: 'bi-patch-check-fill',      label: (t('state.Pagada')  || 'PAGADA').toUpperCase() };
     if (estadoLower.includes('emitid'))
         return { color: 'info',    icono: 'bi-file-earmark-arrow-up', label: (t('state.Emitida') || 'EMITIDA').toUpperCase() };
     if (estadoLower === 'enviado')
         return { color: 'warning', icono: 'bi-truck-flatbed',         label: (t('state.Enviado') || 'ENVIADO').toUpperCase() };
+    if (['pagada','pagado','finalizado','entregado','completada','completado'].includes(estadoLower))
+        return { color: 'warning', icono: 'bi-hourglass-split',       label: (t('state.Emitida') || 'EN PROCESO').toUpperCase() };
     return { color: 'primary', icono: 'bi-hourglass-split', label: estadoLower.toUpperCase() };
 }
 
@@ -875,7 +877,6 @@ function mostrarFacturasBuscadas() {
             }
 
             if (valFiltro === "pagado") {
-
                 return [
                     "pagada",
                     "pagado",
@@ -883,7 +884,7 @@ function mostrarFacturasBuscadas() {
                     "entregado",
                     "completada",
                     "completado"
-                ].includes(e);
+                ].includes(e) && f.todos_pagados === true;
             }
 
             if (valFiltro === "anulada") {
@@ -933,7 +934,7 @@ function mostrarFacturasBuscadas() {
     paginadas.forEach((f, idx) => {
         const globalIdx = inicio + idx;
         const estadoLower = (f.estado || 'emitida').toLowerCase();
-        const cv          = _configVisual(estadoLower);
+        const cv          = _configVisual(estadoLower, f.todos_pagados === true);
         const esFinal     = ['danger','success'].includes(cv.color);
         const fecha       = new Date(f.fecha_emision || f.created_at);
         const fechaStr    = fecha.toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
