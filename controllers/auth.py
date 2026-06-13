@@ -404,6 +404,10 @@ def logout():
             db.usuario_clear_web_token(user_id)
         except Exception:
             pass
+        try:
+            db.usuario_touch(user_id, "2000-01-01T00:00:00+00:00")
+        except Exception:
+            pass
     session.clear()
     resp = make_response(redirect("/inicio"))
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"

@@ -498,8 +498,8 @@ body.has-nav-ticker { padding-top: 104px; }
     flex-shrink: 0;
     width: max-content;
     min-width: max-content;
-    animation: ciScroll 30s linear infinite;
-    -webkit-animation: ciScroll 30s linear infinite;
+    animation: ciScroll 55s linear infinite;
+    -webkit-animation: ciScroll 55s linear infinite;
     will-change: transform;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;

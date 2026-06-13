@@ -194,6 +194,16 @@ def actualizar_estado_comentarios():
     except Exception:
         return jsonify({"error": "server_error"}), 500
 
+@comentarios_bp.route("/desconectar_usuario", methods=["POST"])
+@login_required
+def desconectar_usuario():
+    user_id = session.get("user_id")
+    try:
+        db.usuario_touch(user_id, "2000-01-01T00:00:00+00:00")
+        return jsonify({"status": "ok"}), 200
+    except Exception:
+        return jsonify({"status": "ok"}), 200
+
 @comentarios_bp.route("/mensajes_privados/predeterminados")
 @login_required
 def mensajes_predeterminados():

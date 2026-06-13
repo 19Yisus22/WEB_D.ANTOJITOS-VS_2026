@@ -68,18 +68,48 @@
 })();
 
 (function() {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
     var KEY = 'da_scroll_' + location.pathname;
     var navEntry = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
     var isReload = navEntry ? navEntry.type === 'reload' : (window.performance && window.performance.navigation.type === 1);
+
     if (isReload) {
         var y = parseInt(sessionStorage.getItem(KEY) || '0', 10);
         if (y > 0) {
-            window.scrollTo(0, y);
-            window.addEventListener('load', function() { window.scrollTo(0, y); }, { once: true });
+            function applyScroll() {
+                if (document.body.scrollHeight >= y + window.innerHeight * 0.5) {
+                    window.scrollTo({ top: y, behavior: 'instant' });
+                    return true;
+                }
+                return false;
+            }
+
+            applyScroll();
+
+            window.addEventListener('load', function() {
+                if (!applyScroll()) {
+                    var tries = 0;
+                    function retry() {
+                        if (applyScroll() || tries++ >= 15) return;
+                        requestAnimationFrame(retry);
+                    }
+                    requestAnimationFrame(retry);
+                }
+            }, { once: true });
+
+            setTimeout(function() {
+                if (window.scrollY < y * 0.8) window.scrollTo({ top: y, behavior: 'instant' });
+            }, 600);
+
+            setTimeout(function() {
+                if (window.scrollY < y * 0.8) window.scrollTo({ top: y, behavior: 'instant' });
+            }, 1200);
         }
     } else {
         sessionStorage.removeItem(KEY);
     }
+
     window.addEventListener('beforeunload', function() {
         sessionStorage.setItem(KEY, String(window.scrollY));
     });

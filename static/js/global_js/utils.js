@@ -1291,7 +1291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(_pollMisPedidos, 15000);
     }
 
-    if (document.getElementById('contadorCarritoBadge')) {
+    if (document.getElementById('contadorCarritoBadge') || document.getElementById('dropdownCartBadge')) {
         _syncCartBadge(localStorage.getItem('cant_carrito') || '0');
         setTimeout(_pollCartCount, 1000);
         setInterval(_pollCartCount, 10000);
@@ -1327,10 +1327,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function _syncCartBadge(count) {
     const badge = document.getElementById('contadorCarritoBadge');
-    if (!badge) return;
+    const ddBadge = document.getElementById('dropdownCartBadge');
     const n = parseInt(count) || 0;
-    badge.textContent = n > 99 ? '99+' : n;
-    badge.style.display = n > 0 ? 'flex' : 'none';
+    if (badge) { badge.textContent = n > 99 ? '99+' : n; badge.style.display = n > 0 ? 'flex' : 'none'; }
+    if (ddBadge) { ddBadge.textContent = n > 99 ? '99+' : n; ddBadge.style.display = n > 0 ? 'inline-flex' : 'none'; }
 }
 
 async function _pollCartCount() {
@@ -1640,7 +1640,7 @@ function _updatePrivClientNotif(count) {
     arr.unshift({
         tipo:    'priv_msg',
         titulo:  count === 1 ? 'Nuevo mensaje privado' : `${count} mensajes sin leer`,
-        mensaje: 'El vendedor te ha respondido.',
+        mensaje: 'El personal de D\'Antojitos te ha respondido.',
         imagen:  null,
         url:     '/comentarios_page',
         _count:  count,
@@ -1677,10 +1677,18 @@ async function _pollPrivMsgs() {
         _privResetIfZero('staff',    _lastPrivStaff, staff);
         _privResetIfZero('client_cv',_lastPrivCv,    cv);
 
+        const _isAdmin = !!document.getElementById('navPubBtn');
+
         if (document.getElementById('navClientBellBadge')) _updatePrivClientNotif(cv);
         if (document.getElementById('navBellBadge')) {
-            _updatePrivNotifSistem('cv', cv);
-            _updatePrivNotifSistem('staff', staff);
+            if (!_isAdmin && cv > 0) _updatePrivNotifSistem('cv', cv);
+            if (staff > 0)          _updatePrivNotifSistem('staff', staff);
+        }
+
+        const _ddSugBadge = document.getElementById('dropdownSugBadge');
+        if (_ddSugBadge) {
+            _ddSugBadge.textContent = total > 9 ? '9+' : total;
+            _ddSugBadge.style.display = total > 0 ? 'inline-flex' : 'none';
         }
 
         if (_newMsgs) {

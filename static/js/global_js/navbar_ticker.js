@@ -1,6 +1,13 @@
 (function () {
-    var SPEED_PX_S = 42;
     var _speed = 1;
+
+    function _baseDuration() {
+        var vw = window.innerWidth;
+        if (vw < 480)  return 72;
+        if (vw < 768)  return 62;
+        if (vw < 1024) return 54;
+        return 55;
+    }
 
     function buildHTML(items) {
         var sorted = items.slice().sort(function (a, b) {
@@ -17,9 +24,8 @@
         return '<div class="ci-track">' + inner + '</div>';
     }
 
-    function setDuration(track, container, speed) {
-        var totalDist = track.scrollWidth + container.offsetWidth;
-        var base = totalDist / SPEED_PX_S;
+    function setDuration(track, speed) {
+        var base = _baseDuration();
         track.dataset.baseDuration = String(base);
         var dur = (base / speed).toFixed(2) + 's';
         track.style.animationDuration = dur;
@@ -30,7 +36,7 @@
         var el = document.getElementById('navbarCinta');
         var track = el ? el.querySelector('.ci-track') : null;
         if (!track) return;
-        var base = parseFloat(track.dataset.baseDuration || '30');
+        var base = parseFloat(track.dataset.baseDuration || String(_baseDuration()));
         var dur = (base / speed).toFixed(2) + 's';
         track.style.animationDuration = dur;
         track.style.webkitAnimationDuration = dur;
@@ -62,7 +68,7 @@
 
                 requestAnimationFrame(function () {
                     var track = el.querySelector('.ci-track');
-                    if (track) setDuration(track, el, _speed);
+                    if (track) setDuration(track, _speed);
                 });
             } else {
                 el.classList.remove('ticker-active');
