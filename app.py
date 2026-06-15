@@ -1,6 +1,5 @@
 import sys
 sys.dont_write_bytecode = True
-
 import os
 import socket
 import secrets
@@ -62,10 +61,15 @@ try:
 except OSError:
     pass
 
+_IS_PROD = os.getenv("FLASK_DEBUG", "").lower() not in ("1", "true", "debug")
+
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
-app.secret_key                   = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(24)
-app.permanent_session_lifetime   = timedelta(days=1)
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+app.secret_key                        = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(24)
+app.permanent_session_lifetime        = timedelta(days=1)
+app.config["MAX_CONTENT_LENGTH"]      = 50 * 1024 * 1024
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"]   = _IS_PROD
+app.config["SESSION_COOKIE_SAMESITE"] = "Strict"
 CORS(app, supports_credentials=True)
 
 from controllers.auth               import auth_bp
@@ -100,7 +104,7 @@ app.register_blueprint(logros_bp)
 
 @app.after_request
 def agregar_cabeceras(response):
-    response.headers["Cross-Origin-Opener-Policy"]  = "same-origin-allow-popups"
+    response.headers["Cross-Origin-Opener-Policy"]   = "same-origin-allow-popups"
     response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
     response.headers["Access-Control-Allow-Origin"]  = "*"
     response.headers["X-Content-Type-Options"]       = "nosniff"
@@ -140,18 +144,10 @@ def preview_error_page():
     if _s.get('rol') != 'admin':
         abort(403)
     codigo = request.args.get('codigo', 404, type=int)
-    mensajes = {
-        404: 'Página no encontrada',
-        403: 'Acceso denegado',
-        401: 'No autorizado',
-        500: 'Error interno del servidor',
-    }
+    mensajes = { 404: 'Página no encontrada', 403: 'Acceso denegado', 401: 'No autorizado', 500: 'Error interno del servidor',}
     return _rt("errors/404.html", codigo=codigo, mensaje=mensajes.get(codigo, 'Error'))
 
-_RUTAS_PUBLICAS = frozenset({
-    "/login", "/registro", "/registro-google", "/logout",
-    "/refresh", "/obtener-cliente-id", "/offline",
-})
+_RUTAS_PUBLICAS = frozenset({"/login", "/registro", "/registro-google", "/logout", "/refresh", "/obtener-cliente-id", "/offline",})
 
 @app.before_request
 def redirect_root():
@@ -225,7 +221,7 @@ def _get_local_ip() -> str:
         s.close()
 
 if __name__ == "__main__":
-    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), False
+    host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), True
 
     if debug_mode:
         print("\033[93m" + "MODE DEVELOPMENT - DEBUG" + "\033[0m")

@@ -107,6 +107,8 @@ def actualizar_pago_general(id_pedido):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+_ESTADOS_ELIMINABLES = ("Entregado", "Cancelado")
+
 @pedidos_usuarios_bp.route("/eliminar_pedidos", methods=["DELETE"])
 @vendedor_required
 def eliminar_pedidos():
@@ -115,7 +117,20 @@ def eliminar_pedidos():
     if not ids:
         return jsonify({"success": False, "message": "Sin elementos seleccionados"}), 400
 
+    ids_validos = []
     for id_pedido in ids:
+        try:
+            pedido = db.pedido_get(str(id_pedido))
+            if not pedido or pedido.get("estado") not in _ESTADOS_ELIMINABLES:
+                continue
+            ids_validos.append(id_pedido)
+        except Exception:
+            pass
+
+    if not ids_validos:
+        return jsonify({"success": False, "message": "Solo se pueden eliminar pedidos Entregados o Cancelados"}), 400
+
+    for id_pedido in ids_validos:
         try:
             detalles = db.detalle_get(str(id_pedido))
             for det in detalles:
@@ -127,10 +142,10 @@ def eliminar_pedidos():
         except Exception:
             pass
 
-    result = db.pedido_delete_many(ids)
+    result = db.pedido_delete_many(ids_validos)
     if not result:
         return jsonify({"success": False, "message": "No se pudo eliminar"}), 404
-    return jsonify({"success": True}), 200
+    return jsonify({"success": True, "eliminados": len(ids_validos)}), 200
 
 @pedidos_usuarios_bp.route("/api/mis_pedidos/recientes")
 @login_required

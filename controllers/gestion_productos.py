@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, session, render_template
+import json
 import helpers.models as db
 from helpers.auth import sin_cache, login_required, vendedor_required
 from helpers.cloudinary import upload_image, upload_base64, delete_image
@@ -91,3 +92,80 @@ def eliminar_producto(id_producto):
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
+@gestion_productos_bp.route("/eliminar_productos_bulk", methods=["DELETE"])
+@vendedor_required
+def eliminar_productos_bulk():
+    data = request.get_json(silent=True) or {}
+    ids  = data.get("ids") or []
+    if not isinstance(ids, list) or not ids:
+        return jsonify({"ok": False, "error": "ids requeridos"}), 400
+    try:
+        for pid in ids:
+            try:
+                prod = db.producto_get(str(pid))
+                if prod and prod.get("imagen_url"):
+                    delete_image(prod["imagen_url"])
+            except Exception:
+                pass
+        db.producto_delete_many(ids)
+        return jsonify({"ok": True, "eliminados": len(ids)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+def _get_categorias_list():
+    config = db.inicio_config_get()
+    raw = config.get("catalog_categorias", "[]")
+    try:
+        cats = json.loads(raw) if isinstance(raw, str) else (raw or [])
+    except Exception:
+        cats = []
+    return cats
+
+@gestion_productos_bp.route("/api/categorias", methods=["GET"])
+@login_required
+def get_categorias():
+    return jsonify({"categorias": _get_categorias_list()})
+
+@gestion_productos_bp.route("/api/categorias", methods=["POST"])
+@vendedor_required
+def crear_categoria():
+    body = request.get_json(silent=True) or {}
+    nombre = (body.get("nombre") or "").strip()
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+    cats = _get_categorias_list()
+    if nombre in cats:
+        return jsonify({"ok": False, "error": "Ya existe esa categoría"}), 409
+    cats.append(nombre)
+    db.inicio_config_save({"catalog_categorias": json.dumps(cats, ensure_ascii=False)})
+    return jsonify({"ok": True, "categorias": cats})
+
+@gestion_productos_bp.route("/api/categorias/rename", methods=["PUT"])
+@vendedor_required
+def renombrar_categoria():
+    body = request.get_json(silent=True) or {}
+    nombre = (body.get("nombre") or "").strip()
+    nuevo  = (body.get("nuevo") or "").strip()
+    if not nombre or not nuevo:
+        return jsonify({"ok": False, "error": "Nombre y nuevo requeridos"}), 400
+    cats = _get_categorias_list()
+    if nombre not in cats:
+        return jsonify({"ok": False, "error": "Categoría no encontrada"}), 404
+    cats[cats.index(nombre)] = nuevo
+    db.inicio_config_save({"catalog_categorias": json.dumps(cats, ensure_ascii=False)})
+    return jsonify({"ok": True, "categorias": cats})
+
+@gestion_productos_bp.route("/api/categorias/delete", methods=["DELETE"])
+@vendedor_required
+def eliminar_categoria():
+    body = request.get_json(silent=True) or {}
+    nombre = (body.get("nombre") or "").strip()
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+    cats = _get_categorias_list()
+    if nombre in cats:
+        cats.remove(nombre)
+    db.inicio_config_save({"catalog_categorias": json.dumps(cats, ensure_ascii=False)})
+    return jsonify({"ok": True, "categorias": cats})

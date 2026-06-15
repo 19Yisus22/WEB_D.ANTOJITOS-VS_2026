@@ -465,7 +465,7 @@ function abrirModalPago(facturaNum, total) {
                             </div>
                             ${m.clave_pago ? `
                             <div class="payment-clave-row">
-                                <img src="/static/uploads/bre-b.logo.png" alt="BRE-B"
+                                <img src="/static/uploads/.png" alt="BRE-B"
                                      class="payment-clave-icon"
                                      style="height:18px;width:auto;object-fit:contain;flex-shrink:0;border-radius:3px;"
                                      onerror="this.parentElement.querySelector('.payment-clave-fallback').style.display='inline-flex';this.style.display='none'">

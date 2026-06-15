@@ -759,19 +759,84 @@ function renderPagination() {
     window.onpageshow = (event) => { if (event.persisted || (window.performance && window.performance.navigation.type === 2)) window.location.reload(); };
 })();
 
+function _togglePhotoMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('photoActionMenu');
+    if (!menu) return;
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function _closePhotoMenu() {
+    const menu = document.getElementById('photoActionMenu');
+    if (menu) menu.style.display = 'none';
+}
+
+function _changeProfilePhoto() {
+    _closePhotoMenu();
+    document.getElementById('imagen_url')?.click();
+}
+
+function _deleteProfilePhotoAction() {
+    _closePhotoMenu();
+    mostrarConfirmacionApp(
+        t('confirm.title') || 'Confirmar',
+        t('prof.delete_photo_confirm') || '¿Eliminar tu foto de perfil?',
+        async () => {
+            try {
+                const fd = new FormData();
+                fd.append('eliminar_foto', '1');
+                const r = await fetch(`/actualizar_perfil/${USER_ID}`, { method: 'PUT', body: fd });
+                const d = await r.json();
+                if (r.ok && d.ok) {
+                    document.getElementById('eliminarFotoFlag').value = '';
+                    _resetProfileImgToAvatar();
+                    showMessage(t('notif.photo_deleted') || 'Foto eliminada');
+                } else {
+                    showMessage(d.error || 'Error al eliminar la foto', true);
+                }
+            } catch { showMessage('Error de conexión', true); }
+        }
+    );
+}
+
+function _resetProfileImgToAvatar() {
+    const container = document.getElementById('perfilImgContainer');
+    if (!container) return;
+    const nombre = document.getElementById('nombrePerfil')?.value || '';
+    const existing = container.querySelector('img, .avatar-initial');
+    if (!existing) return;
+    const size = container.offsetWidth || 140;
+    const fs   = Math.max(10, Math.round(size * 0.42)) + 'px';
+    if (typeof _buildAvatarDiv === 'function') {
+        const av = _buildAvatarDiv(nombre, fs);
+        av.style.cssText += ';width:100%;height:100%;border-radius:inherit;';
+        container.replaceChild(av, existing);
+    }
+}
+
+document.addEventListener('click', () => _closePhotoMenu());
+
 document.addEventListener("DOMContentLoaded", () => {
     const inputImagen = document.getElementById("imagen_url");
     if (inputImagen) {
         inputImagen.addEventListener("change", function () {
             const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const imgPerfil = document.querySelector("#formPerfil img");
-                    if (imgPerfil) imgPerfil.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
+            if (!file) return;
+            document.getElementById('eliminarFotoFlag').value = '';
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const container = document.getElementById('perfilImgContainer');
+                if (!container) return;
+                const existing = container.querySelector('img[data-profile-loaded], img[data-profile], .avatar-initial');
+                const foto = document.createElement('img');
+                foto.src                   = ev.target.result;
+                foto.alt                   = 'Vista previa';
+                foto.dataset.profileLoaded = '1';
+                foto.style.cssText         = 'width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:inherit;display:block;flex-shrink:0;';
+                if (existing) container.replaceChild(foto, existing);
+                else container.prepend(foto);
+            };
+            reader.readAsDataURL(file);
         });
     }
     if (window.renderizarLogrosUsuario) {

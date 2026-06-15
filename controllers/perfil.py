@@ -158,12 +158,32 @@ def actualizar_perfil(cedula):
         else:
             return jsonify({"ok": False, "error": "Sesión expirada. Recarga la página e intenta de nuevo."}), 404
 
+    data = request.form if request.form else (request.json or {})
+
+    solo_foto = (data.get("eliminar_foto") or "") == "1" and not request.files.get("imagen_url")
+    if solo_foto:
+        old_url = usuario_previo.get("imagen_url", "")
+        if old_url and "default_icon_profile" not in old_url:
+            try:
+                delete_image(old_url)
+            except Exception:
+                pass
+        try:
+            db.usuario_update(lookup_id, {"imagen_url": None})
+            usuario_final = db.usuario_get(lookup_id)
+            img = (usuario_final or {}).get("imagen_url") or None
+            s = session.get("user") or {}
+            s["imagen_url"] = img
+            session["user"]  = s
+            session.modified = True
+        except Exception as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+        return jsonify({"ok": True, "usuario": usuario_final or {}})
+
     puede, siguiente = _puede_editar_perfil(usuario_previo)
     if not puede:
         dias = _dias_restantes(siguiente)
         return jsonify({"ok": False, "error": f"Solo puedes editar tu perfil una vez cada {COOLDOWN_DIAS} días. Disponible en {dias} día(s).", "disponible_en": siguiente}), 429
-
-    data = request.form if request.form else (request.json or {})
 
     campos = {
         "nombre":      (data.get("nombrePerfil") or "").strip(),

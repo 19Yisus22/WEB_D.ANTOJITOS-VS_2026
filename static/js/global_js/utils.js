@@ -1297,6 +1297,13 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(_pollCartCount, 10000);
     }
 
+    // Auto-renew access token (TTL=5min) silently every 4 min while session is active
+    if (document.getElementById('navClientBellBadge') || document.getElementById('navBellBadge')) {
+        const _doRefresh = () => fetch('/refresh', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+        setTimeout(_doRefresh, 60 * 1000);
+        setInterval(_doRefresh, 4 * 60 * 1000);
+    }
+
     (function () {
         const _vl = document.getElementById('versionLabel');
         if (!_vl) return;
@@ -1805,7 +1812,8 @@ function _applyAvatarFallback(imgEl, name) {
     container.replaceChild(div, imgEl);
 }
 
-window._avatarFallback = _applyAvatarFallback;
+window._avatarFallback  = _applyAvatarFallback;
+window._buildAvatarDiv  = _buildAvatarDiv;
 
 function _cloudinaryThumb(url, w = 80, h = 80) {
     if (!url || !url.includes('cloudinary.com') || !url.includes('/upload/')) return url;
@@ -1821,18 +1829,18 @@ function loadProfileImg(imgEl, rawUrl, name, thumbSize = 80) {
     if (!imgEl || !imgEl.parentNode) return;
     if (imgEl.dataset.profileLoaded) return;
 
-    const container = imgEl.parentNode;
-    const size = container.offsetWidth || 40;
-    const fs   = Math.max(10, Math.round(size * 0.42)) + 'px';
+    const container  = imgEl.parentNode;
+    const explicitSz = parseInt(imgEl.dataset.profileSize || '0', 10);
+    const size       = container.offsetWidth || container.clientWidth || explicitSz || thumbSize || 40;
+    const fs         = Math.max(10, Math.round(size * 0.42)) + 'px';
 
     const isDefault = !rawUrl
         || rawUrl.includes('default_icon_profile')
-        || rawUrl === '/static/uploads/default_icon_profile.png';
+        || rawUrl === '/static/uploads/default_icon_profile.png'
+        || rawUrl.trim() === '';
 
     const avatarDiv = _buildAvatarDiv(name, fs);
-    avatarDiv.style.width        = '100%';
-    avatarDiv.style.height       = '100%';
-    avatarDiv.style.borderRadius = '50%';
+    avatarDiv.style.cssText += ';width:100%;height:100%;border-radius:inherit;';
     container.replaceChild(avatarDiv, imgEl);
 
     if (isDefault) return;
@@ -1845,13 +1853,20 @@ function loadProfileImg(imgEl, rawUrl, name, thumbSize = 80) {
     tmp.onload = () => {
         if (!avatarDiv.parentNode) return;
         const foto = document.createElement('img');
-        foto.src           = optimized;
-        foto.alt           = name || 'Perfil';
+        foto.src                   = optimized;
+        foto.alt                   = name || 'Perfil';
         foto.dataset.profileLoaded = '1';
-        foto.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:50%;display:block;';
-        foto.onerror = () => { if (foto.parentNode) container.replaceChild(_buildAvatarDiv(name, fs), foto); };
+        foto.style.cssText         = 'width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:inherit;display:block;flex-shrink:0;';
+        foto.onerror = () => {
+            if (foto.parentNode) {
+                const fb = _buildAvatarDiv(name, fs);
+                fb.style.cssText += ';width:100%;height:100%;border-radius:inherit;';
+                foto.parentNode.replaceChild(fb, foto);
+            }
+        };
         container.replaceChild(foto, avatarDiv);
     };
+    tmp.onerror = () => {};
     tmp.src = optimized;
 }
 

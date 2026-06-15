@@ -506,3 +506,36 @@ main {
     .card-body { padding: 1rem; }
     .table th, .table td { font-size: 0.78rem; padding: 0.4rem 0.3rem; }
 }
+
+/* ── Multi-select visual feedback ─────────────────────────────────────────── */
+.prod-selected .card {
+    outline: 2.5px solid #e74c3c !important;
+    box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.18) !important;
+    background: rgba(231, 76, 60, 0.04) !important;
+    transform: scale(0.97);
+    transition: all 0.15s ease;
+}
+.prod-selected .prod-select-check {
+    accent-color: #e74c3c;
+}
+
+/* ── Category drag-drop ──────────────────────────────────────────────────── */
+.prod-drag-ghost {
+    opacity: 0.35 !important;
+    background: rgba(211, 84, 0, 0.08) !important;
+    border-radius: 12px !important;
+}
+.prod-drag-chosen .card {
+    box-shadow: 0 10px 30px rgba(211, 84, 0, 0.3) !important;
+    transform: scale(1.03) rotate(1deg);
+    transition: transform 0.15s ease;
+    cursor: grabbing;
+}
+.cat-drag-grid {
+    min-height: 60px;
+    transition: background 0.2s ease;
+}
+.cat-drag-grid.sortable-drag-over {
+    background: rgba(211, 84, 0, 0.04) !important;
+    border-radius: 12px;
+}

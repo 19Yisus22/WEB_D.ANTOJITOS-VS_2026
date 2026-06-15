@@ -54,6 +54,59 @@ body {
     justify-content: center;
 }
 
+.profile-img-camera-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.6rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+.profile-img-container:hover .profile-img-camera-overlay { opacity: 1; }
+
+.photo-action-menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    overflow: hidden;
+    z-index: 300;
+    min-width: 210px;
+    animation: photoMenuIn 0.18s ease;
+}
+@keyframes photoMenuIn {
+    from { opacity:0; transform: translateX(-50%) translateY(-6px); }
+    to   { opacity:1; transform: translateX(-50%) translateY(0); }
+}
+.photo-action-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 18px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #2d3436;
+    transition: background 0.13s;
+    text-align: left;
+}
+.photo-action-item:hover { background: #f5f6f7; }
+.photo-action-item + .photo-action-item { border-top: 1px solid #f0f0f0; }
+.photo-action-delete { color: #e74c3c !important; }
+.photo-action-delete:hover { background: #fff2f2 !important; }
+
 #previewImagen {
     width: 140px;
     height: 140px;
@@ -159,6 +212,7 @@ body {
     .card { padding: 30px !important; }
     .profile-img-container { width: 120px; height: 120px; }
     #previewImagen { width: 120px; height: 120px; }
+    .photo-action-menu { min-width: 190px; }
 }
 
 @media (max-width: 768px) {
@@ -174,6 +228,8 @@ body {
     .profile-img-wrapper { padding: 7px; }
     .profile-img-container { width: 105px; height: 105px; }
     #previewImagen { width: 105px; height: 105px; }
+    .profile-img-camera-overlay { font-size: 1.25rem; }
+    .photo-action-menu { min-width: 190px; font-size: 0.84rem; }
 
     .custom-input { padding: 10px 13px; font-size: 0.9rem; }
     .form-label { font-size: 0.82rem; margin-bottom: 4px; }
@@ -583,6 +639,12 @@ body {
 [data-theme="dark"] .pf-empty p { color: #7878a0 !important; }
 [data-theme="dark"] .pf-state-msg { color: #4a4868 !important; }
 [data-theme="dark"] .pf-file-rename-input { background: #10101a !important; border-color: #f0883e !important; color: #e4e4ef !important; box-shadow: 0 0 0 3px rgba(240,136,62,0.12) !important; }
+[data-theme="dark"] .photo-action-menu { background: #1a1826 !important; box-shadow: 0 8px 32px rgba(0,0,0,0.45) !important; }
+[data-theme="dark"] .photo-action-item { color: #e4e4ef !important; }
+[data-theme="dark"] .photo-action-item:hover { background: rgba(255,255,255,0.05) !important; }
+[data-theme="dark"] .photo-action-item + .photo-action-item { border-color: #2a2838 !important; }
+[data-theme="dark"] .photo-action-delete { color: #fc8181 !important; }
+[data-theme="dark"] .photo-action-delete:hover { background: rgba(252,129,129,0.08) !important; }
 
 @media (max-width: 576px) {
     .pf-header { flex-direction: column; align-items: flex-start; gap: 10px; }

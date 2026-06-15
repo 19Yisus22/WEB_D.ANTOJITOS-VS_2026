@@ -19,6 +19,7 @@ env/
 .env
 node_modules/
 package-lock.json
+SUGERENCIAS.txt
 
 # ── Logs ────────────────────────────────────────────────────────
 *.log
@@ -44,6 +45,7 @@ static/uploads/*.webp
 !static/uploads/nu.logo.png
 !static/uploads/googlogo.ico
 !static/uploads/nequi.logo.png
+!static/uploads/bre-b.logo.png
 !static/uploads/daviplata.logo.png
 !static/uploads/bancolombia.logo.png
 !static/uploads/default_icon_profile.png

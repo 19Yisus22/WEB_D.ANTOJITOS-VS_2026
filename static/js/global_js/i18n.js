@@ -556,7 +556,7 @@ const LANG_DATA = {
     'footer.address':    'Cra 4 #14-38 La Catalana - Chinácota N.S',
     'footer.banks':      'Bancos Digitales:',
     'footer.rights':     'Todos los derechos reservados',
-    'footer.credit':     'Created By: 2022 Yisus™',
+    'footer.credit':     'Created By: 2022 Yisus™ & Claude',
 
     'legal.privacy':     'Políticas de Privacidad',
     'legal.terms':       'Términos y Condiciones',
@@ -1153,7 +1153,7 @@ const LANG_DATA = {
     'footer.address':    'Cra 4 #14-38 La Catalana - Chinácota N.S',
     'footer.banks':      'Digital Banks:',
     'footer.rights':     'All rights reserved',
-    'footer.credit':     'Created by: 2022 Yisus™',
+    'footer.credit':     'Created by: 2022 Yisus™ and Claude',
 
     'legal.privacy':     'Privacy Policies',
     'legal.terms':       'Terms & Conditions',

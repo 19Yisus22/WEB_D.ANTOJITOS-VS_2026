@@ -133,9 +133,14 @@
                             <h4 class="m-0 fw-bold">Gestor de Imágenes</h4>
                             <span class="badge bg-secondary ms-1" id="gestorTotalBadge">—</span>
                         </div>
-                        <button class="btn btn-sm btn-outline-warning fw-bold" onclick="cargarGestorImagenes()">
-                            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" id="btnSeleccionarGestor" title="Selección múltiple">
+                                <i class="bi bi-check2-square me-1"></i>Seleccionar
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning fw-bold" onclick="cargarGestorImagenes()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+                            </button>
+                        </div>
                     </div>
                     <ul class="nav nav-pills mb-4 gap-2" id="gestorTabs">
                         <li class="nav-item">

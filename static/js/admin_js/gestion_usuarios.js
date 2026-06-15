@@ -344,7 +344,7 @@ function mostrarDetalleUsuario(u) {
                             ? `<img src=""
                                     data-profile="${u.imagen_url}"
                                     data-profile-name="${u.nombre_completo || ''}"
-                                    data-profile-size="96"
+                                    data-profile-size="72"
                                     alt="${u.nombre_completo || ''}"
                                     class="udet-avatar udet-avatar-lg"
                                     style="display:block;object-fit:cover;border-radius:50%;"

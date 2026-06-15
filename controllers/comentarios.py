@@ -22,6 +22,53 @@ comentarios_bp = Blueprint("comentarios", __name__)
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
+def _cutoff_from_modo(modo: str):
+    ahora = datetime.now(timezone.utc)
+    if modo == "24h":
+        return (ahora - timedelta(hours=24)).isoformat()
+    elif modo == "7d":
+        return (ahora - timedelta(days=7)).isoformat()
+    elif modo == "mensual":
+        return (ahora - timedelta(days=30)).isoformat()
+    return None
+
+def _get_admin_cedulas() -> list:
+    try:
+        return [
+            u["cedula"] for u in db.usuario_get_all()
+            if (u.get("roles") or {}).get("nombre_role") == "admin"
+        ]
+    except Exception:
+        return []
+
+def _auto_cleanup_chat():
+    """Delete non-admin public comments older than the configured period."""
+    try:
+        cfg  = db.inicio_config_get()
+        modo = cfg.get("chat_temporal_modo_publico") or cfg.get("chat_temporal_modo", "desactivado")
+        if modo == "desactivado":
+            return
+        cutoff = _cutoff_from_modo(modo)
+        if not cutoff:
+            return
+        db.comentario_delete_non_admin_before(cutoff, _get_admin_cedulas())
+    except Exception:
+        pass
+
+def _auto_cleanup_privados():
+    """Delete non-admin private messages older than the configured period."""
+    try:
+        cfg  = db.inicio_config_get()
+        modo = cfg.get("chat_temporal_modo_privado", "desactivado")
+        if modo == "desactivado":
+            return
+        cutoff = _cutoff_from_modo(modo)
+        if not cutoff:
+            return
+        db.mp_delete_non_admin_before(cutoff, _get_admin_cedulas())
+    except Exception:
+        pass
+
 @comentarios_bp.route("/comentarios_page")
 @sin_cache
 @login_required
@@ -54,6 +101,7 @@ def comentarios_page():
 @comentarios_bp.route("/comentarios", methods=["GET"])
 def obtener_comentarios():
     try:
+        _auto_cleanup_chat()
         comentarios = db.comentario_get_all()
         usuarios    = db.usuario_get_all()
         ahora       = datetime.now(timezone.utc)
@@ -112,6 +160,70 @@ def crear_comentario():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ── Chat temporal config (admin only) ──────────────────────────────────────────
+
+_MODOS_VALIDOS = ("desactivado", "24h", "7d", "mensual")
+
+@comentarios_bp.route("/comentarios/config_temporal", methods=["GET"])
+@login_required
+def get_config_temporal():
+    if session.get("rol") != "admin":
+        return jsonify({"error": "Sin permiso"}), 403
+    cfg = db.inicio_config_get()
+    modo = cfg.get("chat_temporal_modo_publico") or cfg.get("chat_temporal_modo", "desactivado")
+    return jsonify({"modo": modo})
+
+@comentarios_bp.route("/comentarios/config_temporal", methods=["POST"])
+@login_required
+def set_config_temporal():
+    if session.get("rol") != "admin":
+        return jsonify({"error": "Sin permiso"}), 403
+    data = request.get_json() or {}
+    modo = data.get("modo", "desactivado")
+    if modo not in _MODOS_VALIDOS:
+        return jsonify({"error": "Modo inválido"}), 400
+    db.inicio_config_save({"chat_temporal_modo_publico": modo})
+    return jsonify({"ok": True})
+
+@comentarios_bp.route("/mensajes_privados/config_temporal", methods=["GET"])
+@login_required
+def get_config_temporal_privado():
+    if session.get("rol") != "admin":
+        return jsonify({"error": "Sin permiso"}), 403
+    cfg = db.inicio_config_get()
+    return jsonify({"modo": cfg.get("chat_temporal_modo_privado", "desactivado")})
+
+@comentarios_bp.route("/mensajes_privados/config_temporal", methods=["POST"])
+@login_required
+def set_config_temporal_privado():
+    if session.get("rol") != "admin":
+        return jsonify({"error": "Sin permiso"}), 403
+    data = request.get_json() or {}
+    modo = data.get("modo", "desactivado")
+    if modo not in _MODOS_VALIDOS:
+        return jsonify({"error": "Modo inválido"}), 400
+    db.inicio_config_save({"chat_temporal_modo_privado": modo})
+    return jsonify({"ok": True})
+
+# ── Bulk delete comments (admin only) ──────────────────────────────────────────
+
+@comentarios_bp.route("/comentarios/bulk", methods=["DELETE"])
+@login_required
+def bulk_eliminar_comentarios():
+    if session.get("rol") != "admin":
+        return jsonify({"error": "Sin permiso"}), 403
+    data = request.get_json() or {}
+    ids  = data.get("ids") or []
+    if not isinstance(ids, list) or not ids:
+        return jsonify({"error": "ids requeridos"}), 400
+    try:
+        db.comentario_delete_many(ids)
+        return jsonify({"ok": True, "eliminados": len(ids)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ── Edit / delete single comment ───────────────────────────────────────────────
+
 @comentarios_bp.route("/comentarios/<id>", methods=["PUT"])
 @login_required
 def editar_comentario(id):
@@ -125,7 +237,14 @@ def editar_comentario(id):
             return jsonify({"error": "Comentario no encontrado"}), 404
         if comentario.get("cedula") != session.get("user_id"):
             return jsonify({"error": "Sin permiso"}), 403
-        result = db.comentario_update(id, {"mensaje": mensaje})
+        # Admin can edit unlimited times; client/vendor can only edit once
+        if session.get("rol") != "admin":
+            upd = comentario.get("updated_at") or ""
+            cre = comentario.get("created_at") or ""
+            if upd and cre and upd != cre:
+                return jsonify({"error": "Solo se puede editar una vez"}), 409
+        ahora  = datetime.now(timezone.utc).isoformat()
+        result = db.comentario_update(id, {"mensaje": mensaje, "updated_at": ahora})
         return jsonify(result[0] if result else {})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -133,12 +252,12 @@ def editar_comentario(id):
 @comentarios_bp.route("/comentarios/<id>", methods=["DELETE"])
 @login_required
 def eliminar_comentario(id):
+    if session.get("rol") != "admin":
+        return jsonify({"error": "Sin permiso"}), 403
     try:
         comentario = db.comentario_get(id)
         if not comentario:
             return jsonify({"error": "Comentario no encontrado"}), 404
-        if comentario.get("cedula") != session.get("user_id"):
-            return jsonify({"error": "Sin permiso"}), 403
         db.comentario_delete(id)
         return jsonify({"ok": True})
     except Exception as e:
@@ -217,6 +336,7 @@ def mi_hilo():
     if rol != "cliente":
         return jsonify({"error": "Solo para clientes"}), 403
     try:
+        _auto_cleanup_privados()
         mensajes = db.mp_get_conversacion(cedula)
         db.mp_marcar_leidos(cedula, es_vendedor_leyendo=False)
         return jsonify(mensajes)
@@ -262,6 +382,7 @@ def hilo_detalle(cedula_cliente):
     if rol not in ("vendedor", "admin"):
         return jsonify({"error": "Sin permiso"}), 403
     try:
+        _auto_cleanup_privados()
         mensajes = db.mp_get_conversacion(cedula_cliente)
         db.mp_marcar_leidos(cedula_cliente, es_vendedor_leyendo=True)
         return jsonify(mensajes)
@@ -315,8 +436,11 @@ def editar_mensaje_privado(id):
         registro = db.mp_get_by_id(id)
         if not registro:
             return jsonify({"error": "No encontrado"}), 404
-        if registro.get("cedula_para") != cedula:
+        if registro.get("cedula_de") != cedula:
             return jsonify({"error": "Sin permiso"}), 403
+        # Admin can edit unlimited times; others only once
+        if session.get("rol") != "admin" and registro.get("es_editado"):
+            return jsonify({"error": "Solo se puede editar una vez"}), 409
         db.mp_update(id, msg)
         return jsonify({"ok": True})
     except Exception as e:
@@ -325,14 +449,12 @@ def editar_mensaje_privado(id):
 @comentarios_bp.route("/mensajes_privados/<id>", methods=["DELETE"])
 @login_required
 def eliminar_mensaje_privado(id):
-    cedula = session.get("user_id")
-    rol    = session.get("rol", "")
+    if session.get("rol") != "admin":
+        return jsonify({"error": "Sin permiso"}), 403
     try:
         msg = db.mp_get_by_id(id)
         if not msg:
             return jsonify({"error": "No encontrado"}), 404
-        if msg.get("cedula_para") != cedula and rol not in ("admin", "vendedor"):
-            return jsonify({"error": "Sin permiso"}), 403
         db.mp_delete(id)
         return jsonify({"ok": True})
     except Exception as e:

@@ -1,6 +1,3 @@
-EN EL CÁTALOGO, AGREGAR SEPARADORES LOS CUALES SON EDITABLES, PARA AGREGAR UN SEPARADOR POR MEDIO DE UN BOTON, SE AGREGÁ UNA CATEGORIA, CUANDO SE AGREGUE CORRECTAMENTE, EN EL MODULO DE PEDIDOS AL AGREGAR UN NUEVO PRODUCTO,  MOSTRAR UN SELECT LIST BIEN IMPLEMENTADO EL CUAL TIENE EN CUENTA ESAS CATEGORIAS AGREGADAS DEL CATÁLOGO PARA QUE AL SELECCIONAR SE MUESTRE EN LA CATEGORIA SELECCIONADA, 
-AGREGAR UN NUEVO CAMPO LLAMADO CATEGORÍA EN LA TABLA CATÁLOGO PARA QUE SE GUARDE AHÍ LA CATEGORÍA QUE LE CORRESPONDE AL PRODUCTO.
-
 DROP EXTENSION IF EXISTS pg_graphql CASCADE;
 
 DROP TABLE IF EXISTS logros            CASCADE;
@@ -39,7 +36,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm" SCHEMA extensions;
 
 CREATE TABLE roles (
     id_role     uuid NOT NULL DEFAULT gen_random_uuid(),
-    nombre_role text NOT NULL UNIQUE CHECK (nombre_role = ANY (ARRAY['admin','vendedor','cliente'])),
+    nombre_role text NOT NULL UNIQUE CHECK (nombre_role = ANY (ARRAY['admin','vendedor','cliente','visitante'])),
     descripcion text,
     CONSTRAINT roles_pkey PRIMARY KEY (id_role)
 );
@@ -344,17 +341,18 @@ CREATE POLICY "logros_all_anon"         ON logros            FOR ALL TO anon USI
 
 INSERT INTO roles (nombre_role, descripcion) VALUES
     ('admin',     'Administrador con acceso total'),
-    ('vendedor',  'Acceso a algunos módulos administrativos'),
-    ('cliente',   'Acceso solo a los módulos del usuario'),
+    ('vendedor',  'Acceso a pedidos, productos e historial'),
+    ('cliente',   'Acceso a catálogo, carrito y facturas propias'),
+    ('visitante', 'Sin cuenta registrada')
 ON CONFLICT (nombre_role) DO NOTHING;
 
 INSERT INTO inicio_config (clave, valor) VALUES
-    ('bienvenida_mensaje', 'Endulza tu día con el auténtico sabor de los mejores postres caseros hechos con amor'),
-    ('historia_titulo',    'Nuestra historia, pasión y sazón'),
-    ('historia_p1',        'Le damos la bienvenida a <strong>D''Antojitos</strong>, un rincón gastronómico que nació del corazón y de la pasión por la cocina. Este maravilloso emprendimiento comenzó como un hobby, una forma de compartir el talento excepcional de nuestra patrona, <strong>Teresa Rubio García</strong>, quien siempre ha tenido un don único para transformar ingredientes sencillos en verdaderas obras de arte culinarias.'),
-    ('historia_p2',        'Lo que empezó en la cocina del hogar pronto se convirtió en un sueño compartido. En <strong>D''Antojitos</strong> nos especializamos en una repostería artesanal irresistible: desde postres caseros deliciosos y frescos hasta tortas decoradas y una gran variedad de antojos dulces que conquistan cualquier paladar. Cada bocado está pensado para evocar la calidez de lo hecho en casa, con el equilibrio perfecto de sabor y dedicación.'),
-    ('historia_p3',        'Pero nuestro amor por la cocina no se detiene en lo dulce. Para satisfacer todos los gustos, también ofrecemos una excelente selección de comidas normales y platos tradicionales, preparados con la misma sazón casera y el toque único de doña Teresa. Nuestro compromiso va más allá de alimentar; buscamos ser el alma de tus celebraciones, el antojo de tus tardes y ese lugar especial donde siempre encuentras algo delicioso para disfrutar.'),
-    ('explorar_titulo',    'Explorar nuestro menú')
+    ('bienvenida_mensaje', 'Endulza tu día con deliciosos postres caseros'),
+    ('historia_titulo',    'Nuestra historia y pasión'),
+    ('historia_p1',        'Le damos la bienvenida a <strong>D''Antojitos</strong>, un espacio donde la pasión por la repostería se convierte en experiencias inolvidables.'),
+    ('historia_p2',        'En <strong>D''Antojitos</strong> creemos que los momentos más simples pueden convertirse en recuerdos extraordinarios con un toque de dulzura.'),
+    ('historia_p3',        'Nuestro compromiso va más allá de ofrecer un producto; buscamos ser parte de tus celebraciones y momentos especiales.'),
+    ('explorar_titulo',    'Explorar')
 ON CONFLICT (clave) DO NOTHING;
 
 UPDATE usuarios

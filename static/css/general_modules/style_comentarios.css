@@ -103,6 +103,16 @@ html, body {
     overflow-wrap: anywhere;
 }
 
+.message.msg-selected {
+    outline: 2.5px solid #e74c3c !important;
+    box-shadow: 0 0 0 5px rgba(231,76,60,0.18) !important;
+    transition: outline 0.12s ease, box-shadow 0.12s ease;
+}
+
+.modo-seleccion [id^="msg-"] {
+    cursor: pointer;
+}
+
 .mensaje-texto {
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -269,15 +279,36 @@ html, body {
     .btn-wide-center {
         width: 100%;
     }
+    /* Mobile: stack layout + show list only by default */
     .priv-layout {
         flex-direction: column;
     }
     .priv-sidebar {
         width: 100%;
-        max-height: 200px;
+        max-height: none;
+        flex: 1;
         border-right: none;
-        border-bottom: 1px solid #eef1f6;
-        flex-shrink: 0;
+        border-bottom: none;
+    }
+    .priv-conv-wrap {
+        display: none;
+    }
+    /* Mobile: conversation open — hide list, show detail full height */
+    .priv-layout.show-detail .priv-sidebar {
+        display: none;
+    }
+    .priv-layout.show-detail .priv-conv-wrap {
+        display: flex;
+        flex: 1;
+    }
+    /* Show back button only on mobile */
+    .priv-mobile-back {
+        display: inline-flex !important;
+    }
+}
+@media (min-width: 769px) {
+    .priv-mobile-back {
+        display: none !important;
     }
 }
 
@@ -650,6 +681,20 @@ html, body {
 }
 .priv-conv-empty i { font-size: 2.5rem; }
 
+.priv-mobile-back {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #d35400;
+    padding: 0 6px 0 0;
+    cursor: pointer;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.priv-mobile-back:hover { color: #a84000; }
+
 .priv-conv-header {
     display: flex;
     align-items: center;
@@ -824,6 +869,7 @@ html, body {
 
 .priv-msg-text { word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; }
 .priv-msg-time { font-size: 0.65rem; opacity: 0.65; align-self: flex-end; }
+.priv-editado-tag { font-size: 0.58rem; opacity: 0.7; font-style: italic; margin-left: 4px; }
 .priv-pred-tag {
     font-size: 0.62rem;
     font-weight: 700;

@@ -683,21 +683,34 @@ function _renderGestorPagina(imgs) {
 
     const liHtml = visibles.map((img, i) => {
         const idx = inicio + i;
+        const urlEsc  = (img.url || '').replace(/'/g, "\\'");
+        const nameEsc = (img.name || '').replace(/'/g, "\\'");
+        const pidEsc  = (img.public_id || '').replace(/'/g, "\\'");
         return `
-        <li class="list-group-item d-flex align-items-center gap-3 py-2 px-2">
-            <img src="${img.url || ''}" alt="${img.name}" loading="lazy"
-                 style="width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid #dee2e6;cursor:pointer;"
-                 onerror="this.outerHTML='<div style=\\'width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:6px;color:#adb5bd;\\'><i class=\\'bi bi-image-slash\\'></i></div>'"
-                 onclick="abrirImagenGestor('${img.url}','${img.name}','${img.size_kb} KB','${img.width}x${img.height}')">
-            <div class="flex-grow-1 overflow-hidden" onclick="abrirImagenGestor('${img.url}','${img.name}','${img.size_kb} KB','${img.width}x${img.height}')" style="cursor:pointer;">
+        <li class="list-group-item d-flex align-items-center gap-3 py-2 px-2" style="cursor:pointer;transition:background 0.15s;"
+            data-public-id="${img.public_id}" data-img-url="${img.url||''}"
+            data-img-name="${img.name}" data-img-size="${img.size_kb} KB"
+            data-img-dims="${img.width}x${img.height}" data-idx="${idx}">
+            <input type="checkbox" class="gestor-select-check" data-public-id="${img.public_id}" style="display:none;">
+            <div style="position:relative;flex-shrink:0;width:48px;height:48px;">
+                <img src="${img.url || ''}" alt="${img.name}" loading="lazy"
+                     style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6;display:block;"
+                     onerror="this.outerHTML='<div style=\\'width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:6px;color:#adb5bd;\\'><i class=\\'bi bi-image-slash\\'></i></div>'">
+                <div class="gestor-sel-marker" style="display:none;position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;border:2.5px solid #e74c3c;background:#fff;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);">
+                    <i class="bi bi-check2" style="font-size:0.7rem;color:#fff;display:none;line-height:1;"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 overflow-hidden">
                 <div class="fw-semibold small text-truncate" title="${img.name}">${img.name}</div>
                 <div class="text-muted" style="font-size:0.72rem;">${img.size_kb} KB · ${(img.format||'').toUpperCase()} · ${img.width}×${img.height}</div>
             </div>
-            <div class="d-flex gap-1 flex-shrink-0">
-                <button class="btn btn-sm btn-outline-secondary px-2" onclick="navigator.clipboard.writeText('${img.url}').then(()=>mostrarAlerta('URL copiada'))">
+            <div class="d-flex gap-1 flex-shrink-0 gestor-item-actions">
+                <button class="btn btn-sm btn-outline-secondary px-2" title="Copiar URL"
+                        onclick="event.stopPropagation();navigator.clipboard.writeText('${urlEsc}').then(()=>mostrarAlerta('URL copiada'))">
                     <i class="bi bi-clipboard"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger px-2" onclick="eliminarImagenGestor('${img.public_id}',${idx})">
+                <button class="btn btn-sm btn-outline-danger px-2" title="Eliminar"
+                        onclick="event.stopPropagation();eliminarImagenGestor('${pidEsc}',${idx})">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>
@@ -716,6 +729,27 @@ function _renderGestorPagina(imgs) {
 
     window._gestorImgsActuales = imgs;
     grid.innerHTML = `<div class="col-12"><ul class="list-group list-group-flush">${liHtml}</ul>${pagNav}</div>`;
+
+    // Wire click delegation on the list
+    const ul = grid.querySelector('ul.list-group');
+    if (ul) {
+        ul.addEventListener('click', (e) => {
+            const li = e.target.closest('li[data-public-id]');
+            if (!li) return;
+            if (e.target.closest('.gestor-item-actions')) return;
+            if (_modoSeleccionGestor) {
+                e.stopPropagation();
+                const cb = li.querySelector('.gestor-select-check');
+                if (cb) { cb.checked = !cb.checked; _actualizarContadorGestor(cb); }
+            } else {
+                abrirImagenGestor(li.dataset.imgUrl, li.dataset.imgName, li.dataset.imgSize, li.dataset.imgDims);
+            }
+        });
+    }
+
+    if (_modoSeleccionGestor) {
+        document.querySelectorAll('.gestor-sel-marker').forEach(m => { m.style.display = 'flex'; });
+    }
 }
 
 async function eliminarImagenGestor(publicId, idx) {
@@ -781,9 +815,95 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-publicidad.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }
 
+// ── Multi-select bulk delete for gestor de imágenes ────────────────────────────
+
+let _modoSeleccionGestor = false;
+
+function _actualizarContadorGestor(cb) {
+    if (cb) {
+        const li = cb.closest('li');
+        if (li) {
+            li.classList.toggle('item-sel-active', cb.checked);
+            const marker = li.querySelector('.gestor-sel-marker');
+            if (marker) {
+                marker.style.background = cb.checked ? '#e74c3c' : '#fff';
+                const icon = marker.querySelector('i');
+                if (icon) icon.style.display = cb.checked ? 'inline' : 'none';
+            }
+        }
+    }
+    const n = document.querySelectorAll('.gestor-select-check:checked').length;
+    const el = document.getElementById('gestorBulkCount');
+    if (el) el.textContent = n > 0 ? `${n} imagen(es) seleccionada(s)` : 'Selecciona imágenes para eliminar';
+}
+
+function _toggleModoSeleccionGestor() {
+    _modoSeleccionGestor = !_modoSeleccionGestor;
+    document.querySelectorAll('.gestor-select-check').forEach(cb => {
+        if (!_modoSeleccionGestor) {
+            cb.checked = false;
+            cb.closest('li')?.classList.remove('item-sel-active');
+        }
+    });
+    document.querySelectorAll('.gestor-sel-marker').forEach(marker => {
+        marker.style.display = _modoSeleccionGestor ? 'flex' : 'none';
+        if (!_modoSeleccionGestor) {
+            marker.style.background = '#fff';
+            const icon = marker.querySelector('i');
+            if (icon) icon.style.display = 'none';
+        }
+    });
+    const toolbar = document.getElementById('gestorBulkToolbar');
+    if (toolbar) toolbar.style.display = _modoSeleccionGestor ? 'flex' : 'none';
+    const btn = document.getElementById('btnSeleccionarGestor');
+    if (btn) btn.classList.toggle('active', _modoSeleccionGestor);
+    _actualizarContadorGestor();
+}
+
+function _initBulkToolbarGestor() {
+    const existing = document.getElementById('gestorBulkToolbar');
+    if (existing) return;
+    const toolbar = document.createElement('div');
+    toolbar.id = 'gestorBulkToolbar';
+    toolbar.style.cssText = 'display:none;position:sticky;bottom:0;left:0;right:0;background:#fff3cd;border-top:2px solid #f0ad4e;padding:10px 16px;gap:10px;align-items:center;z-index:100;';
+    toolbar.innerHTML = `
+        <span id="gestorBulkCount" style="font-size:0.85rem;color:#856404;flex:1;">Selecciona imágenes</span>
+        <button class="btn btn-danger btn-sm" onclick="_bulkEliminarGestor()"><i class="bi bi-trash me-1"></i>Eliminar</button>
+        <button class="btn btn-secondary btn-sm" onclick="_toggleModoSeleccionGestor()">Cancelar</button>
+    `;
+    const gestorGrid = document.getElementById('gestorGrid');
+    if (gestorGrid?.parentElement) gestorGrid.parentElement.appendChild(toolbar);
+    else document.body.appendChild(toolbar);
+}
+
+async function _bulkEliminarGestor() {
+    const checks = [...document.querySelectorAll('.gestor-select-check:checked')];
+    const publicIds = checks.map(cb => cb.dataset.publicId);
+    if (!publicIds.length) return mostrarAlerta('Selecciona al menos una imagen', true);
+    mostrarConfirmacionApp('Eliminar imágenes', `¿Eliminar permanentemente ${publicIds.length} imagen(es) de Cloudinary?`, async () => {
+        const resultados = await Promise.allSettled(publicIds.map(pid =>
+            fetch('/api/cloudinary/gestor/delete', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ public_id: pid })
+            }).then(r => r.json())
+        ));
+        const ok = resultados.filter(r => r.status === 'fulfilled' && r.value?.ok).length;
+        const err = publicIds.length - ok;
+        if (ok > 0) mostrarAlerta(`${ok} imagen(es) eliminada(s)${err > 0 ? ` · ${err} con error` : ''}`);
+        else mostrarAlerta('Error al eliminar imágenes', true);
+        _toggleModoSeleccionGestor();
+        await cargarGestorImagenes();
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const pubBtn = document.getElementById('navPubBtn');
     if (pubBtn) pubBtn.style.display = '';
+
+    const btnSelGestor = document.getElementById('btnSeleccionarGestor');
+    if (btnSelGestor) btnSelGestor.addEventListener('click', _toggleModoSeleccionGestor);
+    _initBulkToolbarGestor();
 
     fetch('/api/inicio/config')
         .then(r => r.json())

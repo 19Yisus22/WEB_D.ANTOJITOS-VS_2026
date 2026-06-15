@@ -6,13 +6,15 @@ const btnCarrito = document.getElementById("btnCarrito");
 const badgeCarrito = document.getElementById("contadorCarritoBadge");
 
 let productos = [];
-let filtroIndex = 0;
+let categorias = [];
+let filtroCategoria = 'Todas';
+let filtroIndex = 0; // 0 = sin filtro (agrupa por categorías)
 let contadorCarrito = 0;
 let isFirstLoad = true;
 let isProcessingPurchase = false;
 let searchTimeout = null;
 const productosNotificados = new Set();
-const filtros = ['Recientes', 'Antiguos', 'Favoritos'];
+const filtros = ['', 'Recientes', 'Antiguos', 'Favoritos']; // index 0 = sin filtro
 const userLogged = window.userLogged || false;
 let favoritos = JSON.parse(localStorage.getItem('mis_favoritos_postres')) || [];
 let audioCtx = null;
@@ -93,6 +95,31 @@ function mostrarBienvenida(nombre) {
         tipo: "bienvenida",
         duracion: 5000
     });
+}
+
+async function cargarCategorias() {
+    try {
+        const res = await fetch('/api/categorias');
+        const data = await res.json();
+        categorias = data.categorias || [];
+    } catch (_) {
+        categorias = [];
+    }
+    const sel = document.getElementById('selectCategoria');
+    const row = document.getElementById('categoriasFilterRow');
+    if (!sel) return;
+    sel.innerHTML = '<option value="Todas">Todas las categorías</option>';
+    categorias.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        sel.appendChild(opt);
+    });
+    if (row) row.style.display = categorias.length > 0 ? 'block' : 'none';
+    sel.onchange = () => {
+        filtroCategoria = sel.value;
+        renderProductos(searchInput.value);
+    };
 }
 
 async function sincronizarContadorCarrito() {
@@ -203,31 +230,93 @@ async function cargarProductos() {
 function renderProductos(filterText = '') {
     catalogoContainer.innerHTML = '';
     let baseFiltrada = productos.filter(p => p.nombre.toLowerCase().includes(filterText.toLowerCase()));
-    if (filtros[filtroIndex] === 'Favoritos') {
+
+    if (filtroCategoria !== 'Todas') {
+        baseFiltrada = baseFiltrada.filter(p => (p.categoria || 'Sin categoría') === filtroCategoria);
+    }
+
+    const filtroActivo = filtros[filtroIndex];
+    if (filtroActivo === 'Favoritos') {
         baseFiltrada = baseFiltrada.filter(p => favoritos.includes(p.id_producto.toString()));
-    } else if (filtros[filtroIndex] === 'Recientes') {
+    } else if (filtroActivo === 'Recientes') {
         baseFiltrada.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-    } else if (filtros[filtroIndex] === 'Antiguos') {
+    } else if (filtroActivo === 'Antiguos') {
         baseFiltrada.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     }
+
     const disponibles = baseFiltrada.filter(p => p.stock > 0);
-    const agotados = baseFiltrada.filter(p => p.stock <= 0);
-    if (disponibles.length > 0) {
-        const headerDisp = document.createElement("div");
-        headerDisp.className = "col-12 mt-2 mb-4";
-        headerDisp.innerHTML = `
-            <div class="seccion-titulo-contenedor">
-                <h3 class="seccion-titulo"><i class="bi bi-check2-circle me-2 color-disponible"></i> ${t('cat.available')}</h3>
-                <div class="linea-decorativa linea-disponible"></div>
-            </div>
-            <div class="row g-4 mt-1" id="gridDisponibles"></div>`;
-        catalogoContainer.appendChild(headerDisp);
-        const gridDisp = document.getElementById("gridDisponibles");
-        disponibles.forEach(p => gridDisp.appendChild(crearCardProductoHTML(p, "disp")));
+    const agotados    = baseFiltrada.filter(p => p.stock <= 0);
+
+    // Only group by categories when no sort/filter is active (filtroIndex === 0)
+    const usarGrupoCategorias = filtroCategoria === 'Todas'
+        && categorias.length > 0
+        && filtroIndex === 0;
+
+    if (usarGrupoCategorias) {
+        _renderProductosPorCategoria(disponibles, agotados);
+    } else {
+        if (disponibles.length > 0) {
+            const headerDisp = document.createElement("div");
+            headerDisp.className = "col-12 mt-2 mb-4";
+            headerDisp.innerHTML = `
+                <div class="seccion-titulo-contenedor">
+                    <h3 class="seccion-titulo"><i class="bi bi-check2-circle me-2 color-disponible"></i> ${t('cat.available')}</h3>
+                    <div class="linea-decorativa linea-disponible"></div>
+                </div>
+                <div class="row g-4 mt-1" id="gridDisponibles"></div>`;
+            catalogoContainer.appendChild(headerDisp);
+            const gridDisp = document.getElementById("gridDisponibles");
+            disponibles.forEach(p => gridDisp.appendChild(crearCardProductoHTML(p, "disp")));
+        }
+        if (agotados.length > 0) {
+            const headerAgot = document.createElement("div");
+            headerAgot.className = "col-12 mt-5 mb-4";
+            headerAgot.innerHTML = `
+                <div class="seccion-titulo-contenedor">
+                    <h3 class="seccion-titulo"><i class="bi bi-x-circle me-2 color-agotado"></i> ${t('cat.soldout')}</h3>
+                    <div class="linea-decorativa linea-disponible"></div>
+                </div>
+                <div class="row g-4 mt-1" id="gridAgotados"></div>`;
+            catalogoContainer.appendChild(headerAgot);
+            const gridAgot = document.getElementById("gridAgotados");
+            agotados.forEach(p => gridAgot.appendChild(crearCardProductoHTML(p, "agot")));
+        }
+        if (baseFiltrada.length === 0) {
+            const msgVacio = filtroActivo === 'Favoritos' ? t('cat.no_favorites') : t('cat.no_results');
+            catalogoContainer.innerHTML = `<div class="col-12 text-center py-5 text-muted">${msgVacio}</div>`;
+        }
     }
+    agregarEventosProductos();
+}
+
+function _renderProductosPorCategoria(disponibles, agotados) {
+    const catOrden = [...categorias];
+    const extraCats = [...new Set(disponibles.map(p => p.categoria || 'Sin categoría'))].filter(c => !catOrden.includes(c));
+    extraCats.forEach(c => catOrden.push(c));
+
+    let hayAlgo = false;
+    catOrden.forEach(cat => {
+        const prods = disponibles.filter(p => (p.categoria || 'Sin categoría') === cat);
+        if (prods.length === 0) return;
+        hayAlgo = true;
+        const safeCat = cat.replace(/[^a-z0-9]/gi, '_');
+        const sep = document.createElement('div');
+        sep.className = 'col-12 cat-sep-wrapper';
+        sep.innerHTML = `
+            <div class="cat-sep-header">
+                <div class="cat-sep-line"></div>
+                <span class="cat-sep-label"><i class="bi bi-tag-fill me-2"></i>${cat}</span>
+                <div class="cat-sep-line"></div>
+            </div>
+            <div class="row g-2 g-md-4 mt-1 justify-content-start" id="catGrid_${safeCat}"></div>`;
+        catalogoContainer.appendChild(sep);
+        const grid = sep.querySelector(`#catGrid_${safeCat}`);
+        prods.forEach(p => grid.appendChild(crearCardProductoHTML(p)));
+    });
+
     if (agotados.length > 0) {
-        const headerAgot = document.createElement("div");
-        headerAgot.className = "col-12 mt-5 mb-4";
+        const headerAgot = document.createElement('div');
+        headerAgot.className = 'col-12 mt-5 mb-4';
         headerAgot.innerHTML = `
             <div class="seccion-titulo-contenedor">
                 <h3 class="seccion-titulo"><i class="bi bi-x-circle me-2 color-agotado"></i> ${t('cat.soldout')}</h3>
@@ -235,14 +324,14 @@ function renderProductos(filterText = '') {
             </div>
             <div class="row g-4 mt-1" id="gridAgotados"></div>`;
         catalogoContainer.appendChild(headerAgot);
-        const gridAgot = document.getElementById("gridAgotados");
-        agotados.forEach(p => gridAgot.appendChild(crearCardProductoHTML(p, "agot")));
+        const gridAgot = headerAgot.querySelector('#gridAgotados');
+        agotados.forEach(p => gridAgot.appendChild(crearCardProductoHTML(p, 'agot')));
+        hayAlgo = true;
     }
-    if (baseFiltrada.length === 0) {
-        const msgVacio = filtros[filtroIndex] === 'Favoritos' ? t('cat.no_favorites') : t('cat.no_results');
-        catalogoContainer.innerHTML = `<div class="col-12 text-center py-5 text-muted">${msgVacio}</div>`;
+
+    if (!hayAlgo) {
+        catalogoContainer.innerHTML = `<div class="col-12 text-center py-5 text-muted">${t('cat.no_results')}</div>`;
     }
-    agregarEventosProductos();
 }
 
 function crearCardProductoHTML(p, prefix = "") {
@@ -547,7 +636,16 @@ window.addEventListener('stockActualizado', (e) => {
 
 btnFiltrar.onclick = () => {
     filtroIndex = (filtroIndex + 1) % filtros.length;
-    btnFiltrar.innerHTML = `<i class="bi bi-funnel-fill me-2"></i>${filtros[filtroIndex]}`;
+    const etiqueta = filtros[filtroIndex];
+    if (filtroIndex === 0) {
+        btnFiltrar.innerHTML = `<i class="bi bi-funnel me-2"></i>Filtrar`;
+        btnFiltrar.classList.remove('btn-warning');
+        btnFiltrar.classList.add('btn-dark');
+    } else {
+        btnFiltrar.innerHTML = `<i class="bi bi-funnel-fill me-2"></i>${etiqueta}`;
+        btnFiltrar.classList.remove('btn-dark');
+        btnFiltrar.classList.add('btn-warning');
+    }
     renderProductos(searchInput.value);
 };
 
@@ -571,7 +669,7 @@ function resetBotonesEstado() {
 }
 
 window.onload = () => {
-    cargarProductos();
+    cargarCategorias().then(() => cargarProductos());
     resetBotonesEstado();
     setInterval(() => { if (!isProcessingPurchase) cargarProductos(); }, 20000);
     if (userLogged && userLogged !== "false") {

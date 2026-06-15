@@ -327,6 +327,10 @@ def producto_delete(id_producto: str) -> list:
         _db().table("gestion_productos").delete().eq("id_producto", id_producto)
     ))
 
+def producto_delete_many(ids: list) -> None:
+    if ids:
+        _run(_db().table("gestion_productos").delete().in_("id_producto", ids))
+
 def carrito_get(cedula: str) -> list:
     return _many(_run(_db().table("carrito").select("*").eq("cedula", cedula)))
 
@@ -567,8 +571,31 @@ def comentario_update(id: str, data: dict) -> list:
 def comentario_delete(id: str) -> None:
     _run(_db().table("comentarios").delete().eq("id", id))
 
+def comentario_delete_many(ids: list) -> None:
+    if ids:
+        _run(_db().table("comentarios").delete().in_("id", ids))
+
+def comentario_delete_non_admin_before(cutoff_iso: str, admin_cedulas: list = None) -> None:
+    try:
+        q = _db().table("comentarios").delete().lt("created_at", cutoff_iso)
+        if admin_cedulas:
+            q = q.not_.in_("cedula", admin_cedulas)
+        _run(q)
+    except Exception:
+        pass
+
 def comentario_update_likes(id: str, likes: list) -> None:
     _run(_db().table("comentarios").update({"likes_usuarios": likes}).eq("id", id))
+
+def mp_delete_non_admin_before(cutoff_iso: str, admin_cedulas: list = None) -> None:
+    """Delete non-admin private messages older than cutoff_iso."""
+    try:
+        q = _db().table("mensajes_privados").delete().lt("created_at", cutoff_iso)
+        if admin_cedulas:
+            q = q.not_.in_("cedula_de", admin_cedulas)
+        _run(q)
+    except Exception:
+        pass
 
 def comentario_delete_all() -> None:
     _run_safe(_db().table("comentarios").delete().neq("id", "00000000-0000-0000-0000-000000000000"))
@@ -591,7 +618,7 @@ def inicio_config_save(data: dict) -> None:
     except Exception as e:
         logger.warning("inicio_config_save error: %s", e)
 
-_MP_SELECT = "id,cedula_de,cedula_para,cedula_dest,mensaje,tipo,leido,adjuntos,created_at"
+_MP_SELECT = "id,cedula_de,cedula_para,cedula_dest,mensaje,tipo,leido,adjuntos,created_at,updated_at,es_editado"
 
 def mp_get_by_id(id: str) -> dict | None:
     return _single(_run(
@@ -599,7 +626,11 @@ def mp_get_by_id(id: str) -> dict | None:
     ))
 
 def mp_update(id: str, mensaje: str) -> None:
-    _run_safe(_db().table("mensajes_privados").update({"mensaje": mensaje}).eq("id", id))
+    from datetime import datetime, timezone
+    _run_safe(_db().table("mensajes_privados").update({
+        "mensaje":    mensaje,
+        "es_editado": True,
+    }).eq("id", id))
 
 def mp_delete(id: str) -> None:
     _run_safe(_db().table("mensajes_privados").delete().eq("id", id))

@@ -337,8 +337,16 @@ async function toggleLike(id) {
     }
 }
 
+function _escAttr(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function renderComentario(c) {
+    const esAdmin = USER_CONFIG.userRol === 'admin';
     const esMio = String(c.cedula) === String(USER_CONFIG.userId);
+    const yaEditado = c.updated_at && c.created_at && c.updated_at !== c.created_at;
+    const puedeEditar = esMio && (esAdmin || !yaEditado);
+    const mostrarOpciones = esAdmin || esMio;
     const bgGradient = getUserPastelColor(String(c.cedula));
     const info = c.usuario_info || {};
     const foto = info.foto_perfil || '';
@@ -350,18 +358,15 @@ function renderComentario(c) {
     wrapper.id = `msg-${c.id}`;
     const estadoClase = info.conectado ? 'estado-conectado' : 'estado-desconectado';
 
-    const mensajeFormateado = c.mensaje
+    const mensajeFormateado = (c.mensaje || '')
         .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
-        .replace(/_(.*?)_/gs,       '<em>$1</em>');
-
-    const _comentAvatarEl = foto
-        ? `<img src="" data-profile="${foto}" data-profile-name="${nombre}" data-profile-size="28"
-                alt="${nombre}" class="rounded-circle border shadow-sm" width="28" height="28" style="object-fit:cover;display:block;">`
-        : `<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.8rem;color:#fff;background:linear-gradient(135deg,#d35400,#e67e22);">${nombre.charAt(0).toUpperCase()}</div>`;
+        .replace(/_(.*?)_/gs, '<em>$1</em>');
 
     wrapper.innerHTML = `
-        <div class="contenedor-foto-estado">
-            ${_comentAvatarEl}
+        <div class="contenedor-foto-estado" style="width:28px;height:28px;flex-shrink:0;">
+            <img src="" data-profile="${_escAttr(foto)}" data-profile-name="${_escAttr(nombre)}" data-profile-size="28"
+                 alt="${_escAttr(nombre)}" class="rounded-circle border shadow-sm"
+                 style="width:28px;height:28px;object-fit:cover;display:block;">
             <span class="punto-estado ${estadoClase}"></span>
         </div>
         <div style="max-width:75%;display:flex;flex-direction:column;${esMio ? 'align-items:flex-end;' : 'align-items:flex-start;'}">
@@ -369,21 +374,17 @@ function renderComentario(c) {
                  style="background:${bgGradient};position:relative;">
                 <div class="d-flex justify-content-between align-items-center mb-1 gap-4">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold" style="font-size:0.8rem;color:#2c3e50;">${esMio ? 'Tú' : nombre}</span>
-                        <span class="text-muted" style="font-size:0.65rem;opacity:0.8;">• ${fecha}</span>
+                        <span class="fw-bold" style="font-size:0.8rem;color:#2c3e50;">${esMio ? 'Tú' : _escAttr(nombre)}</span>
+                        <span class="text-muted" style="font-size:0.65rem;opacity:0.8;">• ${_escAttr(fecha)}${yaEditado ? ' · <em style="font-size:0.6rem;opacity:0.75;">editado</em>' : ''}</span>
                     </div>
-                    ${esMio ? `<i class="bi bi-three-dots-vertical btn-options text-muted" style="cursor:pointer;font-size:0.8rem;"></i>` : ''}
+                    ${esAdmin ? '<i class="bi bi-three-dots-vertical btn-options text-muted" style="cursor:pointer;font-size:0.8rem;"></i>' :
+                      esMio ? `<button class="btn-edit-inline btn p-0 border-0" style="line-height:1;font-size:0.82rem;${yaEditado ? 'color:#bbb;cursor:not-allowed;' : 'color:#7f8c8d;'}" ${yaEditado ? 'disabled title="Ya editaste este mensaje"' : 'title="Editar"'}><i class="bi bi-pencil-fill"></i></button>` : ''}
                 </div>
-                ${mensajeFormateado ? `<div class="mensaje-texto">${mensajeFormateado}</div>` : ''}
-                ${(c.adjuntos && c.adjuntos.length > 0)
-                    ? `<div class="chat-bubble-images">${c.adjuntos.map(a =>
-                        `<img src="${a.data}" class="chat-bubble-img" alt="${a.nombre||'imagen'}" onclick="_abrirImagenAmpliada('${a.data}')">`
-                      ).join('')}</div>`
-                    : ''}
+                ${mensajeFormateado ? '<div class="mensaje-texto"></div>' : ''}
+                ${(c.adjuntos && c.adjuntos.length > 0) ? '<div class="chat-bubble-images"></div>' : ''}
             </div>
             <div class="d-flex align-items-center gap-2 mt-1">
                 <div class="btn-like-mini d-flex align-items-center gap-1"
-                     onclick="toggleLike('${c.id}')"
                      style="cursor:pointer;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.85);
                             box-shadow:0 1px 6px rgba(0,0,0,0.1);backdrop-filter:blur(4px);">
                     <i class="bi ${haDadoLike ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="font-size:0.9rem;${haDadoLike ? '' : 'color:#888;'}"></i>
@@ -391,7 +392,6 @@ function renderComentario(c) {
                 </div>
                 ${USER_CONFIG.userRol === 'admin' && !esMio ? `
                 <div class="btn-reply-pub d-flex align-items-center gap-1"
-                     onclick="responderPublicamente('${c.id}', \`${(nombre).replace(/`/g,"'")}\`, \`${(c.mensaje || '').replace(/`/g,"'").substring(0,60)}\`)"
                      title="Responder a este mensaje"
                      style="cursor:pointer;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.85);
                             box-shadow:0 1px 6px rgba(0,0,0,0.1);backdrop-filter:blur(4px);">
@@ -402,52 +402,134 @@ function renderComentario(c) {
         </div>
     `;
 
-    requestAnimationFrame(() => { if (typeof initAllProfileImages === 'function') initAllProfileImages(); });
+    const msgTextoEl = wrapper.querySelector('.mensaje-texto');
+    if (msgTextoEl && mensajeFormateado) {
+        msgTextoEl.innerHTML = mensajeFormateado;
+    }
 
-    if(esMio) {
+    const adjuntosEl = wrapper.querySelector('.chat-bubble-images');
+    if (adjuntosEl && c.adjuntos && c.adjuntos.length > 0) {
+        c.adjuntos.forEach(a => {
+            const img = document.createElement('img');
+            img.src = a.data;
+            img.className = 'chat-bubble-img';
+            img.alt = a.nombre || 'imagen';
+            img.addEventListener('click', () => _abrirImagenAmpliada(a.data));
+            adjuntosEl.appendChild(img);
+        });
+    }
+
+    const likeBtn = wrapper.querySelector('.btn-like-mini');
+    if (likeBtn) likeBtn.addEventListener('click', () => toggleLike(c.id));
+
+    const replyBtn = wrapper.querySelector('.btn-reply-pub');
+    if (replyBtn) {
+        replyBtn.addEventListener('click', () => {
+            const extracto = (c.mensaje || '')
+                .replace(/<[^>]*>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .substring(0, 60);
+            responderPublicamente(c.id, nombre, extracto);
+        });
+    }
+
+    requestAnimationFrame(() => {
+        const imgEl = wrapper.querySelector('img[data-profile]');
+        if (imgEl && typeof loadProfileImg === 'function') {
+            loadProfileImg(imgEl, foto, nombre, 28);
+        }
+    });
+
+    if (esAdmin) {
         const btnOpt = wrapper.querySelector(".btn-options");
-        btnOpt.onclick = (e) => {
+        if (btnOpt) btnOpt.onclick = (e) => {
             e.stopPropagation();
             document.querySelectorAll(".comentario-dropdown").forEach(d => d.remove());
             const dd = document.createElement("div");
             dd.className = "dropdown-menu show shadow border-0 comentario-dropdown p-1";
-            dd.style.cssText = `position: fixed; top: ${e.clientY}px; left: ${e.clientX - 100}px; z-index: 2000; min-width: 120px; border-radius: 12px;`;
+            dd.style.cssText = `position: fixed; top: ${e.clientY}px; left: ${e.clientX - 100}px; z-index: 2000; min-width: 140px; border-radius: 12px;`;
 
-            const btnEditar = document.createElement('button');
-            btnEditar.className = 'dropdown-item rounded-2 py-1';
-            btnEditar.innerHTML = '<i class="bi bi-pencil me-2"></i>Editar';
-            btnEditar.addEventListener('click', () => {
-                dd.remove();
-                iniciarEdicion(c.id, c.mensaje);
-            });
+            if (puedeEditar) {
+                const btnEditar = document.createElement('button');
+                btnEditar.className = 'dropdown-item rounded-2 py-1';
+                btnEditar.innerHTML = '<i class="bi bi-pencil me-2"></i>Editar';
+                btnEditar.addEventListener('click', () => { dd.remove(); iniciarEdicion(c.id, c.mensaje); });
+                dd.appendChild(btnEditar);
+            }
 
             const btnEliminar = document.createElement('button');
             btnEliminar.className = 'dropdown-item rounded-2 py-1 text-danger';
             btnEliminar.innerHTML = '<i class="bi bi-trash me-2"></i>Eliminar';
-            btnEliminar.addEventListener('click', () => {
-                dd.remove();
-                abrirConfirmacion(c.id);
-            });
-
-            dd.appendChild(btnEditar);
+            btnEliminar.addEventListener('click', () => { dd.remove(); abrirConfirmacion(c.id); });
             dd.appendChild(btnEliminar);
+
+            const btnCheck = document.createElement('button');
+            btnCheck.className = 'dropdown-item rounded-2 py-1';
+            btnCheck.innerHTML = '<i class="bi bi-check2-square me-2"></i>Seleccionar';
+            btnCheck.addEventListener('click', () => {
+                dd.remove();
+                _activarModoSeleccion();
+                const cb = wrapper.querySelector('.chat-msg-check');
+                if (cb) {
+                    cb.checked = true;
+                    const dot = wrapper.querySelector('.msg-sel-dot');
+                    if (dot) { dot.style.background = '#e74c3c'; const ic = dot.querySelector('i'); if (ic) ic.style.display = 'inline'; }
+                    wrapper.querySelector('.message')?.classList.add('msg-selected');
+                    const countEl = document.getElementById('bulkSelectCount');
+                    if (countEl) countEl.textContent = '1 seleccionado(s)';
+                }
+            });
+            dd.appendChild(btnCheck);
+
             document.body.appendChild(dd);
             setTimeout(() => document.addEventListener("click", () => dd.remove(), {once:true}), 50);
         };
+    } else if (esMio && !yaEditado) {
+        const btnEdit = wrapper.querySelector('.btn-edit-inline');
+        if (btnEdit) btnEdit.addEventListener('click', () => iniciarEdicion(c.id, c.mensaje));
     }
+
+    if (esAdmin) {
+        wrapper.style.position = 'relative';
+        // Invisible checkbox — just for data storage, not in the flex flow
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'chat-msg-check';
+        cb.dataset.id = c.id;
+        cb.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:0;height:0;';
+        wrapper.appendChild(cb);
+        // Visible selection marker (circle with check)
+        const dot = document.createElement('div');
+        dot.className = 'msg-sel-dot';
+        const side = esMio ? 'right:2px;' : 'left:2px;';
+        dot.style.cssText = `display:none;position:absolute;top:2px;${side}width:22px;height:22px;border-radius:50%;border:2.5px solid #e74c3c;background:#fff;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.2);z-index:10;transition:all 0.12s ease;`;
+        dot.innerHTML = '<i class="bi bi-check2" style="font-size:0.75rem;color:#fff;display:none;line-height:1;"></i>';
+        wrapper.appendChild(dot);
+    }
+
     return wrapper;
 }
 
-async function cargarComentarios() {
+let _comentariosHash = '';
+
+function _hashComentarios(arr) {
+    return arr.map(c => c.id + ':' + (c.updated_at || c.created_at || '') + ':' + (c.likes_usuarios || []).length).join('|');
+}
+
+async function cargarComentarios(force = false) {
     try {
-        const res = await fetch("/comentarios");
-        if(!res.ok) return;
+        const res = await fetch("/comentarios", { cache: 'no-store' });
+        if (!res.ok) return;
         const data = await res.json();
+        const hash = _hashComentarios(data);
+        if (!force && hash === _comentariosHash) return;
+        _comentariosHash = hash;
         const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
         comentariosActuales = data;
         chatBox.innerHTML = "";
         comentariosActuales.forEach(c => chatBox.appendChild(renderComentario(c)));
-        if(isAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
+        if (isAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
     } catch(e) { console.error(e); }
 }
 
@@ -510,18 +592,53 @@ sendBtn.onclick = async () => {
             editandoComentario = null;
             sendBtn.innerHTML = `<span>Enviar Sugerencia</span><i class="bi bi-send-fill ms-2"></i>`;
             await cargarComentarios();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            showMessage(err.error || 'Error al procesar', true);
+            if (res.status === 409) {
+                editandoComentario = null;
+                sendBtn.innerHTML = `<span>Enviar Sugerencia</span><i class="bi bi-send-fill ms-2"></i>`;
+                _clearEditor();
+                await cargarComentarios();
+            }
         }
     } catch (e) { showMessage("Error al procesar", true); }
     finally { sendBtn.disabled = false; }
 };
 
+let _privFastPoller  = null;
+let _privFastHash    = '';
+let _clienteHiloHash = '';
+let _cvConvHash      = '';
+let _staffConvHash   = '';
+
+function _iniciarPrivFastPoll(fn) {
+    if (_privFastPoller) clearInterval(_privFastPoller);
+    _privFastPoller = setInterval(async () => { if (!document.hidden) await fn(); }, 2000);
+}
+
+function _detenerPrivFastPoll() {
+    if (_privFastPoller) { clearInterval(_privFastPoller); _privFastPoller = null; }
+    _privFastHash = '';
+}
+
 window.onload = () => {
-    cargarComentarios();
+    cargarComentarios(true);
     monitorConexion.iniciar();
-    setInterval(cargarComentarios, 15000);
+
+    setInterval(() => {
+        if (document.hidden) return;
+        const tabPub = document.getElementById('tabPublico');
+        if (!tabPub || tabPub.classList.contains('active')) cargarComentarios();
+    }, 2000);
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) cargarComentarios();
+    });
+
     if (USER_CONFIG.isLogged) {
         _iniciarPrivado();
-        setInterval(_pollNoLeidos, 18000);
+        setInterval(_pollNoLeidos, 5000);
     }
 };
 
@@ -619,7 +736,8 @@ async function _pollNoLeidos() {
 function _iniciarPrivado() {
     if (USER_CONFIG.userRol === 'cliente') {
         _cargarMensajesPredeterminados();
-        _iniciarConvPoller('clienteCV');
+        _cargarHiloCliente();
+        _iniciarConvPoller('clienteCV', _cargarHiloCliente);
     }
 }
 
@@ -673,9 +791,12 @@ async function _cargarHiloCliente() {
     window._chatCV_abierto    = USER_CONFIG.userId;
     window._chatStaff_abierto = null;
     try {
-        const r = await fetch('/mensajes_privados/mi_hilo');
+        const r = await fetch('/mensajes_privados/mi_hilo', { cache: 'no-store' });
         if (!r.ok) return;
         const msgs = await r.json();
+        const hash = msgs.map(m => m.id + ':' + (m.updated_at || m.created_at || '')).join('|');
+        if (hash === _clienteHiloHash && box.children.length > 0) return;
+        _clienteHiloHash = hash;
         const eraAbajo = box.scrollHeight - box.scrollTop <= box.clientHeight + 120;
         box.innerHTML = '';
         if (!msgs.length) {
@@ -721,7 +842,15 @@ async function enviarMensajeLibreCliente() {
                 if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
                 await _cargarHiloCliente();
             } else {
-                showMessage(t('notif.error_conn') || 'Error al editar. Intenta de nuevo.', true);
+                const err = await r.json().catch(() => ({}));
+                showMessage(err.error || t('notif.error_conn') || 'Error al editar.', true);
+                if (r.status === 409) {
+                    ta.value = '';
+                    _editandoMsgPrivado = null;
+                    if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
+                    _clienteHiloHash = '';
+                    await _cargarHiloCliente();
+                }
             }
             return;
         }
@@ -767,9 +896,10 @@ let _convPoller          = null;
 window._chatCV_abierto    = null;
 window._chatStaff_abierto = null;
 
-function _iniciarConvPoller(tipo) {
+function _iniciarConvPoller(tipo, recargarFn) {
     if (_convPoller) clearInterval(_convPoller);
-    _convPoller = setInterval(() => _marcarLeidosConvAbierta(tipo), 12000);
+    _convPoller = setInterval(() => _marcarLeidosConvAbierta(tipo), 8000);
+    if (recargarFn) _iniciarPrivFastPoll(recargarFn);
 }
 
 async function _marcarLeidosConvAbierta(tipo) {
@@ -849,11 +979,25 @@ async function _cargarHilosVendedor() {
     } catch {}
 }
 
+function _volverAListaCV() {
+    document.getElementById('privPanelClientes')?.classList.remove('show-detail');
+    _hiloSeleccionado = null;
+    _cvConvHash = '';
+    document.querySelectorAll('#hilosLista .priv-hilo-item').forEach(el => el.classList.remove('active'));
+    ['privConvEmpty','privConvHeader','privConvBox','privConvInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = id === 'privConvEmpty' ? '' : 'none';
+    });
+    _detenerPrivFastPoll();
+}
+
 async function abrirConversacion(cedulaCliente, nombreCliente, fotoCliente) {
     _hiloSeleccionado             = cedulaCliente;
+    _cvConvHash                   = '';
     window._chatCV_abierto        = cedulaCliente;
     window._chatStaff_abierto     = null;
-    _iniciarConvPoller('cv');
+    _iniciarConvPoller('cv', _refreshMensajesCV);
+    document.getElementById('privPanelClientes')?.classList.add('show-detail');
     const empty  = document.getElementById('privConvEmpty');
     const header = document.getElementById('privConvHeader');
     const box    = document.getElementById('privConvBox');
@@ -862,6 +1006,7 @@ async function abrirConversacion(cedulaCliente, nombreCliente, fotoCliente) {
     if (header) {
         header.style.display = 'flex';
         header.innerHTML = `
+            <button class="priv-mobile-back" onclick="_volverAListaCV()" title="${t('btn.back') || 'Volver'}"><i class="bi bi-arrow-left"></i></button>
             <img src="${fotoCliente}" class="priv-conv-avatar" onerror="this.src='/static/uploads/default_icon_profile.png'">
             <div><strong>${nombreCliente}</strong><small style="display:block;color:#888;font-size:0.72rem;">${t('state.cliente')}</small></div>
             <button class="btn btn-sm btn-outline-danger ms-auto" onclick="limpiarHiloCV('${cedulaCliente}', event)"><i class="bi bi-trash3 me-1"></i>${t('btn.delete')}</button>
@@ -911,7 +1056,14 @@ async function enviarRespuestaVendedor() {
                     document.querySelector('#privConvHeader strong')?.textContent || '',
                     document.querySelector('#privConvHeader .priv-conv-avatar')?.src || '');
             } else {
-                showMessage(t('notif.error_conn') || 'Error al editar. Intenta de nuevo.', true);
+                const err = await r.json().catch(() => ({}));
+                showMessage(err.error || t('notif.error_conn') || 'Error al editar.', true);
+                if (r.status === 409) {
+                    textarea.value = '';
+                    _editandoMsgPrivado = null;
+                    if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
+                    _cvConvHash = '';
+                }
             }
             return;
         }
@@ -957,12 +1109,35 @@ function limpiarHiloCV(cedulaCliente, ev) {
     mostrarConfirmacionApp(t('confirm.title'), t('confirm.delete'), () => {
         localStorage.setItem(`cv_clear_${USER_CONFIG.userId}_${cedulaCliente}`, new Date().toISOString());
         _hiloSeleccionado = null;
+        _cvConvHash = '';
+        document.getElementById('privPanelClientes')?.classList.remove('show-detail');
         _cargarHilosVendedor();
         ['privConvEmpty','privConvHeader','privConvBox','privConvInput'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = id === 'privConvEmpty' ? '' : 'none';
         });
     });
+}
+
+async function _refreshMensajesCV() {
+    if (!_hiloSeleccionado) return;
+    const box = document.getElementById('privConvBox');
+    if (!box || box.style.display === 'none') return;
+    try {
+        const r = await fetch(`/mensajes_privados/hilo/${_hiloSeleccionado}`, { cache: 'no-store' });
+        if (!r.ok) return;
+        const msgs = await r.json();
+        const _clearKey   = `cv_clear_${USER_CONFIG.userId}_${_hiloSeleccionado}`;
+        const _clearedAt  = localStorage.getItem(_clearKey);
+        const filtered    = _clearedAt ? msgs.filter(m => new Date(m.created_at) > new Date(_clearedAt)) : msgs;
+        const hash        = filtered.map(m => m.id + ':' + (m.updated_at || m.created_at || '')).join('|');
+        if (hash === _cvConvHash) return;
+        _cvConvHash = hash;
+        const eraAbajo = box.scrollHeight - box.scrollTop <= box.clientHeight + 100;
+        box.innerHTML = '';
+        filtered.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_para === USER_CONFIG.userId, m.id)));
+        if (eraAbajo) box.scrollTop = box.scrollHeight;
+    } catch {}
 }
 
 let _staffSeleccionado = null;
@@ -999,11 +1174,28 @@ async function _cargarContactosStaff() {
     } catch {}
 }
 
+function _volverAListaStaff() {
+    const panelId = document.getElementById('privPanelEquipo') ? 'privPanelEquipo' : null;
+    const panel   = panelId ? document.getElementById(panelId) : document.querySelector('.priv-layout');
+    panel?.classList.remove('show-detail');
+    _staffSeleccionado = null;
+    _staffConvHash = '';
+    document.querySelectorAll('#staffContactosLista .priv-hilo-item').forEach(el => el.classList.remove('active'));
+    ['staffConvEmpty','staffConvHeader','staffConvBox','staffConvInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = id === 'staffConvEmpty' ? '' : 'none';
+    });
+    _detenerPrivFastPoll();
+}
+
 async function abrirConversacionStaff(cedulaDest, nombre, foto, rolLabel) {
     _staffSeleccionado            = cedulaDest;
+    _staffConvHash                = '';
     window._chatStaff_abierto     = cedulaDest;
     window._chatCV_abierto        = null;
-    _iniciarConvPoller('staff');
+    _iniciarConvPoller('staff', _refreshMensajesStaff);
+    const panel  = document.getElementById('privPanelEquipo') || document.querySelector('.priv-layout');
+    panel?.classList.add('show-detail');
     const empty  = document.getElementById('staffConvEmpty');
     const header = document.getElementById('staffConvHeader');
     const box    = document.getElementById('staffConvBox');
@@ -1012,6 +1204,7 @@ async function abrirConversacionStaff(cedulaDest, nombre, foto, rolLabel) {
     if (header) {
         header.style.display = 'flex';
         header.innerHTML = `
+            <button class="priv-mobile-back" onclick="_volverAListaStaff()" title="${t('btn.back') || 'Volver'}"><i class="bi bi-arrow-left"></i></button>
             <img src="${foto}" class="priv-conv-avatar" onerror="this.src='/static/uploads/default_icon_profile.png'">
             <div><strong>${nombre}</strong><small style="display:block;color:#888;font-size:0.72rem;">${rolLabel}</small></div>
             <button class="btn btn-sm btn-outline-danger ms-auto" onclick="limpiarHiloStaff('${cedulaDest}')"><i class="bi bi-trash3 me-1"></i>${t('btn.delete')}</button>
@@ -1060,6 +1253,15 @@ async function enviarMensajeStaff() {
                     document.querySelector('#staffConvHeader strong')?.textContent || '',
                     document.querySelector('#staffConvHeader .priv-conv-avatar')?.src || '',
                     '');
+            } else {
+                const err = await r.json().catch(() => ({}));
+                showMessage(err.error || t('notif.error_conn') || 'Error al editar.', true);
+                if (r.status === 409) {
+                    ta.value = '';
+                    _editandoMsgPrivado = null;
+                    if (sendBtn) sendBtn.innerHTML = `<i class="bi bi-send-fill"></i>`;
+                    _staffConvHash = '';
+                }
             }
             return;
         }
@@ -1106,12 +1308,36 @@ function limpiarHiloStaff(cedulaDest) {
     mostrarConfirmacionApp(t('confirm.title'), t('confirm.delete'), () => {
         localStorage.setItem(`staff_clear_${USER_CONFIG.userId}_${cedulaDest}`, new Date().toISOString());
         _staffSeleccionado = null;
+        _staffConvHash = '';
+        const panel = document.getElementById('privPanelEquipo') || document.querySelector('.priv-layout');
+        panel?.classList.remove('show-detail');
         _cargarContactosStaff();
         ['staffConvEmpty','staffConvHeader','staffConvBox','staffConvInput'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = id === 'staffConvEmpty' ? '' : 'none';
         });
     });
+}
+
+async function _refreshMensajesStaff() {
+    if (!_staffSeleccionado) return;
+    const box = document.getElementById('staffConvBox');
+    if (!box || box.style.display === 'none') return;
+    try {
+        const r = await fetch(`/mensajes_privados/staff/hilo/${_staffSeleccionado}`, { cache: 'no-store' });
+        if (!r.ok) return;
+        const msgs = await r.json();
+        const _staffClearKey   = `staff_clear_${USER_CONFIG.userId}_${_staffSeleccionado}`;
+        const _staffClearedAt  = localStorage.getItem(_staffClearKey);
+        const filtered         = _staffClearedAt ? msgs.filter(m => new Date(m.created_at) > new Date(_staffClearedAt)) : msgs;
+        const hash             = filtered.map(m => m.id + ':' + (m.updated_at || m.created_at || '')).join('|');
+        if (hash === _staffConvHash) return;
+        _staffConvHash = hash;
+        const eraAbajo = box.scrollHeight - box.scrollTop <= box.clientHeight + 100;
+        box.innerHTML = '';
+        filtered.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
+        if (eraAbajo) box.scrollTop = box.scrollHeight;
+    } catch {}
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1128,26 +1354,35 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function _renderMsgPrivado(m, esMio, msgId) {
+    const esAdmin = USER_CONFIG.userRol === 'admin';
+    const isTempId = String(msgId || '').startsWith('temp_');
+    const yaEditado = !isTempId && !!m.es_editado;
+    const puedeEditar = esMio && !m.es_predeterminado && (esAdmin || !yaEditado);
     const div = document.createElement('div');
     div.className = `priv-msg ${esMio ? 'priv-msg--mio' : 'priv-msg--otro'}`;
     div.dataset.id = msgId || '';
     div.dataset.msgTexto = m.mensaje || '';
     const hora = new Date(m.created_at).toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
+    const editadoTag = (!isTempId && m.es_editado) ? `<em class="priv-editado-tag">editado</em>` : '';
     const adjuntosHtml = (m.adjuntos && m.adjuntos.length > 0)
         ? `<div class="chat-bubble-images">${m.adjuntos.map(a =>
             `<img src="${a.data}" class="chat-bubble-img" alt="${a.nombre||'imagen'}" onclick="_abrirImagenAmpliada('${a.data}')">`
           ).join('')}</div>`
         : '';
+    const editBtnHtml = !esMio || m.es_predeterminado ? '' :
+        esAdmin ? `<button class="priv-msg-edit" onclick="editarMsgPrivado('${msgId}')" title="${t('btn.edit')}"><i class="bi bi-pencil"></i></button>` :
+        yaEditado ? `<button class="priv-msg-edit" disabled title="Ya editado" style="opacity:0.4;cursor:not-allowed;"><i class="bi bi-pencil"></i></button>` :
+        `<button class="priv-msg-edit" onclick="editarMsgPrivado('${msgId}')" title="${t('btn.edit')}"><i class="bi bi-pencil"></i></button>`;
     div.innerHTML = `
         <div class="priv-msg-bubble">
             ${m.es_predeterminado ? `<span class="priv-pred-tag"><i class="bi bi-list-check me-1"></i>${t('chat.list')}</span>` : ''}
             ${m.mensaje ? `<span class="priv-msg-text">${m.mensaje}</span>` : ''}
             ${adjuntosHtml}
             <div class="d-flex justify-content-between align-items-center gap-2 mt-1">
-                <span class="priv-msg-time">${hora}</span>
+                <span class="priv-msg-time">${hora}${editadoTag}</span>
                 <div class="d-flex gap-1">
-                    ${esMio && !m.es_predeterminado ? `<button class="priv-msg-edit" onclick="editarMsgPrivado('${msgId}')" title="${t('btn.edit')}"><i class="bi bi-pencil"></i></button>` : ''}
-                    ${esMio ? `<button class="priv-msg-del" onclick="eliminarMsgPrivado('${msgId}', this)" title="${t('btn.delete')}"><i class="bi bi-trash3"></i></button>` : ''}
+                    ${editBtnHtml}
+                    ${esAdmin ? `<button class="priv-msg-del" onclick="eliminarMsgPrivado('${msgId}', this)" title="${t('btn.delete')}"><i class="bi bi-trash3"></i></button>` : ''}
                 </div>
             </div>
         </div>
@@ -1181,3 +1416,166 @@ async function limpiarTodosMensajes() {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-comentarios.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }
+
+// ── Multi-select bulk delete (admin only) ──────────────────────────────────────
+
+let _modoSeleccion = false;
+
+function _activarModoSeleccion() {
+    if (_modoSeleccion) return;
+    _modoSeleccion = true;
+    chatBox?.classList.add('modo-seleccion');
+    document.querySelectorAll('.msg-sel-dot').forEach(d => { d.style.display = 'flex'; });
+    _mostrarToolbarBulk(true);
+}
+
+function _desactivarModoSeleccion() {
+    _modoSeleccion = false;
+    chatBox?.classList.remove('modo-seleccion');
+    document.querySelectorAll('.chat-msg-check').forEach(cb => { cb.checked = false; });
+    document.querySelectorAll('.msg-sel-dot').forEach(dot => {
+        dot.style.display = 'none';
+        dot.style.background = '#fff';
+        const icon = dot.querySelector('i');
+        if (icon) icon.style.display = 'none';
+    });
+    document.querySelectorAll('.message.msg-selected').forEach(el => el.classList.remove('msg-selected'));
+    _mostrarToolbarBulk(false);
+}
+
+function _toggleModoSeleccion() {
+    _modoSeleccion ? _desactivarModoSeleccion() : _activarModoSeleccion();
+}
+
+function _selToggleWrapper(wrapper) {
+    const cb = wrapper?.querySelector('.chat-msg-check');
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    const dot = wrapper.querySelector('.msg-sel-dot');
+    if (dot) {
+        dot.style.background = cb.checked ? '#e74c3c' : '#fff';
+        const icon = dot.querySelector('i');
+        if (icon) icon.style.display = cb.checked ? 'inline' : 'none';
+    }
+    wrapper.querySelector('.message')?.classList.toggle('msg-selected', cb.checked);
+    const n = document.querySelectorAll('.chat-msg-check:checked').length;
+    const countEl = document.getElementById('bulkSelectCount');
+    if (countEl) countEl.textContent = n > 0 ? `${n} seleccionado(s)` : 'Toca un mensaje para seleccionarlo';
+}
+
+function _mostrarToolbarBulk(visible) {
+    let toolbar = document.getElementById('bulkDeleteToolbar');
+    if (!toolbar) {
+        toolbar = document.createElement('div');
+        toolbar.id = 'bulkDeleteToolbar';
+        toolbar.style.cssText = 'display:none;position:fixed;bottom:0;left:0;right:0;background:#fff3cd;border-top:2px solid #f0ad4e;padding:10px 16px;gap:10px;align-items:center;z-index:9999;box-shadow:0 -4px 16px rgba(0,0,0,0.1);';
+        const info = document.createElement('span');
+        info.id = 'bulkSelectCount';
+        info.style.cssText = 'font-size:0.85rem;color:#856404;flex:1;font-weight:600;';
+        info.textContent = 'Toca un mensaje para seleccionarlo';
+        const btnDel = document.createElement('button');
+        btnDel.className = 'btn btn-danger btn-sm px-3';
+        btnDel.innerHTML = '<i class="bi bi-trash me-1"></i>Eliminar';
+        btnDel.onclick = _bulkEliminarSeleccionados;
+        const btnCancel = document.createElement('button');
+        btnCancel.className = 'btn btn-outline-secondary btn-sm px-3';
+        btnCancel.innerHTML = '<i class="bi bi-x me-1"></i>Cancelar';
+        btnCancel.onclick = _desactivarModoSeleccion;
+        toolbar.appendChild(info);
+        toolbar.appendChild(btnDel);
+        toolbar.appendChild(btnCancel);
+        document.body.appendChild(toolbar);
+        // Click anywhere on a message to toggle selection
+        chatBox?.addEventListener('click', (e) => {
+            if (!_modoSeleccion) return;
+            const wrapper = e.target.closest('[id^="msg-"]');
+            if (wrapper) _selToggleWrapper(wrapper);
+        });
+    }
+    toolbar.style.display = visible ? 'flex' : 'none';
+    if (!visible) {
+        const countEl = document.getElementById('bulkSelectCount');
+        if (countEl) countEl.textContent = 'Toca un mensaje para seleccionarlo';
+    }
+}
+
+async function _bulkEliminarSeleccionados() {
+    const ids = [...document.querySelectorAll('.chat-msg-check:checked')].map(cb => cb.dataset.id);
+    if (!ids.length) return showMessage('Selecciona al menos un mensaje', true);
+    mostrarConfirmacionApp('Eliminar', `¿Eliminar ${ids.length} mensaje(s) permanentemente?`, async () => {
+        try {
+            const r = await fetch('/comentarios/bulk', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids })
+            });
+            if (r.ok) {
+                showMessage(`${ids.length} mensaje(s) eliminados`);
+                _desactivarModoSeleccion();
+                await cargarComentarios(true);
+            } else {
+                showMessage('Error al eliminar', true);
+            }
+        } catch { showMessage('Error al eliminar', true); }
+    });
+}
+
+// ── Chat temporal (admin only) ─────────────────────────────────────────────────
+
+async function _cargarChatTemporalPublico() {
+    if (USER_CONFIG.userRol !== 'admin') return;
+    try {
+        const r = await fetch('/comentarios/config_temporal');
+        if (!r.ok) return;
+        const { modo } = await r.json();
+        const sel = document.getElementById('chatTemporalPublicoSelect');
+        if (sel) sel.value = modo;
+    } catch {}
+}
+
+async function _guardarChatTemporalPublico(modo) {
+    try {
+        await fetch('/comentarios/config_temporal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ modo })
+        });
+        showMessage('Chat público actualizado');
+    } catch { showMessage('Error al guardar', true); }
+}
+
+async function _cargarChatTemporalPrivado() {
+    if (USER_CONFIG.userRol !== 'admin') return;
+    try {
+        const r = await fetch('/mensajes_privados/config_temporal');
+        if (!r.ok) return;
+        const { modo } = await r.json();
+        const sel = document.getElementById('chatTemporalPrivadoSelect');
+        if (sel) sel.value = modo;
+    } catch {}
+}
+
+async function _guardarChatTemporalPrivado(modo) {
+    try {
+        await fetch('/mensajes_privados/config_temporal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ modo })
+        });
+        showMessage('Chat privado actualizado');
+    } catch { showMessage('Error al guardar', true); }
+}
+
+// Initialize admin-only features when DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+    if (USER_CONFIG.userRol === 'admin') {
+        _cargarChatTemporalPublico();
+        _cargarChatTemporalPrivado();
+        const selPub = document.getElementById('chatTemporalPublicoSelect');
+        if (selPub) selPub.addEventListener('change', () => _guardarChatTemporalPublico(selPub.value));
+        const selPriv = document.getElementById('chatTemporalPrivadoSelect');
+        if (selPriv) selPriv.addEventListener('change', () => _guardarChatTemporalPrivado(selPriv.value));
+        const btnSel = document.getElementById('btnModoSeleccion');
+        if (btnSel) btnSel.addEventListener('click', _toggleModoSeleccion);
+    }
+});

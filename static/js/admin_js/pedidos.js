@@ -541,7 +541,22 @@ async function cargarPedidos(isAutoRefresh = false) {
                 aplicarFiltros();
             };
 
+            const esEliminable = ['Entregado', 'Cancelado'].includes(pedido.estado);
+            const btnElimInd = card.querySelector(".btn-eliminar-individual");
+            if (!esEliminable) {
+                btnElimInd.style.display = 'none';
+            } else {
+                const cbPedido = document.createElement('input');
+                cbPedido.type = 'checkbox';
+                cbPedido.className = 'pedido-select-check';
+                cbPedido.dataset.id = idStr;
+                cbPedido.style.cssText = 'display:none;width:20px;height:20px;cursor:pointer;accent-color:#e67e22;flex-shrink:0;';
+                const actionsDiv = btnElimInd.parentElement;
+                if (actionsDiv) actionsDiv.insertBefore(cbPedido, actionsDiv.firstChild);
+            }
+
             card.querySelector(".btn-eliminar-individual").onclick = () => {
+                if (!esEliminable) return;
                 mostrarConfirmacionApp("ELIMINAR REGISTRO", "¿Eliminar este pedido permanentemente? Esta acción no se puede deshacer.", async () => {
                     const res = await fetch("/eliminar_pedidos", {
                         method: "DELETE",
@@ -1111,7 +1126,77 @@ async function generarReporteConfigurado() {
 }
 
 window.onload = iniciarModuloPedidos;
-document.addEventListener("DOMContentLoaded", iniciarModuloPedidos);
+document.addEventListener("DOMContentLoaded", () => {
+    iniciarModuloPedidos();
+    _initBulkToolbarPedidos();
+    const btnSelPed = document.getElementById('btnSeleccionarPedidos');
+    if (btnSelPed) btnSelPed.addEventListener('click', _toggleModoSeleccionPedidos);
+});
+
+// ── Multi-select bulk delete for pedidos ───────────────────────────────────────
+
+let _modoSeleccionPed = false;
+
+function _toggleModoSeleccionPedidos() {
+    _modoSeleccionPed = !_modoSeleccionPed;
+    document.querySelectorAll('.pedido-select-check').forEach(cb => {
+        cb.style.display = _modoSeleccionPed ? 'inline-block' : 'none';
+        if (!_modoSeleccionPed) {
+            cb.checked = false;
+            cb.closest('tr, .card')?.classList.remove('item-sel-active');
+        }
+    });
+    const toolbar = document.getElementById('pedBulkToolbar');
+    if (toolbar) toolbar.style.display = _modoSeleccionPed ? 'flex' : 'none';
+    const btn = document.getElementById('btnSeleccionarPedidos');
+    if (btn) btn.classList.toggle('active', _modoSeleccionPed);
+}
+
+function _initBulkToolbarPedidos() {
+    const existing = document.getElementById('pedBulkToolbar');
+    if (existing) return;
+    const toolbar = document.createElement('div');
+    toolbar.id = 'pedBulkToolbar';
+    toolbar.style.cssText = 'display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#fff3cd;border:2px solid #f0ad4e;padding:10px 20px;gap:10px;align-items:center;z-index:1000;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);';
+    toolbar.innerHTML = `
+        <span id="pedBulkCount" style="font-size:0.85rem;color:#856404;">Selecciona pedidos (Entregados/Cancelados)</span>
+        <button class="btn btn-danger btn-sm" onclick="_bulkEliminarPedidos()"><i class="bi bi-trash me-1"></i>Eliminar</button>
+        <button class="btn btn-secondary btn-sm" onclick="_toggleModoSeleccionPedidos()">Cancelar</button>
+    `;
+    document.body.appendChild(toolbar);
+    document.addEventListener('change', (e) => {
+        if (e.target.classList.contains('pedido-select-check')) {
+            const card = e.target.closest('tr, .card');
+            if (card) card.classList.toggle('item-sel-active', e.target.checked);
+            const n = document.querySelectorAll('.pedido-select-check:checked').length;
+            const el = document.getElementById('pedBulkCount');
+            if (el) el.textContent = n > 0 ? `${n} pedido(s) seleccionado(s)` : 'Selecciona pedidos (Entregados/Cancelados)';
+        }
+    });
+}
+
+async function _bulkEliminarPedidos() {
+    const ids = [...document.querySelectorAll('.pedido-select-check:checked')].map(cb => cb.dataset.id);
+    if (!ids.length) return mostrarAlerta('Selecciona al menos un pedido', true);
+    mostrarConfirmacionApp('Eliminar pedidos', `¿Eliminar permanentemente ${ids.length} pedido(s)?`, async () => {
+        try {
+            const r = await fetch('/eliminar_pedidos', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids })
+            });
+            if (r.ok) {
+                const data = await r.json();
+                mostrarAlerta(`${data.eliminados || ids.length} pedido(s) eliminados`);
+                _toggleModoSeleccionPedidos();
+                debouncedCargarPedidos(false);
+            } else {
+                const err = await r.json().catch(() => ({}));
+                mostrarAlerta(err.message || 'Error al eliminar', true);
+            }
+        } catch { mostrarAlerta('Error de red', true); }
+    });
+}
 
 (function() {
     window.history.pushState(null, "", window.location.href);
