@@ -1273,8 +1273,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('notifAdminPanel')) cargarNotificacionesAdmin();
 
     if (document.getElementById('navBellBadge')) {
-        setTimeout(_pollSistemNotif, 2000);
-        setInterval(_pollSistemNotif, 12000);
+        setTimeout(_pollSistemNotif, 1000);
+        setInterval(_pollSistemNotif, 4000);
     }
 
     if (document.getElementById('clientNotifList')) {
@@ -1283,7 +1283,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (document.getElementById('navClientBellBadge') || document.getElementById('navBellBadge') || document.getElementById('navSugerenciasBadge')) {
         setTimeout(_pollPrivMsgs, 500);
-        setInterval(_pollPrivMsgs, 6000);
+        setInterval(_pollPrivMsgs, 2500);
     }
 
     if (document.getElementById('navClientBellBadge')) {

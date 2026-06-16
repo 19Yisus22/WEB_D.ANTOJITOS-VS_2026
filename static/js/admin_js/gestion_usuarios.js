@@ -74,17 +74,7 @@ function sortTabla(col) {
 }
 
 function _avatarHTML(u) {
-    const name = (u.nombre_completo || u.nombre || '').trim();
-    if (u.imagen_url && !u.imagen_url.includes('default_icon_profile')) {
-        return `<div class="user-avatar-cell">
-                    <img src=""
-                         data-profile="${u.imagen_url}"
-                         data-profile-name="${name}"
-                         data-profile-size="80"
-                         alt="${name}"
-                         style="display:block;width:100%;height:100%;object-fit:cover;border-radius:50%;">
-                </div>`;
-    }
+    const name    = (u.nombre_completo || u.nombre || '').trim();
     const initial = name.charAt(0).toUpperCase() || '?';
     const paletas = [
         ['#d35400','#e67e22'],['#1a6fa8','#2980b9'],['#1a8f4c','#27ae60'],
@@ -96,11 +86,51 @@ function _avatarHTML(u) {
         ['#422006','#a16207'],['#0c4a6e','#0284c7'],['#3b0764','#9333ea'],
         ['#14532d','#16a34a'],['#450a0a','#dc2626'],['#172554','#1d4ed8'],
     ];
-    const idx = name.split('').reduce((h,c)=>(h<<5)-h+c.charCodeAt(0),0);
+    const idx    = name.split('').reduce((h,c)=>(h<<5)-h+c.charCodeAt(0),0);
     const [c1,c2] = paletas[Math.abs(idx)%paletas.length];
-    return `<div class="user-avatar-cell" style="background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;">
-                <span style="color:#fff;font-weight:800;font-size:1rem;font-family:'DM Sans',sans-serif;">${initial}</span>
+
+    const hasPhoto = u.imagen_url
+        && !u.imagen_url.includes('default_icon_profile')
+        && u.imagen_url.trim() !== '';
+
+    const photoAttr = hasPhoto
+        ? `data-gu-photo="${u.imagen_url}" data-gu-name="${name}"`
+        : '';
+
+    return `<div class="user-avatar-cell" style="background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;" ${photoAttr}>
+                <span style="color:#fff;font-weight:800;font-size:1.1rem;font-family:'DM Sans',sans-serif;">${initial}</span>
             </div>`;
+}
+
+function _loadAvatarPhotos(scope) {
+    (scope || document).querySelectorAll('[data-gu-photo]').forEach(cell => {
+        if (cell.dataset.guLoaded) return;
+        cell.dataset.guLoaded = '1';
+        const rawUrl = cell.dataset.guPhoto;
+        const name   = cell.dataset.guName || '';
+        if (!rawUrl) return;
+
+        let url = rawUrl;
+        if (rawUrl.includes('cloudinary.com')) {
+            url = rawUrl.replace('/upload/', '/upload/w_92,h_92,c_fill,g_auto:face,q_auto,f_auto/');
+        } else if (rawUrl.includes('googleusercontent.com')) {
+            url = rawUrl.replace(/=s\d+-c/, '=s92-c').replace(/\/s\d+-c/, '/s92-c');
+        }
+
+        const tmp = new Image();
+        tmp.onload = () => {
+            if (!cell.isConnected) return;
+            cell.style.background = '';
+            cell.innerHTML = '';
+            const img = document.createElement('img');
+            img.src   = url;
+            img.alt   = name;
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:50%;display:block;';
+            cell.appendChild(img);
+        };
+        tmp.onerror = () => {};
+        tmp.src = url;
+    });
 }
 
 function _renderPaginacion(total, pagina) {
@@ -231,7 +261,7 @@ function _renderTabla(lista) {
         };
         tbody.appendChild(tr);
     });
-    if (typeof initAllProfileImages === 'function') initAllProfileImages();
+    _loadAvatarPhotos(tbody);
     tbody.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
         bootstrap.Tooltip.getOrCreateInstance(el, { trigger: 'hover' });
     });
@@ -340,16 +370,11 @@ function mostrarDetalleUsuario(u) {
                 <div class="udet-header udet-header-centered">
                     <button type="button" class="btn-close udet-close" data-bs-dismiss="modal"></button>
                     <div class="udet-avatar-wrap udet-avatar-wrap-centered">
-                        ${u.imagen_url && !u.imagen_url.includes('default_icon_profile')
-                            ? `<img src=""
-                                    data-profile="${u.imagen_url}"
-                                    data-profile-name="${u.nombre_completo || ''}"
-                                    data-profile-size="72"
-                                    alt="${u.nombre_completo || ''}"
-                                    class="udet-avatar udet-avatar-lg"
-                                    style="display:block;object-fit:cover;border-radius:50%;"
-                                    onerror="this.style.display='none'">`
-                            : `<div class="udet-avatar-lg udet-avatar-initial" style="background:linear-gradient(135deg,${_dc1},${_dc2});">${_detName.charAt(0).toUpperCase()}</div>`}
+                        <div class="udet-avatar udet-avatar-lg"
+                             style="background:linear-gradient(135deg,${_dc1},${_dc2});display:flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;"
+                             ${u.imagen_url && !u.imagen_url.includes('default_icon_profile') ? `data-gu-photo="${u.imagen_url}" data-gu-name="${u.nombre_completo || ''}"` : ''}>
+                            <span style="color:#fff;font-weight:800;font-size:1.6rem;font-family:'DM Sans',sans-serif;">${_detName.charAt(0).toUpperCase()}</span>
+                        </div>
                     </div>
                     <div class="udet-header-info text-center">
                         <div class="udet-name">${u.nombre_completo || '—'}</div>
@@ -405,7 +430,7 @@ function mostrarDetalleUsuario(u) {
     document.body.appendChild(modal);
     new bootstrap.Modal(modal).show();
     modal.addEventListener('shown.bs.modal', () => {
-        if (typeof initAllProfileImages === 'function') initAllProfileImages();
+        _loadAvatarPhotos(modal);
     });
     modal.addEventListener('hidden.bs.modal', () => modal.remove());
 }

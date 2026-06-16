@@ -377,7 +377,7 @@ function renderComentario(c) {
                         <span class="fw-bold" style="font-size:0.8rem;color:#2c3e50;">${esMio ? 'Tú' : _escAttr(nombre)}</span>
                         <span class="text-muted" style="font-size:0.65rem;opacity:0.8;">• ${_escAttr(fecha)}${yaEditado ? ' · <em style="font-size:0.6rem;opacity:0.75;">editado</em>' : ''}</span>
                     </div>
-                    ${esAdmin ? '<i class="bi bi-three-dots-vertical btn-options text-muted" style="cursor:pointer;font-size:0.8rem;"></i>' :
+                    ${(esAdmin && esMio) ? '<i class="bi bi-three-dots-vertical btn-options text-muted" style="cursor:pointer;font-size:0.8rem;"></i>' :
                       esMio ? `<button class="btn-edit-inline btn p-0 border-0" style="line-height:1;font-size:0.82rem;${yaEditado ? 'color:#bbb;cursor:not-allowed;' : 'color:#7f8c8d;'}" ${yaEditado ? 'disabled title="Ya editaste este mensaje"' : 'title="Editar"'}><i class="bi bi-pencil-fill"></i></button>` : ''}
                 </div>
                 ${mensajeFormateado ? '<div class="mensaje-texto"></div>' : ''}
@@ -441,7 +441,7 @@ function renderComentario(c) {
         }
     });
 
-    if (esAdmin) {
+    if (esAdmin && esMio) {
         const btnOpt = wrapper.querySelector(".btn-options");
         if (btnOpt) btnOpt.onclick = (e) => {
             e.stopPropagation();

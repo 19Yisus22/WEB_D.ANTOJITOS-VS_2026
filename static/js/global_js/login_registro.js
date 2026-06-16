@@ -311,7 +311,7 @@ function initRegistroForm() {
     validateOnBlur('telefono',  v => /^\d{7,15}$/.test(v.trim()));
     validateOnBlur('correo',    v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()));
     validateOnBlur('username',  v => !v.trim() || /^[A-Za-z0-9@#$%&*]{3,30}$/.test(v.trim()));
-    validateOnBlur('contrasena',v => v.length >= 5);
+    validateOnBlur('contrasena', v => v.length >= 8 && /[A-Za-z]/.test(v) && /[0-9]/.test(v));
 
     form.addEventListener('submit', async e => {
         e.preventDefault();
@@ -332,8 +332,9 @@ function initRegistroForm() {
             setWrap('correo', 'error');
             return;
         }
-        if (contrasena.length < 5) {
-            showMessage('Contraseña', 'La contraseña debe tener al menos 5 caracteres', false);
+        if (contrasena.length < 8 || !/[A-Za-z]/.test(contrasena) || !/[0-9]/.test(contrasena)) {
+            showMessage('Contraseña inválida', 'Mín. 8 caracteres, debe incluir al menos una letra y un número.', false);
+            setWrap('contrasena', 'error');
             return;
         }
 

@@ -553,6 +553,13 @@ async function cargarPedidos(isAutoRefresh = false) {
                 cbPedido.style.cssText = 'display:none;width:20px;height:20px;cursor:pointer;accent-color:#e67e22;flex-shrink:0;';
                 const actionsDiv = btnElimInd.parentElement;
                 if (actionsDiv) actionsDiv.insertBefore(cbPedido, actionsDiv.firstChild);
+
+                card.addEventListener('click', e => {
+                    if (!_modoSeleccionPed) return;
+                    if (e.target.closest('button,input,select,label,a')) return;
+                    cbPedido.checked = !cbPedido.checked;
+                    cbPedido.dispatchEvent(new Event('change', { bubbles: true }));
+                });
             }
 
             card.querySelector(".btn-eliminar-individual").onclick = () => {
@@ -1145,6 +1152,10 @@ function _toggleModoSeleccionPedidos() {
             cb.checked = false;
             cb.closest('tr, .card')?.classList.remove('item-sel-active');
         }
+    });
+    document.querySelectorAll('.card[data-id_real]').forEach(card => {
+        const cb = card.querySelector('.pedido-select-check');
+        if (cb) card.style.cursor = _modoSeleccionPed ? 'pointer' : '';
     });
     const toolbar = document.getElementById('pedBulkToolbar');
     if (toolbar) toolbar.style.display = _modoSeleccionPed ? 'flex' : 'none';
