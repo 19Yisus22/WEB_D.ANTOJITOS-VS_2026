@@ -27,7 +27,7 @@ def _ip_rate_ok(ip: str, max_req: int = 10, window_s: int = 60) -> bool:
 from google.oauth2               import id_token
 from google.auth.transport       import requests as google_requests
 
-import helpers.models as db
+import database.models as db
 from helpers.auth import (
     sin_cache, hash_password, verify_password,
     create_access_token, create_refresh_token,
@@ -314,14 +314,16 @@ def registro():
     if request.method == "GET":
         return render_template("global_modules/registro.html")
 
-    p        = request.get_json() or {}
-    nombre   = (p.get("nombre")     or "").strip()
-    apellido = (p.get("apellido")   or "").strip()
-    cedula   = (p.get("cedula")     or "").strip()
-    telefono = (p.get("telefono")   or "").strip()
-    correo   = (p.get("correo")     or "").strip().lower()
-    username = (p.get("username")   or "").strip()
-    password = (p.get("contrasena") or "")
+    p                = request.get_json() or {}
+    nombre           = (p.get("nombre")           or "").strip()
+    apellido         = (p.get("apellido")         or "").strip()
+    cedula           = (p.get("cedula")           or "").strip()
+    telefono         = (p.get("telefono")         or "").strip()
+    correo           = (p.get("correo")           or "").strip().lower()
+    username         = (p.get("username")         or "").strip()
+    password         = (p.get("contrasena")       or "")
+    direccion        = (p.get("direccion")        or "").strip()
+    fecha_nacimiento = (p.get("fecha_nacimiento") or "").strip() or None
 
     if not nombre or not apellido:
         return jsonify({"ok": False, "error": "Nombre y apellido son obligatorios."}), 400
@@ -339,6 +341,8 @@ def registro():
         return jsonify({"ok": False, "error": "Contraseña inválida (mín. 8 caracteres, debe incluir al menos una letra y un número)."}), 400
     if username and not is_valid_username(username):
         return jsonify({"ok": False, "error": "Username inválido (3–30 caracteres, letras/números)."}), 400
+    if not direccion:
+        return jsonify({"ok": False, "error": "La dirección es obligatoria."}), 400
 
     if db.usuario_get_by_correo(correo):
         return jsonify({"ok": False, "error": "El correo ya está registrado."}), 400
@@ -355,13 +359,15 @@ def registro():
             "telefono":        telefono,
             "correo":          correo,
             "contrasena":      hash_password(password),
-            "direccion":       "N/A",
+            "direccion":       direccion,
             "metodo_pago":     "Efectivo",
             "imagen_url":      None,
             "ultima_conexion": _now(),
         }
         if username:
             row["username"] = username
+        if fecha_nacimiento:
+            row["fecha_nacimiento"] = fecha_nacimiento
         db.usuario_create(row)
         return jsonify({"ok": True, "mensaje": "¡Cuenta creada! Ahora puedes iniciar sesión."}), 201
     except Exception as e:
@@ -381,19 +387,31 @@ def inicio():
     user_id = session.get("user_id")
     if not user_id:
         session.clear()
-        return render_template("inicio.html", user=None)
+        return render_template("inicio.html", user=None, logros_inicial=None)
     try:
+        from helpers.logros_utils import LOGROS_DEFINIDOS
         user = db.usuario_get(user_id)
         if not user:
             session.clear()
-            return render_template("inicio.html", user=None)
+            return render_template("inicio.html", user=None, logros_inicial=None)
         if user.get("roles"):
             user["rol"] = user["roles"].get("nombre_role")
         session["user"] = user
         just = session.pop("just_logged_in", False)
-        return render_template("inicio.html", user=user, just_logged_in=just)
+        rol = (user.get("rol") or "cliente").lower()
+        logros_inicial = None
+        try:
+            logros_rol = [l for l in LOGROS_DEFINIDOS if rol in l.get("roles", [])]
+            obtenidos  = db.usuario_logros_get(user_id)
+            total      = len(logros_rol)
+            obt_count  = len(obtenidos)
+            pct        = round((obt_count / total) * 100) if total > 0 else 0
+            logros_inicial = {"total": total, "obtenidos": obt_count, "pct": pct}
+        except Exception:
+            pass
+        return render_template("inicio.html", user=user, just_logged_in=just, logros_inicial=logros_inicial)
     except Exception:
-        return render_template("inicio.html", user=None)
+        return render_template("inicio.html", user=None, logros_inicial=None)
 
 @auth_bp.route("/logout")
 @sin_cache
@@ -405,7 +423,7 @@ def logout():
         except Exception:
             pass
         try:
-            db.usuario_touch(user_id, "2000-01-01T00:00:00+00:00")
+            db.usuario_touch(user_id, _now())
         except Exception:
             pass
     session.clear()

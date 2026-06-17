@@ -1,13 +1,31 @@
 from flask import Blueprint, jsonify, session, request
-import helpers.models as db
+import database.models as db
 from helpers.auth import login_required
 from helpers.logros_utils import LOGROS_DEFINIDOS, verificar_y_otorgar
+from extensions import socketio
 
 logros_bp = Blueprint("logros", __name__)
 
 @logros_bp.route("/logros/todos")
 def todos_los_logros():
     return jsonify(LOGROS_DEFINIDOS)
+
+@logros_bp.route("/logros/progreso")
+@login_required
+def progreso_logros():
+    cedula = session.get("user_id")
+    rol    = (session.get("rol") or "cliente").lower()
+    if rol not in ("cliente", "vendedor", "admin"):
+        rol = "cliente"
+    logros_rol = [l for l in LOGROS_DEFINIDOS if rol in l.get("roles", [])]
+    total = len(logros_rol)
+    try:
+        obtenidos = db.usuario_logros_get(cedula)
+        obt = len(obtenidos)
+        pct = round((obt / total) * 100) if total > 0 else 0
+        return jsonify({"total": total, "obtenidos": obt, "pct": pct})
+    except Exception:
+        return jsonify({"total": total, "obtenidos": 0, "pct": 0})
 
 @logros_bp.route("/logros/mis_logros")
 @login_required
@@ -52,6 +70,8 @@ def verificar_logros():
     contexto["_rol"] = rol
     try:
         nuevos = verificar_y_otorgar(cedula, contexto)
+        if nuevos:
+            socketio.emit("logro_new", {"nuevos": nuevos}, room=f"user_{cedula}")
         return jsonify({"nuevos": nuevos, "ok": True})
     except Exception as e:
         return jsonify({"nuevos": [], "ok": False, "error": str(e)})

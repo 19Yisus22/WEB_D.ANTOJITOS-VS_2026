@@ -312,48 +312,65 @@ function actualizarContadorBadge(total) {
     }
 }
 
-async function finalizarCompra() {
+async function abrirModalDireccion() {
+    if (isRequesting) return;
+    const modalEl = document.getElementById('modalDireccion');
+    if (!modalEl) return;
+    const input   = document.getElementById('inputDireccionPedido');
+    const errDiv  = document.getElementById('errorDireccion');
+    if (input)  input.value = '';
+    if (errDiv) errDiv.classList.add('d-none');
+    try {
+        const r = await fetch('/carrito/mi_direccion');
+        if (r.ok) {
+            const d = await r.json();
+            if (input && d.direccion) input.value = d.direccion;
+        }
+    } catch (_) {}
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    setTimeout(() => { if (input) input.focus(); }, 350);
+}
+
+async function finalizarCompra(direccionEntrega) {
     const btn = document.getElementById("btnFinalizarCompra");
-    if (!btn || isRequesting) return;
+    const btnConf = document.getElementById("btnConfirmarDireccion");
+    if (isRequesting) return;
     isRequesting = true;
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
-    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+
+    const originalConf = btnConf ? btnConf.innerHTML : '';
+    if (btnConf) { btnConf.disabled = true; btnConf.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
+    if (btn) btn.disabled = true;
+
     try {
         const res = await fetch("/finalizar_compra", {
             method: "POST",
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ direccion_entrega: direccionEntrega })
         });
         const data = await res.json();
         if (!res.ok) {
-            if (res.status === 400 && data.completar_perfil) {
-                showMessage(data.message);
-                setTimeout(() => { window.location.href = "/mi_perfil"; }, 1000);
-            } else {
-                showMessage(data.message || "Error procesando pedido", true);
-            }
-            btn.disabled = false;
-            btn.innerHTML = originalText;
+            showMessage(data.message || "Error procesando pedido", true);
+            if (btnConf) { btnConf.disabled = false; btnConf.innerHTML = originalConf; }
+            if (btn) btn.disabled = false;
             return;
         }
-        let msg = "🎉 ¡Pedido enviado con éxito! Pronto te contactaremos.";
+        const modalEl = document.getElementById('modalDireccion');
+        if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
+        let msg = "¡Pedido enviado con éxito! Pronto te contactaremos.";
         if (data.descuento_cumpleanos && data.descuento_monto > 0) {
-            msg += ` Se aplicó descuento de cumpleaños de ${fmt(data.descuento_monto)}.`;
+            msg += ` Descuento de cumpleaños aplicado: ${fmt(data.descuento_monto)}.`;
         }
         showMessage(msg);
         if (data.logros_nuevos && data.logros_nuevos.length > 0 && window.mostrarLogros) {
             window.mostrarLogros(data.logros_nuevos);
         }
         actualizarContadorBadge(0);
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalCarrito'));
-        if (modal) modal.hide();
         await cargarCarrito();
         if (typeof monitorearCambiosFacturas === 'function') monitorearCambiosFacturas();
-    } catch (error) {
+    } catch {
         showMessage("Error de conexión con el servidor", true);
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        if (btnConf) { btnConf.disabled = false; btnConf.innerHTML = originalConf; }
+        if (btn) btn.disabled = false;
     } finally {
         isRequesting = false;
     }
@@ -380,8 +397,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnFinalizar = document.getElementById("btnFinalizarCompra");
     if (btnFinalizar) {
         btnFinalizar.style.display = "none";
-        btnFinalizar.onclick = finalizarCompra;
+        btnFinalizar.onclick = abrirModalDireccion;
     }
+
+    const btnConf = document.getElementById("btnConfirmarDireccion");
+    if (btnConf) {
+        btnConf.onclick = () => {
+            const input  = document.getElementById('inputDireccionPedido');
+            const errDiv = document.getElementById('errorDireccion');
+            const dir    = (input?.value || '').trim();
+            if (!dir) {
+                if (errDiv) errDiv.classList.remove('d-none');
+                if (input)  { input.classList.add('is-invalid'); input.focus(); }
+                return;
+            }
+            if (errDiv) errDiv.classList.add('d-none');
+            if (input)  input.classList.remove('is-invalid');
+            finalizarCompra(dir);
+        };
+    }
+
+    const inputDir = document.getElementById('inputDireccionPedido');
+    if (inputDir) {
+        inputDir.addEventListener('input', () => {
+            const errDiv = document.getElementById('errorDireccion');
+            if (inputDir.value.trim()) {
+                inputDir.classList.remove('is-invalid');
+                if (errDiv) errDiv.classList.add('d-none');
+            }
+        });
+    }
+
     const savedCount = localStorage.getItem('cant_carrito');
     if (savedCount) actualizarContadorBadge(savedCount);
     cargarCarrito();

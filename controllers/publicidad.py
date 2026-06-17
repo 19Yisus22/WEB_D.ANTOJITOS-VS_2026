@@ -1,7 +1,7 @@
 import json
 from flask import Blueprint, request, jsonify, session, render_template
 
-import helpers.models as db
+import database.models as db
 from helpers.auth import sin_cache, admin_required, vendedor_required
 from helpers.cloudinary import upload_image, upload_base64, delete_image, list_all_folders_images, delete_image_by_public_id
 from helpers.validators import TIPOS_PUBLICIDAD

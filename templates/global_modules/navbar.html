@@ -276,3 +276,7 @@
 {% endif %}
 <script src="{{ url_for('static', filename='js/global_js/navbar_init.js') }}"></script>
 <script src="{{ url_for('static', filename='js/global_js/navbar_ticker.js') }}" defer></script>
+{% if session.get('user_id') %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/global_js/socket_client.js') }}" defer></script>
+{% endif %}

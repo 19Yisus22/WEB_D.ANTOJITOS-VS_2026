@@ -171,7 +171,7 @@ def _try_rebuild_session_from_at() -> bool:
     if not payload or payload.get("type") != "access":
         return False
     try:
-        import helpers.models as db
+        import database.models as db
         user = db.usuario_get(payload["sub"])
         if not user:
             return False

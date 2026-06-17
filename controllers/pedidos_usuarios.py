@@ -1,10 +1,25 @@
 from flask import Blueprint, request, jsonify, session, redirect, render_template
 
-import helpers.models as db
+import database.models as db
 from helpers.auth import sin_cache, login_required, vendedor_required
 from helpers.validators import ESTADOS_PEDIDO, ESTADOS_FACTURA
+from extensions import socketio
 
 pedidos_usuarios_bp = Blueprint("pedidos_usuarios", __name__)
+
+
+def _emit_pedido_update(pedido: dict, nuevo_estado: str | None = None, estado_factura: str | None = None):
+    payload = {
+        "id_pedido":      str(pedido.get("id_pedido", "")),
+        "numero_factura": pedido.get("numero_factura", ""),
+        "estado":         nuevo_estado or pedido.get("estado", ""),
+        "estado_factura": estado_factura or "",
+        "pagado":         pedido.get("pagado", False),
+    }
+    socketio.emit("pedido_update", payload, room="staff")
+    cedula = str(pedido.get("cedula", ""))
+    if cedula:
+        socketio.emit("pedido_update", payload, room=f"user_{cedula}")
 
 @pedidos_usuarios_bp.route("/pedidos_page")
 @sin_cache
@@ -57,7 +72,8 @@ def actualizar_estado(id_pedido):
         factura = db.factura_get_by_numero(pedido.get("numero_factura", ""))
         if factura:
             db.factura_update(pedido["numero_factura"], {"estado": estado_factura})
-
+        pedido["estado"] = nuevo_estado
+        _emit_pedido_update(pedido, nuevo_estado, estado_factura)
         return jsonify({"ok": True, "nuevo_estado": nuevo_estado, "estado_factura": estado_factura}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -73,7 +89,10 @@ def actualizar_pago_item(id_pedido):
         id_str = str(id_pedido)
         if not db.pedido_get(id_str):
             return jsonify({"error": "Pedido no encontrado"}), 404
+        pedido = db.pedido_get(id_str)
         db.pedido_update(id_str, {"pagado": bool(pagado)})
+        pedido["pagado"] = bool(pagado)
+        _emit_pedido_update(pedido)
         return jsonify({"ok": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -102,7 +121,8 @@ def actualizar_pago_general(id_pedido):
 
         if pedido.get("numero_factura"):
             db.factura_update(pedido["numero_factura"], {"estado": estado_factura})
-
+        pedido["pagado"] = bool(pagado_general)
+        _emit_pedido_update(pedido, pedido.get("estado"), estado_factura)
         return jsonify({"ok": True, "pagado": pagado_general, "estado_factura": estado_factura}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

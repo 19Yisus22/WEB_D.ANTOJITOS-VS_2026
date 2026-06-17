@@ -153,16 +153,19 @@
                         <h5 class="mb-3 fw-bold" style="color:#333;border-left:4px solid #d35400;padding-left:12px;"
                             data-config-key="explorar_titulo">Explorar</h5>
                         {% if session.get('user') %}
+                        {% if logros_inicial %}
+                        <script>window.LOGROS_INICIAL={{ logros_inicial | tojson }};</script>
+                        {% endif %}
                         <div id="logrosProgresoWrap" style="margin-bottom:16px;">
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
                                 <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#6c757d;">
                                     <i class="bi bi-trophy-fill me-1" style="color:#f59e0b;"></i>Progreso de Logros
                                 </span>
-                                <span id="logrosProgresoLabel" style="font-size:0.72rem;font-weight:700;color:#d35400;">—</span>
+                                <span id="logrosProgresoLabel" style="font-size:0.72rem;font-weight:700;color:#d35400;">{% if logros_inicial %}{{ logros_inicial.obtenidos }}/{{ logros_inicial.total }} · {{ logros_inicial.pct }}%{% else %}—{% endif %}</span>
                             </div>
                             <div style="background:#f0f0f0;border-radius:999px;height:8px;overflow:hidden;position:relative;">
                                 <div id="logrosProgresoBar"
-                                     style="height:100%;width:0%;border-radius:999px;
+                                     style="height:100%;width:{% if logros_inicial %}{{ logros_inicial.pct }}{% else %}0{% endif %}%;border-radius:999px;
                                             background:linear-gradient(90deg,#4a6fa5,#7c3aed,#f59e0b);
                                             background-size:200% 100%;
                                             transition:width 1.2s cubic-bezier(0.22,1,0.36,1);

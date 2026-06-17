@@ -614,7 +614,7 @@ async function cargarPedidos(isAutoRefresh = false) {
     } catch (e) {
         console.error("Fallo en carga de pedidos:", e);
     } finally {
-        _cargandoPedidos = false; /* libera el lock siempre */
+        _cargandoPedidos = false;
     }
 }
 
@@ -1140,8 +1140,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnSelPed) btnSelPed.addEventListener('click', _toggleModoSeleccionPedidos);
 });
 
-// ── Multi-select bulk delete for pedidos ───────────────────────────────────────
-
 let _modoSeleccionPed = false;
 
 function _toggleModoSeleccionPedidos() {
@@ -1225,7 +1223,6 @@ async function _bulkEliminarPedidos() {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-pedidos.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }
-/* ── Modal de foto de perfil del cliente ── */
 window._abrirModalFotoPedido = function(url, nombre) {
     let modal = document.getElementById('_modalFotoPedido');
     if (!modal) {

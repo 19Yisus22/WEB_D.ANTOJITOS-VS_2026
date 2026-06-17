@@ -1,3 +1,5 @@
+from gevent import monkey as _gm
+_gm.patch_all()
 import sys
 sys.dont_write_bytecode = True
 import os
@@ -42,6 +44,7 @@ from dotenv import load_dotenv
 from flask import Flask, redirect, request
 from flask_cors import CORS
 from datetime import timedelta
+from extensions import socketio
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
@@ -72,6 +75,16 @@ app.config["SESSION_COOKIE_SECURE"]   = _IS_PROD
 app.config["SESSION_COOKIE_SAMESITE"] = "Strict"
 CORS(app, supports_credentials=True)
 
+socketio.init_app(
+    app,
+    cors_allowed_origins="*",
+    async_mode="gevent",
+    ping_timeout=60,
+    ping_interval=25,
+    logger=False,
+    engineio_logger=False,
+)
+
 from controllers.auth               import auth_bp
 from controllers.perfil             import perfil_bp
 from controllers.perfil_usuarios    import perfil_usuarios_bp
@@ -101,6 +114,8 @@ app.register_blueprint(facturacion_bp)
 app.register_blueprint(comentarios_bp)
 app.register_blueprint(paginas_estaticas_bp)
 app.register_blueprint(logros_bp)
+
+import sockets_handlers
 
 @app.after_request
 def agregar_cabeceras(response):
@@ -158,7 +173,7 @@ def redirect_root():
 def auto_rebuild_session_from_token():
     from flask import session as _session
     from helpers.auth import verify_access_token, verify_refresh_token, hash_token, _build_session_data
-    import helpers.models as db
+    import database.models as db
 
     if request.path.startswith("/static/"):
         return
@@ -227,9 +242,11 @@ if __name__ == "__main__":
         print("\033[93m" + "MODE DEVELOPMENT - DEBUG" + "\033[0m")
         print("\033[36m" + f"Local : http://localhost:{port}" + "\033[0m")
         print("\033[92m" + f"Red   : http://{local_ip}:{port}" + "\033[0m")
-        app.run(host=host, port=port, debug=True, threaded=True)
+        socketio.run(app, host=host, port=port, debug=False, use_reloader=False)
     else:
         print("\033[92m" + "PRODUCTION MODE" + "\033[0m")
         print("\033[36m" + f"Local : http://localhost:{port}" + "\033[0m")
         print("\033[92m" + f"Red   : http://{local_ip}:{port}" + "\033[0m")
-        app.run(host=host, port=port, debug=False, threaded=True)
+        socketio.run(app, host=host, port=port, debug=False)
+
+# D'Antojitos© 2023 - Todos los derechos reservados

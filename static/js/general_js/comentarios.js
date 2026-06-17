@@ -314,26 +314,42 @@ async function toggleLike(id) {
     if (!container) return;
     const icon = container.querySelector('.btn-like-mini i');
     const span = container.querySelector('.btn-like-mini small');
-    const wasLiked = icon.classList.contains('bi-heart-fill');
-    icon.classList.toggle('bi-heart-fill', !wasLiked);
-    icon.classList.toggle('bi-heart', wasLiked);
-    icon.classList.toggle('text-danger', !wasLiked);
-    span.innerText = !wasLiked ? parseInt(span.innerText) + 1 : Math.max(0, parseInt(span.innerText) - 1);
+    if (!icon || !span) return;
+
+    const wasLiked  = icon.classList.contains('bi-heart-fill');
+    const newLiked  = !wasLiked;
+    const newCount  = newLiked ? parseInt(span.innerText || 0) + 1 : Math.max(0, parseInt(span.innerText || 0) - 1);
+
+    _syncLikeBtn(container, newLiked, newCount);
+
+    const myId = String(USER_CONFIG.userId);
+    const c = comentariosActuales.find(x => String(x.id) === String(id));
+    if (c) {
+        c.likes_usuarios = newLiked
+            ? [...(c.likes_usuarios || []).filter(l => String(l) !== myId), myId]
+            : (c.likes_usuarios || []).filter(l => String(l) !== myId);
+        _comentariosHash = _hashComentarios(comentariosActuales);
+    }
+
+    _likeInFlight = true;
     try {
         const res = await fetch(`/comentarios/${id}/like`, { method: "POST" });
         if (res.ok) {
-            const data = await res.json();
+            const data  = await res.json();
             const likes = data.likes || [];
-            const liked = likes.map(String).includes(String(USER_CONFIG.userId));
-            icon.classList.toggle('bi-heart-fill', liked);
-            icon.classList.toggle('bi-heart', !liked);
-            icon.classList.toggle('text-danger', liked);
-            span.innerText = likes.length;
+            const liked = likes.map(String).includes(myId);
+            _syncLikeBtn(container, liked, likes.length);
+            if (c) {
+                c.likes_usuarios = likes;
+                _comentariosHash  = _hashComentarios(comentariosActuales);
+            }
         } else {
-            await cargarComentarios();
+            await cargarComentarios(true);
         }
     } catch {
-        await cargarComentarios();
+        await cargarComentarios(true);
+    } finally {
+        _likeInFlight = false;
     }
 }
 
@@ -345,7 +361,7 @@ function renderComentario(c) {
     const esAdmin = USER_CONFIG.userRol === 'admin';
     const esMio = String(c.cedula) === String(USER_CONFIG.userId);
     const yaEditado = c.updated_at && c.created_at && c.updated_at !== c.created_at;
-    const puedeEditar = esMio && (esAdmin || !yaEditado);
+    const puedeEditar = esAdmin || (esMio && !yaEditado);
     const mostrarOpciones = esAdmin || esMio;
     const bgGradient = getUserPastelColor(String(c.cedula));
     const info = c.usuario_info || {};
@@ -377,7 +393,7 @@ function renderComentario(c) {
                         <span class="fw-bold" style="font-size:0.8rem;color:#2c3e50;">${esMio ? 'Tú' : _escAttr(nombre)}</span>
                         <span class="text-muted" style="font-size:0.65rem;opacity:0.8;">• ${_escAttr(fecha)}${yaEditado ? ' · <em style="font-size:0.6rem;opacity:0.75;">editado</em>' : ''}</span>
                     </div>
-                    ${(esAdmin && esMio) ? '<i class="bi bi-three-dots-vertical btn-options text-muted" style="cursor:pointer;font-size:0.8rem;"></i>' :
+                    ${esAdmin ? '<i class="bi bi-three-dots-vertical btn-options text-muted" style="cursor:pointer;font-size:0.8rem;"></i>' :
                       esMio ? `<button class="btn-edit-inline btn p-0 border-0" style="line-height:1;font-size:0.82rem;${yaEditado ? 'color:#bbb;cursor:not-allowed;' : 'color:#7f8c8d;'}" ${yaEditado ? 'disabled title="Ya editaste este mensaje"' : 'title="Editar"'}><i class="bi bi-pencil-fill"></i></button>` : ''}
                 </div>
                 ${mensajeFormateado ? '<div class="mensaje-texto"></div>' : ''}
@@ -441,7 +457,7 @@ function renderComentario(c) {
         }
     });
 
-    if (esAdmin && esMio) {
+    if (esAdmin) {
         const btnOpt = wrapper.querySelector(".btn-options");
         if (btnOpt) btnOpt.onclick = (e) => {
             e.stopPropagation();
@@ -492,14 +508,12 @@ function renderComentario(c) {
 
     if (esAdmin) {
         wrapper.style.position = 'relative';
-        // Invisible checkbox — just for data storage, not in the flex flow
         const cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.className = 'chat-msg-check';
         cb.dataset.id = c.id;
         cb.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:0;height:0;';
         wrapper.appendChild(cb);
-        // Visible selection marker (circle with check)
         const dot = document.createElement('div');
         dot.className = 'msg-sel-dot';
         const side = esMio ? 'right:2px;' : 'left:2px;';
@@ -512,12 +526,23 @@ function renderComentario(c) {
 }
 
 let _comentariosHash = '';
+let _likeInFlight   = false;
 
 function _hashComentarios(arr) {
     return arr.map(c => c.id + ':' + (c.updated_at || c.created_at || '') + ':' + (c.likes_usuarios || []).length).join('|');
 }
 
+function _syncLikeBtn(container, liked, count) {
+    const icon = container.querySelector('.btn-like-mini i');
+    const span = container.querySelector('.btn-like-mini small');
+    if (!icon || !span) return;
+    icon.className = `bi ${liked ? 'bi-heart-fill text-danger' : 'bi-heart'}`;
+    icon.style.color = liked ? '' : '#888';
+    span.innerText   = count;
+}
+
 async function cargarComentarios(force = false) {
+    if (_likeInFlight && !force) return;
     try {
         const res = await fetch("/comentarios", { cache: 'no-store' });
         if (!res.ok) return;
@@ -803,7 +828,7 @@ async function _cargarHiloCliente() {
             box.innerHTML = `<div class="priv-hilo-empty"><i class="bi bi-chat-dots"></i><p data-i18n="chat.priv_empty">${t('chat.priv_empty')}</p></div>`;
             return;
         }
-        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_para === USER_CONFIG.userId, m.id)));
+        msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
         if (eraAbajo) box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -874,6 +899,7 @@ async function enviarMensajeLibreCliente() {
             body: JSON.stringify(body)
         });
         if (r.ok) {
+            _clienteHiloHash = '';
             await _cargarHiloCliente();
         } else {
             document.querySelector(`[data-temp-id="${tempId}"]`)?.remove();
@@ -1028,7 +1054,7 @@ async function abrirConversacion(cedulaCliente, nombreCliente, fotoCliente) {
         const _clearedAt = localStorage.getItem(_clearKey);
         const _filtrados = _clearedAt ? msgs.filter(m => new Date(m.created_at) > new Date(_clearedAt)) : msgs;
         box.innerHTML = '';
-        _filtrados.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_para === USER_CONFIG.userId, m.id)));
+        _filtrados.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
         box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -1135,7 +1161,7 @@ async function _refreshMensajesCV() {
         _cvConvHash = hash;
         const eraAbajo = box.scrollHeight - box.scrollTop <= box.clientHeight + 100;
         box.innerHTML = '';
-        filtered.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_para === USER_CONFIG.userId, m.id)));
+        filtered.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
         if (eraAbajo) box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -1369,7 +1395,7 @@ function _renderMsgPrivado(m, esMio, msgId) {
             `<img src="${a.data}" class="chat-bubble-img" alt="${a.nombre||'imagen'}" onclick="_abrirImagenAmpliada('${a.data}')">`
           ).join('')}</div>`
         : '';
-    const editBtnHtml = !esMio || m.es_predeterminado ? '' :
+    const editBtnHtml = ((!esMio && !esAdmin) || m.es_predeterminado) ? '' :
         esAdmin ? `<button class="priv-msg-edit" onclick="editarMsgPrivado('${msgId}')" title="${t('btn.edit')}"><i class="bi bi-pencil"></i></button>` :
         yaEditado ? `<button class="priv-msg-edit" disabled title="Ya editado" style="opacity:0.4;cursor:not-allowed;"><i class="bi bi-pencil"></i></button>` :
         `<button class="priv-msg-edit" onclick="editarMsgPrivado('${msgId}')" title="${t('btn.edit')}"><i class="bi bi-pencil"></i></button>`;
@@ -1417,7 +1443,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-comentarios.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }
 
-// ── Multi-select bulk delete (admin only) ──────────────────────────────────────
+
 
 let _modoSeleccion = false;
 
@@ -1485,7 +1511,7 @@ function _mostrarToolbarBulk(visible) {
         toolbar.appendChild(btnDel);
         toolbar.appendChild(btnCancel);
         document.body.appendChild(toolbar);
-        // Click anywhere on a message to toggle selection
+        
         chatBox?.addEventListener('click', (e) => {
             if (!_modoSeleccion) return;
             const wrapper = e.target.closest('[id^="msg-"]');
@@ -1520,16 +1546,35 @@ async function _bulkEliminarSeleccionados() {
     });
 }
 
-// ── Chat temporal (admin only) ─────────────────────────────────────────────────
+
+
+const _MODO_LABELS = {
+    '24h':     '24 horas',
+    '7d':      '7 días',
+    'mensual': '1 mes',
+};
+
+function _actualizarBannerTemporal(bannerEl, modo) {
+    if (!bannerEl) return;
+    if (!modo || modo === 'desactivado') {
+        bannerEl.classList.add('d-none');
+        return;
+    }
+    bannerEl.classList.remove('d-none');
+    bannerEl.innerHTML = `<i class="bi bi-clock-history me-2"></i>
+        <span>Mensajes temporales activados — se eliminan automáticamente cada <strong>${_MODO_LABELS[modo] || modo}</strong></span>`;
+}
 
 async function _cargarChatTemporalPublico() {
-    if (USER_CONFIG.userRol !== 'admin') return;
     try {
         const r = await fetch('/comentarios/config_temporal');
         if (!r.ok) return;
         const { modo } = await r.json();
-        const sel = document.getElementById('chatTemporalPublicoSelect');
-        if (sel) sel.value = modo;
+        if (USER_CONFIG.userRol === 'admin') {
+            const sel = document.getElementById('chatTemporalPublicoSelect');
+            if (sel) sel.value = modo;
+        }
+        _actualizarBannerTemporal(document.getElementById('bannerTemporalPublico'), modo);
     } catch {}
 }
 
@@ -1540,18 +1585,21 @@ async function _guardarChatTemporalPublico(modo) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ modo })
         });
+        _actualizarBannerTemporal(document.getElementById('bannerTemporalPublico'), modo);
         showMessage('Chat público actualizado');
     } catch { showMessage('Error al guardar', true); }
 }
 
 async function _cargarChatTemporalPrivado() {
-    if (USER_CONFIG.userRol !== 'admin') return;
     try {
         const r = await fetch('/mensajes_privados/config_temporal');
         if (!r.ok) return;
         const { modo } = await r.json();
-        const sel = document.getElementById('chatTemporalPrivadoSelect');
-        if (sel) sel.value = modo;
+        if (USER_CONFIG.userRol === 'admin') {
+            const sel = document.getElementById('chatTemporalPrivadoSelect');
+            if (sel) sel.value = modo;
+        }
+        _actualizarBannerTemporal(document.getElementById('bannerTemporalPrivado'), modo);
     } catch {}
 }
 
@@ -1562,20 +1610,43 @@ async function _guardarChatTemporalPrivado(modo) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ modo })
         });
+        _actualizarBannerTemporal(document.getElementById('bannerTemporalPrivado'), modo);
         showMessage('Chat privado actualizado');
     } catch { showMessage('Error al guardar', true); }
 }
 
-// Initialize admin-only features when DOM ready
 document.addEventListener('DOMContentLoaded', () => {
-    if (USER_CONFIG.userRol === 'admin') {
+    if (USER_CONFIG.isLogged) {
         _cargarChatTemporalPublico();
         _cargarChatTemporalPrivado();
+    }
+    if (USER_CONFIG.userRol === 'admin') {
         const selPub = document.getElementById('chatTemporalPublicoSelect');
         if (selPub) selPub.addEventListener('change', () => _guardarChatTemporalPublico(selPub.value));
         const selPriv = document.getElementById('chatTemporalPrivadoSelect');
         if (selPriv) selPriv.addEventListener('change', () => _guardarChatTemporalPrivado(selPriv.value));
         const btnSel = document.getElementById('btnModoSeleccion');
         if (btnSel) btnSel.addEventListener('click', _toggleModoSeleccion);
+    }
+});
+
+document.addEventListener('socket:chat_new_msg', () => {
+    _chatPublicoHash = '';
+    if (document.getElementById('panelPublico')?.style.display !== 'none') {
+        _cargarComentarios(true);
+    }
+});
+
+document.addEventListener('socket:priv_new_msg', (e) => {
+    const { cedula_de, cedula_para } = e.detail || {};
+    const miCedula = USER_CONFIG.userId;
+    const esRelevante = cedula_de === miCedula || cedula_para === miCedula;
+    if (!esRelevante) return;
+    _clienteHiloHash  = '';
+    _cvConvHash       = '';
+    _staffConvHash    = '';
+    if (document.getElementById('panelPrivado')?.style.display !== 'none') {
+        if (typeof _cargarHiloCliente === 'function') _cargarHiloCliente();
+        if (_hiloSeleccionado && typeof _refreshMensajesCV === 'function') _refreshMensajesCV();
     }
 });

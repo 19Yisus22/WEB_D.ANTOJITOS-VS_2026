@@ -8,13 +8,13 @@ const badgeCarrito = document.getElementById("contadorCarritoBadge");
 let productos = [];
 let categorias = [];
 let filtroCategoria = 'Todas';
-let filtroIndex = 0; // 0 = sin filtro (agrupa por categorías)
+let filtroIndex = 0; 
 let contadorCarrito = 0;
 let isFirstLoad = true;
 let isProcessingPurchase = false;
 let searchTimeout = null;
 const productosNotificados = new Set();
-const filtros = ['', 'Recientes', 'Antiguos', 'Favoritos']; // index 0 = sin filtro
+const filtros = ['', 'Recientes', 'Antiguos', 'Favoritos']; 
 const userLogged = window.userLogged || false;
 let favoritos = JSON.parse(localStorage.getItem('mis_favoritos_postres')) || [];
 let audioCtx = null;
@@ -247,7 +247,7 @@ function renderProductos(filterText = '') {
     const disponibles = baseFiltrada.filter(p => p.stock > 0);
     const agotados    = baseFiltrada.filter(p => p.stock <= 0);
 
-    // Only group by categories when no sort/filter is active (filtroIndex === 0)
+    
     const usarGrupoCategorias = filtroCategoria === 'Todas'
         && categorias.length > 0
         && filtroIndex === 0;

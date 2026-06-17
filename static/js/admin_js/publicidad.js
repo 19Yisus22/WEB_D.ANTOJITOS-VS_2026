@@ -730,7 +730,7 @@ function _renderGestorPagina(imgs) {
     window._gestorImgsActuales = imgs;
     grid.innerHTML = `<div class="col-12"><ul class="list-group list-group-flush">${liHtml}</ul>${pagNav}</div>`;
 
-    // Wire click delegation on the list
+    
     const ul = grid.querySelector('ul.list-group');
     if (ul) {
         ul.addEventListener('click', (e) => {
@@ -815,7 +815,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {navigator.serviceWorker.register('/static/js/workers/service-worker-publicidad.js') .then(() => console.log('SW OK')) .catch(err => console.error('SW Error', err));});
 }
 
-// ── Multi-select bulk delete for gestor de imágenes ────────────────────────────
+
 
 let _modoSeleccionGestor = false;
 

@@ -41,13 +41,14 @@
                 </div>
                 <div id="panelPublico">
                     {% if session.get('rol') == 'admin' %}
-                    <div class="d-flex align-items-center gap-2 px-3 py-2 border-bottom bg-light" style="flex-wrap:wrap;">
-                        <button id="btnModoSeleccion" class="btn btn-sm btn-outline-warning" title="Selección múltiple">
+                    <div class="temporal-controls-bar">
+                        <button id="btnModoSeleccion" class="btn btn-sm temporal-btn-sel" title="Selección múltiple">
                             <i class="bi bi-check2-square me-1"></i>Seleccionar
                         </button>
-                        <label class="mb-0 ms-auto d-flex align-items-center gap-2" style="font-size:0.82rem;color:#555;">
-                            <i class="bi bi-clock-history"></i> Chat público:
-                            <select id="chatTemporalPublicoSelect" class="form-select form-select-sm" style="width:auto;font-size:0.8rem;">
+                        <label class="temporal-controls-label ms-auto">
+                            <i class="bi bi-clock-history me-1"></i>
+                            <span>Chat público:</span>
+                            <select id="chatTemporalPublicoSelect" class="temporal-select">
                                 <option value="desactivado">Desactivado</option>
                                 <option value="24h">Cada 24 horas</option>
                                 <option value="7d">Cada 7 días</option>
@@ -56,6 +57,7 @@
                         </label>
                     </div>
                     {% endif %}
+                    <div id="bannerTemporalPublico" class="temporal-active-banner d-none"></div>
                     <div id="chatBox" class="p-3 p-md-4"></div>
 
                     <div class="chat-input-area p-3 border-top">
@@ -140,6 +142,7 @@
 
                 {% if session.get('user_id') %}
                 <div id="panelPrivado" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+                    <div id="bannerTemporalPrivado" class="temporal-active-banner d-none"></div>
 
                     {% set user_rol = session.get('rol', 'cliente') %}
 
@@ -190,10 +193,11 @@
                     </div>
 
                     {% elif user_rol == 'admin' %}
-                    <div class="d-flex align-items-center gap-2 px-3 py-2 border-bottom bg-light" style="flex-wrap:wrap;">
-                        <label class="mb-0 ms-auto d-flex align-items-center gap-2" style="font-size:0.82rem;color:#555;">
-                            <i class="bi bi-clock-history"></i> Chat privado:
-                            <select id="chatTemporalPrivadoSelect" class="form-select form-select-sm" style="width:auto;font-size:0.8rem;">
+                    <div class="temporal-controls-bar">
+                        <label class="temporal-controls-label ms-auto">
+                            <i class="bi bi-clock-history me-1"></i>
+                            <span>Chat privado:</span>
+                            <select id="chatTemporalPrivadoSelect" class="temporal-select">
                                 <option value="desactivado">Desactivado</option>
                                 <option value="24h">Cada 24 horas</option>
                                 <option value="7d">Cada 7 días</option>

@@ -249,12 +249,35 @@ h2 i {
 }
 
 footer {
-    background-color: var(--white);
-    color: var(--secondary);
-    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--secondary) 0%, #1a2634 100%);
+    color: rgba(255,255,255,0.85);
+    padding: 2.2rem 2rem;
     width: 100%;
-    border-top: 1px solid rgba(0,0,0,0.05);
-    z-index: 50;
+    position: relative;
+    overflow: hidden;
+}
+
+footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--primary));
+}
+
+footer::after {
+    content: 'D\'ANTOJITOS';
+    position: absolute;
+    right: -20px;
+    bottom: -18px;
+    font-size: 6rem;
+    font-weight: 900;
+    color: rgba(255,255,255,0.03);
+    letter-spacing: 4px;
+    pointer-events: none;
+    user-select: none;
 }
 
 .footer-content {
@@ -263,22 +286,70 @@ footer {
     justify-content: space-between;
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 2rem;
+    gap: 1.5rem;
+}
+
+.footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.footer-brand img.app-badge {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.15);
+    padding: 3px;
+    background: rgba(255,255,255,0.08);
+}
+
+.footer-brand-name {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.footer-brand-name span:first-child {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.footer-brand-name span:last-child {
+    font-size: 0.7rem;
+    color: var(--primary-light);
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .footer-info {
     text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .copyright-text {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 600;
+    color: rgba(255,255,255,0.75);
 }
 
 .author-credit {
-    font-size: 0.8rem;
-    color: var(--primary);
-    font-weight: 500;
+    font-size: 0.78rem;
+    color: var(--primary-light);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.footer-divider {
+    width: 1px;
+    height: 40px;
+    background: rgba(255,255,255,0.12);
+    flex-shrink: 0;
 }
 
 .app-badge {
@@ -370,7 +441,10 @@ footer {
     .card h3 { font-size: 1.15rem; }
     .card-grid { gap: 16px; }
     .btn-back-home { bottom: 24px; right: 20px; width: 50px; height: 50px; border-radius: 16px; }
-    .footer-content { flex-direction: column; text-align: center; gap: 10px; padding: 0 1rem; }
+    .footer-content { flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 0; }
+    .footer-info { text-align: center; }
+    .footer-divider { width: 60px; height: 1px; }
+    footer::after { display: none; }
 }
 @media (max-width: 480px) {
     main { padding: 1rem 0.75rem; padding-top: 4.5rem; }

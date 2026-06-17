@@ -2010,7 +2010,7 @@ html[data-theme="dark"] body,
     }
 }
 
-/* ── Multi-select visual feedback (shared across modules) ─────────────────── */
+
 .item-sel-active {
     outline: 2.5px solid #e74c3c !important;
     background: rgba(231, 76, 60, 0.06) !important;

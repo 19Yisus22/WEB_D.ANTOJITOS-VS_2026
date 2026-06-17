@@ -28,7 +28,7 @@ DROP FUNCTION IF EXISTS gestionar_stock_pedido()     CASCADE;
 DROP FUNCTION IF EXISTS handle_user_login()          CASCADE;
 DROP FUNCTION IF EXISTS rls_auto_enable()            CASCADE;
 
--- INICIO DE LA CREACION DE TABLAS Y FUNCIONES --
+
 
 CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA extensions;
@@ -164,6 +164,8 @@ CREATE TABLE comentarios (
     mensaje        text NOT NULL,
     likes_usuarios jsonb DEFAULT '[]'::jsonb,
     adjuntos       jsonb DEFAULT '[]'::jsonb,
+    es_editado     boolean DEFAULT false,
+    updated_at     timestamptz,
     created_at     timestamptz DEFAULT now(),
     CONSTRAINT comentarios_pkey        PRIMARY KEY (id),
     CONSTRAINT comentarios_cedula_fkey FOREIGN KEY (cedula) REFERENCES usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE
@@ -190,6 +192,8 @@ CREATE TABLE mensajes_privados (
     tipo        text DEFAULT 'cv',
     leido       boolean DEFAULT false,
     adjuntos    jsonb DEFAULT '[]'::jsonb,
+    es_editado  boolean DEFAULT false,
+    updated_at  timestamptz,
     created_at  timestamptz DEFAULT now(),
     CONSTRAINT mensajes_privados_pkey           PRIMARY KEY (id),
     CONSTRAINT mensajes_privados_cedula_de_fkey FOREIGN KEY (cedula_de) REFERENCES usuarios(cedula) ON DELETE CASCADE ON UPDATE CASCADE
@@ -365,3 +369,11 @@ ALTER TABLE metodos_pago
 INSERT INTO inicio_config (clave, valor)
 VALUES ('velocidad_cinta', '1')
 ON CONFLICT (clave) DO NOTHING;
+
+ALTER TABLE comentarios
+    ADD COLUMN IF NOT EXISTS es_editado boolean DEFAULT false,
+    ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+
+ALTER TABLE mensajes_privados
+    ADD COLUMN IF NOT EXISTS es_editado boolean DEFAULT false,
+    ADD COLUMN IF NOT EXISTS updated_at timestamptz;

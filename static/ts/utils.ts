@@ -1,10 +1,6 @@
-/* ═══════════════════════════════════════════════════════════════
-   utils.ts — D'Antojitos©
-   TypeScript fuente de utils.js. Compila a static/js/compiled/
-   Ejecutar: npm run build  (esbuild, ES2020, no bundle)
-   ═══════════════════════════════════════════════════════════════ */
 
-// ── Tipos ──────────────────────────────────────────────────────
+
+
 type Theme       = "light" | "dark";
 type SoundType   = "error" | "default";
 type ToastTipo   = "info" | "success" | "error" | "warning" | "favorito" | "bienvenida";
@@ -19,20 +15,20 @@ interface ToastPublicaOpts {
   sonido?:   boolean;
 }
 
-// Declaraciones de globals de otros módulos
+
 declare function getLang(): string;
 
-// AudioContext cross-browser
+
 interface WindowWithAudio extends Window {
   AudioContext?:       typeof AudioContext;
   webkitAudioContext?: typeof AudioContext;
 }
 declare const window: WindowWithAudio;
 
-// ── Estado interno ─────────────────────────────────────────────
+
 const _notifIdSet = new Set<string>();
 
-// ── Helpers de AudioContext ────────────────────────────────────
+
 function _getAudioContextClass(): typeof AudioContext | undefined {
   return window.AudioContext ?? window.webkitAudioContext;
 }
@@ -67,11 +63,11 @@ function _playNotifSound(type: SoundType = "default"): void {
     osc.connect(gain);
     gain.connect(ctx.destination);
   } catch {
-    /* AudioContext bloqueado por política del navegador — silencio */
+    
   }
 }
 
-// ── Toast admin (fondo blanco, derecha) ───────────────────────
+
 function mostrarAlerta(mensaje: string, esError = false, duracionMs = 4000): void {
   let container = document.getElementById("toastContainer");
   if (!container) {
@@ -142,7 +138,7 @@ function mostrarAlerta(mensaje: string, esError = false, duracionMs = 4000): voi
 
   container.appendChild(toast);
 
-  // Doble rAF garantiza que el navegador aplique el estado inicial antes de animar
+  
   requestAnimationFrame(() => requestAnimationFrame(() => {
     toast.style.transform = "translateX(0)";
     toast.style.opacity   = "1";
@@ -157,7 +153,7 @@ function mostrarAlerta(mensaje: string, esError = false, duracionMs = 4000): voi
   setTimeout(eliminar, duracionMs);
 }
 
-// ── Toast público (fondo oscuro, izquierda, con imagen) ────────
+
 function mostrarAlertaPublica({
   mensaje,
   titulo    = "",
@@ -275,7 +271,7 @@ function mostrarAlertaPublica({
   setTimeout(remove, duracion);
 }
 
-// ── Modal de confirmación ──────────────────────────────────────
+
 function mostrarConfirmacionApp(
   titulo: string,
   mensaje: string,
@@ -368,7 +364,7 @@ function mostrarConfirmacionApp(
   overlay.onclick    = (e: MouseEvent) => { if (e.target === overlay) cerrar(); };
 }
 
-// ── Scroll to top ──────────────────────────────────────────────
+
 function initScrollToTop(): void {
   const btn = document.getElementById("scrollToTopBtn");
   if (!btn) return;
@@ -378,7 +374,7 @@ function initScrollToTop(): void {
   btn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 }
 
-// ── Barra de progreso de scroll ────────────────────────────────
+
 function initScrollProgressBar(): void {
   const bar = document.getElementById("scrollProgressBar");
   if (!bar) return;
@@ -392,7 +388,7 @@ function initScrollProgressBar(): void {
   update();
 }
 
-// ── Permisos de notificación del navegador ─────────────────────
+
 function solicitarPermisosNotificacion(): void {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") return;
@@ -415,14 +411,14 @@ function lanzarNotificacionNativa(
   }
 }
 
-// ── Tema claro / oscuro ───────────────────────────────────────
+
 function setTheme(theme: Theme): void {
   document.documentElement.setAttribute("data-theme", theme);
   localStorage.setItem("dantojitos_theme", theme);
 
   const lang = (typeof getLang === "function") ? getLang() : "es";
 
-  // Botón principal (navbar desktop)
+  
   const btn = document.getElementById("themeToggleBtn");
   if (btn) {
     const icon = btn.querySelector<HTMLElement>("i");
@@ -435,7 +431,7 @@ function setTheme(theme: Theme): void {
     }
   }
 
-  // Iconos en navbar compacto / móvil
+  
   const navIcon  = document.getElementById("navThemeIcon");
   const navLabel = document.getElementById("navThemeLabel");
   if (navIcon)  navIcon.className    = theme === "dark" ? "bi bi-sun-fill" : "bi bi-moon-fill";
@@ -449,7 +445,7 @@ function toggleTheme(): void {
   setTheme(current === "dark" ? "light" : "dark");
 }
 
-// ── Velocidad del ticker (cinta publicitaria) ──────────────────
+
 const _TICKER_SPEED_KEY = "_dantojitos_ticker_speed";
 
 function getTickerSpeed(): number {
@@ -480,7 +476,7 @@ function setTickerSpeed(speed: number): void {
   });
 }
 
-// ── Animación de badge ─────────────────────────────────────────
+
 function _animateBadge(badgeEl: HTMLElement | null): void {
   if (!badgeEl) return;
   badgeEl.style.transition = "none";
@@ -492,14 +488,14 @@ function _animateBadge(badgeEl: HTMLElement | null): void {
   }, 80);
 }
 
-// ── DOMContentLoaded ───────────────────────────────────────────
+
 document.addEventListener("DOMContentLoaded", () => {
   initScrollToTop();
   initScrollProgressBar();
   solicitarPermisosNotificacion();
   setTheme((localStorage.getItem("dantojitos_theme") as Theme | null) ?? "light");
 
-  // Restaurar velocidad guardada en todas las cintas
+  
   const savedSpeed = getTickerSpeed();
   if (savedSpeed !== 1) {
     [".payment-track", ".promo-track", ".ci-track"].forEach(sel => {

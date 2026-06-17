@@ -1056,8 +1056,6 @@ function mostrarFacturasBuscadas() {
                                </div>`
                             : '';
 
-                    /* Botón anular: cliente (no final) y admin (no final) — vendedor NO */
-                    /* Vendedor: botón anular visible pero DESACTIVADO */
                     const btnAnularArchivo = esVendedor
                         ? (!esFinal
                             ? `<button class="btn btn-sm btn-outline-danger inv-btn-anular flex-fill"
@@ -1180,22 +1178,22 @@ function paginar(totalItems) {
     nav.appendChild(frag);
 }
 
-async function cargarTodasFacturasPage() {
+async function cargarTodasFacturasPage(isBackground = false) {
     try {
         const res = await fetch('/todas_facturas_page');
         if (res.status === 401) { window.location.reload(); return; }
         if (!res.ok) return;
         const data = await res.json();
-        if (!Array.isArray(data) || !data.length) return;
+        if (!Array.isArray(data)) return;
         facturasLocalesCache = JSON.parse(JSON.stringify(data));
         facturasActuales     = ordenarFacturas(data);
-        paginaActual         = 1;
+        if (!isBackground) paginaActual = 1;
         _poblarAniosSelect();
         mostrarFacturasBuscadas();
     } catch (e) { console.error(e); }
 }
 
-async function cargarFacturasCliente() {
+async function cargarFacturasCliente(isBackground = false) {
     try {
         const res = await fetch('/obtener_facturas_page');
         if (res.status === 401) { window.location.reload(); return; }
@@ -1204,7 +1202,7 @@ async function cargarFacturasCliente() {
         if (!Array.isArray(data)) return;
         facturasLocalesCache = JSON.parse(JSON.stringify(data));
         facturasActuales     = ordenarFacturas(data);
-        paginaActual         = 1;
+        if (!isBackground) paginaActual = 1;
         _poblarAniosSelect();
         mostrarFacturasBuscadas();
     } catch (e) { console.error(e); }
@@ -1330,24 +1328,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnClearNum.addEventListener('click', _limpiarFiltroNum);
     }
 
-    setInterval(() => {
+    let _facturasIntervalMs = 8000;
+    let _facturasIntervalId = null;
 
-        if (facturasActuales.length > 0) {
-            const inputBuscar = document.getElementById("buscarFactura");
-            const criterio = inputBuscar ? inputBuscar.value.trim() : "";
-            if (criterio) {
-                monitorearCambiosFacturas();
+    function _runFacturasInterval() {
+        const inputBuscar = document.getElementById("buscarFactura");
+        const criterio = inputBuscar ? inputBuscar.value.trim() : "";
+        if (criterio) {
+            monitorearCambiosFacturas();
+        } else {
+            const _roleInt = (window.FACTURA_ROLE || 'cliente').toLowerCase();
+            if (_roleInt === 'vendedor' || _roleInt === 'admin') {
+                cargarTodasFacturasPage(true);
             } else {
-                const _roleInt = (window.FACTURA_ROLE || 'cliente').toLowerCase();
-                if (_roleInt === 'vendedor' || _roleInt === 'admin') {
-                    cargarTodasFacturasPage();
-                } else {
-                    cargarFacturasCliente();
-                }
+                cargarFacturasCliente(true);
             }
         }
+    }
 
-    }, 12000);
+    function _resetFacturasInterval(ms) {
+        if (_facturasIntervalId) clearInterval(_facturasIntervalId);
+        _facturasIntervalMs = ms;
+        _facturasIntervalId = setInterval(_runFacturasInterval, ms);
+    }
+
+    _resetFacturasInterval(_facturasIntervalMs);
+
+    document.addEventListener('socket:factura_update', (e) => {
+        const roleInt = (window.FACTURA_ROLE || 'cliente').toLowerCase();
+        if (roleInt === 'vendedor' || roleInt === 'admin') {
+            cargarTodasFacturasPage(true);
+        } else {
+            cargarFacturasCliente(true);
+        }
+    });
+
+    document.addEventListener('socket:polling_mode', (e) => {
+        _resetFacturasInterval(e.detail.fast ? 8000 : 40000);
+    });
 });
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

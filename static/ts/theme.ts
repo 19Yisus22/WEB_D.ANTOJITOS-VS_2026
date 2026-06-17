@@ -1,9 +1,6 @@
-/**
- * D'Antojitos — Theme & Color System
- * Gestiona tokens de color, gradientes suaves y utilidades de tema.
- */
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
+
+
 
 export type ThemeMode = "light" | "dark";
 
@@ -27,7 +24,7 @@ export interface ProfileImageOptions {
   name?: string;
 }
 
-// ─── Paleta D'Antojitos ───────────────────────────────────────────────────────
+
 
 const LIGHT_PALETTE: BrandPalette = {
   primary:   "#d35400",
@@ -49,26 +46,26 @@ const DARK_PALETTE: BrandPalette = {
   onPrimary: "#0d0b14",
 };
 
-// ─── Gradientes suaves ────────────────────────────────────────────────────────
+
 
 const GRADIENTS: GradientToken[] = [
-  // Hero / hero sections
+  
   { name: "--grad-hero",         value: "linear-gradient(135deg, #1a0a02 0%, #3d1602 30%, #d35400 65%, #f0883e 100%)" },
-  // Botones primarios
+  
   { name: "--grad-btn-primary",  value: "linear-gradient(135deg, #c04a00, #d35400 50%, #e67e22)" },
-  // Cards cálidas
+  
   { name: "--grad-card-warm",    value: "linear-gradient(145deg, #fff9f4 0%, #fff3e8 100%)" },
-  // Navbar scrolled
+  
   { name: "--grad-navbar",       value: "linear-gradient(90deg, rgba(255,255,255,0.97) 0%, rgba(253,248,244,0.97) 100%)" },
-  // Badges
+  
   { name: "--grad-badge-admin",  value: "linear-gradient(135deg, #92400e, #d35400)" },
   { name: "--grad-badge-vendor", value: "linear-gradient(135deg, #1e3a5f, #2980b9)" },
   { name: "--grad-badge-client", value: "linear-gradient(135deg, #064e3b, #059669)" },
-  // Footer / cinta
+  
   { name: "--grad-cinta",        value: "linear-gradient(135deg, #0e0010 0%, #1a0518 25%, #2a0a28 50%, #1a0518 75%, #0e0010 100%)" },
-  // Suave para inputs focus
+  
   { name: "--grad-focus-ring",   value: "linear-gradient(135deg, rgba(211,84,0,0.18), rgba(240,136,62,0.08))" },
-  // Avatar fallback
+  
   { name: "--grad-avatar-default", value: "linear-gradient(135deg, #d35400, #f0883e)" },
 ];
 
@@ -81,7 +78,7 @@ const DARK_GRADIENTS: GradientToken[] = [
   { name: "--grad-avatar-default", value: "linear-gradient(135deg, #c04a00, #d35400)" },
 ];
 
-// ─── Token Injector ───────────────────────────────────────────────────────────
+
 
 function _injectTokens(mode: ThemeMode): void {
   const palette   = mode === "dark" ? DARK_PALETTE   : LIGHT_PALETTE;
@@ -89,12 +86,12 @@ function _injectTokens(mode: ThemeMode): void {
 
   const root = document.documentElement;
 
-  // Paleta base
+  
   (Object.entries(palette) as [keyof BrandPalette, string][]).forEach(([k, v]) => {
     root.style.setProperty(`--brand-${k}`, v);
   });
 
-  // Gradientes: aplica solo los sobreescritos por el dark mode
+  
   const gradMap = new Map(gradients.map(g => [g.name, g.value]));
   GRADIENTS.forEach(({ name }) => {
     const val = gradMap.get(name);
@@ -102,7 +99,7 @@ function _injectTokens(mode: ThemeMode): void {
   });
 }
 
-// ─── Observer de tema ─────────────────────────────────────────────────────────
+
 
 export class ThemeManager {
   private current: ThemeMode;
@@ -128,7 +125,7 @@ export class ThemeManager {
   get mode(): ThemeMode { return this.current; }
 }
 
-// ─── Avatar con gradiente D'Antojitos ─────────────────────────────────────────
+
 
 export class AvatarFallback {
   static readonly PALETTES: [string, string][] = [
@@ -166,10 +163,7 @@ export class AvatarFallback {
     return el;
   }
 
-  /**
-   * Reemplaza una <img> rota con el avatar de gradiente.
-   * Misma API que window._avatarFallback para compatibilidad.
-   */
+  
   static apply(imgEl: HTMLImageElement, name: string): void {
     if (!imgEl?.parentNode) return;
     const size    = imgEl.parentElement?.offsetWidth || 40;
@@ -180,7 +174,7 @@ export class AvatarFallback {
   }
 }
 
-// ─── Profile image loader (TypeScript) ────────────────────────────────────────
+
 
 export class ProfileImageLoader {
   private static _thumb(url: string, w: number, h: number): string {
@@ -231,7 +225,7 @@ export class ProfileImageLoader {
   }
 }
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
+
 
 const themeManager = new ThemeManager();
 
@@ -241,7 +235,7 @@ if (document.readyState === "loading") {
   ProfileImageLoader.initAll();
 }
 
-// Exponemos en window para compatibilidad con JS legacy
+
 declare global {
   interface Window {
     DS_Theme:  typeof ThemeManager;

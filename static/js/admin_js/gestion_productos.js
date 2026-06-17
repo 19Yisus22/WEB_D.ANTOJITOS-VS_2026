@@ -311,19 +311,25 @@ function _crearCardProducto(p) {
     const stockActual = parseInt(p.stock) || 0;
     const isAgotado = stockActual <= 0;
     card.innerHTML = `
-    <div class="card h-100 shadow-sm ${isAgotado ? 'gris' : ''} prod-card-selectable" data-id="${p.id_producto}" style="position:relative;">
+    <div class="card h-100 prod-card-selectable" data-id="${p.id_producto}" style="position:relative;">
+        <div class="prod-drag-handle" title="Arrastrar para reorganizar"><i class="bi bi-grip-vertical"></i></div>
         <input type="checkbox" class="prod-select-check" data-id="${p.id_producto}"
                style="display:none;position:absolute;top:8px;left:8px;z-index:10;width:20px;height:20px;cursor:pointer;accent-color:#e67e22;">
-        <img src="${p.imagen_url || '/static/uploads/default.png'}" class="postre-img card-img-top" alt="${p.nombre}" loading="lazy"
-             onerror="this.src='/static/uploads/default.png'">
+        <div class="postre-img-wrapper ${isAgotado ? 'gris-img' : ''}">
+            <img src="${p.imagen_url || '/static/uploads/default.png'}" class="postre-img" alt="${p.nombre}" loading="lazy"
+                 onerror="this.src='/static/uploads/default.png'">
+            ${isAgotado ? '<div class="postre-agotado-badge"><i class="bi bi-x-circle-fill me-1"></i>Agotado</div>' : ''}
+        </div>
         <div class="card-body p-3">
-            <h6 class="card-title text-truncate mb-1">${p.nombre}</h6>
-            <span class="badge mb-1" style="background:rgba(52,152,219,0.1);color:#1a6896;font-size:0.68rem;border-radius:6px;font-weight:600;">
-                <i class="bi bi-tag me-1"></i>${p.categoria || 'Sin categoría'}
+            <h6 class="card-title text-truncate mb-1 fw-bold" style="font-size:0.88rem;">${p.nombre}</h6>
+            <span class="prod-cat-badge mb-2 d-inline-block">
+                <i class="bi bi-tag-fill me-1"></i>${p.categoria || 'Sin categoría'}
             </span>
-            <p class="card-text text-primary fw-bold mb-2">${Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="badge ${stockActual <= 5 ? 'bg-danger' : 'bg-success'}">Stock: ${stockActual}</span>
+            <p class="card-text fw-bold mb-2" style="color:var(--primary);font-size:0.95rem;">${Number(p.precio).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
+            <div class="d-flex justify-content-between align-items-center mt-auto">
+                <span class="badge ${stockActual <= 0 ? 'badge-agotado' : stockActual <= 5 ? 'badge-bajo' : 'badge-ok'}">
+                    <i class="bi bi-box-seam me-1"></i>Stock: ${stockActual}
+                </span>
                 <div class="d-flex gap-1">
                     <button class="btn-card-action btn-card-view" title="Ver detalle">
                         <i class="bi bi-eye"></i>
@@ -467,16 +473,49 @@ function renderPostres(filtro = "") {
         _renderCategoriaDragDrop(filtro);
     } else {
         if (catContainer) catContainer.classList.add('d-none');
-        if (secDisp) secDisp.style.display = '';
-        if (secAgot) secAgot.style.display = '';
-        listaPostresDisponibles.innerHTML = "";
-        listaPostresAgotados.innerHTML = "";
-        _paginaDisp = 1;
-        _paginaAgot = 1;
-        _listaDisp  = productosFiltrados.filter(p => (parseInt(p.stock) || 0) > 0);
-        _listaAgot  = productosFiltrados.filter(p => (parseInt(p.stock) || 0) <= 0);
-        _renderSeccionProductos();
+        const onboarding = document.getElementById('prodEmptyOnboarding');
+        if (postres.length === 0 && !filtro) {
+            if (secDisp) secDisp.style.display = 'none';
+            if (secAgot) secAgot.style.display = 'none';
+            if (onboarding) {
+                onboarding.classList.remove('d-none');
+            } else {
+                _insertarGuiaCategorias();
+                setTimeout(() => {
+                    const row = document.getElementById('categoriasManagerRow');
+                    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const inp = document.getElementById('inputNuevaCategoria');
+                    if (inp) inp.focus();
+                }, 400);
+            }
+        } else {
+            if (onboarding) onboarding.classList.add('d-none');
+            if (secDisp) secDisp.style.display = '';
+            if (secAgot) secAgot.style.display = '';
+            listaPostresDisponibles.innerHTML = "";
+            listaPostresAgotados.innerHTML = "";
+            _paginaDisp = 1;
+            _paginaAgot = 1;
+            _listaDisp  = productosFiltrados.filter(p => (parseInt(p.stock) || 0) > 0);
+            _listaAgot  = productosFiltrados.filter(p => (parseInt(p.stock) || 0) <= 0);
+            _renderSeccionProductos();
+        }
     }
+}
+
+function _insertarGuiaCategorias() {
+    const anchor = document.getElementById('catalogoCategorizado');
+    if (!anchor || !anchor.parentNode) return;
+    const el = document.createElement('div');
+    el.id = 'prodEmptyOnboarding';
+    el.className = 'prod-empty-onboarding animate-in';
+    el.innerHTML = `
+        <div class="prod-empty-icon"><i class="bi bi-tags-fill"></i></div>
+        <h5 class="fw-bold mb-2">¡Empieza configurando tus categorías!</h5>
+        <p class="text-muted mb-4">Antes de agregar productos, crea al menos una categoría para organizar tu catálogo.</p>
+        <div class="prod-empty-arrow"><i class="bi bi-arrow-up-circle-fill"></i></div>
+        <p class="text-muted small mt-1">Usa el gestor de categorías justo arriba <strong>↑</strong></p>`;
+    anchor.parentNode.insertBefore(el, anchor);
 }
 
 function _renderCategoriaDragDrop(filtro = '') {
@@ -540,6 +579,7 @@ function _renderCatGrupo(container, catKey, catLabel, prods) {
         const s = Sortable.create(grid, {
             group: 'productos_drag',
             animation: 200,
+            handle: '.prod-drag-handle',
             ghostClass: 'prod-drag-ghost',
             chosenClass: 'prod-drag-chosen',
             disabled: _modoSeleccionProd,

@@ -1,10 +1,18 @@
 from flask import Blueprint, request, jsonify, session, render_template
 
-import helpers.models as db
+import database.models as db
 from helpers.auth import sin_cache, login_required, vendedor_required
 from helpers.validators import ESTADOS_FACTURA
+from extensions import socketio
 
 historial_facturas_bp = Blueprint("historial_facturas", __name__)
+
+
+def _emit_factura_update(numero_factura: str, estado: str, cedula_cliente: str | None = None):
+    payload = {"numero_factura": numero_factura, "estado": estado}
+    socketio.emit("factura_update", payload, room="staff")
+    if cedula_cliente:
+        socketio.emit("factura_update", payload, room=f"user_{cedula_cliente}")
 
 def _enriquecer_factura(f: dict) -> dict:
     detalles  = db.detalle_get(f.get("id_pedido", ""))
@@ -268,7 +276,6 @@ def anular_factura_page(numero_factura):
             return jsonify({"message": f"No se puede anular en estado: {factura['estado']}"}), 400
         db.factura_update(numero_factura, {"estado": "Anulada"})
         db.pedido_update(factura["id_pedido"], {"estado": "Cancelado"})
-
         try:
             detalles = db.detalle_get(str(factura["id_pedido"]))
             for det in detalles:
@@ -279,7 +286,7 @@ def anular_factura_page(numero_factura):
                     db.producto_update(str(det["id_producto"]), {"stock": stock_actual + cantidad_devol})
         except Exception:
             pass
-
+        _emit_factura_update(numero_factura, "Anulada", str(factura.get("cedula", "")))
         return jsonify({"message": "Factura anulada con éxito"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
@@ -300,6 +307,7 @@ def actualizar_estado_factura(numero_factura):
             db.pedido_update(factura["id_pedido"], {"pagado": True, "estado": "Entregado"})
         elif nuevo_estado == "Anulada":
             db.pedido_update(factura["id_pedido"], {"estado": "Cancelado"})
+        _emit_factura_update(numero_factura, nuevo_estado, str(factura.get("cedula", "")))
         return jsonify({"message": "Estado actualizado con éxito"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500

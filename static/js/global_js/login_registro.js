@@ -305,26 +305,30 @@ function initRegistroForm() {
     const pwInp = document.getElementById('contrasena');
     if (pwInp) pwInp.addEventListener('input', () => renderStrength(pwInp.value));
 
-    validateOnBlur('nombre',    v => /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s\-\.]{1,50}$/.test(v.trim()));
-    validateOnBlur('apellido',  v => /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s\-\.]{1,50}$/.test(v.trim()));
-    validateOnBlur('cedula',    v => /^\d{7,15}$/.test(v.trim()));
-    validateOnBlur('telefono',  v => /^\d{7,15}$/.test(v.trim()));
-    validateOnBlur('correo',    v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()));
-    validateOnBlur('username',  v => !v.trim() || /^[A-Za-z0-9@#$%&*]{3,30}$/.test(v.trim()));
-    validateOnBlur('contrasena', v => v.length >= 8 && /[A-Za-z]/.test(v) && /[0-9]/.test(v));
+    validateOnBlur('nombre',           v => /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s\-\.]{1,50}$/.test(v.trim()));
+    validateOnBlur('apellido',         v => /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s\-\.]{1,50}$/.test(v.trim()));
+    validateOnBlur('cedula',           v => /^\d{7,15}$/.test(v.trim()));
+    validateOnBlur('telefono',         v => /^\d{7,15}$/.test(v.trim()));
+    validateOnBlur('correo',           v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()));
+    validateOnBlur('username',         v => !v.trim() || /^[A-Za-z0-9@#$%&*]{3,30}$/.test(v.trim()));
+    validateOnBlur('contrasena',       v => v.length >= 8 && /[A-Za-z]/.test(v) && /[0-9]/.test(v));
+    validateOnBlur('direccion',        v => v.trim().length > 0);
 
     form.addEventListener('submit', async e => {
         e.preventDefault();
-        const nombre     = (document.getElementById('nombre')?.value || '').trim();
-        const apellido   = (document.getElementById('apellido')?.value || '').trim();
-        const cedula     = (document.getElementById('cedula')?.value || '').trim();
-        const telefono   = (document.getElementById('telefono')?.value || '').trim();
-        const correo     = (document.getElementById('correo')?.value || '').trim().toLowerCase();
-        const username   = (document.getElementById('username')?.value || '').trim();
-        const contrasena = (document.getElementById('contrasena')?.value || '');
+        const nombre           = (document.getElementById('nombre')?.value || '').trim();
+        const apellido         = (document.getElementById('apellido')?.value || '').trim();
+        const cedula           = (document.getElementById('cedula')?.value || '').trim();
+        const telefono         = (document.getElementById('telefono')?.value || '').trim();
+        const correo           = (document.getElementById('correo')?.value || '').trim().toLowerCase();
+        const username         = (document.getElementById('username')?.value || '').trim();
+        const contrasena       = (document.getElementById('contrasena')?.value || '');
+        const direccion        = (document.getElementById('direccion')?.value || '').trim();
+        const fecha_nacimiento = (document.getElementById('fecha_nacimiento')?.value || '').trim();
 
-        if (!nombre || !apellido || !cedula || !telefono || !correo || !contrasena) {
+        if (!nombre || !apellido || !cedula || !telefono || !correo || !contrasena || !direccion) {
             showMessage('Atención', 'Completa todos los campos obligatorios', false);
+            if (!direccion) setWrap('direccion', 'error');
             return;
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(correo)) {
@@ -349,7 +353,7 @@ function initRegistroForm() {
             const res  = await fetch('/registro', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ nombre, apellido, cedula, telefono, correo, username, contrasena }),
+                body:    JSON.stringify({ nombre, apellido, cedula, telefono, correo, username, contrasena, direccion, fecha_nacimiento }),
             });
             const data = await res.json();
             if (data.ok) {

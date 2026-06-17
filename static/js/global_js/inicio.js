@@ -568,17 +568,15 @@ if ('serviceWorker' in navigator) {
     const label = document.getElementById('logrosProgresoLabel');
     if (!bar || !label) return;
 
+    if (window.LOGROS_INICIAL && window.LOGROS_INICIAL.total > 0) return;
+
     async function _cargarProgreso() {
         try {
-            const r = await fetch('/logros/mis_logros', { cache: 'no-store' });
+            const r = await fetch('/logros/progreso', { cache: 'no-store' });
             if (!r.ok) return;
-            const data = await r.json();
-            const total     = (data.todos     || []).length;
-            const obtenidos = (data.obtenidos || []).length;
-            if (total === 0) return;
-            const pct = Math.round((obtenidos / total) * 100);
+            const { total, obtenidos, pct } = await r.json();
+            if (!total) return;
             label.textContent = `${obtenidos}/${total} · ${pct}%`;
-
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 bar.style.width = pct + '%';
             }));
@@ -586,8 +584,8 @@ if ('serviceWorker' in navigator) {
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => setTimeout(_cargarProgreso, 600));
+        document.addEventListener('DOMContentLoaded', () => setTimeout(_cargarProgreso, 80));
     } else {
-        setTimeout(_cargarProgreso, 600);
+        setTimeout(_cargarProgreso, 80);
     }
 })();

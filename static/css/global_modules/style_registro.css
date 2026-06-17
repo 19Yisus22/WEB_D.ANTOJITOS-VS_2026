@@ -489,6 +489,21 @@
 .reg-step.active small { color: var(--pri); }
 .reg-step-line  { flex: 1; height: 2px; background: #eef2f7; max-width: 80px; border-radius: 2px; }
 
+/* ── date input: quita chrome nativo que rompe el field-wrap ── */
+.field-wrap input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    color-scheme: light;
+    padding-right: 10px;
+    min-width: 0;
+    width: 100%;
+    cursor: pointer;
+}
+[data-theme="dark"] .field-wrap input[type="date"] {
+    color-scheme: dark;
+    color: var(--dk-text, #e4e4ef) !important;
+}
+
 @media (min-width: 768px) and (max-width: 1024px) {
     .reg-left { width: 300px; padding: 40px 28px; }
     .reg-brand h1 { font-size: 1.6rem; }
@@ -497,13 +512,40 @@
 }
 
 @media (max-width: 767px) {
+    .reg-body {
+        align-items: flex-start;
+        overflow-y: auto;
+    }
+    .reg-wrapper {
+        flex-direction: column;
+        min-height: 100dvh;
+    }
     .reg-left  { display: none; }
-    .reg-right { padding: 80px 14px 28px; align-items: flex-start; }
-    .reg-card  { padding: 28px 20px 22px; border-radius: 20px; max-width: 100%; overflow-x: hidden; }
-    .reg-row   { grid-template-columns: 1fr; }
-    .reg-header h2 { font-size: 1.4rem; }
-    .code-digit { width: 46px; height: 58px; font-size: 1.6rem; }
-    .btn-reg   { padding: 13px; font-size: 0.92rem; }
+    .reg-right {
+        flex: 1;
+        padding: 72px 16px 36px;
+        align-items: center;
+        justify-content: flex-start;
+        overflow: visible;
+    }
+    .reg-card {
+        width: 100%;
+        max-width: 100%;
+        padding: 26px 18px 24px;
+        border-radius: 20px;
+        overflow-x: hidden;
+        box-sizing: border-box;
+    }
+    .reg-row        { grid-template-columns: 1fr; gap: 0; }
+    .reg-row > .reg-field { margin-bottom: 14px; }
+    .reg-header h2  { font-size: 1.35rem; }
+    .reg-section-label { font-size: 0.64rem; }
+    .reg-field label   { font-size: 0.72rem; }
+    .field-wrap input  { font-size: 0.88rem; padding: 11px 10px 11px 0; }
+    .field-wrap > i:first-child { padding: 0 10px; }
+    .code-digit { width: 44px; height: 56px; font-size: 1.5rem; }
+    .btn-reg    { padding: 13px; font-size: 0.92rem; }
+    .reg-divider { margin: 18px 0 12px; }
 }
 
 [data-theme="dark"] .reg-body {

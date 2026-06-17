@@ -22,4 +22,3 @@ def crear_entorno_virtual():
 if __name__ == "__main__":
     crear_entorno_virtual()
 
-# ACTIVAR ENTORNO: venv\Scripts\activate

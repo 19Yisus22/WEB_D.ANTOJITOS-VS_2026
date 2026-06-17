@@ -3,7 +3,7 @@ from datetime import datetime, timezone, date, timedelta
 
 from flask import Blueprint, request, jsonify, session, render_template
 
-import helpers.models as db
+import database.models as db
 from helpers.auth import sin_cache, login_required, admin_required
 from helpers.validators import METODOS_PAGO_VALIDOS
 
@@ -231,8 +231,12 @@ def finalizar_compra():
             return jsonify({"message": "Usuario no encontrado", "ok": False}), 404
         if str(user_id).startswith("G-"):
             return jsonify({"message": "Actualiza tu cédula en el perfil antes de realizar pedidos.", "completar_perfil": True, "ok": False}), 400
-        if not usuario.get("direccion"):
-            return jsonify({"message": "Complete su perfil (dirección requerida)", "completar_perfil": True, "ok": False}), 400
+        data_body = request.get_json(silent=True) or {}
+        direccion_entrega = (data_body.get("direccion_entrega") or "").strip()
+        if not direccion_entrega:
+            direccion_entrega = (usuario.get("direccion") or "").strip()
+        if not direccion_entrega:
+            return jsonify({"message": "La dirección de entrega es obligatoria.", "completar_perfil": False, "ok": False}), 400
 
         carrito = db.carrito_get(user_id)
         if not carrito:
@@ -258,7 +262,7 @@ def finalizar_compra():
         db.pedido_create({
             "id_pedido":         id_pedido,
             "cedula":            user_id,
-            "direccion_entrega": usuario["direccion"],
+            "direccion_entrega": direccion_entrega,
             "metodo_pago":       metodo,
             "estado":            "Pendiente",
             "pagado":            False,
@@ -317,6 +321,12 @@ def finalizar_compra():
         })
     except Exception as e:
         return jsonify({"message": str(e), "ok": False}), 500
+
+@carrito_bp.route("/carrito/mi_direccion")
+@login_required
+def mi_direccion():
+    usuario = db.usuario_get(session.get("user_id")) or {}
+    return jsonify({"direccion": usuario.get("direccion") or ""})
 
 @carrito_bp.route("/carrito/cumpleanos")
 @login_required

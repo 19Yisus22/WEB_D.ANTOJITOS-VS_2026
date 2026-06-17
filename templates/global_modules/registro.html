@@ -108,6 +108,32 @@
                 </div>
 
                 <div class="reg-section-label mt-2">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <span data-i18n="reg.additional_data">Información adicional</span>
+                </div>
+
+                <div class="reg-field">
+                    <label><span data-i18n="reg.address">Dirección</span> <span class="req">*</span></label>
+                    <div class="field-wrap">
+                        <i class="bi bi-house-door"></i>
+                        <input type="text" id="direccion" name="direccion" maxlength="300"
+                               data-i18n-placeholder="ph.address"
+                               placeholder="Calle 45 # 12-30, Barrio Las Flores" required>
+                    </div>
+                    <small class="field-hint"><i class="bi bi-info-circle me-1"></i><span data-i18n="reg.address_hint">Usada para enviar tus pedidos</span></small>
+                </div>
+
+                <div class="reg-field">
+                    <label><span data-i18n="reg.birthday">Fecha de nacimiento</span> <small class="reg-optional" data-i18n="reg.optional">(opcional)</small></label>
+                    <div class="field-wrap" style="overflow:visible;">
+                        <i class="bi bi-cake2"></i>
+                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento"
+                               max="9999-12-31" style="flex:1;min-width:0;">
+                    </div>
+                    <small class="field-hint"><i class="bi bi-info-circle me-1"></i><span data-i18n="reg.birthday_hint">Recibe un descuento especial en tu cumpleaños</span></small>
+                </div>
+
+                <div class="reg-section-label mt-2">
                     <i class="bi bi-lock-fill"></i>
                     <span data-i18n="reg.access_data">Datos de acceso</span>
                 </div>

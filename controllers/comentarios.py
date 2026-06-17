@@ -1,8 +1,9 @@
 from datetime import datetime, timezone, timedelta
 from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template
 
-import helpers.models as db
+import database.models as db
 from helpers.auth import sin_cache, login_required
+from extensions import socketio
 
 MENSAJES_PREDETERMINADOS = [
     {"id": 1, "icono": "🚚", "texto": "Mi pedido no ha llegado"},
@@ -42,7 +43,6 @@ def _get_admin_cedulas() -> list:
         return []
 
 def _auto_cleanup_chat():
-    """Delete non-admin public comments older than the configured period."""
     try:
         cfg  = db.inicio_config_get()
         modo = cfg.get("chat_temporal_modo_publico") or cfg.get("chat_temporal_modo", "desactivado")
@@ -56,7 +56,6 @@ def _auto_cleanup_chat():
         pass
 
 def _auto_cleanup_privados():
-    """Delete non-admin private messages older than the configured period."""
     try:
         cfg  = db.inicio_config_get()
         modo = cfg.get("chat_temporal_modo_privado", "desactivado")
@@ -156,19 +155,17 @@ def crear_comentario():
             "adjuntos":       adjuntos,
         })
         resp = result[0] if result else {}
+        socketio.emit("chat_new_msg", {"id": resp.get("id"), "cedula": str(usuario["cedula"])}, broadcast=True)
         return jsonify(resp)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ── Chat temporal config (admin only) ──────────────────────────────────────────
 
 _MODOS_VALIDOS = ("desactivado", "24h", "7d", "mensual")
 
 @comentarios_bp.route("/comentarios/config_temporal", methods=["GET"])
 @login_required
 def get_config_temporal():
-    if session.get("rol") != "admin":
-        return jsonify({"error": "Sin permiso"}), 403
     cfg = db.inicio_config_get()
     modo = cfg.get("chat_temporal_modo_publico") or cfg.get("chat_temporal_modo", "desactivado")
     return jsonify({"modo": modo})
@@ -188,8 +185,6 @@ def set_config_temporal():
 @comentarios_bp.route("/mensajes_privados/config_temporal", methods=["GET"])
 @login_required
 def get_config_temporal_privado():
-    if session.get("rol") != "admin":
-        return jsonify({"error": "Sin permiso"}), 403
     cfg = db.inicio_config_get()
     return jsonify({"modo": cfg.get("chat_temporal_modo_privado", "desactivado")})
 
@@ -205,7 +200,6 @@ def set_config_temporal_privado():
     db.inicio_config_save({"chat_temporal_modo_privado": modo})
     return jsonify({"ok": True})
 
-# ── Bulk delete comments (admin only) ──────────────────────────────────────────
 
 @comentarios_bp.route("/comentarios/bulk", methods=["DELETE"])
 @login_required
@@ -222,7 +216,6 @@ def bulk_eliminar_comentarios():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ── Edit / delete single comment ───────────────────────────────────────────────
 
 @comentarios_bp.route("/comentarios/<id>", methods=["PUT"])
 @login_required
@@ -237,14 +230,10 @@ def editar_comentario(id):
             return jsonify({"error": "Comentario no encontrado"}), 404
         if comentario.get("cedula") != session.get("user_id"):
             return jsonify({"error": "Sin permiso"}), 403
-        # Admin can edit unlimited times; client/vendor can only edit once
-        if session.get("rol") != "admin":
-            upd = comentario.get("updated_at") or ""
-            cre = comentario.get("created_at") or ""
-            if upd and cre and upd != cre:
-                return jsonify({"error": "Solo se puede editar una vez"}), 409
+        if session.get("rol") != "admin" and comentario.get("es_editado"):
+            return jsonify({"error": "Solo se puede editar una vez"}), 409
         ahora  = datetime.now(timezone.utc).isoformat()
-        result = db.comentario_update(id, {"mensaje": mensaje, "updated_at": ahora})
+        result = db.comentario_update(id, {"mensaje": mensaje, "updated_at": ahora, "es_editado": True})
         return jsonify(result[0] if result else {})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -420,6 +409,10 @@ def enviar_mensaje_privado():
             es_predeterminado = es_pred,
             adjuntos          = adjuntos,
         )
+        destinatario = cedula_cliente if es_vendedor else None
+        socketio.emit("priv_new_msg", {"cedula_de": cedula, "cedula_para": cedula_cliente}, room="staff")
+        if destinatario:
+            socketio.emit("priv_new_msg", {"cedula_de": cedula, "cedula_para": cedula_cliente}, room=f"user_{destinatario}")
         return jsonify({"ok": True, "mensaje": nuevo})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -438,7 +431,6 @@ def editar_mensaje_privado(id):
             return jsonify({"error": "No encontrado"}), 404
         if registro.get("cedula_de") != cedula:
             return jsonify({"error": "Sin permiso"}), 403
-        # Admin can edit unlimited times; others only once
         if session.get("rol") != "admin" and registro.get("es_editado"):
             return jsonify({"error": "Solo se puede editar una vez"}), 409
         db.mp_update(id, msg)
@@ -602,7 +594,7 @@ def limpiar_hilo_staff(cedula_otro):
     if rol not in ("vendedor", "admin"):
         return jsonify({"error": "Sin permiso"}), 403
     try:
-        from helpers.models import _staff_thread_key
+        from database.models import _staff_thread_key
         c1, c2 = _staff_thread_key(cedula, cedula_otro)
         db.mp_delete_hilo(c1, "staff")
         return jsonify({"ok": True})

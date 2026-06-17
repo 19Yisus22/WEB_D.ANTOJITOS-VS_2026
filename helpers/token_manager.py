@@ -131,7 +131,7 @@ def verify_refresh_token_full(token: str) -> TokenResult:
         return TokenResult(TokenStatus.INVALID, error="Token sin campo 'sub'")
 
     try:
-        import helpers.models as db
+        import database.models as db
 
         stored = db.usuario_get_web_token(cedula)
 
@@ -214,7 +214,7 @@ def build_session_data(user: dict) -> None:
     session.modified   = True
 
 def emit_tokens_and_session(user: dict, response) -> None:
-    import helpers.models as db
+    import database.models as db
 
     cedula = str(user["cedula"])
     rol    = "cliente"
@@ -232,7 +232,7 @@ def emit_tokens_and_session(user: dict, response) -> None:
 
 def revoke_session(cedula: str) -> None:
     try:
-        import helpers.models as db
+        import database.models as db
         db.usuario_clear_web_token(cedula)
         _logger.info("Sesión revocada — cedula=%s", cedula)
     except Exception as exc:
@@ -246,7 +246,7 @@ def rebuild_session_from_cookies() -> bool:
         at_res = verify_access_token(at_cookie)
         if at_res.ok:
             try:
-                import helpers.models as db
+                import database.models as db
                 user = db.usuario_get(at_res.payload["sub"])
                 if user:
                     build_session_data(user)

@@ -1297,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(_pollCartCount, 10000);
     }
 
-    // Auto-renew access token (TTL=5min) silently every 4 min while session is active
+    
     if (document.getElementById('navClientBellBadge') || document.getElementById('navBellBadge')) {
         const _doRefresh = () => fetch('/refresh', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
         setTimeout(_doRefresh, 60 * 1000);

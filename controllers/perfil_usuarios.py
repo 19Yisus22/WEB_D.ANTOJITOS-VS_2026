@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from functools import wraps
 from flask import Blueprint, request, jsonify, session, render_template, Response
 
-import helpers.models as db
+import database.models as db
 from helpers.auth import sin_cache, admin_required, login_required
 from helpers.cloudinary import delete_image, upload_raw_file, delete_raw_file
 

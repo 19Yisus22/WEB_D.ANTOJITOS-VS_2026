@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session, render_template
 import json
-import helpers.models as db
+import database.models as db
 from helpers.auth import sin_cache, login_required, vendedor_required
 from helpers.cloudinary import upload_image, upload_base64, delete_image
 

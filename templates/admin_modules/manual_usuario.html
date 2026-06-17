@@ -8,11 +8,10 @@
         {% if session.get('rol') == 'admin' %}Manual del Administrador
         {% elif session.get('rol') == 'vendedor' %}Manual del Vendedor
         {% else %}Manual de Usuario
-        {% endif %} - D'Antojitos
+        {% endif %} — D'Antojitos
     </title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='uploads/logo.ico') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_modules/style_manual.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_utils.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global_modules/style_design_system.css') }}">
@@ -26,10 +25,7 @@
         <i class="bi bi-list" id="menuToggleIcon"></i>
     </button>
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-    <a href="/inicio" class="btn-back-home" title="Volver al Inicio">
-        <i class="bi bi-house-door-fill"></i>
-    </a>
+    <a href="/inicio" class="btn-back-home" title="Volver al Inicio"><i class="bi bi-house-door-fill"></i></a>
 
     <div class="wrapper">
         <aside>
@@ -38,109 +34,312 @@
                 <h1>D'Antojitos</h1>
             </div>
             <nav>
-                <div class="nav-item active" onclick="showSection('inicio')"><i class="bi bi-grid-1x2"></i> <span>Inicio</span></div>
-                <div class="nav-item" onclick="showSection('perfil')"><i class="bi bi-person-gear"></i> <span>Mi Perfil</span></div>
-                <div class="nav-item" onclick="showSection('productos')"><i class="bi bi-box-seam"></i> <span>Productos</span></div>
-                <div class="nav-item" onclick="showSection('pedidos')"><i class="bi bi-receipt"></i> <span>Pedidos</span></div>
-                <div class="nav-item" onclick="showSection('publicidad')"><i class="bi bi-megaphone"></i> <span>Publicidad</span></div>
-                <div class="nav-item" onclick="showSection('facturacion')"><i class="bi bi-wallet2"></i> <span>Facturación</span></div>
+                <div class="nav-item active" onclick="showSection('a-inicio')"><i class="bi bi-grid-1x2"></i> <span>Inicio</span></div>
+                <div class="nav-item" onclick="showSection('a-usuarios')"><i class="bi bi-people"></i> <span>Usuarios</span></div>
+                <div class="nav-item" onclick="showSection('a-productos')"><i class="bi bi-box-seam"></i> <span>Productos</span></div>
+                <div class="nav-item" onclick="showSection('a-catalogo')"><i class="bi bi-shop"></i> <span>Catálogo</span></div>
+                <div class="nav-item" onclick="showSection('a-pedidos')"><i class="bi bi-receipt"></i> <span>Pedidos</span></div>
+                <div class="nav-item" onclick="showSection('a-facturas')"><i class="bi bi-wallet2"></i> <span>Facturas</span></div>
+                <div class="nav-item" onclick="showSection('a-publicidad')"><i class="bi bi-megaphone"></i> <span>Publicidad</span></div>
+                <div class="nav-item" onclick="showSection('a-chat')"><i class="bi bi-chat-heart"></i> <span>Chat y Mensajes</span></div>
+                <div class="nav-item" onclick="showSection('a-logros')"><i class="bi bi-trophy"></i> <span>Logros</span></div>
+                <div class="nav-item" onclick="showSection('a-perfil')"><i class="bi bi-person-gear"></i> <span>Perfil Admin</span></div>
             </nav>
         </aside>
 
         <main>
-            <section id="inicio" class="content-section active">
-                <h2><i class="bi bi-stars"></i> Manual del Administrador</h2>
-                <p class="intro-text">Bienvenido al ecosistema administrativo de <strong>D'Antojitos©</strong>. Aquí encontrarás las directrices para operar la plataforma con máxima eficiencia y fluidez.</p>
 
+            <section id="a-inicio" class="content-section active">
+                <h2><i class="bi bi-stars"></i> Manual del Administrador</h2>
+                <p class="intro-text">Bienvenido al panel de control completo de <strong>D'Antojitos©</strong>. Como administrador tienes acceso total a todos los módulos del sistema: usuarios, inventario, pedidos, facturación, publicidad, logros y comunicaciones.</p>
                 <div class="card-grid" data-reveal>
                     <div class="card ds-card">
-                        <h3><i class="bi bi-lightning-charge"></i> Gestión Fluida</h3>
-                        <p>La interfaz ha sido optimizada para ofrecer una respuesta inmediata. Cada cambio realizado impacta directamente en la experiencia de tus clientes sin tiempos de espera.</p>
+                        <h3><i class="bi bi-lightning-charge"></i> Tiempo Real</h3>
+                        <p>Los módulos críticos (facturas, pedidos, chat) se actualizan automáticamente mediante WebSockets. Los cambios son visibles para todos los usuarios conectados sin necesidad de recargar.</p>
                     </div>
                     <div class="card ds-card">
-                        <h3><i class="bi bi-shield-check"></i> Seguridad</h3>
-                        <p>El sistema cuenta con capas de verificación de rol. Como administrador, tus acciones son definitivas para el inventario y la contabilidad del negocio.</p>
+                        <h3><i class="bi bi-shield-check"></i> Control Total</h3>
+                        <p>Tus acciones son definitivas: asignar roles, eliminar usuarios, anular facturas y configurar el sistema. Actúa con responsabilidad y verifica antes de confirmar operaciones irreversibles.</p>
+                    </div>
+                    <div class="card ds-card">
+                        <h3><i class="bi bi-bell"></i> Notificaciones</h3>
+                        <p>Recibes alertas en tiempo real cuando llegan nuevos pedidos, mensajes privados, pagos de facturas y logros desbloqueados por usuarios. El ícono de campana en la barra superior las centraliza.</p>
+                    </div>
+                    <div class="card ds-card">
+                        <h3><i class="bi bi-moon-stars"></i> Tema Visual</h3>
+                        <p>Alterna entre modo claro y oscuro desde el botón de luna/sol en la barra de navegación. La preferencia se guarda automáticamente para tu próxima sesión.</p>
                     </div>
                 </div>
             </section>
 
-            <section id="perfil" class="content-section">
-                <h2><i class="bi bi-person-badge"></i> Gestión de Usuarios</h2>
+            <section id="a-usuarios" class="content-section">
+                <h2><i class="bi bi-people"></i> Gestión de Usuarios</h2>
                 <div class="card">
-                    <h3>Jerarquía Administrativa</h3>
-                    <p>El control de acceso es fundamental para la seguridad operativa:</p>
+                    <h3>Visualización y Búsqueda</h3>
                     <ul class="feature-list">
-                        <li><i class="bi bi-check2-circle"></i> <strong>Asignación de Roles:</strong> Capacidad de elevar cuentas a nivel Administrativo.</li>
-                        <li><i class="bi bi-check2-circle"></i> <strong>Límite de Seguridad:</strong> Se recomienda un máximo de 3 administradores activos.</li>
-                        <li><i class="bi bi-check2-circle"></i> <strong>Privilegios:</strong> Acceso exclusivo a reportes financieros y configuración de pagos.</li>
+                        <li><i class="bi bi-search"></i> <strong>Búsqueda global:</strong> Filtra por nombre, cédula o correo en tiempo real mientras escribes.</li>
+                        <li><i class="bi bi-funnel"></i> <strong>Filtros por rol:</strong> Botones rápidos para ver solo administradores, vendedores o clientes.</li>
+                        <li><i class="bi bi-sort-alpha-down"></i> <strong>Orden dinámico:</strong> Los usuarios aparecen ordenados: Admins → Vendedores → Clientes.</li>
+                        <li><i class="bi bi-person-badge"></i> <strong>Avatar único:</strong> Cada usuario muestra un color de avatar único y consistente basado en su cédula.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Detalle de Usuario</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-eye"></i> <strong>Modal de información:</strong> Haz clic en cualquier usuario para ver su ficha completa: datos personales, rol, fecha de registro, última conexión y archivos adjuntos.</li>
+                        <li><i class="bi bi-clock-history"></i> <strong>Última conexión:</strong> Muestra la fecha y hora exacta del último inicio o cierre de sesión del usuario.</li>
+                        <li><i class="bi bi-paperclip"></i> <strong>Archivos:</strong> Visualiza documentos adjuntos al perfil del usuario directamente en el modal.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Gestión de Roles</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-person-up"></i> <strong>Promover a Vendedor/Admin:</strong> Desde el modal de usuario puedes cambiar su rol. El cambio es inmediato y afecta su acceso en la próxima recarga.</li>
+                        <li><i class="bi bi-person-down"></i> <strong>Degradar a Cliente:</strong> Revoca privilegios de vendedor o admin de forma instantánea.</li>
+                        <li><i class="bi bi-exclamation-triangle"></i> <strong>Precaución:</strong> No elimines ni degrades tu propia cuenta de administrador. Mantén siempre al menos un admin activo.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Selección Múltiple y Acciones en Lote</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-check2-square"></i> <strong>Modo selección:</strong> Activa el botón "Seleccionar" para marcar varios usuarios y aplicar acciones en lote como cambio de rol o eliminación.</li>
+                        <li><i class="bi bi-trash3"></i> <strong>Eliminación:</strong> La eliminación de usuarios es permanente. Úsala únicamente para cuentas inactivas o duplicadas.</li>
                     </ul>
                 </div>
             </section>
 
-            <section id="productos" class="content-section">
+            <section id="a-productos" class="content-section">
                 <h2><i class="bi bi-box-seam"></i> Gestión de Productos</h2>
                 <div class="card">
-                    <h3>Control de Inventario y Catálogo</h3>
-                    <p>Centraliza la oferta comercial de tu tienda con herramientas de edición dinámica:</p>
+                    <h3>Primeros Pasos — Categorías</h3>
+                    <p>Antes de agregar productos debes crear al menos una categoría. El sistema te guía automáticamente: si el catálogo está vacío, aparece una pantalla de bienvenida que te dirige al gestor de categorías.</p>
                     <ul class="feature-list">
-                        <li><i class="bi bi-plus-circle"></i> <strong>Gestión Integral:</strong> Creación, edición y retiro de productos en segundos.</li>
-                        <li><i class="bi bi-arrow-repeat"></i> <strong>Sincronización:</strong> El catálogo público refleja cambios instantáneamente.</li>
-                        <li><i class="bi bi-database-check"></i> <strong>Stock Inteligente:</strong> Reposición automática en caso de cancelaciones o limpiezas de carrito.</li>
+                        <li><i class="bi bi-tags-fill"></i> <strong>Crear categoría:</strong> Escribe el nombre en el campo "Nueva categoría" y presiona Agregar. Ejemplos: Pasteles, Postres Fríos, Bebidas.</li>
+                        <li><i class="bi bi-x-circle"></i> <strong>Eliminar categoría:</strong> Haz clic en la X junto al nombre. Los productos de esa categoría pasan a "Sin categoría".</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Agregar y Editar Productos</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-plus-circle"></i> <strong>Nuevo producto:</strong> Botón "Nuevo Postre" abre el formulario. Completa nombre, precio, stock, descripción, categoría e imagen.</li>
+                        <li><i class="bi bi-pencil-square"></i> <strong>Editar:</strong> Haz clic en el ícono de lápiz en una tarjeta. El formulario se rellena con los datos actuales para modificarlos.</li>
+                        <li><i class="bi bi-eye"></i> <strong>Ver detalle:</strong> El ícono de ojo abre el modal de vista rápida con foto ampliada e información completa.</li>
+                        <li><i class="bi bi-image"></i> <strong>Imágenes:</strong> Las imágenes se suben automáticamente a la nube al guardar. El tamaño máximo es 50 MB.</li>
+                        <li><i class="bi bi-trash3"></i> <strong>Eliminar:</strong> Disponible desde el modal de detalle. Esta acción no se puede deshacer y reduce el stock disponible.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Organización por Arrastre</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-grip-vertical"></i> <strong>Handle de arrastre:</strong> Pasa el cursor sobre una tarjeta para que aparezca el ícono de agarre (⋮⋮) en la esquina superior derecha. Arrastra desde ahí para mover el producto a otra categoría.</li>
+                        <li><i class="bi bi-arrows-move"></i> <strong>Sin conflicto de clic:</strong> El arrastre solo se activa desde el handle; hacer clic en el resto de la tarjeta abre el detalle normalmente.</li>
+                        <li><i class="bi bi-check2-circle"></i> <strong>Guardado automático:</strong> Al soltar el producto en una nueva categoría, el cambio se guarda inmediatamente en la base de datos.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Selección Múltiple</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-check2-square"></i> <strong>Activar modo:</strong> Botón "Seleccionar" en la barra superior. Las tarjetas muestran una casilla de verificación.</li>
+                        <li><i class="bi bi-collection"></i> <strong>Acciones en lote:</strong> Selecciona varios productos para eliminarlos o cambiar su categoría de una vez.</li>
+                        <li><i class="bi bi-x-circle"></i> <strong>Desactivar:</strong> Vuelve a hacer clic en "Seleccionar" para salir del modo sin perder cambios.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Almacenamiento en la Nube</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-cloud"></i> <strong>Indicador de almacenamiento:</strong> El ícono circular en la esquina inferior izquierda muestra el porcentaje de almacenamiento Cloudinary usado.</li>
+                        <li><i class="bi bi-exclamation-circle"></i> <strong>Límite:</strong> Cuando el uso supere el 80%, el indicador cambia de color. Elimina imágenes antiguas o productos sin uso para liberar espacio.</li>
                     </ul>
                 </div>
             </section>
 
-            <section id="pedidos" class="content-section">
-                <h2><i class="bi bi-cart-check"></i> Gestión de Pedidos</h2>
+            <section id="a-catalogo" class="content-section">
+                <h2><i class="bi bi-shop"></i> Catálogo de Productos</h2>
                 <div class="card">
-                    <h3>Logística y Seguimiento</h3>
-                    <p>Administra el flujo de ventas con herramientas de filtrado avanzado:</p>
+                    <h3>Vista Pública del Inventario</h3>
                     <ul class="feature-list">
-                        <li><i class="bi bi-funnel"></i> <strong>Filtros Avanzados:</strong> Localiza pedidos por cédula, nombre o estado de factura.</li>
-                        <li><i class="bi bi-file-earmark-pdf"></i> <strong>Reportes:</strong> Generación de cierres de caja en formato PDF por mes y año.</li>
-                        <li><i class="bi bi-pin-angle"></i> <strong>Priorización:</strong> Sistema de "fijado" para destacar pedidos urgentes al inicio.</li>
-                        <li><i class="bi bi-toggle-on"></i> <strong>Control de Pagos:</strong> Switch de validación para saldos pendientes y entregas.</li>
+                        <li><i class="bi bi-search"></i> <strong>Búsqueda:</strong> Barra de búsqueda instantánea por nombre de producto o categoría.</li>
+                        <li><i class="bi bi-tags"></i> <strong>Separadores de categoría:</strong> Los productos se agrupan visualmente por categoría con etiquetas naranja.</li>
+                        <li><i class="bi bi-eye"></i> <strong>Modal de detalle:</strong> Haz clic en cualquier producto para ver foto ampliada, descripción completa y precio actualizado.</li>
+                        <li><i class="bi bi-cart-plus"></i> <strong>Agregar al carrito:</strong> Los clientes pueden agregar productos directamente al carrito desde el catálogo o el modal de detalle.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Información en Tiempo Real</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-arrow-repeat"></i> <strong>Actualización automática:</strong> El catálogo se refresca periódicamente. Los cambios de precio o stock realizados en Gestión de Productos se reflejan sin necesidad de recargar la página.</li>
+                        <li><i class="bi bi-x-circle"></i> <strong>Agotados:</strong> Los productos con stock 0 aparecen marcados como "Agotado" y no se pueden agregar al carrito.</li>
                     </ul>
                 </div>
             </section>
 
-            <section id="publicidad" class="content-section">
-                <h2><i class="bi bi-megaphone"></i> Estrategia de Publicidad</h2>
+            <section id="a-pedidos" class="content-section">
+                <h2><i class="bi bi-receipt"></i> Gestión de Pedidos</h2>
                 <div class="card">
-                    <h3>Marketing Visual</h3>
-                    <p>Configura la identidad visual y promocional de la plataforma:</p>
+                    <h3>Panel de Pedidos</h3>
                     <ul class="feature-list">
-                        <li><i class="bi bi-broadcast"></i> <strong>Alertas Globales:</strong> Notificaciones con imagen para campañas flash.</li>
-                        <li><i class="bi bi-images"></i> <strong>Carrusel Dinámico:</strong> Gestión de banners principales con vista previa.</li>
-                        <li><i class="bi bi-cloud-upload"></i> <strong>Persistencia:</strong> Recuerda usar el botón "Guardar todos los cambios" para publicar.</li>
+                        <li><i class="bi bi-list-ul"></i> <strong>Tabla completa:</strong> Todos los pedidos ordenados por fecha, con nombre del cliente, número de factura, estado y monto.</li>
+                        <li><i class="bi bi-funnel"></i> <strong>Filtros:</strong> Filtra por nombre de cliente, cédula, número de factura o estado del pedido.</li>
+                        <li><i class="bi bi-file-earmark-pdf"></i> <strong>Cierre de caja PDF:</strong> Genera un reporte en PDF de todos los pedidos del mes y año seleccionados con el resumen financiero.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Control de Estado y Pago</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-toggle-on"></i> <strong>Estado del pedido:</strong> Cambia entre Pendiente → En proceso → Enviado → Entregado → Cancelado usando el desplegable de cada fila.</li>
+                        <li><i class="bi bi-cash-coin"></i> <strong>Pago general:</strong> El switch de pago marca el pedido completo como pagado o pendiente.</li>
+                        <li><i class="bi bi-list-check"></i> <strong>Pago por ítem:</strong> Expande el pedido para marcar el pago de cada producto individualmente.</li>
+                        <li><i class="bi bi-pin-angle-fill"></i> <strong>Fijar pedidos:</strong> Marca pedidos urgentes con el pin para que aparezcan al inicio de la lista.</li>
+                        <li><i class="bi bi-broadcast"></i> <strong>Tiempo real:</strong> Los cambios de estado se propagan instantáneamente al cliente via WebSocket sin que éste tenga que recargar.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Acciones en el Detalle</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-eye"></i> <strong>Ver detalle:</strong> Despliega los productos del pedido, cantidades, precios y el estado de pago de cada ítem.</li>
+                        <li><i class="bi bi-trash3"></i> <strong>Eliminar pedido:</strong> Solo disponible para pedidos en estado Entregado o Cancelado. Útil para limpiar el historial.</li>
                     </ul>
                 </div>
             </section>
 
-            <section id="facturacion" class="content-section">
-                <h2><i class="bi bi-credit-card"></i> Configuración de Pagos</h2>
+            <section id="a-facturas" class="content-section">
+                <h2><i class="bi bi-wallet2"></i> Historial de Facturas</h2>
                 <div class="card">
-                    <h3>Canales de Recaudo</h3>
-                    <p>Administra los métodos de pago disponibles para tus clientes:</p>
+                    <h3>Visualización y Filtros</h3>
                     <ul class="feature-list">
-                        <li><i class="bi bi-bank"></i> <strong>Billeteras:</strong> Vinculación de Nequi, Daviplata y cuentas bancarias.</li>
-                        <li><i class="bi bi-file-text"></i> <strong>Factura PDF:</strong> Sincronización automática de datos en el comprobante del cliente.</li>
-                        <li><i class="bi bi-eye"></i> <strong>Previsualizador:</strong> Verifica la estética de los datos de pago antes de confirmar.</li>
+                        <li><i class="bi bi-search"></i> <strong>Búsqueda:</strong> Encuentra facturas por número, nombre o cédula del cliente.</li>
+                        <li><i class="bi bi-calendar3"></i> <strong>Filtro por año:</strong> Selecciona el año para ver solo las facturas de ese período.</li>
+                        <li><i class="bi bi-sort-down"></i> <strong>Orden:</strong> Alterna entre orden ascendente y descendente por fecha.</li>
+                        <li><i class="bi bi-archive"></i> <strong>Archivadas:</strong> Activa "Mostrar archivadas" para ver las facturas que los clientes han marcado como archivadas.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Actualización de Estado</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-pencil-square"></i> <strong>Cambiar estado:</strong> Usa el desplegable en cada tarjeta de factura para cambiar entre Emitida → Pagada → Anulada.</li>
+                        <li><i class="bi bi-broadcast"></i> <strong>Tiempo real:</strong> El cambio de estado se propaga instantáneamente a todos los usuarios que ven esa factura via WebSocket.</li>
+                        <li><i class="bi bi-x-octagon"></i> <strong>Anular factura:</strong> Marca la factura como Anulada y cancela automáticamente el pedido asociado. El stock se devuelve al inventario.</li>
+                        <li><i class="bi bi-receipt-cutoff"></i> <strong>Ver factura PDF:</strong> Descarga el comprobante en PDF con todos los datos del pedido y las opciones de pago configuradas.</li>
                     </ul>
                 </div>
             </section>
+
+            <section id="a-publicidad" class="content-section">
+                <h2><i class="bi bi-megaphone"></i> Publicidad y Marketing</h2>
+                <div class="card">
+                    <h3>Carrusel Principal</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-images"></i> <strong>Gestión de banners:</strong> Sube, edita y elimina las imágenes del carrusel que ven los clientes en la página de inicio.</li>
+                        <li><i class="bi bi-eye"></i> <strong>Vista previa:</strong> Previsualiza cada banner antes de publicarlo.</li>
+                        <li><i class="bi bi-cloud-upload"></i> <strong>Guardar:</strong> Presiona "Guardar todos los cambios" para que los banners nuevos se publiquen en tiempo real para todos los visitantes.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Alertas y Notificaciones Globales</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-broadcast"></i> <strong>Alerta con imagen:</strong> Configura un mensaje de alerta que aparece como banner en la parte superior de la página para todos los usuarios. Ideal para promociones o avisos urgentes.</li>
+                        <li><i class="bi bi-toggle-off"></i> <strong>Activar/Desactivar:</strong> El switch de alerta la muestra u oculta globalmente de inmediato.</li>
+                        <li><i class="bi bi-collection"></i> <strong>Secciones especiales:</strong> Administra las secciones de marketing visual adicionales (imágenes tipo "seccion" y "cinta") que se muestran en el inicio.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Configuración del Inicio</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-card-heading"></i> <strong>Textos configurables:</strong> Modifica los títulos y subtítulos que aparecen en la página de inicio sin tocar código.</li>
+                        <li><i class="bi bi-layout-wtf"></i> <strong>Diseño responsivo:</strong> Todos los elementos de publicidad se adaptan automáticamente a móvil y escritorio.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="a-chat" class="content-section">
+                <h2><i class="bi bi-chat-heart"></i> Chat y Mensajes</h2>
+                <div class="card">
+                    <h3>Muro de Sugerencias (Chat Público)</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-megaphone-fill"></i> <strong>Canal abierto:</strong> Todos los usuarios registrados pueden publicar mensajes, sugerencias o comentarios.</li>
+                        <li><i class="bi bi-hand-thumbs-up"></i> <strong>Likes:</strong> Cualquier usuario puede dar "me gusta" a los mensajes.</li>
+                        <li><i class="bi bi-three-dots"></i> <strong>Menú de 3 puntos:</strong> Como admin puedes editar y eliminar CUALQUIER mensaje (el tuyo y el de otros usuarios).</li>
+                        <li><i class="bi bi-check2-square"></i> <strong>Selección múltiple:</strong> Botón "Seleccionar" para marcar y eliminar varios mensajes a la vez (solo admins).</li>
+                        <li><i class="bi bi-paperclip"></i> <strong>Adjuntos:</strong> Los mensajes pueden incluir imágenes adjuntas.</li>
+                        <li><i class="bi bi-emoji-smile"></i> <strong>Panel de emojis:</strong> Accede a la colección de emojis categorizados desde el botón 🎂 en el editor.</li>
+                        <li><i class="bi bi-type-bold"></i> <strong>Formato de texto:</strong> La barra de herramientas permite negrita, cursiva, listas y más.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Mensajes Temporales</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-clock-history"></i> <strong>Configuración:</strong> El selector "Chat público / privado" en la barra superior del chat permite activar la eliminación automática de mensajes: Desactivado, 24 horas, 7 días o Mensual.</li>
+                        <li><i class="bi bi-info-circle"></i> <strong>Banner informativo:</strong> Cuando el modo temporal está activo, todos los usuarios (no solo admins) ven un banner naranja dentro del chat indicando el tiempo configurado.</li>
+                        <li><i class="bi bi-exclamation-circle"></i> <strong>Aviso:</strong> Los mensajes se eliminan automáticamente del servidor según el período. Informa a los usuarios antes de activar este modo.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Chat Privado (Mensajes)</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-lock-fill"></i> <strong>Conversaciones privadas:</strong> Como admin tienes acceso a todas las conversaciones entre clientes y vendedores en el panel de equipo.</li>
+                        <li><i class="bi bi-reply-fill"></i> <strong>Responder:</strong> Selecciona una conversación en la lista lateral para ver el historial y responder directamente al cliente.</li>
+                        <li><i class="bi bi-pencil-fill"></i> <strong>Editar mensajes:</strong> Puedes editar cualquier mensaje (el tuyo y el de otros) desde el botón de edición en el mensaje.</li>
+                        <li><i class="bi bi-trash3"></i> <strong>Eliminar mensajes privados:</strong> Solo administradores pueden eliminar mensajes en el chat privado.</li>
+                        <li><i class="bi bi-people-fill"></i> <strong>Chat de equipo:</strong> Comunícate directamente con los vendedores en el canal privado de equipo (admin ↔ vendedor).</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="a-logros" class="content-section">
+                <h2><i class="bi bi-trophy"></i> Logros y Gamificación</h2>
+                <div class="card">
+                    <h3>Sistema de Logros</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-award"></i> <strong>Logros desbloqueables:</strong> El sistema tiene docenas de logros clasificados por rareza: Común, Raro, Épico y Legendario.</li>
+                        <li><i class="bi bi-bell-fill"></i> <strong>Notificación inmediata:</strong> Cuando desbloqueas un logro aparece un toast en pantalla con el nombre e ícono del logro, en tiempo real.</li>
+                        <li><i class="bi bi-bar-chart-line"></i> <strong>Barra de progreso:</strong> En la página de inicio (sección Explorar) ves tu progreso global con la cantidad de logros obtenidos vs total disponibles.</li>
+                        <li><i class="bi bi-grid"></i> <strong>Panel completo:</strong> Accede desde el menú "Logros" para ver todos tus logros desbloqueados y los pendientes con su descripción y condición.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Logros de Administrador</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-person-up"></i> <strong>Gestión:</strong> Desbloquea logros por gestionar usuarios, cambiar roles, registrar productos y administrar el sistema.</li>
+                        <li><i class="bi bi-graph-up-arrow"></i> <strong>Estadísticas del sistema:</strong> Como admin puedes ver estadísticas globales de logros: cuántos usuarios han desbloqueado cada logro.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="a-perfil" class="content-section">
+                <h2><i class="bi bi-person-gear"></i> Perfil de Administrador</h2>
+                <div class="card">
+                    <h3>Datos Personales</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-pencil-square"></i> <strong>Edición:</strong> Actualiza nombre, apellido, correo, teléfono, dirección y fecha de nacimiento desde "Mi Perfil".</li>
+                        <li><i class="bi bi-camera-fill"></i> <strong>Foto de perfil:</strong> Sube una imagen desde tu dispositivo o usa el recortador integrado para ajustarla. También puedes usar una URL de imagen directamente.</li>
+                        <li><i class="bi bi-key-fill"></i> <strong>Contraseña:</strong> Cambia tu contraseña desde la sección de seguridad del perfil. Se requiere la contraseña actual para confirmar el cambio.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Archivos y Documentos</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-file-earmark-arrow-up"></i> <strong>Subir archivos:</strong> Desde tu perfil puedes adjuntar documentos (PDF, imágenes) a tu cuenta. Estos son visibles para los administradores en el módulo de usuarios.</li>
+                        <li><i class="bi bi-google"></i> <strong>Vinculación con Google:</strong> Si iniciaste sesión con Google, tu cuenta queda vinculada y puedes acceder con ese método en el futuro.</li>
+                    </ul>
+                </div>
+            </section>
+
         </main>
     </div>
 
     <footer>
         <div class="footer-content">
-            <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="footer-brand">
                 <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo" class="app-badge">
-                <span style="font-weight: 700; color: var(--secondary);">D'ANTOJITOS</span>
+                <div class="footer-brand-name">
+                    <span>D'ANTOJITOS</span>
+                    <span>Repostería Artesanal</span>
+                </div>
             </div>
+            <div class="footer-divider"></div>
             <div class="footer-info">
-                <div class="copyright-text">2023 D'Antojitos© - Todos los derechos reservados</div>
-                <div class="author-credit">Created By: 2022 Yisus™</div>
+                <div class="copyright-text">© 2025 D'Antojitos — Todos los derechos reservados</div>
+                <div class="author-credit">Desarrollado por Yisus™</div>
             </div>
         </div>
     </footer>
@@ -151,10 +350,7 @@
         <i class="bi bi-list" id="menuToggleIcon"></i>
     </button>
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-    <a href="/inicio" class="btn-back-home" title="Volver al Inicio">
-        <i class="bi bi-house-door-fill"></i>
-    </a>
+    <a href="/inicio" class="btn-back-home" title="Volver al Inicio"><i class="bi bi-house-door-fill"></i></a>
 
     <div class="wrapper">
         <aside>
@@ -164,75 +360,61 @@
             </div>
             <nav>
                 <div class="nav-item active" onclick="showSection('v-inicio')"><i class="bi bi-grid-1x2"></i> <span>Inicio</span></div>
-                <div class="nav-item" onclick="showSection('v-perfil')"><i class="bi bi-person-circle"></i> <span>Mi Perfil</span></div>
-                <div class="nav-item" onclick="showSection('v-pedidos')"><i class="bi bi-receipt"></i> <span>Pedidos</span></div>
                 <div class="nav-item" onclick="showSection('v-productos')"><i class="bi bi-box-seam"></i> <span>Productos</span></div>
                 <div class="nav-item" onclick="showSection('v-catalogo')"><i class="bi bi-shop"></i> <span>Catálogo</span></div>
+                <div class="nav-item" onclick="showSection('v-pedidos')"><i class="bi bi-receipt"></i> <span>Pedidos</span></div>
+                <div class="nav-item" onclick="showSection('v-facturas')"><i class="bi bi-wallet2"></i> <span>Facturas</span></div>
+                <div class="nav-item" onclick="showSection('v-chat')"><i class="bi bi-chat-heart"></i> <span>Chat y Mensajes</span></div>
+                <div class="nav-item" onclick="showSection('v-perfil')"><i class="bi bi-person-circle"></i> <span>Mi Perfil</span></div>
             </nav>
         </aside>
 
         <main>
+
             <section id="v-inicio" class="content-section active">
                 <h2><i class="bi bi-stars"></i> Manual del Vendedor</h2>
-                <p class="intro-text">Bienvenido al panel de operaciones de <strong>D'Antojitos©</strong>. Este manual te guiará en las tareas del día a día para que puedas atender a los clientes de forma rápida y eficiente.</p>
-
+                <p class="intro-text">Bienvenido al panel de operaciones de <strong>D'Antojitos©</strong>. Este manual te guiará en las tareas del día a día: gestionar el inventario, atender pedidos y comunicarte con los clientes de forma rápida y eficiente.</p>
                 <div class="card-grid" data-reveal>
                     <div class="card ds-card">
                         <h3><i class="bi bi-lightning-charge"></i> Operación Ágil</h3>
-                        <p>Tienes acceso a las herramientas necesarias para gestionar pedidos y atender al cliente sin interrupciones durante el servicio.</p>
+                        <p>Tienes acceso a pedidos, productos, facturas y mensajes. Los módulos se actualizan en tiempo real mediante WebSockets para que nunca pierdas un pedido nuevo o un mensaje de cliente.</p>
                     </div>
                     <div class="card ds-card">
                         <h3><i class="bi bi-person-lock"></i> Acceso Controlado</h3>
-                        <p>Tu rol de vendedor te permite operar el flujo de ventas. Las configuraciones del sistema y reportes financieros son exclusivos del administrador.</p>
+                        <p>Como vendedor puedes gestionar todo el flujo de ventas. La configuración del sistema, reportes financieros globales y eliminación de usuarios son exclusivos del administrador.</p>
                     </div>
-                </div>
-            </section>
-
-            <section id="v-perfil" class="content-section">
-                <h2><i class="bi bi-person-circle"></i> Mi Perfil</h2>
-                <div class="card">
-                    <h3>Datos Personales</h3>
-                    <p>Gestiona la información asociada a tu cuenta de vendedor:</p>
-                    <ul class="feature-list">
-                        <li><i class="bi bi-pencil-square"></i> <strong>Edición de Datos:</strong> Actualiza tu nombre, correo o contraseña desde tu perfil.</li>
-                        <li><i class="bi bi-image"></i> <strong>Foto de Perfil:</strong> Personaliza tu avatar para identificarte en el sistema.</li>
-                        <li><i class="bi bi-shield-lock"></i> <strong>Seguridad:</strong> Cambia tu contraseña periódicamente para proteger tu cuenta.</li>
-                    </ul>
-                </div>
-            </section>
-
-            <section id="v-pedidos" class="content-section">
-                <h2><i class="bi bi-receipt"></i> Gestión de Pedidos</h2>
-                <div class="card">
-                    <h3>Atención y Seguimiento</h3>
-                    <p>Consulta y gestiona el flujo de pedidos activos durante tu turno:</p>
-                    <ul class="feature-list">
-                        <li><i class="bi bi-funnel"></i> <strong>Búsqueda:</strong> Filtra pedidos por nombre o cédula del cliente para localizarlos rápidamente.</li>
-                        <li><i class="bi bi-toggle-on"></i> <strong>Estado de Entrega:</strong> Marca pedidos como entregados una vez se complete la transacción.</li>
-                        <li><i class="bi bi-pin-angle"></i> <strong>Pedidos Fijados:</strong> Los pedidos prioritarios aparecen al inicio de la lista para atenderlos primero.</li>
-                        <li><i class="bi bi-cash-coin"></i> <strong>Saldo Pendiente:</strong> Identifica los pedidos con pagos incompletos para gestionarlos con el cliente.</li>
-                    </ul>
+                    <div class="card ds-card">
+                        <h3><i class="bi bi-bell"></i> Alertas en Tiempo Real</h3>
+                        <p>Recibes notificaciones inmediatas de nuevos pedidos, mensajes privados de clientes y cambios de estado de facturas sin necesidad de recargar la página.</p>
+                    </div>
                 </div>
             </section>
 
             <section id="v-productos" class="content-section">
                 <h2><i class="bi bi-box-seam"></i> Gestión de Productos</h2>
                 <div class="card">
-                    <h3>Administración del Inventario</h3>
-                    <p>Como vendedor puedes crear, editar y controlar los productos del catálogo:</p>
+                    <h3>Primeros Pasos — Categorías</h3>
+                    <p>Antes de agregar productos, crea al menos una categoría desde el gestor en la parte superior del módulo. Si el catálogo está vacío, el sistema te guía automáticamente a crearlo.</p>
                     <ul class="feature-list">
-                        <li><i class="bi bi-plus-circle"></i> <strong>Agregar Postre:</strong> Usa el botón "Nuevo Postre" para ingresar un producto con nombre, precio, stock, descripción e imagen.</li>
-                        <li><i class="bi bi-pencil-square"></i> <strong>Editar Producto:</strong> Haz clic sobre cualquier tarjeta del catálogo para abrir su ficha y editarla.</li>
-                        <li><i class="bi bi-trash3"></i> <strong>Eliminar:</strong> Desde la ficha del producto puedes eliminarlo de forma permanente. Esta acción no se puede deshacer.</li>
-                        <li><i class="bi bi-boxes"></i> <strong>Control de Stock:</strong> Mantén el stock actualizado; los productos con stock 0 aparecen como agotados en el catálogo.</li>
-                        <li><i class="bi bi-image"></i> <strong>Imágenes:</strong> Las imágenes se comprimen y suben automáticamente a Cloudinary al guardar el producto.</li>
+                        <li><i class="bi bi-tags-fill"></i> <strong>Crear categoría:</strong> Escribe el nombre y presiona Agregar. Ejemplos: Pasteles, Postres Fríos, Especiales.</li>
+                        <li><i class="bi bi-x-circle"></i> <strong>Eliminar categoría:</strong> Clic en la X del nombre. Los productos asociados pasan a "Sin categoría".</li>
                     </ul>
                 </div>
                 <div class="card">
-                    <h3>Búsqueda y Filtros</h3>
+                    <h3>Agregar y Editar Productos</h3>
                     <ul class="feature-list">
-                        <li><i class="bi bi-search"></i> <strong>Buscador:</strong> Escribe el nombre en la barra de búsqueda para localizar productos al instante.</li>
-                        <li><i class="bi bi-check2-circle"></i> <strong>Disponibles / Agotados:</strong> El módulo separa automáticamente los productos en dos secciones según su stock.</li>
+                        <li><i class="bi bi-plus-circle"></i> <strong>Nuevo producto:</strong> Botón "Nuevo Postre". Completa nombre, precio, stock, descripción, categoría e imagen.</li>
+                        <li><i class="bi bi-pencil-square"></i> <strong>Editar:</strong> Ícono de lápiz en la tarjeta del producto para abrir el formulario de edición.</li>
+                        <li><i class="bi bi-eye"></i> <strong>Ver detalle:</strong> Ícono de ojo para la vista rápida con foto ampliada.</li>
+                        <li><i class="bi bi-boxes"></i> <strong>Stock:</strong> Mantén el stock actualizado. Con stock 0 el producto aparece como "Agotado" en el catálogo para los clientes.</li>
+                        <li><i class="bi bi-image"></i> <strong>Imágenes:</strong> Se suben automáticamente a la nube al guardar. Formato recomendado: JPG o PNG, máximo 10 MB.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Organización por Arrastre</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-grip-vertical"></i> <strong>Handle de arrastre:</strong> Pasa el cursor sobre una tarjeta y usa el ícono ⋮⋮ para arrastrar el producto a otra categoría.</li>
+                        <li><i class="bi bi-check2-circle"></i> <strong>Guardado automático:</strong> El cambio de categoría se guarda al soltar el producto.</li>
                     </ul>
                 </div>
             </section>
@@ -240,27 +422,109 @@
             <section id="v-catalogo" class="content-section">
                 <h2><i class="bi bi-shop"></i> Catálogo de Productos</h2>
                 <div class="card">
-                    <h3>Consulta de Inventario</h3>
-                    <p>Explora el catálogo para orientar a los clientes sobre disponibilidad y precios:</p>
+                    <h3>Vista del Inventario</h3>
                     <ul class="feature-list">
-                        <li><i class="bi bi-search"></i> <strong>Búsqueda de Productos:</strong> Localiza cualquier artículo por nombre o categoría al instante.</li>
-                        <li><i class="bi bi-check2-circle"></i> <strong>Disponibilidad:</strong> El catálogo muestra el stock en tiempo real para evitar ventas de productos agotados.</li>
-                        <li><i class="bi bi-tag"></i> <strong>Precios Actualizados:</strong> Los precios que ves son los mismos que se aplican al momento de la venta.</li>
+                        <li><i class="bi bi-search"></i> <strong>Búsqueda:</strong> Barra de búsqueda instantánea por nombre o categoría.</li>
+                        <li><i class="bi bi-tags"></i> <strong>Categorías:</strong> Los productos se agrupan por categoría con separadores visuales naranjas.</li>
+                        <li><i class="bi bi-eye"></i> <strong>Detalle:</strong> Haz clic en un producto para ver su ficha completa con foto, descripción y precio.</li>
+                        <li><i class="bi bi-check2-circle"></i> <strong>Disponibilidad real:</strong> Los productos agotados aparecen claramente marcados. Los precios son siempre los actuales.</li>
                     </ul>
                 </div>
             </section>
+
+            <section id="v-pedidos" class="content-section">
+                <h2><i class="bi bi-receipt"></i> Gestión de Pedidos</h2>
+                <div class="card">
+                    <h3>Panel de Pedidos</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-funnel"></i> <strong>Búsqueda:</strong> Filtra por nombre del cliente, cédula, número de factura o estado.</li>
+                        <li><i class="bi bi-file-earmark-pdf"></i> <strong>Cierre de caja:</strong> Descarga un PDF con todos los pedidos del mes y año seleccionados.</li>
+                        <li><i class="bi bi-broadcast"></i> <strong>Tiempo real:</strong> Los nuevos pedidos aparecen automáticamente en la lista sin recargar.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Control de Estado y Pago</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-toggle-on"></i> <strong>Estado del pedido:</strong> Cambia entre Pendiente → En proceso → Enviado → Entregado → Cancelado. El cliente ve el cambio en tiempo real.</li>
+                        <li><i class="bi bi-cash-coin"></i> <strong>Pago general:</strong> Switch para marcar el pedido completo como pagado.</li>
+                        <li><i class="bi bi-list-check"></i> <strong>Pago por ítem:</strong> Expande el pedido para marcar el pago de cada producto individualmente.</li>
+                        <li><i class="bi bi-pin-angle-fill"></i> <strong>Fijar:</strong> Usa el pin para destacar pedidos urgentes al inicio de la lista.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="v-facturas" class="content-section">
+                <h2><i class="bi bi-wallet2"></i> Historial de Facturas</h2>
+                <div class="card">
+                    <h3>Gestión de Facturas</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-search"></i> <strong>Búsqueda:</strong> Por número de factura, nombre o cédula del cliente.</li>
+                        <li><i class="bi bi-calendar3"></i> <strong>Filtro por año:</strong> Selecciona el año para ver solo las facturas de ese período.</li>
+                        <li><i class="bi bi-pencil-square"></i> <strong>Cambiar estado:</strong> Actualiza el estado de cada factura (Emitida / Pagada). El cliente lo ve en tiempo real.</li>
+                        <li><i class="bi bi-receipt-cutoff"></i> <strong>Ver PDF:</strong> Descarga el comprobante de factura con los datos del cliente y métodos de pago.</li>
+                        <li><i class="bi bi-broadcast"></i> <strong>Tiempo real:</strong> Los cambios de estado se propagan instantáneamente vía WebSocket.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="v-chat" class="content-section">
+                <h2><i class="bi bi-chat-heart"></i> Chat y Mensajes</h2>
+                <div class="card">
+                    <h3>Muro de Sugerencias (Chat Público)</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-megaphone-fill"></i> <strong>Canal abierto:</strong> Publica mensajes, responde sugerencias y da likes a comentarios de clientes.</li>
+                        <li><i class="bi bi-pencil-fill"></i> <strong>Editar mensajes:</strong> Puedes editar tu propio mensaje una sola vez después de enviarlo.</li>
+                        <li><i class="bi bi-emoji-smile"></i> <strong>Emojis y formato:</strong> Usa la barra de herramientas para dar formato a tus mensajes y agregar emojis.</li>
+                        <li><i class="bi bi-clock-history"></i> <strong>Mensajes temporales:</strong> Si el admin activó mensajes temporales, verás un banner naranja indicando el período de eliminación automática.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Mensajes Privados de Clientes</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-people-fill"></i> <strong>Lista de conversaciones:</strong> En el tab "Mensajes" verás todas las conversaciones con clientes en la barra lateral izquierda.</li>
+                        <li><i class="bi bi-dot"></i> <strong>Indicador de no leídos:</strong> Las conversaciones con mensajes sin respuesta muestran un contador.</li>
+                        <li><i class="bi bi-reply-fill"></i> <strong>Responder:</strong> Selecciona una conversación y escribe tu respuesta en el campo inferior. El cliente la recibe en tiempo real.</li>
+                        <li><i class="bi bi-pencil-fill"></i> <strong>Editar:</strong> Puedes editar tus propios mensajes privados una sola vez.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Chat de Equipo (Staff)</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-shield-fill"></i> <strong>Canal privado:</strong> El tab "Equipo" es exclusivo para comunicaciones entre vendedores y administradores. Los clientes no tienen acceso.</li>
+                        <li><i class="bi bi-reply-all-fill"></i> <strong>Mensajes de equipo:</strong> Escribe y envía mensajes directamente a cualquier miembro del staff.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="v-perfil" class="content-section">
+                <h2><i class="bi bi-person-circle"></i> Mi Perfil</h2>
+                <div class="card">
+                    <h3>Datos Personales</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-pencil-square"></i> <strong>Edición:</strong> Actualiza nombre, apellido, correo, teléfono, dirección y fecha de nacimiento.</li>
+                        <li><i class="bi bi-camera-fill"></i> <strong>Foto de perfil:</strong> Sube una imagen desde tu dispositivo con el recortador integrado.</li>
+                        <li><i class="bi bi-key-fill"></i> <strong>Contraseña:</strong> Cambia tu contraseña desde la sección de seguridad. Requiere tu contraseña actual.</li>
+                        <li><i class="bi bi-file-earmark-arrow-up"></i> <strong>Documentos:</strong> Adjunta archivos a tu perfil (documentos de identidad u otros requeridos por el admin).</li>
+                    </ul>
+                </div>
+            </section>
+
         </main>
     </div>
 
     <footer>
         <div class="footer-content">
-            <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="footer-brand">
                 <img src="{{ url_for('static', filename='uploads/logo.ico') }}" alt="Logo" class="app-badge">
-                <span style="font-weight: 700; color: var(--secondary);">D'ANTOJITOS</span>
+                <div class="footer-brand-name">
+                    <span>D'ANTOJITOS</span>
+                    <span>Repostería Artesanal</span>
+                </div>
             </div>
+            <div class="footer-divider"></div>
             <div class="footer-info">
-                <div class="copyright-text">2023 D'Antojitos© - Todos los derechos reservados</div>
-                <div class="author-credit">Created By: 2022 Yisus™</div>
+                <div class="copyright-text">© 2025 D'Antojitos — Todos los derechos reservados</div>
+                <div class="author-credit">Desarrollado por Yisus™</div>
             </div>
         </div>
     </footer>
@@ -269,11 +533,11 @@
 
     <div class="admin-lock-screen">
         <div class="lock-card">
-            <i class="bi bi-shield-lock" style="font-size: 4rem; color: var(--primary);"></i>
-            <h2 style="margin-top: 20px;">Acceso Restringido</h2>
-            <p>Debes iniciar sesión para acceder a esta documentación.</p>
+            <i class="bi bi-shield-lock" style="font-size:4rem;color:var(--primary);"></i>
+            <h2 style="margin-top:20px;">Acceso Restringido</h2>
+            <p>Debes iniciar sesión como administrador o vendedor para acceder a esta documentación.</p>
             <br>
-            <a href="/login" class="btn-verify-admin" style="background: var(--secondary); color: white; padding: 15px 30px; border-radius: 12px; text-decoration: none; font-weight: 600; display: inline-block;">
+            <a href="/login" class="btn-verify-admin" style="background:var(--secondary);color:white;padding:15px 30px;border-radius:12px;text-decoration:none;font-weight:600;display:inline-block;">
                 Iniciar Sesión
             </a>
         </div>
@@ -288,4 +552,3 @@
     <script type="module" src="{{ url_for('static', filename='js/compiled/theme.js') }}" defer></script>
 </body>
 </html>
-

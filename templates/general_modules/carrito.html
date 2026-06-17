@@ -41,6 +41,34 @@
     </main>
     </div>
 
+    <div class="modal fade" id="modalDireccion" tabindex="-1" aria-labelledby="modalDireccionLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold" id="modalDireccionLabel">
+                        <i class="bi bi-geo-alt-fill me-2" style="color:var(--bs-warning,#f39c12);"></i>Confirmar dirección de entrega
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <p class="text-muted small mb-3">¿A dónde enviamos tu pedido? Verifica o ingresa la dirección.</p>
+                    <label for="inputDireccionPedido" class="form-label fw-semibold">Dirección de entrega <span class="text-danger">*</span></label>
+                    <textarea id="inputDireccionPedido" class="form-control rounded-3" rows="3"
+                        placeholder="Ej: Calle 45 # 12-30, Barrio Las Flores, Apto 201" maxlength="300"></textarea>
+                    <div id="errorDireccion" class="text-danger small mt-1 d-none">
+                        <i class="bi bi-exclamation-circle me-1"></i>Ingresa una dirección válida para continuar.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 gap-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-confirmar rounded-pill px-4 fw-semibold" id="btnConfirmarDireccion">
+                        <i class="bi bi-send-check me-2"></i>Enviar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="toastContainer"></div>
     {% include 'global_modules/footer.html' %}
     <button id="scrollToTopBtn" title="Volver arriba"><i class="bi bi-arrow-up"></i></button>

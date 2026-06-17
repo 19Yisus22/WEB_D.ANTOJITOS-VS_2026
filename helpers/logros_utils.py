@@ -430,7 +430,7 @@ def _perfil_completo(usuario: dict) -> bool:
     return True
 
 def verificar_y_otorgar(cedula: str, contexto: dict | None = None) -> list[dict]:
-    import helpers.models as db
+    import database.models as db
     contexto = contexto or {}
     nuevos: list[dict] = []
 

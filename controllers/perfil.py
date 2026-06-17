@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template
-import helpers.models as db
+import database.models as db
 from helpers.auth import sin_cache, login_required, admin_required, hash_password
 from helpers.validators import is_valid_name, is_valid_numeric, is_valid_email
 from helpers.cloudinary import upload_image, delete_image
