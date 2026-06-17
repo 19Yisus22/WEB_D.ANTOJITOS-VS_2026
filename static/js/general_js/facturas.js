@@ -257,32 +257,34 @@ function lanzarNotificacionMultidispositivo(fObj, estado) {
     t.innerHTML = `
         <div class="d-flex align-items-center p-3">
 
-            <div class="position-relative me-3">
+            <div class="position-relative me-3 flex-shrink-0">
                 <i class="bi ${configuracion.icono} text-${configuracion.color} fs-3"></i>
                 <span class="position-absolute top-0 start-100 translate-middle p-1 bg-${configuracion.color} border border-light rounded-circle"></span>
             </div>
 
-            <div class="flex-grow-1">
+            <div class="flex-grow-1 min-width-0">
 
-                <strong style="font-size: 0.9rem;" class="d-block text-uppercase">
-                    ${configuracion.titulo}
-                </strong>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <strong style="font-size: 0.85rem;" class="text-uppercase">
+                        ${configuracion.titulo}
+                    </strong>
+                    <img src="/static/uploads/bre-b.logo.png" alt="BRE-B"
+                         style="height:14px;width:auto;object-fit:contain;opacity:0.85;flex-shrink:0;"
+                         onerror="this.style.display='none'">
+                </div>
 
-                <div class="d-flex align-items-center gap-1 mt-1">
-
+                <div class="d-flex align-items-center gap-1">
                     <small class="text-white-50">
                         Factura ${facturaFormateada}
                     </small>
-
                     <span class="badge bg-${configuracion.color} text-dark ms-auto" style="font-size: 0.6rem;">
                         ${estado.toUpperCase()}
                     </span>
-
                 </div>
 
             </div>
 
-            <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 0.7rem;"></i>
+            <i class="bi bi-x-lg ms-3 btn-close-toast" style="cursor:pointer; font-size: 0.7rem;flex-shrink:0;"></i>
 
         </div>
     `;
@@ -372,6 +374,9 @@ const _BANCO_LOGOS = {
     'Daviplata':   '/static/uploads/daviplata.logo.png',
     'Bancolombia': '/static/uploads/bancolombia.logo.png',
     'NuBank':      '/static/uploads/nu.logo.png',
+    'Bre-b':       '/static/uploads/bre-b.logo.png',
+    'BRE-B':       '/static/uploads/bre-b.logo.png',
+    'bre-b':       '/static/uploads/bre-b.logo.png',
 };
 
 function _getBancoLogoTag(entidad, size) {
@@ -465,7 +470,7 @@ function abrirModalPago(facturaNum, total) {
                             </div>
                             ${m.clave_pago ? `
                             <div class="payment-clave-row">
-                                <img src="/static/uploads/.png" alt="BRE-B"
+                                <img src="/static/uploads/bre-b.logo.png" alt="BRE-B"
                                      class="payment-clave-icon"
                                      style="height:18px;width:auto;object-fit:contain;flex-shrink:0;border-radius:3px;"
                                      onerror="this.parentElement.querySelector('.payment-clave-fallback').style.display='inline-flex';this.style.display='none'">
@@ -965,14 +970,21 @@ function mostrarFacturasBuscadas() {
         const clienteUser    = f.username_cliente ? `@${f.username_cliente}` : '';
 
         item.innerHTML = `
-            <!-- ── Cabecera recibo: logo + marca | número + fecha + badge ── -->
             <div class="inv-header" onclick="toggleInvItem(${globalIdx})">
                 <div class="inv-brand-side">
                     <div class="inv-brand-logo">
                         <img src="/static/uploads/logo.ico" alt="Logo D'Antojitos"
                              onerror="this.src='/static/uploads/logo.ico'">
                     </div>
-                    <span class="inv-brand-name">D'Antojitos©</span>
+                    <div class="inv-brand-text-col">
+                        <span class="inv-brand-name">D'Antojitos©</span>
+                        <span class="inv-breb-tag">
+                            <img src="/static/uploads/bre-b.logo.png" alt="BRE-B"
+                                 class="inv-breb-img"
+                                 onerror="this.style.display='none'">
+                            <span class="inv-breb-label">BRE-B</span>
+                        </span>
+                    </div>
                 </div>
                 <div class="inv-meta-side">
                     <span class="inv-num">${f.numero_factura}</span>
