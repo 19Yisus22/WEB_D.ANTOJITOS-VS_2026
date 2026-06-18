@@ -1,11 +1,18 @@
 (function () {
     var _speed = 1;
 
-    function _baseDuration() {
+    function _baseDuration(track) {
         var vw = window.innerWidth;
-        if (vw < 480)  return 72;
-        if (vw < 768)  return 62;
-        if (vw < 1024) return 54;
+        if (track) {
+            var tw = track.scrollWidth || vw * 2;
+            // Keep each item visible ~35 s at speed=1 regardless of viewport width
+            var raw = Math.round(35 * (vw + tw) / vw);
+            return Math.min(200, Math.max(40, raw));
+        }
+        // Fallback breakpoints before track is available
+        if (vw < 480)  return 120;
+        if (vw < 768)  return 90;
+        if (vw < 1024) return 70;
         return 55;
     }
 
@@ -25,7 +32,7 @@
     }
 
     function setDuration(track, speed) {
-        var base = _baseDuration();
+        var base = _baseDuration(track);
         track.dataset.baseDuration = String(base);
         var dur = (base / speed).toFixed(2) + 's';
         track.style.animationDuration = dur;
@@ -36,11 +43,21 @@
         var el = document.getElementById('navbarCinta');
         var track = el ? el.querySelector('.ci-track') : null;
         if (!track) return;
-        var base = parseFloat(track.dataset.baseDuration || String(_baseDuration()));
+        var base = parseFloat(track.dataset.baseDuration) || _baseDuration(track);
         var dur = (base / speed).toFixed(2) + 's';
         track.style.animationDuration = dur;
         track.style.webkitAnimationDuration = dur;
     }
+
+    var _resizeTicker = null;
+    window.addEventListener('resize', function () {
+        clearTimeout(_resizeTicker);
+        _resizeTicker = setTimeout(function () {
+            var el = document.getElementById('navbarCinta');
+            var track = el ? el.querySelector('.ci-track') : null;
+            if (track) setDuration(track, _speed);
+        }, 200);
+    });
 
     function init() {
         var el = document.getElementById('navbarCinta');

@@ -735,6 +735,8 @@ async function procesarAnulacion(numFactura) {
             }
 
             if (res.ok) {
+                // Prevent duplicate toast when the socket:factura_update echo arrives
+                _facturaEstadosNotif.set(`${numFactura}__Anulada`, true);
 
                 const _role = (window.FACTURA_ROLE || 'cliente').toLowerCase();
                 if (_role === 'vendedor' || _role === 'admin') {
@@ -923,7 +925,11 @@ function mostrarFacturasBuscadas() {
         if (emptyEl) {
             emptyEl.style.display = 'block';
             const sub = emptyEl.querySelector('.facturas-empty-sub');
-            if (sub) sub.textContent = mostrarArchivadas ? t('inv.no_archived') : t('inv.no_results_q');
+            if (sub) sub.textContent = mostrarArchivadas
+                ? t('inv.no_archived')
+                : facturasActuales.length === 0
+                    ? t('inv.no_facturas')
+                    : t('inv.no_results_q');
         }
         paginar(0);
         return;
@@ -1057,7 +1063,7 @@ function mostrarFacturasBuscadas() {
                     const esVendedor = role === 'vendedor';
                     const esAdmin    = role === 'admin';
                     const esCliente  = !esVendedor && !esAdmin;
-                    const btnPagar = (!esFinal && !esVendedor)
+                    const btnPagar = (esCliente && !esFinal)
                         ? `<button class="btn btn-primary w-100 rounded-pill py-2 fw-bold inv-btn-pagar">
                                <i class="bi bi-qr-code-scan me-2"></i>${t('inv.proceed')}
                            </button>`
@@ -1123,6 +1129,21 @@ function mostrarFacturasBuscadas() {
     });
 
     paginar(filtradas.length);
+    _actualizarBadgeArchivadas();
+}
+
+function _actualizarBadgeArchivadas() {
+    const btn = document.getElementById('btnToggleArchivadas');
+    if (!btn) return;
+    const existing = btn.querySelector('.archive-count-badge');
+    if (existing) existing.remove();
+    if (mostrarArchivadas) return;
+    const count = facturasActuales.filter(f => f.archivada && !esFacturaEmitida(f)).length;
+    if (count < 1) return;
+    const badge = document.createElement('span');
+    badge.className = 'archive-count-badge';
+    badge.textContent = count > 99 ? '99+' : String(count);
+    btn.appendChild(badge);
 }
 
 window.toggleInvItem = function(idx) {
@@ -1258,9 +1279,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             mostrarArchivadas = !mostrarArchivadas;
 
-            btnArchivadas.innerHTML = mostrarArchivadas
-                ? `<i class="bi bi-archive-fill"></i><span>${t('inv.hide_archived')}</span>`
-                : `<i class="bi bi-archive-fill"></i><span>${t('inv.show_archived')}</span>`;
+            const label = mostrarArchivadas ? t('inv.hide_archived') : t('inv.show_archived');
+            btnArchivadas.innerHTML = `<i class="bi bi-archive-fill"></i><span>${label}</span>`;
 
             btnArchivadas.classList.toggle('active', mostrarArchivadas);
 
@@ -1367,6 +1387,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     _resetFacturasInterval(_facturasIntervalMs);
 
     document.addEventListener('socket:factura_update', (e) => {
+        const detail        = e.detail || {};
+        const numFactura    = detail.numero_factura || '';
+        const estadoSocket  = detail.estado         || '';
+        const estadoLower   = estadoSocket.toLowerCase();
+
+        const esSignificativo = ['pagada','pagado','anulada','cancelado','cancelada'].includes(estadoLower);
+        if (esSignificativo && numFactura) {
+            const key = `${numFactura}__${estadoSocket}`;
+            if (!_facturaEstadosNotif.has(key)) {
+                _facturaEstadosNotif.set(key, true);
+                lanzarNotificacionMultidispositivo({ numero_factura: numFactura }, estadoSocket);
+            }
+        }
+
+        const roleInt = (window.FACTURA_ROLE || 'cliente').toLowerCase();
+        if (roleInt === 'vendedor' || roleInt === 'admin') {
+            cargarTodasFacturasPage(true);
+        } else {
+            cargarFacturasCliente(true);
+        }
+    });
+
+    document.addEventListener('socket:pedido_update', (e) => {
+        const detail        = e.detail || {};
+        const estadoFactura = detail.estado_factura || '';
+        const estadoPedido  = detail.estado          || '';
+        const numFactura    = detail.numero_factura  || '';
+
+        let estadoToast = null;
+        if (['pagada', 'pagado'].includes(estadoFactura.toLowerCase())) {
+            estadoToast = estadoFactura;
+        } else if (['anulada', 'cancelado', 'cancelada'].includes(estadoFactura.toLowerCase())) {
+            estadoToast = estadoFactura;
+        } else if (estadoPedido.toLowerCase() === 'enviado') {
+            estadoToast = 'Enviado';
+        }
+
+        if (estadoToast && numFactura) {
+            const key = `${numFactura}__${estadoToast}`;
+            if (!_facturaEstadosNotif.has(key)) {
+                _facturaEstadosNotif.set(key, true);
+                lanzarNotificacionMultidispositivo({ numero_factura: numFactura }, estadoToast);
+            }
+        }
+
         const roleInt = (window.FACTURA_ROLE || 'cliente').toLowerCase();
         if (roleInt === 'vendedor' || roleInt === 'admin') {
             cargarTodasFacturasPage(true);

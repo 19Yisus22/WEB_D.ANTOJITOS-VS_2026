@@ -346,6 +346,7 @@ function crearCardProductoHTML(p, prefix = "") {
                onload="this.style.opacity='1'"
                onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')">`
         : '';
+    const isFav = favoritos.includes(p.id_producto.toString());
     col.innerHTML = `
         <div class="card product-card ${isAgotado ? 'producto-gris' : ''}" style="cursor:pointer;border-radius:20px;border:1px solid rgba(0,0,0,0.05);">
             <div class="img-wrapper position-relative overflow-hidden" style="border-radius:20px 20px 0 0;">
@@ -354,6 +355,9 @@ function crearCardProductoHTML(p, prefix = "") {
                     <i class="bi bi-image-slash"></i><span>${t('status.no_image')}</span>
                 </div>
                 ${isAgotado ? `<div class="letrero-agotado">${t('cat.out_stock')}</div>` : ''}
+                <button class="btn-favorito-floating ${isFav ? 'activo' : ''}" title="${isFav ? 'Quitar de favoritos' : 'Añadir a favoritos'}">
+                    <i class="bi ${isFav ? 'bi-heart-fill' : 'bi-heart'}"></i>
+                </button>
             </div>
             <div class="card-body p-2 d-flex flex-column gap-1 align-items-center text-center">
                 <h6 class="fw-bold mb-0 w-100" style="font-size:0.85rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;">${p.nombre}</h6>
@@ -374,9 +378,31 @@ function crearCardProductoHTML(p, prefix = "") {
     const card = col.querySelector('.product-card');
     card._prodData = p;
     card.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-agregar-modern,.qty-btn,.cantidad,.btn-disminuir,.btn-aumentar,.btn-secondary')) return;
+        if (e.target.closest('.btn-agregar-modern,.qty-btn,.cantidad,.btn-disminuir,.btn-aumentar,.btn-secondary,.btn-favorito-floating')) return;
         abrirModalProducto(this._prodData);
     });
+    const btnFavCard = col.querySelector('.btn-favorito-floating');
+    if (btnFavCard) {
+        btnFavCard.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idStr = p.id_producto.toString();
+            const eraFav = favoritos.includes(idStr);
+            const seraFav = !eraFav;
+            // Update icon immediately (visual feedback before re-render)
+            btnFavCard.classList.toggle('activo', seraFav);
+            btnFavCard.querySelector('i').className = `bi ${seraFav ? 'bi-heart-fill' : 'bi-heart'}`;
+            // Update data + persist + show toast (renderProductos called inside if Favoritos filter)
+            if (eraFav) {
+                favoritos.splice(favoritos.indexOf(idStr), 1);
+                mostrarToastFavorito("Postre eliminado de favoritos", false);
+            } else {
+                favoritos.push(idStr);
+                mostrarToastFavorito("Postre añadido a favoritos", true);
+            }
+            localStorage.setItem('mis_favoritos_postres', JSON.stringify(favoritos));
+            if (filtros[filtroIndex] === 'Favoritos') renderProductos(searchInput.value);
+        });
+    }
     return col;
 }
 

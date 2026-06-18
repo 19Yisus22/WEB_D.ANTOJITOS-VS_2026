@@ -585,6 +585,8 @@ body.has-nav-ticker { padding-top: 104px; }
     .navbar-ticker .ci-track {
         -webkit-animation-name: ciScroll !important;
         animation-name: ciScroll !important;
+        -webkit-animation-duration: 100s;
+        animation-duration: 100s;
         -webkit-animation-timing-function: linear !important;
         animation-timing-function: linear !important;
         -webkit-animation-iteration-count: infinite !important;
@@ -593,6 +595,13 @@ body.has-nav-ticker { padding-top: 104px; }
         animation-fill-mode: none !important;
         -webkit-animation-play-state: running !important;
         animation-play-state: running !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-ticker .ci-track {
+        -webkit-animation-duration: 120s;
+        animation-duration: 120s;
     }
 }
 

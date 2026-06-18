@@ -35,7 +35,7 @@
         { label:'Mi carrito',             url:'/carrito_page',                  icon:'bi-cart3',             rol:null },
         { label:'Mi perfil',              url:'/mi_perfil',                     icon:'bi-person-circle',     rol:null },
         { label:'Sugerencias',            url:'/comentarios_page',              icon:'bi-chat-dots',         rol:null },
-        { label:'Historial de facturas',  url:'/historial_facturas_page',       icon:'bi-receipt',           rol:null },
+        { label:'Historial de facturas',  url:'/gestionar_facturas_page',       icon:'bi-receipt',           rol:null },
         { label:'Zona de pagos',          url:'/zona_pagos',                    icon:'bi-credit-card',       rol:null },
         { label:'Mensajes privados',      url:'/mensajes_privados',             icon:'bi-envelope-fill',     rol:null },
         { label:'Iniciar sesión',         url:'/login',                         icon:'bi-box-arrow-in-right',rol:null },

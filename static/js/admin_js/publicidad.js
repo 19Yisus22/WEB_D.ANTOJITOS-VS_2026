@@ -854,9 +854,7 @@ function _toggleModoSeleccionGestor() {
         }
     });
     const toolbar = document.getElementById('gestorBulkToolbar');
-    if (toolbar) toolbar.style.display = _modoSeleccionGestor ? 'flex' : 'none';
-    const btn = document.getElementById('btnSeleccionarGestor');
-    if (btn) btn.classList.toggle('active', _modoSeleccionGestor);
+    if (toolbar) toolbar.classList.toggle('visible', _modoSeleccionGestor);
     _actualizarContadorGestor();
 }
 
@@ -865,15 +863,13 @@ function _initBulkToolbarGestor() {
     if (existing) return;
     const toolbar = document.createElement('div');
     toolbar.id = 'gestorBulkToolbar';
-    toolbar.style.cssText = 'display:none;position:sticky;bottom:0;left:0;right:0;background:#fff3cd;border-top:2px solid #f0ad4e;padding:10px 16px;gap:10px;align-items:center;z-index:100;';
+    toolbar.className = 'bulk-float-toolbar';
     toolbar.innerHTML = `
-        <span id="gestorBulkCount" style="font-size:0.85rem;color:#856404;flex:1;">Selecciona imágenes</span>
-        <button class="btn btn-danger btn-sm" onclick="_bulkEliminarGestor()"><i class="bi bi-trash me-1"></i>Eliminar</button>
-        <button class="btn btn-secondary btn-sm" onclick="_toggleModoSeleccionGestor()">Cancelar</button>
+        <span id="gestorBulkCount" class="bulk-count">Selecciona imágenes para eliminar</span>
+        <button class="btn-bulk-delete" onclick="_bulkEliminarGestor()"><i class="bi bi-trash me-1"></i>Eliminar</button>
+        <button class="btn-bulk-cancel" onclick="_toggleModoSeleccionGestor()">Cancelar</button>
     `;
-    const gestorGrid = document.getElementById('gestorGrid');
-    if (gestorGrid?.parentElement) gestorGrid.parentElement.appendChild(toolbar);
-    else document.body.appendChild(toolbar);
+    document.body.appendChild(toolbar);
 }
 
 async function _bulkEliminarGestor() {
@@ -901,9 +897,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const pubBtn = document.getElementById('navPubBtn');
     if (pubBtn) pubBtn.style.display = '';
 
-    const btnSelGestor = document.getElementById('btnSeleccionarGestor');
-    if (btnSelGestor) btnSelGestor.addEventListener('click', _toggleModoSeleccionGestor);
     _initBulkToolbarGestor();
+
+    // Ctrl+Click — selección múltiple en escritorio (capture para interceptar antes que ul handler)
+    let _lpTimerGst = null, _lpMovedGst = false, _lpTargetGst = null;
+    document.addEventListener('click', (e) => {
+        if (!e.ctrlKey && !e.metaKey) return;
+        const li = e.target.closest('li[data-public-id]');
+        if (!li) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (!_modoSeleccionGestor) _toggleModoSeleccionGestor();
+        const cb = li.querySelector('.gestor-select-check');
+        if (cb) { cb.checked = !cb.checked; _actualizarContadorGestor(cb); }
+    }, true);
+
+    // Long press — selección múltiple en móvil
+    document.addEventListener('pointerdown', (e) => {
+        _lpMovedGst = false;
+        _lpTargetGst = e.target.closest('li[data-public-id]');
+        if (!_lpTargetGst) return;
+        _lpTimerGst = setTimeout(() => {
+            if (_lpMovedGst) return;
+            if (!_modoSeleccionGestor) _toggleModoSeleccionGestor();
+            const cb = _lpTargetGst.querySelector('.gestor-select-check');
+            if (cb) { cb.checked = !cb.checked; _actualizarContadorGestor(cb); }
+            navigator.vibrate?.(50);
+        }, 500);
+    });
+    document.addEventListener('pointermove', () => { _lpMovedGst = true; clearTimeout(_lpTimerGst); });
+    document.addEventListener('pointerup',   () => clearTimeout(_lpTimerGst));
+    document.addEventListener('pointercancel', () => clearTimeout(_lpTimerGst));
 
     fetch('/api/inicio/config')
         .then(r => r.json())

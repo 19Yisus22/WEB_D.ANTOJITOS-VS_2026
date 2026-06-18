@@ -629,7 +629,12 @@ function actualizarStatsVentas(pedidos) {
     if (!Array.isArray(pedidos) || !pedidos.length) return;
     const total      = pedidos.length;
     const entregados = pedidos.filter(p => p.estado === 'Entregado').length;
-    const ventas     = pedidos.filter(p => p.estado === 'Entregado').reduce((s, p) => s + Number(p.total || 0), 0);
+    const ventas     = pedidos.filter(p => p.estado === 'Entregado').reduce((s, p) => {
+        const t = Number(p.total || 0);
+        if (t > 0) return s + t;
+        const det = Array.isArray(p.pedido_detalle) ? p.pedido_detalle : [];
+        return s + det.reduce((a, d) => a + Number(d.subtotal || 0), 0);
+    }, 0);
 
     const ahora    = new Date();
     const mesAct   = ahora.getMonth();
@@ -657,22 +662,19 @@ function actualizarStatsVentas(pedidos) {
     if (elVentas)     elVentas.textContent = ventas.toLocaleString('es-CO', { style:'currency', currency:'COP', maximumFractionDigits:0 });
 
     if (elPorc) {
-        if (tasaActual >= 0 && tasaAnterior >= 0) {
-            const diff   = tasaActual - tasaAnterior;
-            const flecha = diff >= 0 ? '↑' : '↓';
-            elPorc.textContent = `${flecha} ${Math.abs(diff)}%`;
-            elPorc.title       = `Este mes: ${tasaActual}% · Mes anterior: ${tasaAnterior}%`;
-            elPorc.className   = `badge-porcentaje-verde${diff < 0 ? ' badge-porcentaje-bajo' : ''}`;
-        } else if (tasaActual >= 0) {
-            elPorc.textContent = `${tasaActual}%`;
-            elPorc.title       = `Tasa de éxito este mes`;
-            elPorc.className   = `badge-porcentaje-verde${tasaActual < 50 ? ' badge-porcentaje-bajo' : ''}`;
-        } else if (tasaGlobal >= 0) {
-            elPorc.textContent = `${tasaGlobal}%`;
-            elPorc.title       = `Tasa de éxito global`;
-            elPorc.className   = `badge-porcentaje-verde${tasaGlobal < 50 ? ' badge-porcentaje-bajo' : ''}`;
+        const tasaDisplay = tasaActual >= 0 ? tasaActual : tasaGlobal;
+        if (tasaDisplay >= 0) {
+            elPorc.textContent = `${tasaDisplay}%`;
+            elPorc.className   = `badge-porcentaje-verde${tasaDisplay < 50 ? ' badge-porcentaje-bajo' : ''}`;
+            if (tasaActual >= 0 && tasaAnterior >= 0) {
+                const diff = tasaActual - tasaAnterior;
+                elPorc.title = `Este mes: ${tasaActual}% · Anterior: ${tasaAnterior}% (${diff >= 0 ? '+' : ''}${diff}pp)`;
+            } else {
+                elPorc.title = tasaActual >= 0 ? 'Tasa de éxito este mes' : 'Tasa de éxito global';
+            }
         } else {
             elPorc.textContent = '—';
+            elPorc.title       = '';
             elPorc.className   = 'badge-porcentaje-verde';
         }
     }
@@ -1136,8 +1138,35 @@ window.onload = iniciarModuloPedidos;
 document.addEventListener("DOMContentLoaded", () => {
     iniciarModuloPedidos();
     _initBulkToolbarPedidos();
-    const btnSelPed = document.getElementById('btnSeleccionarPedidos');
-    if (btnSelPed) btnSelPed.addEventListener('click', _toggleModoSeleccionPedidos);
+
+    // Ctrl+Click — selección múltiple en escritorio
+    let _lpTimerPed = null, _lpMovedPed = false, _lpTargetPed = null;
+    document.addEventListener('click', (e) => {
+        if (!e.ctrlKey && !e.metaKey) return;
+        const card = e.target.closest('[data-id_real]');
+        if (!card) return;
+        e.preventDefault();
+        if (!_modoSeleccionPed) _toggleModoSeleccionPedidos();
+        const cb = card.querySelector('.pedido-select-check');
+        if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+    });
+
+    // Long press — selección múltiple en móvil
+    document.addEventListener('pointerdown', (e) => {
+        _lpMovedPed = false;
+        _lpTargetPed = e.target.closest('[data-id_real]');
+        if (!_lpTargetPed) return;
+        _lpTimerPed = setTimeout(() => {
+            if (_lpMovedPed) return;
+            if (!_modoSeleccionPed) _toggleModoSeleccionPedidos();
+            const cb = _lpTargetPed.querySelector('.pedido-select-check');
+            if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+            navigator.vibrate?.(50);
+        }, 500);
+    });
+    document.addEventListener('pointermove', () => { _lpMovedPed = true; clearTimeout(_lpTimerPed); });
+    document.addEventListener('pointerup',   () => clearTimeout(_lpTimerPed));
+    document.addEventListener('pointercancel', () => clearTimeout(_lpTimerPed));
 });
 
 let _modoSeleccionPed = false;
@@ -1148,17 +1177,15 @@ function _toggleModoSeleccionPedidos() {
         cb.style.display = _modoSeleccionPed ? 'inline-block' : 'none';
         if (!_modoSeleccionPed) {
             cb.checked = false;
-            cb.closest('tr, .card')?.classList.remove('item-sel-active');
+            cb.closest('tr, [data-id_real]')?.classList.remove('item-sel-active');
         }
     });
-    document.querySelectorAll('.card[data-id_real]').forEach(card => {
+    document.querySelectorAll('[data-id_real]').forEach(card => {
         const cb = card.querySelector('.pedido-select-check');
         if (cb) card.style.cursor = _modoSeleccionPed ? 'pointer' : '';
     });
     const toolbar = document.getElementById('pedBulkToolbar');
-    if (toolbar) toolbar.style.display = _modoSeleccionPed ? 'flex' : 'none';
-    const btn = document.getElementById('btnSeleccionarPedidos');
-    if (btn) btn.classList.toggle('active', _modoSeleccionPed);
+    if (toolbar) toolbar.classList.toggle('visible', _modoSeleccionPed);
 }
 
 function _initBulkToolbarPedidos() {
@@ -1166,16 +1193,16 @@ function _initBulkToolbarPedidos() {
     if (existing) return;
     const toolbar = document.createElement('div');
     toolbar.id = 'pedBulkToolbar';
-    toolbar.style.cssText = 'display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#fff3cd;border:2px solid #f0ad4e;padding:10px 20px;gap:10px;align-items:center;z-index:1000;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);';
+    toolbar.className = 'bulk-float-toolbar';
     toolbar.innerHTML = `
-        <span id="pedBulkCount" style="font-size:0.85rem;color:#856404;">Selecciona pedidos (Entregados/Cancelados)</span>
-        <button class="btn btn-danger btn-sm" onclick="_bulkEliminarPedidos()"><i class="bi bi-trash me-1"></i>Eliminar</button>
-        <button class="btn btn-secondary btn-sm" onclick="_toggleModoSeleccionPedidos()">Cancelar</button>
+        <span id="pedBulkCount" class="bulk-count">Selecciona pedidos (Entregados/Cancelados)</span>
+        <button class="btn-bulk-delete" onclick="_bulkEliminarPedidos()"><i class="bi bi-trash me-1"></i>Eliminar</button>
+        <button class="btn-bulk-cancel" onclick="_toggleModoSeleccionPedidos()">Cancelar</button>
     `;
     document.body.appendChild(toolbar);
     document.addEventListener('change', (e) => {
         if (e.target.classList.contains('pedido-select-check')) {
-            const card = e.target.closest('tr, .card');
+            const card = e.target.closest('tr, [data-id_real]');
             if (card) card.classList.toggle('item-sel-active', e.target.checked);
             const n = document.querySelectorAll('.pedido-select-check:checked').length;
             const el = document.getElementById('pedBulkCount');

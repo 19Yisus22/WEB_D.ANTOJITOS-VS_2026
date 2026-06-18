@@ -27,7 +27,38 @@ def _enriquecer_factura(f: dict) -> dict:
             "imagen":          str(prod.get("imagen_url") or "/static/uploads/default.png"),
             "pagado":          bool(d.get("pagado", False)),
         })
-    todos_pagados = bool(productos) and all(p["pagado"] for p in productos)
+
+    # Use joined pedido data (populated by factura_get_by_user / factura_get_all_enriched)
+    pedido_raw  = f.get("pedidos") or {}
+    pedido_join = pedido_raw[0] if isinstance(pedido_raw, list) else pedido_raw
+    # Fallback: join not available (e.g. no FK) → fetch separately
+    if not pedido_join and f.get("id_pedido"):
+        try:
+            _p = db.pedido_get(str(f["id_pedido"]))
+            if _p:
+                pedido_join = _p
+        except Exception:
+            pass
+    pedido_estado = str(pedido_join.get("estado") or "").strip()
+    pedido_pagado = bool(pedido_join.get("pagado", False))
+
+    # todos_pagados: pedidos.pagado is source of truth; item-level pagado as fallback
+    todos_pagados = pedido_pagado or (bool(productos) and all(p["pagado"] for p in productos))
+
+    # Derive display estado — DB keeps only Emitida/Pagada/Anulada,
+    # but UI needs Enviado/Entregado as intermediate display states
+    estado_db = str(f.get("estado") or "Emitida").strip()
+    if estado_db == "Anulada" or pedido_estado == "Cancelado":
+        estado_display = "Anulada"
+    elif estado_db == "Pagada" or pedido_pagado:
+        estado_display = "Pagada"
+    elif pedido_estado == "Entregado":
+        estado_display = "Entregado"
+    elif pedido_estado == "Enviado":
+        estado_display = "Enviado"
+    else:
+        estado_display = "Emitida"
+
     return {
         "id_factura":     str(f.get("id_factura", "")),
         "numero_factura": str(f.get("numero_factura", "")),
@@ -35,7 +66,7 @@ def _enriquecer_factura(f: dict) -> dict:
         "subtotal":       float(f.get("subtotal") or 0),
         "total":          float(f.get("total") or 0),
         "metodo_pago":    str(f.get("metodo_pago") or "No especificado"),
-        "estado":         str(f.get("estado") or "Emitida"),
+        "estado":         estado_display,
         "cedula":         str(f.get("cedula") or ""),
         "id_pedido":      str(f.get("id_pedido") or ""),
         "productos":      productos,
@@ -67,19 +98,20 @@ def todas_facturas_page():
         resultado    = []
 
         for f in facturas_raw:
-            usr       = f.get("usuarios") or {}
-            rol_usr   = _rol_de_usuario(usr)
-
-            if rol == "vendedor" and rol_usr == "admin":
+            try:
+                usr     = f.get("usuarios") or {}
+                rol_usr = _rol_de_usuario(usr)
+                if rol == "vendedor" and rol_usr == "admin":
+                    continue
+                enr = _enriquecer_factura(f)
+                enr["cliente_nombre"]   = f"{usr.get('nombre','')} {usr.get('apellido','')}".strip()
+                enr["username_cliente"] = str(usr.get("username") or "")
+                enr["correo"]           = str(usr.get("correo") or "")
+                enr["telefono"]         = str(usr.get("telefono") or "")
+                enr["direccion"]        = str(usr.get("direccion") or "")
+                resultado.append(enr)
+            except Exception:
                 continue
-
-            enr = _enriquecer_factura(f)
-            enr["cliente_nombre"]   = f"{usr.get('nombre','')} {usr.get('apellido','')}".strip()
-            enr["username_cliente"] = str(usr.get("username") or "")
-            enr["correo"]           = str(usr.get("correo") or "")
-            enr["telefono"]         = str(usr.get("telefono") or "")
-            enr["direccion"]        = str(usr.get("direccion") or "")
-            resultado.append(enr)
 
         return jsonify(resultado), 200
     except Exception as e:
@@ -91,16 +123,19 @@ def obtener_facturas_page():
     user_id   = session.get("user_id")
     user_data = session.get("user") or {}
     try:
-        facturas = db.factura_get_by_user(user_id)
+        facturas = db.factura_get_by_user(str(user_id) if user_id is not None else "")
         resultado = []
         for f in facturas:
-            enriquecida = _enriquecer_factura(f)
-            enriquecida["cliente_nombre"]   = f"{user_data.get('nombre','')} {user_data.get('apellido','')}".strip()
-            enriquecida["username_cliente"] = str(user_data.get("username") or "")
-            enriquecida["correo"]           = str(user_data.get("correo") or "")
-            enriquecida["telefono"]         = str(user_data.get("telefono") or "")
-            enriquecida["direccion"]        = str(user_data.get("direccion") or "")
-            resultado.append(enriquecida)
+            try:
+                enriquecida = _enriquecer_factura(f)
+                enriquecida["cliente_nombre"]   = f"{user_data.get('nombre','')} {user_data.get('apellido','')}".strip()
+                enriquecida["username_cliente"] = str(user_data.get("username") or "")
+                enriquecida["correo"]           = str(user_data.get("correo") or "")
+                enriquecida["telefono"]         = str(user_data.get("telefono") or "")
+                enriquecida["direccion"]        = str(user_data.get("direccion") or "")
+                resultado.append(enriquecida)
+            except Exception:
+                continue
         return jsonify(resultado), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

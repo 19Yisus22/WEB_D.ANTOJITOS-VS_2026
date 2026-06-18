@@ -1494,31 +1494,31 @@ function _mostrarToolbarBulk(visible) {
     if (!toolbar) {
         toolbar = document.createElement('div');
         toolbar.id = 'bulkDeleteToolbar';
-        toolbar.style.cssText = 'display:none;position:fixed;bottom:0;left:0;right:0;background:#fff3cd;border-top:2px solid #f0ad4e;padding:10px 16px;gap:10px;align-items:center;z-index:9999;box-shadow:0 -4px 16px rgba(0,0,0,0.1);';
+        toolbar.className = 'bulk-float-toolbar';
         const info = document.createElement('span');
         info.id = 'bulkSelectCount';
-        info.style.cssText = 'font-size:0.85rem;color:#856404;flex:1;font-weight:600;';
+        info.className = 'bulk-count';
         info.textContent = 'Toca un mensaje para seleccionarlo';
         const btnDel = document.createElement('button');
-        btnDel.className = 'btn btn-danger btn-sm px-3';
+        btnDel.className = 'btn-bulk-delete';
         btnDel.innerHTML = '<i class="bi bi-trash me-1"></i>Eliminar';
         btnDel.onclick = _bulkEliminarSeleccionados;
         const btnCancel = document.createElement('button');
-        btnCancel.className = 'btn btn-outline-secondary btn-sm px-3';
+        btnCancel.className = 'btn-bulk-cancel';
         btnCancel.innerHTML = '<i class="bi bi-x me-1"></i>Cancelar';
         btnCancel.onclick = _desactivarModoSeleccion;
         toolbar.appendChild(info);
         toolbar.appendChild(btnDel);
         toolbar.appendChild(btnCancel);
         document.body.appendChild(toolbar);
-        
+
         chatBox?.addEventListener('click', (e) => {
             if (!_modoSeleccion) return;
             const wrapper = e.target.closest('[id^="msg-"]');
             if (wrapper) _selToggleWrapper(wrapper);
         });
     }
-    toolbar.style.display = visible ? 'flex' : 'none';
+    toolbar.classList.toggle('visible', visible);
     if (!visible) {
         const countEl = document.getElementById('bulkSelectCount');
         if (countEl) countEl.textContent = 'Toca un mensaje para seleccionarlo';
@@ -1625,15 +1625,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selPub) selPub.addEventListener('change', () => _guardarChatTemporalPublico(selPub.value));
         const selPriv = document.getElementById('chatTemporalPrivadoSelect');
         if (selPriv) selPriv.addEventListener('change', () => _guardarChatTemporalPrivado(selPriv.value));
-        const btnSel = document.getElementById('btnModoSeleccion');
-        if (btnSel) btnSel.addEventListener('click', _toggleModoSeleccion);
+
+        // Ctrl+Click — selección múltiple en escritorio
+        chatBox?.addEventListener('click', (e) => {
+            if (!e.ctrlKey && !e.metaKey) return;
+            const wrapper = e.target.closest('[id^="msg-"]');
+            if (!wrapper) return;
+            e.preventDefault();
+            if (!_modoSeleccion) _activarModoSeleccion();
+            _selToggleWrapper(wrapper);
+        });
+
+        // Long press — selección múltiple en móvil
+        let _lpTimer = null, _lpMoved = false, _lpTarget = null;
+        chatBox?.addEventListener('pointerdown', (e) => {
+            _lpMoved = false;
+            _lpTarget = e.target.closest('[id^="msg-"]');
+            if (!_lpTarget) return;
+            _lpTimer = setTimeout(() => {
+                if (_lpMoved) return;
+                if (!_modoSeleccion) _activarModoSeleccion();
+                _selToggleWrapper(_lpTarget);
+                navigator.vibrate?.(50);
+            }, 500);
+        });
+        chatBox?.addEventListener('pointermove', () => { _lpMoved = true; clearTimeout(_lpTimer); });
+        chatBox?.addEventListener('pointerup',   () => clearTimeout(_lpTimer));
+        chatBox?.addEventListener('pointercancel', () => clearTimeout(_lpTimer));
     }
 });
 
 document.addEventListener('socket:chat_new_msg', () => {
     _chatPublicoHash = '';
     if (document.getElementById('panelPublico')?.style.display !== 'none') {
-        _cargarComentarios(true);
+        cargarComentarios(true);
     }
 });
 

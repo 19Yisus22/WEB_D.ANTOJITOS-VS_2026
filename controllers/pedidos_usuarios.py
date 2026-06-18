@@ -87,12 +87,21 @@ def actualizar_pago_item(id_pedido):
         if pagado is None:
             return jsonify({"error": "Falta el valor de pago"}), 400
         id_str = str(id_pedido)
-        if not db.pedido_get(id_str):
-            return jsonify({"error": "Pedido no encontrado"}), 404
         pedido = db.pedido_get(id_str)
+        if not pedido:
+            return jsonify({"error": "Pedido no encontrado"}), 404
         db.pedido_update(id_str, {"pagado": bool(pagado)})
         pedido["pagado"] = bool(pagado)
-        _emit_pedido_update(pedido)
+
+        estado_factura = "Emitida"
+        if pedido["estado"] in ("Entregado", "Enviado") and bool(pagado):
+            estado_factura = "Pagada"
+        elif pedido["estado"] == "Cancelado":
+            estado_factura = "Anulada"
+        if pedido.get("numero_factura"):
+            db.factura_update(pedido["numero_factura"], {"estado": estado_factura})
+
+        _emit_pedido_update(pedido, pedido.get("estado"), estado_factura)
         return jsonify({"ok": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

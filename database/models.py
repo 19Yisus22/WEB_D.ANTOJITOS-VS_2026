@@ -572,10 +572,16 @@ def detalle_create_many(items: list[dict]) -> None:
 
 
 def factura_get_by_user(cedula: str) -> list:
-    return _many(_run(
-        _db().table("facturas").select("*")
-        .eq("cedula", cedula).order("fecha_emision", desc=True)
-    ))
+    try:
+        return _many(_run(
+            _db().table("facturas").select("*, pedidos(estado,pagado)")
+            .eq("cedula", cedula).order("fecha_emision", desc=True)
+        ))
+    except Exception:
+        return _many(_run(
+            _db().table("facturas").select("*")
+            .eq("cedula", cedula).order("fecha_emision", desc=True)
+        ))
 
 
 def factura_get_by_numero(numero: str) -> dict | None:
@@ -594,17 +600,20 @@ def factura_get_all() -> list:
 
 
 def factura_get_all_enriched(limit: int | None = None) -> list:
-    q = (
-        _db().table("facturas")
-        .select(
+    def _build(with_pedido: bool):
+        sel = (
             "*, usuarios(cedula,nombre,apellido,username,telefono,direccion,"
             "metodo_pago,roles(nombre_role))"
+            + (", pedidos(estado,pagado)" if with_pedido else "")
         )
-        .order("fecha_emision", desc=True)
-    )
-    if limit is not None:
-        q = q.limit(limit)
-    return _many(_run(q))
+        q = _db().table("facturas").select(sel).order("fecha_emision", desc=True)
+        if limit is not None:
+            q = q.limit(limit)
+        return q
+    try:
+        return _many(_run(_build(True)))
+    except Exception:
+        return _many(_run(_build(False)))
 
 
 def factura_next_seq(year: str) -> int:

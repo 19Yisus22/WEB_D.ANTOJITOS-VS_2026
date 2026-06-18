@@ -1239,7 +1239,7 @@ async function _pollMisPedidos() {
                 titulo:  `Pedido ${est}`,
                 mensaje: `Tu pedido (${items})${total} — ${est}`,
                 imagen:  '/static/uploads/logo.ico',
-                url:     '/historial_facturas_page',
+                url:     '/gestionar_facturas_page',
             });
             if (!_isNotifMuted()) {
                 const bellEl = document.getElementById('navClientBellBtn');

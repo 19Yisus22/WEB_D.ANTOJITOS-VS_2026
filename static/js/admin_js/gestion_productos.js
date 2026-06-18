@@ -390,9 +390,7 @@ function _toggleModoSeleccionProd() {
         }
     });
     const toolbar = document.getElementById('prodBulkToolbar');
-    if (toolbar) toolbar.style.display = _modoSeleccionProd ? 'flex' : 'none';
-    const btn = document.getElementById('btnSeleccionarProd');
-    if (btn) btn.classList.toggle('active', _modoSeleccionProd);
+    if (toolbar) toolbar.classList.toggle('visible', _modoSeleccionProd);
 }
 
 async function _bulkEliminarProductos() {
@@ -419,16 +417,15 @@ async function _bulkEliminarProductos() {
 }
 
 function _initBulkToolbarProd() {
-    const container = document.querySelector('.container-fluid') || document.body;
     const existing = document.getElementById('prodBulkToolbar');
     if (existing) return;
     const toolbar = document.createElement('div');
     toolbar.id = 'prodBulkToolbar';
-    toolbar.style.cssText = 'display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#fff3cd;border:2px solid #f0ad4e;padding:10px 20px;gap:10px;align-items:center;z-index:1000;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);';
+    toolbar.className = 'bulk-float-toolbar';
     toolbar.innerHTML = `
-        <span id="prodBulkCount" style="font-size:0.85rem;color:#856404;">Selecciona productos</span>
-        <button class="btn btn-danger btn-sm" onclick="_bulkEliminarProductos()"><i class="bi bi-trash me-1"></i>Eliminar</button>
-        <button class="btn btn-secondary btn-sm" onclick="_toggleModoSeleccionProd()">Cancelar</button>
+        <span id="prodBulkCount" class="bulk-count">Selecciona productos</span>
+        <button class="btn-bulk-delete" onclick="_bulkEliminarProductos()"><i class="bi bi-trash me-1"></i>Eliminar</button>
+        <button class="btn-bulk-cancel" onclick="_toggleModoSeleccionProd()">Cancelar</button>
     `;
     document.body.appendChild(toolbar);
 }
@@ -749,8 +746,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnDesc) btnDesc.addEventListener('click', guardarDescuentoCumple);
 
     _initBulkToolbarProd();
-    const btnSelProd = document.getElementById('btnSeleccionarProd');
-    if (btnSelProd) btnSelProd.addEventListener('click', _toggleModoSeleccionProd);
+
+    // Ctrl+Click — selección múltiple en escritorio (capture para interceptar antes que cardEl.onclick)
+    let _lpTimerProd = null, _lpMovedProd = false, _lpTargetProd = null;
+    document.addEventListener('click', (e) => {
+        if (!e.ctrlKey && !e.metaKey) return;
+        const col = e.target.closest('[data-prod-id]');
+        if (!col) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (!_modoSeleccionProd) _toggleModoSeleccionProd();
+        const cb = col.querySelector('.prod-select-check');
+        if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+    }, true);
+
+    // Long press — selección múltiple en móvil
+    document.addEventListener('pointerdown', (e) => {
+        _lpMovedProd = false;
+        _lpTargetProd = e.target.closest('[data-prod-id]');
+        if (!_lpTargetProd) return;
+        _lpTimerProd = setTimeout(() => {
+            if (_lpMovedProd) return;
+            if (!_modoSeleccionProd) _toggleModoSeleccionProd();
+            const cb = _lpTargetProd.querySelector('.prod-select-check');
+            if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+            navigator.vibrate?.(50);
+        }, 500);
+    });
+    document.addEventListener('pointermove', () => { _lpMovedProd = true; clearTimeout(_lpTimerProd); });
+    document.addEventListener('pointerup',   () => clearTimeout(_lpTimerProd));
+    document.addEventListener('pointercancel', () => clearTimeout(_lpTimerProd));
 
     await cargarCategorias();
     const btnAgregarCat = document.getElementById('btnAgregarCategoria');

@@ -155,7 +155,7 @@ def crear_comentario():
             "adjuntos":       adjuntos,
         })
         resp = result[0] if result else {}
-        socketio.emit("chat_new_msg", {"id": resp.get("id"), "cedula": str(usuario["cedula"])}, broadcast=True)
+        socketio.emit("chat_new_msg", {"id": resp.get("id"), "cedula": str(usuario["cedula"])})
         return jsonify(resp)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
