@@ -855,6 +855,8 @@ function _toggleModoSeleccionGestor() {
     });
     const toolbar = document.getElementById('gestorBulkToolbar');
     if (toolbar) toolbar.classList.toggle('visible', _modoSeleccionGestor);
+    const btn = document.getElementById('btnSeleccionarGestor');
+    if (btn) btn.classList.toggle('active', _modoSeleccionGestor);
     _actualizarContadorGestor();
 }
 
@@ -898,6 +900,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pubBtn) pubBtn.style.display = '';
 
     _initBulkToolbarGestor();
+    const btnSelGestor = document.getElementById('btnSeleccionarGestor');
+    if (btnSelGestor) btnSelGestor.addEventListener('click', _toggleModoSeleccionGestor);
 
     // Ctrl+Click — selección múltiple en escritorio (capture para interceptar antes que ul handler)
     let _lpTimerGst = null, _lpMovedGst = false, _lpTargetGst = null;

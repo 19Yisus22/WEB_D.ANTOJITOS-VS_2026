@@ -42,6 +42,15 @@
                 <div id="panelPublico">
                     {% if session.get('rol') == 'admin' %}
                     <div class="temporal-controls-bar">
+                        <button id="btnModoSeleccion" class="btn btn-sm temporal-btn-sel" title="Selección múltiple">
+                            <span class="position-relative d-inline-flex align-items-center" style="gap:5px;">
+                                <span class="position-relative">
+                                    <i class="bi bi-trash3-fill"></i>
+                                    <i class="bi bi-check-lg" style="font-size:0.6em;position:absolute;bottom:-2px;right:-5px;color:#fff;text-shadow:0 0 2px rgba(0,0,0,0.8);"></i>
+                                </span>
+                                Seleccionar
+                            </span>
+                        </button>
                         <label class="temporal-controls-label ms-auto">
                             <i class="bi bi-clock-history me-1"></i>
                             <span>Chat público:</span>

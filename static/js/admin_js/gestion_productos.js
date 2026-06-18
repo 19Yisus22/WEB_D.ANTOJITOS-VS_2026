@@ -391,6 +391,8 @@ function _toggleModoSeleccionProd() {
     });
     const toolbar = document.getElementById('prodBulkToolbar');
     if (toolbar) toolbar.classList.toggle('visible', _modoSeleccionProd);
+    const btn = document.getElementById('btnSeleccionarProd');
+    if (btn) btn.classList.toggle('active', _modoSeleccionProd);
 }
 
 async function _bulkEliminarProductos() {
@@ -746,6 +748,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnDesc) btnDesc.addEventListener('click', guardarDescuentoCumple);
 
     _initBulkToolbarProd();
+    const btnSelProd = document.getElementById('btnSeleccionarProd');
+    if (btnSelProd) btnSelProd.addEventListener('click', _toggleModoSeleccionProd);
 
     // Ctrl+Click — selección múltiple en escritorio (capture para interceptar antes que cardEl.onclick)
     let _lpTimerProd = null, _lpMovedProd = false, _lpTargetProd = null;

@@ -1626,6 +1626,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const selPriv = document.getElementById('chatTemporalPrivadoSelect');
         if (selPriv) selPriv.addEventListener('change', () => _guardarChatTemporalPrivado(selPriv.value));
 
+        const btnSel = document.getElementById('btnModoSeleccion');
+        if (btnSel) btnSel.addEventListener('click', _toggleModoSeleccion);
+
         // Ctrl+Click — selección múltiple en escritorio
         chatBox?.addEventListener('click', (e) => {
             if (!e.ctrlKey && !e.metaKey) return;

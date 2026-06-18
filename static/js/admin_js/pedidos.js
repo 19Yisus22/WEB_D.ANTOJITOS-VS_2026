@@ -1138,6 +1138,8 @@ window.onload = iniciarModuloPedidos;
 document.addEventListener("DOMContentLoaded", () => {
     iniciarModuloPedidos();
     _initBulkToolbarPedidos();
+    const btnSelPed = document.getElementById('btnSeleccionarPedidos');
+    if (btnSelPed) btnSelPed.addEventListener('click', _toggleModoSeleccionPedidos);
 
     // Ctrl+Click — selección múltiple en escritorio
     let _lpTimerPed = null, _lpMovedPed = false, _lpTargetPed = null;
@@ -1186,6 +1188,8 @@ function _toggleModoSeleccionPedidos() {
     });
     const toolbar = document.getElementById('pedBulkToolbar');
     if (toolbar) toolbar.classList.toggle('visible', _modoSeleccionPed);
+    const btn = document.getElementById('btnSeleccionarPedidos');
+    if (btn) btn.classList.toggle('active', _modoSeleccionPed);
 }
 
 function _initBulkToolbarPedidos() {
