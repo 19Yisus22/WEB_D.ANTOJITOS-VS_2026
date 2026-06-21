@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-login-v9';
+const CACHE_NAME = 'dantojitos-login-v10';
 
 const PRECACHE = [
     '/login',

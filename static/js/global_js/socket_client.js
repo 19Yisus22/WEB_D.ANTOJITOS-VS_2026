@@ -43,6 +43,8 @@
         'pedido_update',
         'chat_new_msg',
         'priv_new_msg',
+        'chat_cleanup',
+        'priv_cleanup',
         'logro_new',
         'notificacion',
         'pong_alive',

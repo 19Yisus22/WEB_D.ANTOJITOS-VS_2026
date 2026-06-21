@@ -85,21 +85,25 @@ document.addEventListener('click', (e) => {
 let _pendingImages = [];
 
 function _actualizarPreviewImagenes() {
-    const area = document.getElementById('imagenesPreview');
-    if (!area) return;
-    if (_pendingImages.length === 0) {
-        area.style.display = 'none';
-        area.innerHTML = '';
-        return;
-    }
-    area.style.display = 'flex';
-    area.innerHTML = _pendingImages.map((img, i) => `
+    const thumbsHtml = _pendingImages.map((img, i) => `
         <div class="chat-img-thumb">
             <img src="${img.data}" alt="imagen">
             <button class="chat-img-thumb-remove" onclick="_removerImagenPendiente(${i})" title="Quitar">
                 <i class="bi bi-x"></i>
             </button>
         </div>`).join('');
+    const counterHtml = _pendingImages.length > 0
+        ? `<div class="chat-img-counter"><i class="bi bi-images me-1"></i>${_pendingImages.length}/5 imagen${_pendingImages.length !== 1 ? 'es' : ''}</div>`
+        : '';
+    document.querySelectorAll('.chat-img-preview-area').forEach(area => {
+        if (_pendingImages.length === 0) {
+            area.style.display = 'none';
+            area.innerHTML = '';
+        } else {
+            area.style.display = 'flex';
+            area.innerHTML = counterHtml + thumbsHtml;
+        }
+    });
 }
 
 function _removerImagenPendiente(idx) {
@@ -109,12 +113,17 @@ function _removerImagenPendiente(idx) {
 
 function _agregarImagenAlChat(file) {
     if (!file || !file.type.startsWith('image/')) return;
+    if (_pendingImages.length >= 5) {
+        showMessage('Máximo 5 imágenes por mensaje', true);
+        return;
+    }
     if (file.size > 2 * 1024 * 1024) {
         showMessage('La imagen supera el límite de 2 MB', true);
         return;
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
+        if (_pendingImages.length >= 5) return;
         _pendingImages.push({ data: ev.target.result, nombre: file.name, size: file.size });
         _actualizarPreviewImagenes();
     };
@@ -122,10 +131,70 @@ function _agregarImagenAlChat(file) {
 }
 
 function adjuntarImagenDesdeArchivo(input) {
-    if (input.files && input.files[0]) {
-        _agregarImagenAlChat(input.files[0]);
-        input.value = '';
+    if (!input.files || !input.files.length) return;
+    Array.from(input.files).forEach(f => _agregarImagenAlChat(f));
+    input.value = '';
+}
+
+function _setupChatDropZones() {
+    // — Drop zone: editor público —
+    const dropzone = document.getElementById('chatEditorDropzone');
+    const hint     = document.getElementById('dropHint');
+    if (dropzone) {
+        dropzone.addEventListener('dragenter', (e) => {
+            if (!e.dataTransfer.types.includes('Files')) return;
+            e.preventDefault();
+            dropzone.classList.add('drag-over');
+        });
+        dropzone.addEventListener('dragover', (e) => {
+            if (!e.dataTransfer.types.includes('Files')) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+        dropzone.addEventListener('dragleave', (e) => {
+            if (!dropzone.contains(e.relatedTarget)) dropzone.classList.remove('drag-over');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            files.forEach(f => _agregarImagenAlChat(f));
+        });
     }
+
+    // — Drop zone: textareas del chat privado —
+    document.querySelectorAll('.priv-textarea').forEach(ta => {
+        ta.addEventListener('dragenter', (e) => {
+            if (!e.dataTransfer.types.includes('Files')) return;
+            e.preventDefault();
+            ta.classList.add('drag-over');
+        });
+        ta.addEventListener('dragover', (e) => {
+            if (!e.dataTransfer.types.includes('Files')) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+        ta.addEventListener('dragleave', (e) => {
+            if (!ta.contains(e.relatedTarget)) ta.classList.remove('drag-over');
+        });
+        ta.addEventListener('drop', (e) => {
+            e.preventDefault();
+            ta.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            files.forEach(f => _agregarImagenAlChat(f));
+        });
+    });
+
+    // — Pegar imágenes desde el portapapeles —
+    document.addEventListener('paste', (e) => {
+        const active = document.activeElement;
+        const isChatInput = active?.id === 'mensajeInput' || active?.classList.contains('priv-textarea');
+        if (!isChatInput) return;
+        const items = Array.from(e.clipboardData?.items || []).filter(i => i.type.startsWith('image/'));
+        if (!items.length) return;
+        e.preventDefault();
+        items.forEach(item => _agregarImagenAlChat(item.getAsFile()));
+    });
 }
 
 function _abrirImagenAmpliada(src) {
@@ -527,6 +596,10 @@ function renderComentario(c) {
 
 let _comentariosHash = '';
 let _likeInFlight   = false;
+let _pubTemporalModo      = 'desactivado';
+let _pubTemporalActivadoEn = null;
+let _privTemporalModo      = 'desactivado';
+let _privTemporalActivadoEn = null;
 
 function _hashComentarios(arr) {
     return arr.map(c => c.id + ':' + (c.updated_at || c.created_at || '') + ':' + (c.likes_usuarios || []).length).join('|');
@@ -554,6 +627,7 @@ async function cargarComentarios(force = false) {
         comentariosActuales = data;
         chatBox.innerHTML = "";
         comentariosActuales.forEach(c => chatBox.appendChild(renderComentario(c)));
+        _insertarSeparadorTemporal(chatBox, comentariosActuales, _pubTemporalActivadoEn, _pubTemporalModo);
         if (isAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
     } catch(e) { console.error(e); }
 }
@@ -720,6 +794,8 @@ sendBtn.onclick = async function() {
 };
 
 function switchTab(tab) {
+    _pendingImages = [];
+    _actualizarPreviewImagenes();
     const panelPub  = document.getElementById('panelPublico');
     const panelPriv = document.getElementById('panelPrivado');
     const tabPub    = document.getElementById('tabPublico');
@@ -829,6 +905,7 @@ async function _cargarHiloCliente() {
             return;
         }
         msgs.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
+        _insertarSeparadorTemporal(box, msgs, _privTemporalActivadoEn, _privTemporalModo);
         if (eraAbajo) box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -1055,6 +1132,7 @@ async function abrirConversacion(cedulaCliente, nombreCliente, fotoCliente) {
         const _filtrados = _clearedAt ? msgs.filter(m => new Date(m.created_at) > new Date(_clearedAt)) : msgs;
         box.innerHTML = '';
         _filtrados.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
+        _insertarSeparadorTemporal(box, _filtrados, _privTemporalActivadoEn, _privTemporalModo);
         box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -1145,10 +1223,10 @@ function limpiarHiloCV(cedulaCliente, ev) {
     });
 }
 
-async function _refreshMensajesCV() {
+async function _refreshMensajesCV(force = false) {
     if (!_hiloSeleccionado) return;
     const box = document.getElementById('privConvBox');
-    if (!box || box.style.display === 'none') return;
+    if (!box || (!force && box.style.display === 'none')) return;
     try {
         const r = await fetch(`/mensajes_privados/hilo/${_hiloSeleccionado}`, { cache: 'no-store' });
         if (!r.ok) return;
@@ -1162,6 +1240,7 @@ async function _refreshMensajesCV() {
         const eraAbajo = box.scrollHeight - box.scrollTop <= box.clientHeight + 100;
         box.innerHTML = '';
         filtered.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
+        _insertarSeparadorTemporal(box, filtered, _privTemporalActivadoEn, _privTemporalModo);
         if (eraAbajo) box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -1252,6 +1331,7 @@ async function abrirConversacionStaff(cedulaDest, nombre, foto, rolLabel) {
         const _staffFiltrados = _staffClearedAt ? msgs.filter(m => new Date(m.created_at) > new Date(_staffClearedAt)) : msgs;
         box.innerHTML = '';
         _staffFiltrados.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
+        _insertarSeparadorTemporal(box, _staffFiltrados, _privTemporalActivadoEn, _privTemporalModo);
         box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -1345,10 +1425,10 @@ function limpiarHiloStaff(cedulaDest) {
     });
 }
 
-async function _refreshMensajesStaff() {
+async function _refreshMensajesStaff(force = false) {
     if (!_staffSeleccionado) return;
     const box = document.getElementById('staffConvBox');
-    if (!box || box.style.display === 'none') return;
+    if (!box || (!force && box.style.display === 'none')) return;
     try {
         const r = await fetch(`/mensajes_privados/staff/hilo/${_staffSeleccionado}`, { cache: 'no-store' });
         if (!r.ok) return;
@@ -1362,6 +1442,7 @@ async function _refreshMensajesStaff() {
         const eraAbajo = box.scrollHeight - box.scrollTop <= box.clientHeight + 100;
         box.innerHTML = '';
         filtered.forEach(m => box.appendChild(_renderMsgPrivado(m, m.cedula_de === USER_CONFIG.userId, m.id)));
+        _insertarSeparadorTemporal(box, filtered, _privTemporalActivadoEn, _privTemporalModo);
         if (eraAbajo) box.scrollTop = box.scrollHeight;
     } catch {}
 }
@@ -1377,6 +1458,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); fn(); }
         });
     });
+    _setupChatDropZones();
 });
 
 function _renderMsgPrivado(m, esMio, msgId) {
@@ -1549,10 +1631,28 @@ async function _bulkEliminarSeleccionados() {
 
 
 const _MODO_LABELS = {
+    '1min':    '1 minuto (prueba)',
     '24h':     '24 horas',
     '7d':      '7 días',
     'mensual': '1 mes',
 };
+
+function _insertarSeparadorTemporal(box, msgs, activadoEn, modo) {
+    if (!activadoEn || !modo || modo === 'desactivado') return;
+    const activadoDate = new Date(activadoEn);
+    const sep = document.createElement('div');
+    sep.className = 'chat-temporal-sep';
+    sep.innerHTML = `<div class="chat-temporal-sep-inner"><i class="bi bi-clock-history"></i><span>Chats temporales activados</span></div>`;
+    // Busca el primer mensaje escrito DESPUÉS de la activación
+    const idx = msgs.findIndex(m => new Date(m.created_at) >= activadoDate);
+    if (idx < 0) {
+        // Todos los mensajes son anteriores a la activación → separador al final
+        box.appendChild(sep);
+    } else {
+        const children = Array.from(box.children);
+        box.insertBefore(sep, children[idx] || null);
+    }
+}
 
 function _actualizarBannerTemporal(bannerEl, modo) {
     if (!bannerEl) return;
@@ -1565,28 +1665,47 @@ function _actualizarBannerTemporal(bannerEl, modo) {
         <span>Mensajes temporales activados — se eliminan automáticamente cada <strong>${_MODO_LABELS[modo] || modo}</strong></span>`;
 }
 
+function _toggle1minOption(selectId, habilitado) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    const opt = sel.querySelector('option[value="1min"]');
+    if (!opt) return;
+    opt.hidden   = !habilitado;
+    opt.disabled = !habilitado;
+    // Si estaba seleccionada y se deshabilita, resetear a desactivado
+    if (!habilitado && sel.value === '1min') sel.value = 'desactivado';
+}
+
 async function _cargarChatTemporalPublico() {
     try {
         const r = await fetch('/comentarios/config_temporal');
         if (!r.ok) return;
-        const { modo } = await r.json();
+        const { modo, activado_en, chat_1min_habilitado } = await r.json();
+        _pubTemporalModo = modo || 'desactivado';
+        _pubTemporalActivadoEn = activado_en || null;
         if (USER_CONFIG.userRol === 'admin') {
+            _toggle1minOption('chatTemporalPublicoSelect', chat_1min_habilitado !== false);
             const sel = document.getElementById('chatTemporalPublicoSelect');
-            if (sel) sel.value = modo;
+            if (sel) sel.value = _pubTemporalModo;
         }
-        _actualizarBannerTemporal(document.getElementById('bannerTemporalPublico'), modo);
+        _actualizarBannerTemporal(document.getElementById('bannerTemporalPublico'), _pubTemporalModo);
     } catch {}
 }
 
 async function _guardarChatTemporalPublico(modo) {
     try {
-        await fetch('/comentarios/config_temporal', {
+        const r = await fetch('/comentarios/config_temporal', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ modo })
         });
+        const data = r.ok ? await r.json().catch(() => ({})) : {};
+        _pubTemporalModo = modo;
+        _pubTemporalActivadoEn = data.activado_en || null;
         _actualizarBannerTemporal(document.getElementById('bannerTemporalPublico'), modo);
         showMessage('Chat público actualizado');
+        _comentariosHash = '';
+        cargarComentarios(true);
     } catch { showMessage('Error al guardar', true); }
 }
 
@@ -1594,22 +1713,28 @@ async function _cargarChatTemporalPrivado() {
     try {
         const r = await fetch('/mensajes_privados/config_temporal');
         if (!r.ok) return;
-        const { modo } = await r.json();
+        const { modo, activado_en, chat_1min_habilitado } = await r.json();
+        _privTemporalModo = modo || 'desactivado';
+        _privTemporalActivadoEn = activado_en || null;
         if (USER_CONFIG.userRol === 'admin') {
+            _toggle1minOption('chatTemporalPrivadoSelect', chat_1min_habilitado !== false);
             const sel = document.getElementById('chatTemporalPrivadoSelect');
-            if (sel) sel.value = modo;
+            if (sel) sel.value = _privTemporalModo;
         }
-        _actualizarBannerTemporal(document.getElementById('bannerTemporalPrivado'), modo);
+        _actualizarBannerTemporal(document.getElementById('bannerTemporalPrivado'), _privTemporalModo);
     } catch {}
 }
 
 async function _guardarChatTemporalPrivado(modo) {
     try {
-        await fetch('/mensajes_privados/config_temporal', {
+        const r = await fetch('/mensajes_privados/config_temporal', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ modo })
         });
+        const data = r.ok ? await r.json().catch(() => ({})) : {};
+        _privTemporalModo = modo;
+        _privTemporalActivadoEn = data.activado_en || null;
         _actualizarBannerTemporal(document.getElementById('bannerTemporalPrivado'), modo);
         showMessage('Chat privado actualizado');
     } catch { showMessage('Error al guardar', true); }
@@ -1659,7 +1784,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('socket:chat_new_msg', () => {
-    _chatPublicoHash = '';
+    _comentariosHash = '';
     if (document.getElementById('panelPublico')?.style.display !== 'none') {
         cargarComentarios(true);
     }
@@ -1676,5 +1801,24 @@ document.addEventListener('socket:priv_new_msg', (e) => {
     if (document.getElementById('panelPrivado')?.style.display !== 'none') {
         if (typeof _cargarHiloCliente === 'function') _cargarHiloCliente();
         if (_hiloSeleccionado && typeof _refreshMensajesCV === 'function') _refreshMensajesCV();
+    }
+});
+
+document.addEventListener('socket:chat_cleanup', () => {
+    _comentariosHash = '';
+    cargarComentarios(true);
+});
+
+document.addEventListener('socket:priv_cleanup', () => {
+    _clienteHiloHash = '';
+    _cvConvHash      = '';
+    _staffConvHash   = '';
+    if (USER_CONFIG.userRol === 'cliente') {
+        _cargarHiloCliente();
+    } else {
+        _cargarHilosVendedor();
+        // force=true: actualiza aunque el box esté oculto (panel en otra pestaña)
+        if (_hiloSeleccionado) _refreshMensajesCV(true);
+        if (_staffSeleccionado) _refreshMensajesStaff(true);
     }
 });

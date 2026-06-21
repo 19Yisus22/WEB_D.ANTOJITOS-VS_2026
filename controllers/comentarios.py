@@ -1,5 +1,5 @@
 from datetime import datetime, timezone, timedelta
-from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template
+from flask import Blueprint, current_app, request, jsonify, session, redirect, url_for, render_template
 
 import database.models as db
 from helpers.auth import sin_cache, login_required
@@ -25,7 +25,9 @@ def _now() -> str:
 
 def _cutoff_from_modo(modo: str):
     ahora = datetime.now(timezone.utc)
-    if modo == "24h":
+    if modo == "1min":
+        return (ahora - timedelta(minutes=1)).isoformat()
+    elif modo == "24h":
         return (ahora - timedelta(hours=24)).isoformat()
     elif modo == "7d":
         return (ahora - timedelta(days=7)).isoformat()
@@ -161,14 +163,18 @@ def crear_comentario():
         return jsonify({"error": str(e)}), 500
 
 
-_MODOS_VALIDOS = ("desactivado", "24h", "7d", "mensual")
+_MODOS_VALIDOS = ("desactivado", "1min", "24h", "7d", "mensual")
 
 @comentarios_bp.route("/comentarios/config_temporal", methods=["GET"])
 @login_required
 def get_config_temporal():
     cfg = db.inicio_config_get()
     modo = cfg.get("chat_temporal_modo_publico") or cfg.get("chat_temporal_modo", "desactivado")
-    return jsonify({"modo": modo})
+    activado_en = cfg.get("chat_temporal_pub_activado_en") or None
+    if modo == "desactivado":
+        activado_en = None
+    habilitado_1min = bool(current_app.config.get("CHAT_1MIN_HABILITADO", True))
+    return jsonify({"modo": modo, "activado_en": activado_en, "chat_1min_habilitado": habilitado_1min})
 
 @comentarios_bp.route("/comentarios/config_temporal", methods=["POST"])
 @login_required
@@ -179,14 +185,38 @@ def set_config_temporal():
     modo = data.get("modo", "desactivado")
     if modo not in _MODOS_VALIDOS:
         return jsonify({"error": "Modo inválido"}), 400
-    db.inicio_config_save({"chat_temporal_modo_publico": modo})
-    return jsonify({"ok": True})
+    cfg = db.inicio_config_get()
+    modo_actual = cfg.get("chat_temporal_modo_publico") or cfg.get("chat_temporal_modo", "desactivado")
+    save_data = {"chat_temporal_modo_publico": modo}
+    activado_en = None
+    if modo != "desactivado":
+        existing = cfg.get("chat_temporal_pub_activado_en") or ""
+        if modo_actual == "desactivado" or not existing:
+            activado_en = datetime.now(timezone.utc).isoformat()
+            save_data["chat_temporal_pub_activado_en"] = activado_en
+        else:
+            activado_en = existing
+    else:
+        save_data["chat_temporal_pub_activado_en"] = ""
+    db.inicio_config_save(save_data)
+    if modo != "desactivado":
+        # Borrar TODOS los mensajes no-admin hasta este instante (sin filtro de ventana)
+        cutoff_ahora = datetime.now(timezone.utc).isoformat()
+        protegidos = _get_admin_cedulas() or [session["user_id"]]
+        db.comentario_delete_non_admin_before(cutoff_ahora, protegidos)
+        socketio.emit("chat_cleanup", {})
+    return jsonify({"ok": True, "activado_en": activado_en})
 
 @comentarios_bp.route("/mensajes_privados/config_temporal", methods=["GET"])
 @login_required
 def get_config_temporal_privado():
     cfg = db.inicio_config_get()
-    return jsonify({"modo": cfg.get("chat_temporal_modo_privado", "desactivado")})
+    modo = cfg.get("chat_temporal_modo_privado", "desactivado")
+    activado_en = cfg.get("chat_temporal_priv_activado_en") or None
+    if modo == "desactivado":
+        activado_en = None
+    habilitado_1min = bool(current_app.config.get("CHAT_1MIN_HABILITADO", True))
+    return jsonify({"modo": modo, "activado_en": activado_en, "chat_1min_habilitado": habilitado_1min})
 
 @comentarios_bp.route("/mensajes_privados/config_temporal", methods=["POST"])
 @login_required
@@ -197,8 +227,27 @@ def set_config_temporal_privado():
     modo = data.get("modo", "desactivado")
     if modo not in _MODOS_VALIDOS:
         return jsonify({"error": "Modo inválido"}), 400
-    db.inicio_config_save({"chat_temporal_modo_privado": modo})
-    return jsonify({"ok": True})
+    cfg = db.inicio_config_get()
+    modo_actual = cfg.get("chat_temporal_modo_privado", "desactivado")
+    save_data = {"chat_temporal_modo_privado": modo}
+    activado_en = None
+    if modo != "desactivado":
+        existing = cfg.get("chat_temporal_priv_activado_en") or ""
+        if modo_actual == "desactivado" or not existing:
+            activado_en = datetime.now(timezone.utc).isoformat()
+            save_data["chat_temporal_priv_activado_en"] = activado_en
+        else:
+            activado_en = existing
+    else:
+        save_data["chat_temporal_priv_activado_en"] = ""
+    db.inicio_config_save(save_data)
+    if modo != "desactivado":
+        # Borrar TODOS los mensajes privados no-admin hasta este instante (sin filtro de ventana)
+        cutoff_ahora = datetime.now(timezone.utc).isoformat()
+        protegidos = _get_admin_cedulas() or [session["user_id"]]
+        db.mp_delete_non_admin_before(cutoff_ahora, protegidos)
+        socketio.emit("priv_cleanup", {})
+    return jsonify({"ok": True, "activado_en": activado_en})
 
 
 @comentarios_bp.route("/comentarios/bulk", methods=["DELETE"])

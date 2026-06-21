@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-inicio-v13';
+const CACHE_NAME = 'dantojitos-inicio-v14';
 
 const PRECACHE = [
     '/static/css/global_modules/style_inicio.css',

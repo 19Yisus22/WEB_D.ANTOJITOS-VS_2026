@@ -779,8 +779,9 @@ def comentario_delete_non_admin_before(cutoff_iso: str, admin_cedulas: list = No
         if admin_cedulas:
             q = q.not_.in_("cedula", admin_cedulas)
         _run(q)
-    except Exception:
-        pass
+        logger.info("comentario_delete_non_admin_before OK (cutoff=%s)", cutoff_iso)
+    except Exception as e:
+        logger.warning("comentario_delete_non_admin_before ERROR: %s", e)
 
 
 def comentario_update_likes(id: str, likes: list) -> None:
@@ -936,8 +937,9 @@ def mp_delete_non_admin_before(cutoff_iso: str, admin_cedulas: list = None) -> N
         if admin_cedulas:
             q = q.not_.in_("cedula_de", admin_cedulas)
         _run(q)
-    except Exception:
-        pass
+        logger.info("mp_delete_non_admin_before OK (cutoff=%s)", cutoff_iso)
+    except Exception as e:
+        logger.warning("mp_delete_non_admin_before ERROR: %s", e)
 
 
 def _staff_thread_key(cedula_a: str, cedula_b: str) -> tuple[str, str]:

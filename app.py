@@ -73,6 +73,7 @@ app.config["MAX_CONTENT_LENGTH"]      = 50 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SECURE"]   = _IS_PROD
 app.config["SESSION_COOKIE_SAMESITE"] = "Strict"
+app.config["CHAT_1MIN_HABILITADO"]    = False
 CORS(app, supports_credentials=True)
 
 socketio.init_app(
@@ -234,6 +235,61 @@ def _get_local_ip() -> str:
         return "0.0.0.0"
     finally:
         s.close()
+
+def _chat_cleanup_bg():
+    from datetime import datetime, timezone, timedelta
+    import database.models as db
+
+    def _cutoff(modo):
+        ahora = datetime.now(timezone.utc)
+        if modo == "1min":
+            return (ahora - timedelta(minutes=1)).isoformat()
+        if modo == "24h":
+            return (ahora - timedelta(hours=24)).isoformat()
+        if modo == "7d":
+            return (ahora - timedelta(days=7)).isoformat()
+        if modo == "mensual":
+            return (ahora - timedelta(days=30)).isoformat()
+        return None
+
+    def _admin_cedulas():
+        try:
+            return [u["cedula"] for u in db.usuario_get_all()
+                    if (u.get("roles") or {}).get("nombre_role") == "admin"]
+        except Exception:
+            return []
+
+    while True:
+        try:
+            cfg = db.inicio_config_get()
+            modo_pub  = cfg.get("chat_temporal_modo_publico") or cfg.get("chat_temporal_modo", "desactivado")
+            modo_priv = cfg.get("chat_temporal_modo_privado", "desactivado")
+            intervalo = 30 if "1min" in (modo_pub, modo_priv) else 300
+        except Exception:
+            cfg = {}
+            modo_pub = modo_priv = "desactivado"
+            intervalo = 300
+
+        socketio.sleep(intervalo)
+
+        try:
+            if modo_pub != "desactivado":
+                cutoff = _cutoff(modo_pub)
+                if cutoff:
+                    db.comentario_delete_non_admin_before(cutoff, _admin_cedulas())
+                    socketio.emit("chat_cleanup", {})
+                    _logger.info("chat_cleanup ejecutado (modo=%s)", modo_pub)
+
+            if modo_priv != "desactivado":
+                cutoff = _cutoff(modo_priv)
+                if cutoff:
+                    db.mp_delete_non_admin_before(cutoff, _admin_cedulas())
+                    socketio.emit("priv_cleanup", {})
+                    _logger.info("priv_cleanup ejecutado (modo=%s)", modo_priv)
+        except Exception as e:
+            _logger.warning("chat_cleanup_bg error: %s", e)
+
+socketio.start_background_task(_chat_cleanup_bg)
 
 if __name__ == "__main__":
     host, port, local_ip, debug_mode = "0.0.0.0", 8000, _get_local_ip(), False

@@ -56,6 +56,7 @@
                             <span>Chat público:</span>
                             <select id="chatTemporalPublicoSelect" class="temporal-select">
                                 <option value="desactivado">Desactivado</option>
+                                <option value="1min">1 minuto (prueba)</option>
                                 <option value="24h">Cada 24 horas</option>
                                 <option value="7d">Cada 7 días</option>
                                 <option value="mensual">Mensual</option>
@@ -113,9 +114,9 @@
                             <div class="fmt-sep"></div>
                             <button type="button" class="fmt-btn" id="btnListado" title="Lista" onclick="insertListItem()"><i class="bi bi-list-ul"></i></button>
                             <div class="fmt-sep"></div>
-                            <label class="fmt-btn" id="btnAdjuntarImg" title="Adjuntar imagen" style="cursor:pointer;margin:0;">
-                                <i class="bi bi-image"></i>
-                                <input type="file" id="inputImagenChat" accept="image/*" style="display:none;" onchange="adjuntarImagenDesdeArchivo(this)">
+                            <label class="fmt-btn" id="btnAdjuntarImg" title="Adjuntar imágenes (máx 5)" style="cursor:pointer;margin:0;">
+                                <i class="bi bi-images"></i>
+                                <input type="file" id="inputImagenChat" accept="image/*" multiple style="display:none;" onchange="adjuntarImagenDesdeArchivo(this)">
                             </label>
                         </div>
                         <div id="imagenesPreview" class="chat-img-preview-area" style="display:none;"></div>
@@ -127,12 +128,18 @@
                             <button class="reply-quote-close" onclick="cancelarRespuesta()"><i class="bi bi-x-lg"></i></button>
                         </div>
 
-                        <div id="mensajeInput"
-                             class="rich-editor"
-                             contenteditable="true"
-                             data-i18n-placeholder="chat.placeholder"
-                             data-placeholder="Escribe tu sugerencia aquí..."
-                             spellcheck="true"></div>
+                        <div class="chat-editor-dropzone" id="chatEditorDropzone">
+                            <div id="mensajeInput"
+                                 class="rich-editor"
+                                 contenteditable="true"
+                                 data-i18n-placeholder="chat.placeholder"
+                                 data-placeholder="Escribe tu sugerencia aquí..."
+                                 spellcheck="true"></div>
+                            <div class="drop-hint" id="dropHint" aria-hidden="true">
+                                <i class="bi bi-cloud-arrow-up-fill"></i>
+                                <span>Suelta las imágenes aquí</span>
+                            </div>
+                        </div>
 
                         <div class="d-flex flex-column align-items-center mt-3">
                             <button id="sendBtn" class="btn btn-primary ds-ripple fw-bold px-5 py-2 shadow-sm d-flex align-items-center justify-content-center">
@@ -176,8 +183,15 @@
                             <div id="privConvHeader" class="priv-conv-header" style="display:none;"></div>
                             <div id="privConvBox" class="priv-conv-box" style="display:none;"></div>
                             <div id="privConvInput" class="priv-conv-input" style="display:none;">
-                                <textarea id="privRespuestaInput" class="priv-textarea" data-i18n-placeholder="chat.reply_placeholder" placeholder="Escribe tu respuesta al cliente..." rows="2"></textarea>
-                                <button class="priv-send-btn" onclick="enviarRespuestaVendedor()"><i class="bi bi-send-fill"></i></button>
+                                <div class="chat-img-preview-area" style="display:none;"></div>
+                                <div class="priv-conv-input-row">
+                                    <label class="priv-attach-btn" title="Adjuntar imágenes (máx 5)">
+                                        <i class="bi bi-paperclip"></i>
+                                        <input type="file" accept="image/*" multiple style="display:none;" onchange="adjuntarImagenDesdeArchivo(this)">
+                                    </label>
+                                    <textarea id="privRespuestaInput" class="priv-textarea" data-i18n-placeholder="chat.reply_placeholder" placeholder="Escribe tu respuesta al cliente..." rows="2"></textarea>
+                                    <button class="priv-send-btn" onclick="enviarRespuestaVendedor()"><i class="bi bi-send-fill"></i></button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -192,8 +206,15 @@
                             <div id="staffConvHeader" class="priv-conv-header" style="display:none;"></div>
                             <div id="staffConvBox" class="priv-conv-box" style="display:none;"></div>
                             <div id="staffConvInput" class="priv-conv-input" style="display:none;">
-                                <textarea id="staffMensajeInput" class="priv-textarea" data-i18n-placeholder="chat.reply_placeholder" placeholder="Escribe tu mensaje..." rows="2"></textarea>
-                                <button class="priv-send-btn" onclick="enviarMensajeStaff()"><i class="bi bi-send-fill"></i></button>
+                                <div class="chat-img-preview-area" style="display:none;"></div>
+                                <div class="priv-conv-input-row">
+                                    <label class="priv-attach-btn" title="Adjuntar imágenes (máx 5)">
+                                        <i class="bi bi-paperclip"></i>
+                                        <input type="file" accept="image/*" multiple style="display:none;" onchange="adjuntarImagenDesdeArchivo(this)">
+                                    </label>
+                                    <textarea id="staffMensajeInput" class="priv-textarea" data-i18n-placeholder="chat.reply_placeholder" placeholder="Escribe tu mensaje..." rows="2"></textarea>
+                                    <button class="priv-send-btn" onclick="enviarMensajeStaff()"><i class="bi bi-send-fill"></i></button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -205,6 +226,7 @@
                             <span>Chat privado:</span>
                             <select id="chatTemporalPrivadoSelect" class="temporal-select">
                                 <option value="desactivado">Desactivado</option>
+                                <option value="1min">1 minuto (prueba)</option>
                                 <option value="24h">Cada 24 horas</option>
                                 <option value="7d">Cada 7 días</option>
                                 <option value="mensual">Mensual</option>
@@ -221,8 +243,15 @@
                             <div id="staffConvHeader" class="priv-conv-header" style="display:none;"></div>
                             <div id="staffConvBox" class="priv-conv-box" style="display:none;"></div>
                             <div id="staffConvInput" class="priv-conv-input" style="display:none;">
-                                <textarea id="staffMensajeInput" class="priv-textarea" data-i18n-placeholder="chat.reply_placeholder" placeholder="Escribe tu mensaje..." rows="2"></textarea>
-                                <button class="priv-send-btn" onclick="enviarMensajeStaff()"><i class="bi bi-send-fill"></i></button>
+                                <div class="chat-img-preview-area" style="display:none;"></div>
+                                <div class="priv-conv-input-row">
+                                    <label class="priv-attach-btn" title="Adjuntar imágenes (máx 5)">
+                                        <i class="bi bi-paperclip"></i>
+                                        <input type="file" accept="image/*" multiple style="display:none;" onchange="adjuntarImagenDesdeArchivo(this)">
+                                    </label>
+                                    <textarea id="staffMensajeInput" class="priv-textarea" data-i18n-placeholder="chat.reply_placeholder" placeholder="Escribe tu mensaje..." rows="2"></textarea>
+                                    <button class="priv-send-btn" onclick="enviarMensajeStaff()"><i class="bi bi-send-fill"></i></button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -239,8 +268,15 @@
                             <div id="predefinedBtns" class="priv-predefined-grid"></div>
                         </div>
                         <div class="priv-conv-input" style="display:flex;">
-                            <textarea id="clienteMensajeLibre" class="priv-textarea" data-i18n-placeholder="chat.placeholder" placeholder="O escribe tu mensaje aquí..." rows="2"></textarea>
-                            <button class="priv-send-btn" onclick="enviarMensajeLibreCliente()"><i class="bi bi-send-fill"></i></button>
+                            <div class="chat-img-preview-area" style="display:none;"></div>
+                            <div class="priv-conv-input-row">
+                                <label class="priv-attach-btn" title="Adjuntar imágenes (máx 5)">
+                                    <i class="bi bi-paperclip"></i>
+                                    <input type="file" accept="image/*" multiple style="display:none;" onchange="adjuntarImagenDesdeArchivo(this)">
+                                </label>
+                                <textarea id="clienteMensajeLibre" class="priv-textarea" data-i18n-placeholder="chat.placeholder" placeholder="O escribe tu mensaje aquí..." rows="2"></textarea>
+                                <button class="priv-send-btn" onclick="enviarMensajeLibreCliente()"><i class="bi bi-send-fill"></i></button>
+                            </div>
                         </div>
                     </div>
                     {% endif %}

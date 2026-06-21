@@ -1,6 +1,6 @@
 importScripts('/static/js/workers/sw-core.js');
 
-const CACHE_NAME = 'dantojitos-catalogo-v11';
+const CACHE_NAME = 'dantojitos-catalogo-v12';
 
 const PRECACHE = [
     '/static/css/general_modules/style_catalogo.css',

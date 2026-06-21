@@ -1264,3 +1264,121 @@ html, body {
 [data-theme="dark"] .temporal-controls-label { color: #a08070 !important; }
 [data-theme="dark"] .temporal-select { background-color: #1a1210 !important; color: #e0c8b8 !important; border-color: rgba(211,84,0,0.3) !important; }
 [data-theme="dark"] .temporal-active-banner { background: rgba(211,84,0,0.1) !important; border-color: rgba(211,84,0,0.2) !important; color: #e0a88a !important; }
+
+/* Separador de activación — burbuja de sistema centrada (estilo WhatsApp) */
+.chat-temporal-sep {
+    display: flex;
+    justify-content: center;
+    padding: 6px 16px;
+    margin: 12px 0;
+    pointer-events: none;
+}
+.chat-temporal-sep-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 20px;
+    font-size: 0.74rem;
+    color: #888;
+    white-space: nowrap;
+}
+.chat-temporal-sep-inner i { color: #d35400; font-size: 0.8rem; }
+[data-theme="dark"] .chat-temporal-sep-inner { background: rgba(255,255,255,0.07); color: #777; }
+[data-theme="dark"] .chat-temporal-sep-inner i { color: #e07040; }
+
+/* ══════════════════════════════════════════
+   MULTI-IMAGE DROP ZONES
+   ══════════════════════════════════════════ */
+
+/* Drop zone wrapper del editor público */
+.chat-editor-dropzone {
+    position: relative;
+}
+
+/* Hint overlay dentro del editor al arrastrar */
+.drop-hint {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(211, 84, 0, 0.08);
+    border: 2px dashed #d35400;
+    border-radius: inherit;
+    pointer-events: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #d35400;
+    letter-spacing: 0.01em;
+}
+.drop-hint i { font-size: 2rem; }
+.chat-editor-dropzone.drag-over .drop-hint { display: flex; }
+.chat-editor-dropzone.drag-over .rich-editor { opacity: 0.3; }
+
+/* Estado drag-over para textareas privadas */
+.priv-textarea.drag-over {
+    border-color: #d35400 !important;
+    background: rgba(211, 84, 0, 0.05) !important;
+    box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.15) !important;
+    outline: 2px dashed #d35400;
+    outline-offset: 2px;
+}
+
+/* Preview area dentro de priv-conv-input (arriba de la fila) */
+.priv-conv-input {
+    flex-wrap: wrap;
+}
+.priv-conv-input .chat-img-preview-area {
+    width: 100%;
+    order: -1;
+    margin-bottom: 6px;
+    border-radius: 8px;
+}
+
+/* Fila de controles internos */
+.priv-conv-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Botón clip para adjuntar en chat privado */
+.priv-attach-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(211, 84, 0, 0.09);
+    border: 1.5px solid rgba(211, 84, 0, 0.2);
+    color: #d35400;
+    font-size: 1rem;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.18s;
+    margin-bottom: 0;
+}
+.priv-attach-btn:hover { background: rgba(211, 84, 0, 0.18); transform: scale(1.1); }
+
+/* Contador de imágenes en el área de preview */
+.chat-img-counter {
+    width: 100%;
+    font-size: 0.72rem;
+    color: #888;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Dark mode */
+[data-theme="dark"] .drop-hint { background: rgba(211,84,0,0.12); }
+[data-theme="dark"] .priv-attach-btn { background: rgba(211,84,0,0.12); border-color: rgba(211,84,0,0.28); }
+[data-theme="dark"] .chat-img-counter { color: #666; }
