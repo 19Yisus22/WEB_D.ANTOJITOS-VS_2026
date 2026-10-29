@@ -9,7 +9,7 @@ google-auth==2.29.0
 google-auth-oauthlib==1.2.1
 cloudinary==1.41.0
 cryptography==50.0.0
-pyasn1==0.6.0
+pyasn1==0.6.4
 pyasn1-modules==0.4.0
 gunicorn==22.0.0
 resend==2.30.1
